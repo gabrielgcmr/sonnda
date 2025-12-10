@@ -31,7 +31,7 @@ func NewPatientHandler(
 	}
 }
 
-func (h *PatientHandler) CreateByPatient(c *gin.Context) {
+func (h *PatientHandler) CreateByAuthenticatedPatient(c *gin.Context) {
 	var input patient.CreatePatientInput
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -71,7 +71,7 @@ func (h *PatientHandler) CreateByPatient(c *gin.Context) {
 
 }
 
-func (h *PatientHandler) CreateByOthers(c *gin.Context) {
+func (h *PatientHandler) CreateByProfessional(c *gin.Context) {
 	var input patient.CreatePatientInput
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{

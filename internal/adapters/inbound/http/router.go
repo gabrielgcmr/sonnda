@@ -46,19 +46,20 @@ func SetupRoutes(
 		)
 		me.POST("/patient",
 			middleware.RequirePatient(),
-			patientHandler.CreateByPatient,
+			patientHandler.CreateByAuthenticatedPatient,
 		)
 		me.GET("labs",
 			middleware.RequirePatient(),
-			labsHandler.ListMyLabReports,
+			labsHandler.ListLabReports,
 		)
 		me.POST("labs/upload",
 			middleware.RequirePatient(),
-			labsHandler.UploadAndProcessLabReport,
+			labsHandler.UploadAndProcessLabs,
 		)
 		//me.GET("/doctor", userHandler.GetCurrentDoctor)
 	}
-	// Rotas de pacientes
+
+	// Rotas para profissionais de saúde
 	patients := protected.Group("/patients")
 	{
 		// Qualquer usuário autenticado pode listar
@@ -66,26 +67,26 @@ func SetupRoutes(
 
 		// Apenas doctors podem criar pacientes
 		patients.POST("",
-			middleware.RequireDoctor(),
-			patientHandler.CreateByOthers,
+			middleware.RequireProfessional(),
+			patientHandler.CreateByProfessional,
 		)
 
 		// Buscar por ID (doctors only)
 		patients.GET("/:id",
-			middleware.RequireDoctor(),
+			middleware.RequireProfessional(),
 			patientHandler.GetByID,
 		)
 
 		// Atualizar (doctors only)
 		patients.PUT("/:id",
-			middleware.RequireDoctor(),
+			middleware.RequireProfessional(),
 			patientHandler.UpdateByID,
 		)
 
 		// Upload de laudo (doctors only)
 		patients.POST("/:id/labs/upload",
-			middleware.RequireDoctor(),
-			labsHandler.UploadAndProcessLabReport,
+			middleware.RequireProfessional(),
+			labsHandler.UploadAndProcessLabs,
 		)
 
 		// Rotas específicas de doctors
@@ -93,7 +94,7 @@ func SetupRoutes(
 	}
 
 	doctors := protected.Group("/doctors")
-	doctors.Use(middleware.RequireDoctor())
+	doctors.Use(middleware.RequireProfessional())
 	{
 		// Exemplo: rotas específicas de médicos
 	}

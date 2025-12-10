@@ -38,8 +38,8 @@ func RequireRole(allowedRoles ...domain.Role) gin.HandlerFunc {
 	}
 }
 
-// RequireDoctor middleware específico para rotas de médicos
-func RequireDoctor() gin.HandlerFunc {
+// RequireProfessional middleware específico para rotas de médicos
+func RequireProfessional() gin.HandlerFunc {
 	return RequireRole(domain.RoleDoctor, domain.RoleAdmin)
 }
 
