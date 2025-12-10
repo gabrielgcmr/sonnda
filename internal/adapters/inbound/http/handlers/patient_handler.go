@@ -31,7 +31,7 @@ func NewPatientHandler(
 	}
 }
 
-func (h *PatientHandler) Create(c *gin.Context) {
+func (h *PatientHandler) CreateByPatient(c *gin.Context) {
 	var input patient.CreatePatientInput
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -50,20 +50,62 @@ func (h *PatientHandler) Create(c *gin.Context) {
 		return
 	}
 
-	if user.Role == domain.RolePatient {
-		input.AppUserID = &user.ID
-	} else {
-		input.AppUserID = nil
+	//impede crianção de paciente para outra pessoa
+	if input.AppUserID != nil && *input.AppUserID != user.ID {
+		c.JSON(http.StatusForbidden, gin.H{
+			"error":   "forbidden",
+			"message": "você não tem permissão para criar paciente para outro paciente",
+		})
+		return
 	}
 
-	// Executa usecase
+	input.AppUserID = &user.ID
+
 	output, err := h.createUC.Execute(c.Request.Context(), input)
 	if err != nil {
 		handleServiceError(c, err)
 		return
 	}
 
-	// Converte UseCase Output → HTTP Response
+	c.JSON(http.StatusCreated, output)
+
+}
+
+func (h *PatientHandler) CreateByOthers(c *gin.Context) {
+	var input patient.CreatePatientInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "invalid_input",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	user, ok := middleware.CurrentUser(c)
+	if !ok || user == nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error":   "unauthorized",
+			"message": "usuário não autenticado",
+		})
+		return
+	}
+
+	// Protege contra tentativas de injetar app_user_id
+	if input.AppUserID != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "invalid_input",
+			"message": "médicos não devem informar app_user_id",
+		})
+		return
+	}
+
+	// Continua com criação
+	output, err := h.createUC.Execute(c.Request.Context(), input)
+	if err != nil {
+		handleServiceError(c, err)
+		return
+	}
+
 	c.JSON(http.StatusCreated, output)
 }
 

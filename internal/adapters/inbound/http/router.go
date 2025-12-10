@@ -46,7 +46,7 @@ func SetupRoutes(
 		)
 		me.POST("/patient",
 			middleware.RequirePatient(),
-			patientHandler.Create,
+			patientHandler.CreateByPatient,
 		)
 		me.GET("labs",
 			middleware.RequirePatient(),
@@ -67,7 +67,7 @@ func SetupRoutes(
 		// Apenas doctors podem criar pacientes
 		patients.POST("",
 			middleware.RequireDoctor(),
-			patientHandler.Create,
+			patientHandler.CreateByOthers,
 		)
 
 		// Buscar por ID (doctors only)

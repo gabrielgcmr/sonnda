@@ -85,16 +85,16 @@ Resumo da estrutura (pode ajustar conforme seu projeto atual):
 │   │   ├── ports/                     # Interfaces (repositories, services)
 │   │   └── usecases/                  # Casos de uso da aplicação (orquestram o domínio)
 │   └── adapters/
-│   │   ├── inbound/                   # Tudo que vem de fora da aplicação
-│   │   │   ├── cli/                   # Entradas CLI
-│   │   │   ├── http/                  # Entradas HTTP, roteamento e middlewares
-│   │   ├── outbound/                  # Tudo que vai pra fora da aplicação
-│   │   │   ├── auth/                  # Implementação e ajustes do sistema da autenticação
-│   │   │   ├── authorization/         # Regras de autorização (RBAC, checagem de permissões)
-│   │   │   ├── database/              # Implementação de repositórios usando Supabase/Postgres
-│   │   │   ├── storage/               # Implementação do storage
-│   │   │   ├── external/              # Chamadas a APIs externas.
-│   │   │   │   └── documentai/        # Cliente para Google Document AI
+│       ├── inbound/                   # Tudo que vem de fora da aplicação
+│       │   ├── cli/                   # Entradas CLI
+│       │   └── http/                  # Entradas HTTP, roteamento e middlewares
+│       └── outbound/                  # Tudo que vai pra fora da aplicação
+│           ├── auth/                  # Implementação e ajustes do sistema da autenticação
+│           ├── authorization/         # Regras de autorização (RBAC, checagem de permissões)
+│           ├── database/              # Implementação de repositórios usando Supabase/Postgres
+│           ├── storage/               # Implementação do storage
+│           └── external/              # Chamadas a APIs externas.
+│               └── documentai/        # Cliente para Google Document AI
 ├── samples/                           # Exemplos de payloads / exames (sempre dados fictícios/anonimizados)
 ├── .env.example                       # Exemplo de variáveis de ambiente (sem segredos)
 ├── .gitignore
