@@ -70,9 +70,9 @@ func (uc *ListLabsUseCase) Execute(
 			}
 
 			for _, item := range tr.Items {
-				testSummary.Items = append(testSummary.Items, ResultItemSummaryOutput{
+				testSummary.Items = append(testSummary.Items, LabResultItemSummaryOutput{
 					ParameterName: item.ParameterName,
-					ResultText:    item.ResultText,
+					ResultValue:   item.ResultValue,
 					ResultUnit:    item.ResultUnit,
 				})
 			}

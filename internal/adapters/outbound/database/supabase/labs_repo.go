@@ -241,7 +241,7 @@ func (r *LabsRepository) Create(ctx context.Context, report *domain.LabReport) (
 			row := tx.QueryRow(ctx, insertLabTestItemSQL,
 				tr.ID,
 				item.ParameterName,
-				item.ResultText,
+				item.ResultValue,
 				item.ResultUnit,
 				item.ReferenceText,
 			)
@@ -379,7 +379,7 @@ func (r *LabsRepository) FindByID(ctx context.Context, reportID string) (*domain
 			}
 
 			item.LabTestResultID = tr.ID
-			item.ResultText = nullableString(resultText)
+			item.ResultValue = nullableString(resultText)
 			item.ResultUnit = nullableString(resultUnit)
 			item.ReferenceText = nullableString(referenceText)
 
