@@ -40,10 +40,11 @@ const (
 			requesting_doctor,
 			technical_manager,
 			report_date,
-			raw_text
+			raw_text,
+			uploaded_by_user_id
 		)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
-		RETURNING id, created_at
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+		RETURNING id, created_at, updated_at, uploaded_by_user_id
 	`
 
 	insertLabTestResultSQL = `
@@ -84,7 +85,9 @@ const (
 			technical_manager,
 			report_date,
 			raw_text,
-			created_at
+			uploaded_by_user_id,
+			created_at,
+			updated_at
 		FROM lab_reports
 		WHERE id = $1
 	`
@@ -121,7 +124,9 @@ const (
 			patient_name,
 			lab_name,
 			report_date,
-			created_at
+			uploaded_by_user_id,
+			created_at,
+			updated_at
 		FROM lab_reports
 		WHERE patient_id = $1
 		ORDER BY report_date DESC NULLS LAST, created_at DESC
@@ -203,11 +208,14 @@ func (r *LabsRepository) Create(ctx context.Context, report *domain.LabReport) (
 		report.TechnicalManager,
 		report.ReportDate,
 		report.RawText,
+		report.UploadedByUserID,
 	)
 
-	if err = row.Scan(&report.ID, &report.CreatedAt); err != nil {
+	var uploadedBy sql.NullString
+	if err = row.Scan(&report.ID, &report.CreatedAt, &report.UpdatedAt, &uploadedBy); err != nil {
 		return err
 	}
+	report.UploadedByUserID = nullableString(uploadedBy)
 
 	// 2) lab_test_results + lab_test_items
 	for i := range report.TestResults {
@@ -259,8 +267,8 @@ func (r *LabsRepository) FindByID(ctx context.Context, reportID string) (*domain
 	// 1) lab_reports
 	var (
 		patientName, labName, labPhone, insuranceProvider,
-		requestingDoctor, technicalManager, rawText sql.NullString
-		patientDOB, reportDate sql.NullTime
+		requestingDoctor, technicalManager, rawText, uploadedBy sql.NullString
+		patientDOB, reportDate, updatedAt sql.NullTime
 	)
 
 	row := r.client.Pool().QueryRow(ctx, selectLabReportByIDSQL, reportID)
@@ -277,7 +285,9 @@ func (r *LabsRepository) FindByID(ctx context.Context, reportID string) (*domain
 		&technicalManager,
 		&reportDate,
 		&rawText,
+		&uploadedBy,
 		&lr.CreatedAt,
+		&updatedAt,
 	); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
@@ -294,6 +304,10 @@ func (r *LabsRepository) FindByID(ctx context.Context, reportID string) (*domain
 	lr.TechnicalManager = nullableString(technicalManager)
 	lr.ReportDate = nullableTime(reportDate)
 	lr.RawText = nullableString(rawText)
+	lr.UploadedByUserID = nullableString(uploadedBy)
+	if t := nullableTime(updatedAt); t != nil {
+		lr.UpdatedAt = *t
+	}
 
 	// 2) lab_test_results
 	rows, err := r.client.Pool().Query(ctx, selectLabTestResultsByReportIDSQL, reportID)
@@ -410,6 +424,8 @@ func (r *LabsRepository) FindByPatientID(ctx context.Context, patientID string) 
 			lr                   domain.LabReport
 			patientName, labName sql.NullString
 			reportDate           sql.NullTime
+			uploadedBy           sql.NullString
+			updatedAt            sql.NullTime
 		)
 
 		if err := rows.Scan(
@@ -418,7 +434,9 @@ func (r *LabsRepository) FindByPatientID(ctx context.Context, patientID string) 
 			&patientName,
 			&labName,
 			&reportDate,
+			&uploadedBy,
 			&lr.CreatedAt,
+			&updatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -426,6 +444,10 @@ func (r *LabsRepository) FindByPatientID(ctx context.Context, patientID string) 
 		lr.PatientName = nullableString(patientName)
 		lr.LabName = nullableString(labName)
 		lr.ReportDate = nullableTime(reportDate)
+		lr.UploadedByUserID = nullableString(uploadedBy)
+		if t := nullableTime(updatedAt); t != nil {
+			lr.UpdatedAt = *t
+		}
 
 		result = append(result, lr)
 	}

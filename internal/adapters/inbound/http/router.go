@@ -52,12 +52,14 @@ func SetupRoutes(
 			middleware.RequirePatient(),
 			labsHandler.ListLabReports,
 		)
-		me.POST("labs/upload",
-			middleware.RequirePatient(),
-			labsHandler.UploadAndProcessLabs,
-		)
+
 		//me.GET("/doctor", userHandler.GetCurrentDoctor)
 	}
+	//Upload Labs
+	protected.POST(":patientID/labs/upload",
+		middleware.RequirePatient(),
+		labsHandler.UploadAndProcessLabs,
+	)
 
 	// Rotas para profissionais de saúde
 	patients := protected.Group("/patients")

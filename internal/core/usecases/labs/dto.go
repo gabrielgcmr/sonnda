@@ -22,6 +22,7 @@ type LabReportOutput struct {
 	RequestingDoctor  *string
 	TechnicalManager  *string
 	ReportDate        *time.Time
+	UploadedByUserID  *string
 	TestResults       []TestResultOutput
 	CreatedAt         time.Time
 	UpdatedAt         time.Time

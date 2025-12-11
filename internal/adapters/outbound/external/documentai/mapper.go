@@ -118,11 +118,11 @@ func mapTestResult(doc *documentaipb.Document, ent *documentaipb.Document_Entity
 			v := extractEntityText(doc, prop)
 			tr.Method = &v
 
-		case "collected_datetime":
+		case "collected_at", "collection_date", "collection_datetime", "collected_date":
 			v := extractEntityValue(doc, prop)
 			tr.CollectedAt = &v
 
-		case "release_datetime":
+		case "release_at", "released_at", "release_date", "result_date":
 			v := extractEntityValue(doc, prop)
 			tr.ReleaseAt = &v
 

@@ -27,9 +27,9 @@ type LabReport struct {
 	// Carregado via JOIN quando você quiser devolver tudo de uma vez
 	TestResults []LabTestResult `json:"test_results,omitempty"`
 
-	CreatedAt        time.Time `db:"created_at"  json:"created_at"`
-	UpdatedAt        time.Time `db:"updated_at"  json:"updated_at"`
-	UploadedByUserID *string   `db:"updated_by_user_id" json:"updated_by_user_id"`
+	CreatedAt        time.Time `db:"created_at"         json:"created_at"`
+	UpdatedAt        time.Time `db:"updated_at"         json:"updated_at"`
+	UploadedByUserID *string   `db:"uploaded_by_user_id" json:"uploaded_by_user_id,omitempty"`
 }
 
 // LabTestResult representa um exame/painel dentro do laudo

@@ -24,16 +24,15 @@ func NewCreateFromDocument(
 	}
 }
 
-// CreateFromDocument é o ponto de entrada principal:
+// CreateFromDocument:
 // 1) chama o extractor (Document AI via adapter de labtest)
-// 2) converte DTO -> domínio
+// 2) converte DTO -> dominio
 // 3) salva no banco via Repository
-
 func (uc *CreateFromDocumentUseCase) Execute(
 	ctx context.Context,
 	input CreateFromDocumentInput,
 ) (*LabReportOutput, error) {
-	// 1. Validações básicas
+	// 1. Validacoes basicas
 	if err := uc.validate(input); err != nil {
 		return nil, err
 	}
@@ -44,8 +43,12 @@ func (uc *CreateFromDocumentUseCase) Execute(
 		return nil, domain.ErrDocumentProcessing
 	}
 
-	// 3. Converte ExtractedLabReport → Domain Entity
-	report, err := uc.mapExtractedToDomain(input.PatientID, extracted)
+	// 3. Converte ExtractedLabReport -> Domain Entity
+	var uploader *string
+	if input.UploadedByUserID != "" {
+		uploader = &input.UploadedByUserID
+	}
+	report, err := uc.mapExtractedToDomain(input.PatientID, uploader, extracted)
 	if err != nil {
 		return nil, err
 	}
@@ -84,6 +87,7 @@ func (uc *CreateFromDocumentUseCase) validate(input CreateFromDocumentInput) err
 
 func (uc *CreateFromDocumentUseCase) mapExtractedToDomain(
 	patientID string,
+	uploadedByUserID *string,
 	extracted *services.ExtractedLabReport,
 ) (*domain.LabReport, error) {
 	now := time.Now()
@@ -99,6 +103,7 @@ func (uc *CreateFromDocumentUseCase) mapExtractedToDomain(
 		RawText:           extracted.RawText,
 		CreatedAt:         now,
 		UpdatedAt:         now,
+		UploadedByUserID:  uploadedByUserID,
 	}
 
 	// Parse datas
@@ -162,6 +167,7 @@ func (uc *CreateFromDocumentUseCase) toOutput(report *domain.LabReport) *LabRepo
 		RequestingDoctor:  report.RequestingDoctor,
 		TechnicalManager:  report.TechnicalManager,
 		ReportDate:        report.ReportDate,
+		UploadedByUserID:  report.UploadedByUserID,
 		CreatedAt:         report.CreatedAt,
 		UpdatedAt:         report.UpdatedAt,
 	}
