@@ -48,10 +48,6 @@ func SetupRoutes(
 			middleware.RequirePatient(),
 			patientHandler.CreateByAuthenticatedPatient,
 		)
-		me.GET("labs",
-			middleware.RequirePatient(),
-			labsHandler.ListLabReports,
-		)
 
 		//me.GET("/doctor", userHandler.GetCurrentDoctor)
 	}
@@ -60,6 +56,11 @@ func SetupRoutes(
 		middleware.RequirePatient(),
 		labsHandler.UploadAndProcessLabs,
 	)
+	protected.GET(":patientID/labs",
+		middleware.RequirePatient(),
+		labsHandler.ListLabs,
+	)
+	//TODO: GET /patients/{patientID}/labs?from=2025-01-01&to=2025-01-31
 
 	// Rotas para profissionais de saúde
 	patients := protected.Group("/patients")

@@ -405,13 +405,20 @@ func (r *LabsRepository) FindByID(ctx context.Context, reportID string) (*domain
    ============================================================ */
 
 // FindByPatientID retorna apenas os cabeçalhos dos laudos do paciente.
-func (r *LabsRepository) FindByPatientID(ctx context.Context, patientID string) ([]domain.LabReport, error) {
+func (r *LabsRepository) FindByPatientID(ctx context.Context, patientID string, limit, offset int) ([]domain.LabReport, error) {
 	const (
 		defaultLimit  = 100
 		defaultOffset = 0
 	)
 
-	rows, err := r.client.Pool().Query(ctx, selectLabReportsByPatientIDSQL, patientID, defaultLimit, defaultOffset)
+	if limit <= 0 {
+		limit = defaultLimit
+	}
+	if offset < 0 {
+		offset = defaultOffset
+	}
+
+	rows, err := r.client.Pool().Query(ctx, selectLabReportsByPatientIDSQL, patientID, limit, offset)
 	if err != nil {
 		return nil, err
 	}

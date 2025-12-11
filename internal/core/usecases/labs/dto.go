@@ -45,3 +45,25 @@ type TestItemOutput struct {
 	ResultUnit    *string
 	ReferenceText *string
 }
+
+// Usado em: GET /patients/:patientID/labs
+type LabReportSummaryOutput struct {
+	ID           string                   `json:"id"`
+	PatientID    string                   `json:"patient_id"`
+	ReportDate   *time.Time               `json:"report_date,omitempty"`
+	SummaryTests []LabResultSummaryOutput `json:"summary_tests"`
+}
+
+// Um teste resumido (ex.: "Creatinina", "Hemoglobina")
+type LabResultSummaryOutput struct {
+	TestName    string `json:"test_name"`
+	CollectedAt *time.Time
+	Items       []ResultItemSummaryOutput `json:"key_results"`
+}
+
+// Resultado essencial de um parâmetro (o que importa pro card/lista)
+type ResultItemSummaryOutput struct {
+	ParameterName string  `json:"parameter_name"`
+	ResultText    *string `json:"result_text,omitempty"`
+	ResultUnit    *string `json:"result_unit,omitempty"`
+}

@@ -87,7 +87,8 @@ func main() {
 	//6.2 Módulo Lab Reports
 	labReportRepo := supabase.NewLabsRepository(dbClient)
 	createLabReportUC := labs.NewCreateFromDocument(labReportRepo, docExtractor)
-	labReportHandler := handlers.NewLabsHandler(createLabReportUC, storageService)
+	listLabReportsUC := labs.NewListLabs(patientRepo, labReportRepo)
+	labReportHandler := handlers.NewLabsHandler(createLabReportUC, listLabReportsUC, storageService)
 
 	// 7.Configura o Gin
 	r := gin.Default()
