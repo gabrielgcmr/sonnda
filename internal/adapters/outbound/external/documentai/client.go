@@ -57,7 +57,7 @@ func (c *Client) ProcessDocument(
 	}
 
 	if resp.Document == nil {
-		return nil, fmt.Errorf("Document AI retornou resposta sem documento")
+		return nil, fmt.Errorf("document AI retornou resposta sem documento")
 	}
 
 	return resp.Document, nil
