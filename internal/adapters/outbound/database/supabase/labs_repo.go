@@ -64,7 +64,7 @@ const (
 		INSERT INTO lab_test_items (
 			lab_test_result_id,
 			parameter_name,
-			result_text,
+			result_value,
 			result_unit,
 			reference_text
 		)
@@ -109,7 +109,7 @@ const (
 		SELECT
 			id,
 			parameter_name,
-			result_text,
+			result_value,
 			result_unit,
 			reference_text
 		FROM lab_test_items
@@ -138,6 +138,22 @@ const (
 		WHERE id = $1
 	`
 
+	selectLabReportByPatientAndRawTextSQL = `
+	SELECT 1
+	FROM lab_reports
+	WHERE patient_id = $1
+		AND raw_text   = $2
+	LIMIT 1
+	`
+
+	selescrLabReportByPatientAndHash = `
+		SELECT 1
+		FROM lab_reports
+		WHERE patient_id = $1
+			AND report_hash = $2
+		LIMIT 1
+	`
+
 	selectItemsTimelineByPatientAndParamSQL = `
 		SELECT
 			lr.id          AS report_id,
@@ -146,7 +162,7 @@ const (
 			lr.report_date AS report_date,
 			ltr.test_name  AS test_name,
 			lti.parameter_name,
-			lti.result_text,
+			lti.result_value,
 			lti.result_unit
 		FROM lab_test_items lti
 		JOIN lab_test_results ltr ON lti.lab_test_result_id = ltr.id
@@ -405,7 +421,10 @@ func (r *LabsRepository) FindByID(ctx context.Context, reportID string) (*domain
    ============================================================ */
 
 // FindByPatientID retorna apenas os cabeçalhos dos laudos do paciente.
-func (r *LabsRepository) FindByPatientID(ctx context.Context, patientID string, limit, offset int) ([]domain.LabReport, error) {
+func (r *LabsRepository) FindByPatientID(ctx context.Context,
+	patientID string,
+	limit, offset int,
+) ([]domain.LabReport, error) {
 	const (
 		defaultLimit  = 100
 		defaultOffset = 0
@@ -536,4 +555,45 @@ func (r *LabsRepository) ListItemsByPatientAndParameter(
 	}
 
 	return result, nil
+}
+
+/* ============================================================
+   DELETE
+   ============================================================ */
+
+func (r *LabsRepository) ExistsByPatientAndRawText(
+	ctx context.Context,
+	patientID string,
+	rawText string,
+) (bool, error) {
+	row := r.client.Pool().QueryRow(ctx, selectLabReportByPatientAndRawTextSQL, patientID, rawText)
+
+	var dummy int
+	if err := row.Scan(&dummy); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, nil
+		}
+		return false, err
+	}
+
+	return true, nil
+}
+
+// Verifica se já existe um laudo de exame laboratorial com a mesma assinatura
+func (r *LabsRepository) ExistsBySignature(
+	ctx context.Context,
+	patientID, reportHash string,
+) (bool, error) {
+
+	row := r.client.Pool().QueryRow(ctx, selescrLabReportByPatientAndHash, patientID, reportHash)
+
+	var dummy int
+	if err := row.Scan(&dummy); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, nil
+		}
+		return false, err
+	}
+
+	return true, nil
 }

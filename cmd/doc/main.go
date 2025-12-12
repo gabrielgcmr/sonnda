@@ -185,7 +185,7 @@ func ProcessLabReport(projectID, location, processorID, filePath string) (*LabRe
 						switch subProp.Type {
 						case "parameter_name":
 							item.ParameterName = subText
-						case "result": // mapeado para result_text no DocAI
+						case "result": // mapeado para result_value no DocAI
 							item.ResultValue = stringPtr(subText)
 						case "unit":
 							item.ResultUnit = stringPtr(subText)

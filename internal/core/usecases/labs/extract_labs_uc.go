@@ -2,6 +2,10 @@ package labs
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
+	"sort"
 	"time"
 
 	"sonnda-api/internal/core/domain"
@@ -9,16 +13,16 @@ import (
 	"sonnda-api/internal/core/ports/services"
 )
 
-type CreateFromDocumentUseCase struct {
+type ExtractLabsUseCase struct {
 	repo      repositories.LabsRepository
 	extractor services.DocumentExtractor
 }
 
-func NewCreateFromDocument(
+func NewExtractLabs(
 	repo repositories.LabsRepository,
 	extractor services.DocumentExtractor,
-) *CreateFromDocumentUseCase {
-	return &CreateFromDocumentUseCase{
+) *ExtractLabsUseCase {
+	return &ExtractLabsUseCase{
 		repo:      repo,
 		extractor: extractor,
 	}
@@ -28,7 +32,7 @@ func NewCreateFromDocument(
 // 1) chama o extractor (Document AI via adapter de labtest)
 // 2) converte DTO -> dominio
 // 3) salva no banco via Repository
-func (uc *CreateFromDocumentUseCase) Execute(
+func (uc *ExtractLabsUseCase) Execute(
 	ctx context.Context,
 	input CreateFromDocumentInput,
 ) (*LabReportOutput, error) {
@@ -52,17 +56,29 @@ func (uc *CreateFromDocumentUseCase) Execute(
 	if err != nil {
 		return nil, err
 	}
+	//4. Gera o identificador com o hash para ver duplicidade
+	fingerprint := generateLabFingerprint(input.PatientID, report)
 
-	// 4. Persiste no banco
+	// 5. checa existencia de duplicidade
+	exists, err := uc.repo.ExistsBySignature(ctx, input.PatientID, fingerprint)
+	if err != nil {
+		return nil, err
+	}
+	if exists {
+		return nil, domain.ErrLabReportAlreadyExists
+	}
+
+	// 5. Persiste no banco
+	report.Fingerprint = &fingerprint
 	if err := uc.repo.Create(ctx, report); err != nil {
 		return nil, err
 	}
 
-	// 5. Retorna output
+	// 6. Retorna output
 	return uc.toOutput(report), nil
 }
 
-func (uc *CreateFromDocumentUseCase) validate(input CreateFromDocumentInput) error {
+func (uc *ExtractLabsUseCase) validate(input CreateFromDocumentInput) error {
 	if input.PatientID == "" {
 		return domain.ErrInvalidInput
 	}
@@ -85,7 +101,7 @@ func (uc *CreateFromDocumentUseCase) validate(input CreateFromDocumentInput) err
 	return nil
 }
 
-func (uc *CreateFromDocumentUseCase) mapExtractedToDomain(
+func (uc *ExtractLabsUseCase) mapExtractedToDomain(
 	patientID string,
 	uploadedByUserID *string,
 	extracted *services.ExtractedLabReport,
@@ -155,7 +171,46 @@ func (uc *CreateFromDocumentUseCase) mapExtractedToDomain(
 	return report, nil
 }
 
-func (uc *CreateFromDocumentUseCase) toOutput(report *domain.LabReport) *LabReportOutput {
+// Gera a assinatura do laudo com base nos dados chave
+func generateLabFingerprint(patientID string, labReport *domain.LabReport) string {
+	var parts []string
+
+	for _, tr := range labReport.TestResults {
+
+		var dateStr string
+		if tr.CollectedAt != nil {
+			dateStr = tr.CollectedAt.Format("2006-01-02")
+		} else if labReport.ReportDate != nil {
+			dateStr = labReport.ReportDate.Format("2006-01-02")
+		} else {
+			dateStr = "000-00-00"
+		}
+
+		testName := normalize(tr.TestName)
+		for _, item := range tr.Items {
+			param := normalize(item.ParameterName)
+			value := normalizeValue(item.ResultValue)
+
+			parts = append(parts,
+				fmt.Sprintf("%s|%s|%s|%s|%s", patientID, dateStr, testName, param, value),
+			)
+		}
+	}
+
+	sort.Strings(parts)
+
+	// Cria o hash SHA-256
+	hash := sha256.New()
+	for _, part := range parts {
+		hash.Write([]byte(part))
+	}
+
+	hashBytes := hash.Sum(nil)
+	return hex.EncodeToString(hashBytes)
+
+}
+
+func (uc *ExtractLabsUseCase) toOutput(report *domain.LabReport) *LabReportOutput {
 	output := &LabReportOutput{
 		ID:                report.ID,
 		PatientID:         report.PatientID,

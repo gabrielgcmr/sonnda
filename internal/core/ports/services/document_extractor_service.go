@@ -35,6 +35,11 @@ type ExtractedLabReport struct {
 	Tests []ExtractedTestResult
 }
 
+type ExtractedImageExam struct {
+	//TODO: criar um DTO para extração de exames de imagem.
+}
+
 type DocumentExtractor interface {
 	ExtractLabReport(ctx context.Context, documentURI, mimeType string) (*ExtractedLabReport, error)
+	ExtractImageExam(ctx context.Context, documentURI, mimeType string) (*ExtractedImageExam, error)
 }

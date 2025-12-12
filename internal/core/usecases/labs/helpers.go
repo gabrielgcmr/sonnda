@@ -8,7 +8,7 @@ import (
 )
 
 // Helpers de parsing de datas
-func (uc *CreateFromDocumentUseCase) parseDate(s string) (time.Time, error) {
+func (uc *ExtractLabsUseCase) parseDate(s string) (time.Time, error) {
 	s = strings.TrimSpace(s)
 
 	layouts := []string{
@@ -26,7 +26,7 @@ func (uc *CreateFromDocumentUseCase) parseDate(s string) (time.Time, error) {
 	return time.Time{}, domain.ErrInvalidDateFormat
 }
 
-func (uc *CreateFromDocumentUseCase) parseDateTime(s string) (time.Time, error) {
+func (uc *ExtractLabsUseCase) parseDateTime(s string) (time.Time, error) {
 	s = strings.TrimSpace(s)
 	// normalizacoes simples que costumam vir em laudos ("as", "h")
 	s = strings.ReplaceAll(s, "\u00e0s", " ")
@@ -54,4 +54,20 @@ func (uc *CreateFromDocumentUseCase) parseDateTime(s string) (time.Time, error) 
 
 	// Tenta como data simples
 	return uc.parseDate(s)
+}
+
+func normalize(s string) string {
+	s = strings.TrimSpace(strings.ToUpper(s))
+	// aqui dá pra remover acentos se quiser ser mais agressivo
+	// ex: usar norm.NFD + remover runas com categoria Mn
+	return s
+}
+
+func normalizeValue(v *string) string {
+	if v == nil {
+		return ""
+	}
+	s := strings.TrimSpace(*v)
+	// se quiser, limpa espaços, troca vírgula por ponto, etc.
+	return s
 }

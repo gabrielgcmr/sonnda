@@ -16,13 +16,13 @@ import (
 )
 
 type LabsHandler struct {
-	createUC *labs.CreateFromDocumentUseCase
+	createUC *labs.ExtractLabsUseCase
 	listLabs *labs.ListLabsUseCase
 	storage  services.StorageService
 }
 
 func NewLabsHandler(
-	createUC *labs.CreateFromDocumentUseCase,
+	createUC *labs.ExtractLabsUseCase,
 	listLabs *labs.ListLabsUseCase,
 	storageClient services.StorageService,
 ) *LabsHandler {

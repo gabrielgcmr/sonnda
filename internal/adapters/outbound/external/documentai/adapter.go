@@ -64,3 +64,12 @@ func (a *DocumentAIAdapter) validateExtracted(extracted *services.ExtractedLabRe
 
 	return nil
 }
+
+func (a *DocumentAIAdapter) ExtractImageExam(
+	ctx context.Context,
+	documentURI, mimeType string,
+) (*services.ExtractedImageExam, error) {
+	//TODO: Implementar
+	return nil, nil
+
+}

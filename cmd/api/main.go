@@ -86,7 +86,7 @@ func main() {
 
 	//6.2 Módulo Lab Reports
 	labReportRepo := supabase.NewLabsRepository(dbClient)
-	createLabReportUC := labs.NewCreateFromDocument(labReportRepo, docExtractor)
+	createLabReportUC := labs.NewExtractLabs(labReportRepo, docExtractor)
 	listLabReportsUC := labs.NewListLabs(patientRepo, labReportRepo)
 	labReportHandler := handlers.NewLabsHandler(createLabReportUC, listLabReportsUC, storageService)
 

@@ -21,6 +21,7 @@ type LabReport struct {
 	RequestingDoctor  *string    `db:"requesting_doctor"  json:"requesting_doctor,omitempty"`
 	TechnicalManager  *string    `db:"technical_manager"  json:"technical_manager,omitempty"`
 	ReportDate        *time.Time `db:"report_date"        json:"report_date,omitempty"`
+	Fingerprint       *string    `db:"fingerprint"        json:"fingerprint,omitempty"`
 
 	RawText *string `db:"raw_text" json:"raw_text,omitempty"`
 
@@ -56,7 +57,7 @@ type LabTestItem struct {
 	LabTestResultID string `db:"lab_test_result_id" json:"lab_test_result_id"`
 
 	ParameterName string  `db:"parameter_name" json:"parameter_name"`
-	ResultValue   *string `db:"result_text"    json:"result_text,omitempty"`
+	ResultValue   *string `db:"result_value"    json:"result_value,omitempty"`
 	ResultUnit    *string `db:"result_unit"    json:"result_unit,omitempty"`
 	ReferenceText *string `db:"reference_text" json:"reference_text,omitempty"`
 }
@@ -70,6 +71,6 @@ type LabTestItemTimeline struct {
 	ReportDate    *time.Time `db:"report_date"    json:"report_date,omitempty"`
 	TestName      string     `db:"test_name"      json:"test_name"`
 	ParameterName string     `db:"parameter_name" json:"parameter_name"`
-	ResultValue   *string    `db:"result_text"    json:"result_text,omitempty"`
+	ResultValue   *string    `db:"result_value"    json:"result_value,omitempty"`
 	ResultUnit    *string    `db:"result_unit"    json:"result_unit,omitempty"`
 }
