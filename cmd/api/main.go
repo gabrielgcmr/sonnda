@@ -41,7 +41,7 @@ func main() {
 	}
 	defer dbClient.Close()
 
-	//5. Carrega serviços
+	//5. Conectando outros serviços
 	//5.1 Storage Service (GCS)
 	storageService, err := storage.NewStorageAdapter(ctx, cfg.GCSBucket, cfg.GCPProjectID)
 	if err != nil {
@@ -49,16 +49,7 @@ func main() {
 	}
 	defer storageService.Close()
 
-	//5.2 Auth Service e Auth Middleware
-	userRepo := supabase.NewUserRepository(dbClient)
-	createUserFromIdentityUC := user.NewCreateUserFromIdentity(userRepo)
-	userHandler := handlers.NewUserHandler(createUserFromIdentityUC)
-
-	authService := auth.NewSupabaseAuthService()
-	authMiddleware := middleware.NewAuthMiddleware(authService, userRepo)
-	authorizationService := authorization.NewAuthorizationService()
-
-	//5.3 Document AI Service
+	//5.2 Document AI Service
 	docAIClient, err := documentai.NewClient(ctx, cfg.GCPProjectID, cfg.GCPLocation)
 	if err != nil {
 		log.Fatalf("falha ao criar DocAI client: %v", err)
@@ -71,7 +62,15 @@ func main() {
 	)
 
 	//6. Carregando módulos
-	//6.1 Módulo Paciente
+	//6.1 Auth Service e Auth Middleware
+	authService := auth.NewSupabaseAuthService()
+	userRepo := supabase.NewUserRepository(dbClient)
+	createUserFromIdentityUC := user.NewCreateUserFromIdentity(userRepo) //pega a identidade do supabase para autenticação.
+	userHandler := handlers.NewUserHandler(createUserFromIdentityUC)
+	authMiddleware := middleware.NewAuthMiddleware(authService, userRepo)
+	authorizationService := authorization.NewAuthorizationService()
+
+	//6.2 Módulo Paciente
 	patientRepo := supabase.NewPatientRepository(dbClient)
 	createPatientUC := patient.NewCreatePatient(patientRepo)
 	getPatientUC := patient.NewGetPatient(patientRepo)
@@ -84,11 +83,17 @@ func main() {
 		listPatientsUC,
 	)
 
-	//6.2 Módulo Lab Reports
+	//6.3 Módulo Lab Reports
 	labReportRepo := supabase.NewLabsRepository(dbClient)
 	createLabReportUC := labs.NewExtractLabs(labReportRepo, docExtractor)
-	listLabReportsUC := labs.NewListLabs(patientRepo, labReportRepo)
-	labReportHandler := handlers.NewLabsHandler(createLabReportUC, listLabReportsUC, storageService)
+	listLabsUC := labs.NewListLabs(patientRepo, labReportRepo)
+	listFullLabsUC := labs.NewListFullLabs(patientRepo, labReportRepo)
+	labReportHandler := handlers.NewLabsHandler(
+		createLabReportUC,
+		listLabsUC,
+		listFullLabsUC,
+		storageService,
+	)
 
 	// 7.Configura o Gin
 	r := gin.Default()

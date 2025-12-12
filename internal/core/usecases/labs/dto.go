@@ -23,6 +23,7 @@ type LabReportOutput struct {
 	TechnicalManager  *string
 	ReportDate        *time.Time
 	UploadedByUserID  *string
+	Fingerprint       *string
 	TestResults       []TestResultOutput
 	CreatedAt         time.Time
 	UpdatedAt         time.Time

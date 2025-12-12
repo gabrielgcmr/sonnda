@@ -16,20 +16,23 @@ import (
 )
 
 type LabsHandler struct {
-	createUC *labs.ExtractLabsUseCase
-	listLabs *labs.ListLabsUseCase
-	storage  services.StorageService
+	createUC     *labs.ExtractLabsUseCase
+	listLabs     *labs.ListLabsUseCase
+	listFullLabs *labs.ListFullLabsUseCase
+	storage      services.StorageService
 }
 
 func NewLabsHandler(
 	createUC *labs.ExtractLabsUseCase,
 	listLabs *labs.ListLabsUseCase,
+	listFullLabs *labs.ListFullLabsUseCase,
 	storageClient services.StorageService,
 ) *LabsHandler {
 	return &LabsHandler{
-		createUC: createUC,
-		listLabs: listLabs,
-		storage:  storageClient,
+		createUC:     createUC,
+		listLabs:     listLabs,
+		listFullLabs: listFullLabs,
+		storage:      storageClient,
 	}
 }
 
@@ -148,6 +151,74 @@ func (h *LabsHandler) handleFileUpload(
 	}
 
 	return uri, contentType, nil
+}
+
+func (h *LabsHandler) ListFullLabs(c *gin.Context) {
+	user, ok := middleware.CurrentUser(c)
+	if !ok || user == nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error":   "unauthorized",
+			"message": "usuário não autenticado",
+		})
+		return
+	}
+
+	// 2) Paciente alvo (dono do laudo)
+	patientID := c.Param("patientID")
+	if patientID == "" {
+		// fallback para rotas que usam :id
+		patientID = c.Param("id")
+	}
+	if patientID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "missing_patient_id"})
+		return
+	}
+
+	// paginação (mesma lógica do ListLabs)
+	limit := 100
+	if limitStr := c.Query("limit"); limitStr != "" {
+		l, err := strconv.Atoi(limitStr)
+		if err != nil || l <= 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid_limit"})
+			return
+		}
+		limit = l
+	}
+
+	offset := 0
+	if offsetStr := c.Query("offset"); offsetStr != "" {
+		o, err := strconv.Atoi(offsetStr)
+		if err != nil || o < 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid_offset"})
+			return
+		}
+		offset = o
+	}
+
+	// aqui chamamos o usecase de lista COMPLETA
+	list, err := h.listFullLabs.Execute(c.Request.Context(), patientID, limit, offset)
+	if err != nil {
+		switch err {
+		case domain.ErrPatientNotFound:
+			c.JSON(http.StatusNotFound, gin.H{
+				"error":   "patient_not_found",
+				"message": "nenhum paciente vinculado a este usuário",
+			})
+		case domain.ErrForbidden:
+			c.JSON(http.StatusForbidden, gin.H{
+				"error":   "forbidden",
+				"message": "usuário não permitido para esta operação",
+			})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error":   "server_error",
+				"details": err.Error(),
+			})
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, list)
 }
 
 // Handler único para upload de laudo

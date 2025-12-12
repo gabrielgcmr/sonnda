@@ -146,11 +146,11 @@ const (
 	LIMIT 1
 	`
 
-	selescrLabReportByPatientAndHash = `
+	selectLabReportByPatientAndFingerprint = `
 		SELECT 1
 		FROM lab_reports
 		WHERE patient_id = $1
-			AND report_hash = $2
+			AND fingerprint = $2
 		LIMIT 1
 	`
 
@@ -582,10 +582,10 @@ func (r *LabsRepository) ExistsByPatientAndRawText(
 // Verifica se já existe um laudo de exame laboratorial com a mesma assinatura
 func (r *LabsRepository) ExistsBySignature(
 	ctx context.Context,
-	patientID, reportHash string,
+	patientID, fingerprint string,
 ) (bool, error) {
 
-	row := r.client.Pool().QueryRow(ctx, selescrLabReportByPatientAndHash, patientID, reportHash)
+	row := r.client.Pool().QueryRow(ctx, selectLabReportByPatientAndFingerprint, patientID, fingerprint)
 
 	var dummy int
 	if err := row.Scan(&dummy); err != nil {

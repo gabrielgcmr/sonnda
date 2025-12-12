@@ -58,6 +58,10 @@ func SetupRoutes(
 	)
 	protected.GET(":patientID/labs",
 		middleware.RequirePatient(),
+		labsHandler.ListFullLabs,
+	)
+	protected.GET(":patientID/labs-summary",
+		middleware.RequirePatient(),
 		labsHandler.ListLabs,
 	)
 	//TODO: GET /patients/{patientID}/labs?from=2025-01-01&to=2025-01-31

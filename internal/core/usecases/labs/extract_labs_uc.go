@@ -56,10 +56,10 @@ func (uc *ExtractLabsUseCase) Execute(
 	if err != nil {
 		return nil, err
 	}
-	//4. Gera o identificador com o hash para ver duplicidade
+	//4. Gera o identificador com o hash
 	fingerprint := generateLabFingerprint(input.PatientID, report)
 
-	// 5. checa existencia de duplicidade
+	// 5. checa existencia de duplicidade a partir do identificador
 	exists, err := uc.repo.ExistsBySignature(ctx, input.PatientID, fingerprint)
 	if err != nil {
 		return nil, err
