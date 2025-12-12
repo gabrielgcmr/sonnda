@@ -40,7 +40,7 @@ const (
 			technical_manager,
 			report_date,
 			raw_text,
-			uploaded_by_user_id
+			uploaded_by_user_id,
 			fingerprint
 		)
 		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
@@ -86,7 +86,7 @@ const (
 			report_date,
 			raw_text,
 			uploaded_by_user_id,
-			fingeprint
+			fingerprint
 			created_at,
 			updated_at
 		FROM lab_reports
@@ -126,7 +126,7 @@ const (
 			lab_name,
 			report_date,
 			uploaded_by_user_id,
-			fingerprint
+			fingerprint,
 			created_at,
 			updated_at
 		FROM lab_reports
@@ -207,10 +207,13 @@ func (r *LabsRepository) Create(ctx context.Context, report *domain.LabReport) (
 		report.ReportDate,
 		report.RawText,
 		report.UploadedByUserID,
+		report.Fingerprint,
 	)
 
 	var uploadedBy sql.NullString
-	if err = row.Scan(&report.ID, &report.CreatedAt, &report.UpdatedAt, &uploadedBy); err != nil {
+	var fingerprint sql.NullString
+
+	if err = row.Scan(&report.ID, &report.CreatedAt, &report.UpdatedAt, &uploadedBy, &fingerprint); err != nil {
 		return err
 	}
 	report.UploadedByUserID = nullableString(uploadedBy)

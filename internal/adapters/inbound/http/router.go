@@ -60,7 +60,7 @@ func SetupRoutes(
 		middleware.RequirePatient(),
 		labsHandler.ListFullLabs,
 	)
-	protected.GET(":patientID/labs-summary",
+	protected.GET(":patientID/labs/summary",
 		middleware.RequirePatient(),
 		labsHandler.ListLabs,
 	)

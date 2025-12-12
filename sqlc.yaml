@@ -1,0 +1,14 @@
+version: "2"
+sql:
+  - engine: "postgresql"
+    schema: "internal/adapters/outbound/database/sqlc/labs/schema.sql"
+    queries: "internal/adapters/outbound/database/sqlc/labs/queries.sql"
+    gen:
+      go:
+        package: "labssqlc"
+        out: " internal/adapters/secondary/database/sqlc/labs"
+        sql_package: "pgx/v5"
+        emit_json_tags: true
+        emit_prepared_queries: false
+        emit_interface: false
+        emit_db_tags: false
