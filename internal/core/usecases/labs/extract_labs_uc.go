@@ -56,6 +56,7 @@ func (uc *ExtractLabsUseCase) Execute(
 	if err != nil {
 		return nil, err
 	}
+
 	//4. Gera o identificador com o hash
 	fingerprint := generateLabFingerprint(input.PatientID, report)
 

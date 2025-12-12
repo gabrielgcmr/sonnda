@@ -278,7 +278,8 @@ func (h *LabsHandler) UploadAndProcessLabs(c *gin.Context) {
 			})
 		case domain.ErrDocumentProcessing:
 			c.JSON(http.StatusBadGateway, gin.H{
-				"error": "document_processing_failed",
+				"error":   "document_processing_failed",
+				"details": err.Error(),
 			})
 		default:
 			c.JSON(http.StatusInternalServerError, gin.H{

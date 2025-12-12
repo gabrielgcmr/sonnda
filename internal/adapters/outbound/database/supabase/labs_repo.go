@@ -5,7 +5,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"time"
 
 	"sonnda-api/internal/core/domain"
 	"sonnda-api/internal/core/ports/repositories"
@@ -42,9 +41,10 @@ const (
 			report_date,
 			raw_text,
 			uploaded_by_user_id
+			fingerprint
 		)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
-		RETURNING id, created_at, updated_at, uploaded_by_user_id
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+		RETURNING id, created_at, updated_at, uploaded_by_user_id,fingerprint
 	`
 
 	insertLabTestResultSQL = `
@@ -86,6 +86,7 @@ const (
 			report_date,
 			raw_text,
 			uploaded_by_user_id,
+			fingeprint
 			created_at,
 			updated_at
 		FROM lab_reports
@@ -125,6 +126,7 @@ const (
 			lab_name,
 			report_date,
 			uploaded_by_user_id,
+			fingerprint
 			created_at,
 			updated_at
 		FROM lab_reports
@@ -173,26 +175,6 @@ const (
 		LIMIT $3 OFFSET $4
 	`
 )
-
-/* ============================================================
-   NULL HELPERS
-   ============================================================ */
-
-func nullableString(ns sql.NullString) *string {
-	if !ns.Valid {
-		return nil
-	}
-	v := ns.String
-	return &v
-}
-
-func nullableTime(nt sql.NullTime) *time.Time {
-	if !nt.Valid {
-		return nil
-	}
-	t := nt.Time
-	return &t
-}
 
 /* ============================================================
    CREATE
