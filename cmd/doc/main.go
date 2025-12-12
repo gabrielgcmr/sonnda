@@ -56,7 +56,7 @@ type LabTestItem struct {
 	LabTestResultID string `db:"lab_test_result_id" json:"lab_test_result_id"`
 
 	ParameterName string  `db:"parameter_name" json:"parameter_name"`
-	ResultText    *string `db:"result_text"    json:"result_text,omitempty"`
+	ResultValue   *string `db:"result_value"    json:"result_value,omitempty"`
 	ResultUnit    *string `db:"result_unit"    json:"result_unit,omitempty"`
 	ReferenceText *string `db:"reference_text" json:"reference_text,omitempty"`
 }
@@ -186,7 +186,7 @@ func ProcessLabReport(projectID, location, processorID, filePath string) (*LabRe
 						case "parameter_name":
 							item.ParameterName = subText
 						case "result": // mapeado para result_text no DocAI
-							item.ResultText = stringPtr(subText)
+							item.ResultValue = stringPtr(subText)
 						case "unit":
 							item.ResultUnit = stringPtr(subText)
 						case "reference_text":
@@ -225,8 +225,8 @@ func main() {
 		fmt.Printf(" >> Exame: %s (Itens: %d)\n", result.TestName, len(result.Items))
 		for _, item := range result.Items {
 			val := "N/A"
-			if item.ResultText != nil {
-				val = *item.ResultText
+			if item.ResultValue != nil {
+				val = *item.ResultValue
 			}
 			fmt.Printf("    - %s: %s\n", item.ParameterName, val)
 		}

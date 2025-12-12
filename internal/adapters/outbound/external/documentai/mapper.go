@@ -142,9 +142,9 @@ func mapTestItem(doc *documentaipb.Document, ent *documentaipb.Document_Entity) 
 		case "parameter_name":
 			item.ParameterName = extractEntityText(doc, prop)
 
-		case "result":
+		case "result_value":
 			v := extractEntityText(doc, prop)
-			item.ResultText = &v
+			item.ResultValue = &v
 
 		case "unit":
 			v := extractEntityText(doc, prop)

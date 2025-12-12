@@ -41,7 +41,7 @@ type TestResultOutput struct {
 type TestItemOutput struct {
 	ID            string
 	ParameterName string
-	ResultText    *string
+	ResultValue   *string
 	ResultUnit    *string
 	ReferenceText *string
 }
@@ -64,6 +64,6 @@ type LabResultSummaryOutput struct {
 // Resultado essencial de um parâmetro (o que importa pro card/lista)
 type ResultItemSummaryOutput struct {
 	ParameterName string  `json:"parameter_name"`
-	ResultText    *string `json:"result_text,omitempty"`
+	ResultValue   *string `json:"result_text,omitempty"`
 	ResultUnit    *string `json:"result_unit,omitempty"`
 }

@@ -142,7 +142,7 @@ func (uc *CreateFromDocumentUseCase) mapExtractedToDomain(
 		for _, ei := range et.Items {
 			item := domain.LabTestItem{
 				ParameterName: ei.ParameterName,
-				ResultText:    ei.ResultText,
+				ResultValue:   ei.ResultValue,
 				ResultUnit:    ei.ResultUnit,
 				ReferenceText: ei.ReferenceText,
 			}
@@ -186,7 +186,7 @@ func (uc *CreateFromDocumentUseCase) toOutput(report *domain.LabReport) *LabRepo
 			testOutput.Items = append(testOutput.Items, TestItemOutput{
 				ID:            item.ID,
 				ParameterName: item.ParameterName,
-				ResultText:    item.ResultText,
+				ResultValue:   item.ResultValue,
 				ResultUnit:    item.ResultUnit,
 				ReferenceText: item.ReferenceText,
 			})

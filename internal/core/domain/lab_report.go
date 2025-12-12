@@ -56,7 +56,7 @@ type LabTestItem struct {
 	LabTestResultID string `db:"lab_test_result_id" json:"lab_test_result_id"`
 
 	ParameterName string  `db:"parameter_name" json:"parameter_name"`
-	ResultText    *string `db:"result_text"    json:"result_text,omitempty"`
+	ResultValue   *string `db:"result_text"    json:"result_text,omitempty"`
 	ResultUnit    *string `db:"result_unit"    json:"result_unit,omitempty"`
 	ReferenceText *string `db:"reference_text" json:"reference_text,omitempty"`
 }
@@ -70,6 +70,6 @@ type LabTestItemTimeline struct {
 	ReportDate    *time.Time `db:"report_date"    json:"report_date,omitempty"`
 	TestName      string     `db:"test_name"      json:"test_name"`
 	ParameterName string     `db:"parameter_name" json:"parameter_name"`
-	ResultText    *string    `db:"result_text"    json:"result_text,omitempty"`
+	ResultValue   *string    `db:"result_text"    json:"result_text,omitempty"`
 	ResultUnit    *string    `db:"result_unit"    json:"result_unit,omitempty"`
 }

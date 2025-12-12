@@ -241,7 +241,7 @@ func (r *LabsRepository) Create(ctx context.Context, report *domain.LabReport) (
 			row := tx.QueryRow(ctx, insertLabTestItemSQL,
 				tr.ID,
 				item.ParameterName,
-				item.ResultText,
+				item.ResultValue,
 				item.ResultUnit,
 				item.ReferenceText,
 			)
@@ -362,15 +362,15 @@ func (r *LabsRepository) FindByID(ctx context.Context, reportID string) (*domain
 
 		for itemRows.Next() {
 			var (
-				item                   domain.LabTestItem
-				resultText, resultUnit sql.NullString
-				referenceText          sql.NullString
+				item                    domain.LabTestItem
+				resultValue, resultUnit sql.NullString
+				referenceText           sql.NullString
 			)
 
 			if err := itemRows.Scan(
 				&item.ID,
 				&item.ParameterName,
-				&resultText,
+				&resultValue,
 				&resultUnit,
 				&referenceText,
 			); err != nil {
@@ -379,7 +379,7 @@ func (r *LabsRepository) FindByID(ctx context.Context, reportID string) (*domain
 			}
 
 			item.LabTestResultID = tr.ID
-			item.ResultText = nullableString(resultText)
+			item.ResultValue = nullableString(resultValue)
 			item.ResultUnit = nullableString(resultUnit)
 			item.ReferenceText = nullableString(referenceText)
 
@@ -506,9 +506,9 @@ func (r *LabsRepository) ListItemsByPatientAndParameter(
 
 	for rows.Next() {
 		var (
-			item                   domain.LabTestItemTimeline
-			reportDate             sql.NullTime
-			resultText, resultUnit sql.NullString
+			item                    domain.LabTestItemTimeline
+			reportDate              sql.NullTime
+			resultValue, resultUnit sql.NullString
 		)
 
 		if err := rows.Scan(
@@ -518,14 +518,14 @@ func (r *LabsRepository) ListItemsByPatientAndParameter(
 			&reportDate,
 			&item.TestName,
 			&item.ParameterName,
-			&resultText,
+			&resultValue,
 			&resultUnit,
 		); err != nil {
 			return nil, err
 		}
 
 		item.ReportDate = nullableTime(reportDate)
-		item.ResultText = nullableString(resultText)
+		item.ResultValue = nullableString(resultValue)
 		item.ResultUnit = nullableString(resultUnit)
 
 		result = append(result, item)

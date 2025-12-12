@@ -5,7 +5,7 @@ import "context"
 // ExtractedTestItem representa um test_item vindo do Document AI.
 type ExtractedTestItem struct {
 	ParameterName string  // test_item.parameter_name
-	ResultText    *string // test_item.result
+	ResultValue   *string // test_item.result_value
 	ResultUnit    *string // test_item.unit
 	ReferenceText *string // test_item.reference_text
 }
