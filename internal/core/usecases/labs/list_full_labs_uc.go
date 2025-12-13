@@ -4,6 +4,8 @@ import (
 	"context"
 	"sonnda-api/internal/core/domain"
 	"sonnda-api/internal/core/ports/repositories"
+
+	"github.com/google/uuid"
 )
 
 type ListFullLabsUseCase struct {
@@ -23,10 +25,10 @@ func NewListFullLabs(
 
 func (uc *ListFullLabsUseCase) Execute(
 	ctx context.Context,
-	patientID string,
+	patientID uuid.UUID,
 	limit, offset int,
 ) ([]*LabReportOutput, error) {
-	if patientID == "" {
+	if patientID == uuid.Nil {
 		return nil, domain.ErrInvalidInput
 	}
 
@@ -65,8 +67,8 @@ func (uc *ListFullLabsUseCase) Execute(
 
 func mapDomainReportToOutput(report *domain.LabReport) *LabReportOutput {
 	output := &LabReportOutput{
-		ID:                report.ID,
-		PatientID:         report.PatientID,
+		ID:                report.ID.String(),
+		PatientID:         report.PatientID.String(),
 		PatientName:       report.PatientName,
 		PatientDOB:        report.PatientDOB,
 		LabName:           report.LabName,
@@ -75,7 +77,7 @@ func mapDomainReportToOutput(report *domain.LabReport) *LabReportOutput {
 		RequestingDoctor:  report.RequestingDoctor,
 		TechnicalManager:  report.TechnicalManager,
 		ReportDate:        report.ReportDate,
-		UploadedByUserID:  report.UploadedByUserID,
+		UploadedByUserID:  report.UploadedByUserID.String(),
 		Fingerprint:       report.Fingerprint,
 		CreatedAt:         report.CreatedAt,
 		UpdatedAt:         report.UpdatedAt,
@@ -83,7 +85,7 @@ func mapDomainReportToOutput(report *domain.LabReport) *LabReportOutput {
 
 	for _, tr := range report.TestResults {
 		testOutput := TestResultOutput{
-			ID:          tr.ID,
+			ID:          tr.ID.String(),
 			TestName:    tr.TestName,
 			Material:    tr.Material,
 			Method:      tr.Method,
@@ -93,7 +95,7 @@ func mapDomainReportToOutput(report *domain.LabReport) *LabReportOutput {
 
 		for _, item := range tr.Items {
 			testOutput.Items = append(testOutput.Items, TestItemOutput{
-				ID:            item.ID,
+				ID:            item.ID.String(),
 				ParameterName: item.ParameterName,
 				ResultValue:   item.ResultValue,
 				ResultUnit:    item.ResultUnit,

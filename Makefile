@@ -13,6 +13,10 @@ build:
 dev:
 	air
 
+#sqlc
+sqlc-check:
+	sqlc compile
+
 # Docker
 docker-up:
 	docker-compose up

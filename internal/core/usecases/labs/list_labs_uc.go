@@ -5,6 +5,8 @@ import (
 
 	"sonnda-api/internal/core/domain"
 	"sonnda-api/internal/core/ports/repositories"
+
+	"github.com/google/uuid"
 )
 
 type ListLabsUseCase struct {
@@ -24,10 +26,10 @@ func NewListLabs(
 
 func (uc *ListLabsUseCase) Execute(
 	ctx context.Context,
-	patientID string,
+	patientID uuid.UUID,
 	limit, offset int,
 ) ([]LabReportSummaryOutput, error) {
-	if patientID == "" {
+	if patientID == uuid.Nil {
 		return nil, domain.ErrInvalidInput
 	}
 
@@ -57,8 +59,8 @@ func (uc *ListLabsUseCase) Execute(
 		}
 
 		summary := LabReportSummaryOutput{
-			ID:         fullReport.ID,
-			PatientID:  fullReport.PatientID,
+			ID:         fullReport.ID.String(),
+			PatientID:  fullReport.PatientID.String(),
 			ReportDate: fullReport.ReportDate,
 			// vamos preencher SummaryTests abaixo
 		}

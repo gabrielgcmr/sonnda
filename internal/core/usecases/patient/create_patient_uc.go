@@ -7,10 +7,12 @@ import (
 
 	"sonnda-api/internal/core/domain"
 	"sonnda-api/internal/core/ports/repositories"
+
+	"github.com/google/uuid"
 )
 
 type CreatePatientInput struct {
-	AppUserID *string       `json:"app_user_id,omitempty"`
+	AppUserID *uuid.UUID    `json:"app_user_id,omitempty"`
 	CPF       string        `json:"cpf"`
 	CNS       *string       `json:"cns,omitempty"`
 	FullName  string        `json:"full_name"`

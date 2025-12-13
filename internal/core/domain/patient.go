@@ -2,15 +2,17 @@ package domain
 
 import (
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type Patient struct {
-	ID        string  `json:"id" db:"id"`
-	AppUserID *string `json:"app_user_id,omitempty" db:"app_user_id"`
-	CPF       string  `json:"cpf" db:"cpf"`
-	CNS       *string `json:"cns,omitempty" db:"cns"`
-	FullName  string  `json:"full_name" db:"full_name"`
-	BirthDate time.Time `json:"birth_date" db:"birth_date"`
+	ID        uuid.UUID  `json:"id" db:"id"`
+	AppUserID *uuid.UUID `json:"app_user_id,omitempty" db:"app_user_id"`
+	CPF       string     `json:"cpf" db:"cpf"`
+	CNS       *string    `json:"cns,omitempty" db:"cns"`
+	FullName  string     `json:"full_name" db:"full_name"`
+	BirthDate time.Time  `json:"birth_date" db:"birth_date"`
 
 	//Demograficos
 	Gender Gender `json:"gender" db:"gender"`
@@ -88,7 +90,7 @@ type PhysicalExam struct {
 }
 
 func NewPatient(
-	appUserID *string,
+	appUserID *uuid.UUID,
 	cpf string,
 	cns *string,
 	fullName string,
@@ -112,7 +114,7 @@ func NewPatient(
 	now := time.Now()
 
 	return &Patient{
-		ID:        "", // repo/banco preenche
+		ID:        uuid.Nil, // repo/banco preenche
 		CPF:       normalizedCPF.String(),
 		CNS:       cns,
 		FullName:  fullName,

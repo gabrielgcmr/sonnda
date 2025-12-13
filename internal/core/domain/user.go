@@ -2,6 +2,8 @@ package domain
 
 import (
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type Role string
@@ -14,11 +16,11 @@ const (
 )
 
 type User struct {
-	ID           string `json:"id"`
-	AuthProvider string `json:"auth_provider"`
-	AuthSubject  string `json:"auth_subject"`
-	Email        string `json:"email"`
-	Role         Role   `json:"role"`
+	ID           uuid.UUID `json:"id"`
+	AuthProvider string    `json:"auth_provider"`
+	AuthSubject  string    `json:"auth_subject"`
+	Email        string    `json:"email"`
+	Role         Role      `json:"role"`
 
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`

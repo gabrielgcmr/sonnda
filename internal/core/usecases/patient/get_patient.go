@@ -4,6 +4,8 @@ import (
 	"context"
 	"sonnda-api/internal/core/domain"
 	"sonnda-api/internal/core/ports/repositories"
+
+	"github.com/google/uuid"
 )
 
 type GetPatientUseCase struct {
@@ -26,7 +28,7 @@ func (uc *GetPatientUseCase) ExecuteByCPF(ctx context.Context, cpf string) (*dom
 	return patient, nil
 }
 
-func (uc *GetPatientUseCase) ExecuteByID(ctx context.Context, id string) (*domain.Patient, error) {
+func (uc *GetPatientUseCase) ExecuteByID(ctx context.Context, id uuid.UUID) (*domain.Patient, error) {
 	patient, err := uc.repo.FindByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -38,7 +40,7 @@ func (uc *GetPatientUseCase) ExecuteByID(ctx context.Context, id string) (*domai
 	return patient, nil
 }
 
-func (uc *GetPatientUseCase) ExecuteByUserID(ctx context.Context, userID string) (*domain.Patient, error) {
+func (uc *GetPatientUseCase) ExecuteByUserID(ctx context.Context, userID uuid.UUID) (*domain.Patient, error) {
 	patient, err := uc.repo.FindByUserID(ctx, userID)
 	if err != nil {
 		return nil, err

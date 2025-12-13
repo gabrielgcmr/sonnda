@@ -58,7 +58,7 @@ func main() {
 
 	docExtractor := documentai.NewDocumentAIAdapter(
 		*docAIClient,
-		cfg.LabtestProcessorID,
+		cfg.LabsProcessorID,
 	)
 
 	//6. Carregando módulos

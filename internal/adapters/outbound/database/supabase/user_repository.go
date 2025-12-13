@@ -39,7 +39,7 @@ func scanUser(row pgx.Row) (*domain.User, error) {
 		return nil, err
 	}
 
-	u.ID = idUUID.String()
+	u.ID = idUUID
 	u.AuthSubject = subjectUUID.String()
 	u.Role = domain.Role(roleStr)
 
@@ -100,7 +100,7 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*domain
 	return u, nil
 }
 
-func (r *UserRepository) FindByID(ctx context.Context, id string) (*domain.User, error) {
+func (r *UserRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain.User, error) {
 	const query = `
 		select id, auth_provider, auth_subject, email, role, created_at, updated_at
 		from app_users
@@ -147,14 +147,15 @@ func (r *UserRepository) Create(
 		return err
 	}
 
-	u.ID = idUUID.String()
+	u.ID = idUUID
 
 	return nil
 }
 
 func (r *UserRepository) UpdateAuthIdentity(
 	ctx context.Context,
-	id, provider, subject string,
+	id uuid.UUID,
+	provider, subject string,
 ) (*domain.User, error) {
 	const query = `
 		update app_users

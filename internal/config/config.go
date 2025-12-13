@@ -12,10 +12,10 @@ import (
 type Config struct {
 	DBURL string
 
-	GCPProjectID       string
-	GCSBucket          string
-	GCPLocation        string
-	LabtestProcessorID string
+	GCPProjectID    string
+	GCSBucket       string
+	GCPLocation     string
+	LabsProcessorID string
 
 	JWTSecret string
 
@@ -25,14 +25,14 @@ type Config struct {
 
 func Load() (*Config, error) {
 	cfg := &Config{
-		DBURL:              os.Getenv("DATABASE_URL"),
-		GCPProjectID:       os.Getenv("GCP_PROJECT_ID"),
-		GCSBucket:          os.Getenv("GCS_BUCKET"),
-		GCPLocation:        os.Getenv("GCP_LOCATION"),
-		LabtestProcessorID: os.Getenv("DOCAI_LABTEST_PROCESSOR_ID"),
-		JWTSecret:          os.Getenv("SUPABASE_JWT_SECRET"),
-		Port:               getEnvOrDefault("PORT", "8080"),
-		Env:                getEnvOrDefault("APP_ENV", "dev"),
+		DBURL:           os.Getenv("DATABASE_URL"),
+		GCPProjectID:    os.Getenv("GCP_PROJECT_ID"),
+		GCSBucket:       os.Getenv("GCS_BUCKET"),
+		GCPLocation:     os.Getenv("GCP_LOCATION"),
+		LabsProcessorID: os.Getenv("DOCAI_LABS_PROCESSOR_ID"),
+		JWTSecret:       os.Getenv("SUPABASE_JWT_SECRET"),
+		Port:            getEnvOrDefault("PORT", "8080"),
+		Env:             getEnvOrDefault("APP_ENV", "dev"),
 	}
 
 	// validação básica dos obrigatórios
@@ -50,8 +50,8 @@ func Load() (*Config, error) {
 	if cfg.GCPLocation == "" {
 		missing = append(missing, "GCP_LOCATION")
 	}
-	if cfg.LabtestProcessorID == "" {
-		missing = append(missing, "DOCAI_LABTEST_PROCESSOR_ID")
+	if cfg.LabsProcessorID == "" {
+		missing = append(missing, "DOCAI_LABS_PROCESSOR_ID")
 	}
 	if cfg.JWTSecret == "" {
 		missing = append(missing, "JWT_SECRET")

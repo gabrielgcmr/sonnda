@@ -8,6 +8,7 @@ import (
 	"sonnda-api/internal/core/usecases/patient"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type PatientHandler struct {
@@ -131,7 +132,13 @@ func (h *PatientHandler) GetMyProfile(c *gin.Context) {
 }
 
 func (h *PatientHandler) GetByID(c *gin.Context) {
-	id := c.Param("id")
+	idStr := c.Param("id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid_patient_id"})
+		return
+
+	}
 
 	p, err := h.getUC.ExecuteByID(c.Request.Context(), id)
 	if err != nil {

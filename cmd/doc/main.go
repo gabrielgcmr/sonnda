@@ -29,12 +29,12 @@ type LabReport struct {
 	RawText *string `db:"raw_text" json:"raw_text,omitempty"`
 
 	// Carregado via JOIN quando você quiser devolver tudo de uma vez
-	TestResults []LabTestResult `json:"test_results,omitempty"`
+	TestResults []LabResult `json:"test_results,omitempty"`
 }
 
-// LabTestResult representa um exame/painel dentro do laudo
-// (ex.: Hemograma, Creatinina, HbA1c). Uma linha em lab_test_results.
-type LabTestResult struct {
+// LabResult representa um exame/painel dentro do laudo
+// (ex.: Hemograma, Creatinina, HbA1c). Uma linha em lab_results.
+type LabResult struct {
 	ID          string `db:"id"            json:"id"`
 	LabReportID string `db:"lab_report_id" json:"lab_report_id"`
 
@@ -46,14 +46,14 @@ type LabTestResult struct {
 	ReleaseAt   *time.Time `db:"release_at"   json:"release_at,omitempty"`
 
 	// Carregado via JOIN quando necessário
-	Items []LabTestItem `json:"items,omitempty"`
+	Items []LabsItem `json:"items,omitempty"`
 }
 
-// LabTestItem representa uma linha/paramêtro dentro de um teste
-// (ex.: Hemoglobina, Creatinina, LDL). Uma linha em lab_test_items.
-type LabTestItem struct {
-	ID              string `db:"id"                 json:"id"`
-	LabTestResultID string `db:"lab_test_result_id" json:"lab_test_result_id"`
+// LabsItem representa uma linha/paramêtro dentro de um teste
+// (ex.: Hemoglobina, Creatinina, LDL). Uma linha em lab_items.
+type LabsItem struct {
+	ID          string `db:"id"                 json:"id"`
+	LabResultID string `db:"lab_result_id" json:"lab_result_id"`
 
 	ParameterName string  `db:"parameter_name" json:"parameter_name"`
 	ResultValue   *string `db:"result_value"    json:"result_value,omitempty"`
@@ -159,7 +159,7 @@ func ProcessLabReport(projectID, location, processorID, filePath string) (*LabRe
 
 		// --- Mapeamento dos Exames (Nível TestResult) ---
 		case "test_result":
-			testResult := LabTestResult{}
+			testResult := LabResult{}
 
 			// Itera sobre as propriedades dentro do test_result
 			for _, prop := range entity.Properties {
@@ -179,7 +179,7 @@ func ProcessLabReport(projectID, location, processorID, filePath string) (*LabRe
 
 				// --- Mapeamento dos Itens (Nível TestItem) ---
 				case "test_item":
-					item := LabTestItem{}
+					item := LabsItem{}
 					for _, subProp := range prop.Properties {
 						subText := subProp.MentionText
 						switch subProp.Type {

@@ -11,6 +11,8 @@ import (
 	"sonnda-api/internal/core/domain"
 	"sonnda-api/internal/core/ports/repositories"
 	"sonnda-api/internal/core/ports/services"
+
+	"github.com/google/uuid"
 )
 
 type ExtractLabsUseCase struct {
@@ -29,7 +31,7 @@ func NewExtractLabs(
 }
 
 // CreateFromDocument:
-// 1) chama o extractor (Document AI via adapter de labtest)
+// 1) chama o extractor (Document AI via adapter de labs)
 // 2) converte DTO -> dominio
 // 3) salva no banco via Repository
 func (uc *ExtractLabsUseCase) Execute(
@@ -48,11 +50,7 @@ func (uc *ExtractLabsUseCase) Execute(
 	}
 
 	// 3. Converte ExtractedLabReport -> Domain Entity
-	var uploader *string
-	if input.UploadedByUserID != "" {
-		uploader = &input.UploadedByUserID
-	}
-	report, err := uc.mapExtractedToDomain(input.PatientID, uploader, extracted)
+	report, err := uc.mapExtractedToDomain(input.PatientID, input.UploadedByUserID, extracted)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +78,7 @@ func (uc *ExtractLabsUseCase) Execute(
 }
 
 func (uc *ExtractLabsUseCase) validate(input CreateFromDocumentInput) error {
-	if input.PatientID == "" {
+	if input.PatientID == uuid.Nil {
 		return domain.ErrInvalidInput
 	}
 	if input.DocumentURI == "" {
@@ -103,8 +101,8 @@ func (uc *ExtractLabsUseCase) validate(input CreateFromDocumentInput) error {
 }
 
 func (uc *ExtractLabsUseCase) mapExtractedToDomain(
-	patientID string,
-	uploadedByUserID *string,
+	patientID uuid.UUID,
+	uploadedByUserID uuid.UUID,
 	extracted *services.ExtractedLabReport,
 ) (*domain.LabReport, error) {
 	now := time.Now()
@@ -137,7 +135,7 @@ func (uc *ExtractLabsUseCase) mapExtractedToDomain(
 
 	// Mapeia testes
 	for _, et := range extracted.Tests {
-		testResult := domain.LabTestResult{
+		testResult := domain.LabResult{
 			TestName: et.TestName,
 			Material: et.Material,
 			Method:   et.Method,
@@ -157,7 +155,7 @@ func (uc *ExtractLabsUseCase) mapExtractedToDomain(
 
 		// Mapeia itens
 		for _, ei := range et.Items {
-			item := domain.LabTestItem{
+			item := domain.LabResultItem{
 				ParameterName: ei.ParameterName,
 				ResultValue:   ei.ResultValue,
 				ResultUnit:    ei.ResultUnit,
@@ -173,7 +171,7 @@ func (uc *ExtractLabsUseCase) mapExtractedToDomain(
 }
 
 // Gera a assinatura do laudo com base nos dados chave
-func generateLabFingerprint(patientID string, labReport *domain.LabReport) string {
+func generateLabFingerprint(patientID uuid.UUID, labReport *domain.LabReport) string {
 	var parts []string
 
 	for _, tr := range labReport.TestResults {
@@ -212,9 +210,10 @@ func generateLabFingerprint(patientID string, labReport *domain.LabReport) strin
 }
 
 func (uc *ExtractLabsUseCase) toOutput(report *domain.LabReport) *LabReportOutput {
+
 	output := &LabReportOutput{
-		ID:                report.ID,
-		PatientID:         report.PatientID,
+		ID:                report.ID.String(),
+		PatientID:         report.PatientID.String(),
 		PatientName:       report.PatientName,
 		PatientDOB:        report.PatientDOB,
 		LabName:           report.LabName,
@@ -223,14 +222,14 @@ func (uc *ExtractLabsUseCase) toOutput(report *domain.LabReport) *LabReportOutpu
 		RequestingDoctor:  report.RequestingDoctor,
 		TechnicalManager:  report.TechnicalManager,
 		ReportDate:        report.ReportDate,
-		UploadedByUserID:  report.UploadedByUserID,
+		UploadedByUserID:  report.UploadedByUserID.String(),
 		CreatedAt:         report.CreatedAt,
 		UpdatedAt:         report.UpdatedAt,
 	}
 
 	for _, tr := range report.TestResults {
 		testOutput := TestResultOutput{
-			ID:          tr.ID,
+			ID:          tr.ID.String(),
 			TestName:    tr.TestName,
 			Material:    tr.Material,
 			Method:      tr.Method,
@@ -240,7 +239,7 @@ func (uc *ExtractLabsUseCase) toOutput(report *domain.LabReport) *LabReportOutpu
 
 		for _, item := range tr.Items {
 			testOutput.Items = append(testOutput.Items, TestItemOutput{
-				ID:            item.ID,
+				ID:            item.ID.String(),
 				ParameterName: item.ParameterName,
 				ResultValue:   item.ResultValue,
 				ResultUnit:    item.ResultUnit,

@@ -106,7 +106,7 @@ func (m *AuthMiddleware) Authenticate() gin.HandlerFunc {
 				}
 			} else {
 				user = &domain.User{
-					ID:           uuid.NewString(),
+					ID:           uuid.New(),
 					AuthProvider: identity.Provider,
 					AuthSubject:  identity.Subject,
 					Email:        identity.Email,

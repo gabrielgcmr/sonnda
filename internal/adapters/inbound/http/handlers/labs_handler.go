@@ -13,6 +13,7 @@ import (
 	"sonnda-api/internal/core/usecases/labs"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type LabsHandler struct {
@@ -47,13 +48,19 @@ func (h *LabsHandler) ListLabs(c *gin.Context) {
 	}
 
 	// 2) Paciente alvo (dono do laudo)
-	patientID := c.Param("patientID")
-	if patientID == "" {
+	patientIDStr := c.Param("patientID")
+	if patientIDStr == "" {
 		// Se suas rotas usam :id em vez de :patientID, você pode dar fallback:
-		patientID = c.Param("id")
+		patientIDStr = c.Param("id")
 	}
-	if patientID == "" {
+	if patientIDStr == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "missing_patient_id"})
+		return
+	}
+
+	patientID, err := uuid.Parse(patientIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid_patient_id"})
 		return
 	}
 
@@ -110,7 +117,7 @@ func (h *LabsHandler) ListLabs(c *gin.Context) {
 // - retornar (URI, MIME)
 func (h *LabsHandler) handleFileUpload(
 	c *gin.Context,
-	patientID string,
+	patientID uuid.UUID,
 ) (string, string, error) {
 
 	fileHeader, err := c.FormFile("file")
@@ -143,7 +150,7 @@ func (h *LabsHandler) handleFileUpload(
 		return "", "", fmt.Errorf("unsupported_mime_type: %s", contentType)
 	}
 
-	objectName := fmt.Sprintf("patients/%s/lab-reports/%s", patientID, fileHeader.Filename)
+	objectName := fmt.Sprintf("patients/%s/lab-reports/%s", patientID.String(), fileHeader.Filename)
 
 	uri, err := h.storage.Upload(c.Request.Context(), file, objectName, contentType)
 	if err != nil {
@@ -164,13 +171,19 @@ func (h *LabsHandler) ListFullLabs(c *gin.Context) {
 	}
 
 	// 2) Paciente alvo (dono do laudo)
-	patientID := c.Param("patientID")
-	if patientID == "" {
+	patientIDStr := c.Param("patientID")
+	if patientIDStr == "" {
 		// fallback para rotas que usam :id
-		patientID = c.Param("id")
+		patientIDStr = c.Param("id")
 	}
-	if patientID == "" {
+	if patientIDStr == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "missing_patient_id"})
+		return
+	}
+
+	patientID, err := uuid.Parse(patientIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid_patient_id"})
 		return
 	}
 
@@ -237,13 +250,19 @@ func (h *LabsHandler) UploadAndProcessLabs(c *gin.Context) {
 	}
 
 	// 2) Paciente alvo (dono do laudo)
-	patientID := c.Param("patientID")
-	if patientID == "" {
+	patientIDStr := c.Param("patientID")
+	if patientIDStr == "" {
 		// Se suas rotas usam :id em vez de :patientID, você pode dar fallback:
-		patientID = c.Param("id")
+		patientIDStr = c.Param("id")
 	}
-	if patientID == "" {
+	if patientIDStr == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "missing_patient_id"})
+		return
+	}
+
+	patientID, err := uuid.Parse(patientIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid_patient_id"})
 		return
 	}
 

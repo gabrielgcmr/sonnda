@@ -7,6 +7,7 @@ import (
 	"sonnda-api/internal/core/domain"
 	"sonnda-api/internal/core/ports/repositories"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -130,17 +131,17 @@ func (r *PatientRepository) Update(ctx context.Context, p *domain.Patient) error
 }
 
 // Delete remove um paciente.
-func (r *PatientRepository) Delete(ctx context.Context, id string) error {
+func (r *PatientRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	_, err := r.client.Pool().Exec(ctx, "DELETE FROM patients WHERE id=$1", id)
 	return err
 }
 
 // Busca um paciente pelo user ID.
-func (r *PatientRepository) FindByUserID(ctx context.Context, userID string) (*domain.Patient, error) {
+func (r *PatientRepository) FindByUserID(ctx context.Context, userID uuid.UUID) (*domain.Patient, error) {
 	row := r.client.Pool().QueryRow(ctx, patientByUserIDQuery, userID)
 	patient, err := scanPatient(row)
 	if err != nil {
-		if isNotFound(err) {
+		if IsNotFound(err) {
 			return nil, nil
 		}
 		return nil, err
@@ -153,7 +154,7 @@ func (r *PatientRepository) FindByCPF(ctx context.Context, cpf string) (*domain.
 	row := r.client.Pool().QueryRow(ctx, patientByCPFQuery, cpf)
 	patient, err := scanPatient(row)
 	if err != nil {
-		if isNotFound(err) {
+		if IsNotFound(err) {
 			return nil, nil
 		}
 		return nil, err
@@ -161,11 +162,11 @@ func (r *PatientRepository) FindByCPF(ctx context.Context, cpf string) (*domain.
 	return patient, nil
 }
 
-func (r *PatientRepository) FindByID(ctx context.Context, id string) (*domain.Patient, error) {
+func (r *PatientRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain.Patient, error) {
 	row := r.client.Pool().QueryRow(ctx, patientByIDQuery, id)
 	patient, err := scanPatient(row)
 	if err != nil {
-		if isNotFound(err) {
+		if IsNotFound(err) {
 			return nil, nil
 		}
 		return nil, err
