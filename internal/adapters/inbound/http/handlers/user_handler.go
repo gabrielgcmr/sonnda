@@ -1,12 +1,15 @@
 package handlers
 
 import (
+	"log/slog"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 
 	"sonnda-api/internal/adapters/inbound/http/middleware"
 	"sonnda-api/internal/core/usecases/user"
+
+	applog "sonnda-api/internal/logger"
 )
 
 type UserHandler struct {
@@ -22,30 +25,72 @@ func NewUserHandler(
 }
 
 func (h *UserHandler) CreateUserFromIdentity(c *gin.Context) {
+	log := applog.FromContext(c.Request.Context())
+	log.Info("creating_user_from_identity")
+
 	identity, ok := middleware.Identity(c)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		handleUserError(
+			c,
+			log,
+			http.StatusUnauthorized,
+			"missing_identity",
+			nil,
+		)
 		return
 	}
 
 	u, err := h.createUserFromIdentityUC.Execute(c.Request.Context(), identity)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "could_not_register_user",
+		handleUserError(
+			c,
+			log,
+			http.StatusInternalServerError,
+			"could_not_register_user",
+			err,
+		)
+		return
+	}
+
+	log.Info("user_created_from_identity")
+	c.JSON(http.StatusOK, u)
+}
+
+func (h *UserHandler) GetCurrentUser(c *gin.Context) {
+	log := applog.FromContext(c.Request.Context())
+	user, ok := middleware.CurrentUser(c)
+	if !ok {
+		handleUserError(
+			c,
+			log,
+			http.StatusUnauthorized,
+			"missing_user",
+			nil,
+		)
+		return
+	}
+
+	c.JSON(http.StatusOK, user)
+}
+
+func handleUserError(
+	c *gin.Context,
+	log *slog.Logger,
+	status int,
+	code string,
+	err error,
+) {
+	if err != nil {
+		log.Error("handler_error", "status", status, "error", code, "err", err)
+		c.JSON(status, gin.H{
+			"error":   code,
 			"message": err.Error(),
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, u)
-}
+	// Sem err: casos como unauthorized podem ser Warn/Info (aqui usei Warn)
+	log.Warn("handler_error", "status", status, "error", code)
 
-func (h *UserHandler) GetCurrentUser(c *gin.Context) {
-	user, ok := middleware.CurrentUser(c)
-	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-		return
-	}
-
-	c.JSON(http.StatusOK, user)
+	c.JSON(status, gin.H{"error": code})
 }

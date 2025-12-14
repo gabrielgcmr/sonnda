@@ -21,6 +21,9 @@ type Config struct {
 
 	Port string // porta HTTP (ex.: "8080")
 	Env  string // ex.: "dev", "prod"
+
+	LogLevel  string
+	LogFormat string
 }
 
 func Load() (*Config, error) {
@@ -33,6 +36,12 @@ func Load() (*Config, error) {
 		JWTSecret:       os.Getenv("SUPABASE_JWT_SECRET"),
 		Port:            getEnvOrDefault("PORT", "8080"),
 		Env:             getEnvOrDefault("APP_ENV", "dev"),
+		LogLevel:        getEnvOrDefault("LOG_LEVEL", "info"),
+		LogFormat:       getEnvOrDefault("LOG_FORMAT", "text"),
+	}
+
+	if cfg.Env == "prod" && cfg.LogFormat == "text" {
+		cfg.LogFormat = "json"
 	}
 
 	// validação básica dos obrigatórios

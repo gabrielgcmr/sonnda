@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	obslog "sonnda-api/internal/observability/logger"
+	applog "sonnda-api/internal/logger"
 )
 
 const requestIDHeader = "X-Request-ID"
@@ -26,35 +26,35 @@ func RequestID() gin.HandlerFunc {
 }
 
 // AccessLog loga uma linha por request (estilo access log).
-func AccessLog(base *slog.Logger, getUserID func(*gin.Context) string) gin.HandlerFunc {
+func AccessLog(l *slog.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
 
 		// cria logger contextual por request
 		rid, _ := c.Get("request_id")
-		reqLog := base.With(
+		reqLog := l.With(
 			slog.String("request_id", toString(rid)),
 			slog.String("method", c.Request.Method),
 			slog.String("path", c.FullPath()),
 		)
 
-		// coloca no context pra usecases/repos pegarem
-		c.Request = c.Request.WithContext(obslog.IntoContext(c.Request.Context(), reqLog))
+		// injeta o logger no context da request (usecases/repos podem pegar com logger.FromContext)
+		c.Request = c.Request.WithContext(applog.IntoContext(c.Request.Context(), reqLog))
 
 		c.Next()
 
 		status := c.Writer.Status()
 		latency := time.Since(start)
 
-		attrs := []slog.Attr{
+		attrs := []any{
 			slog.Int("status", status),
 			slog.Int64("latency_ms", latency.Milliseconds()),
 		}
-		if getUserID != nil {
-			if uid := getUserID(c); uid != "" {
-				attrs = append(attrs, slog.String("user_id", uid))
-			}
+
+		if u, ok := CurrentUser(c); ok && u != nil {
+			attrs = append(attrs, slog.String("user_id", u.ID.String()))
 		}
+
 		if len(c.Errors) > 0 {
 			attrs = append(attrs, slog.String("gin_errors", c.Errors.String()))
 		}
@@ -62,11 +62,11 @@ func AccessLog(base *slog.Logger, getUserID func(*gin.Context) string) gin.Handl
 		// nível baseado no status
 		switch {
 		case status >= 500:
-			reqLog.Error("request_completed", attrsToAny(attrs)...)
+			reqLog.Error("request_completed", attrs...)
 		case status >= 400:
-			reqLog.Warn("request_completed", attrsToAny(attrs)...)
+			reqLog.Warn("request_completed", attrs...)
 		default:
-			reqLog.Info("request_completed", attrsToAny(attrs)...)
+			reqLog.Info("request_completed", attrs...)
 		}
 	}
 }
@@ -79,12 +79,4 @@ func toString(v any) string {
 		return s
 	}
 	return ""
-}
-
-func attrsToAny(attrs []slog.Attr) []any {
-	out := make([]any, 0, len(attrs))
-	for _, a := range attrs {
-		out = append(out, a)
-	}
-	return out
 }
