@@ -7,6 +7,11 @@ import (
 	"strings"
 )
 
+//Error: falha do servidor / bug / dependência fora / banco caiu / docAI falhou
+//Warn: algo “estranho” que pode indicar problema, abuso ou mau uso (ex.: rate-limit, tentativa inválida repetida, payload malformado demais)
+//Info: comportamento esperado (inclui muitos 4xx)
+//Debug: detalhes úteis pra dev
+
 type Config struct {
 	Env       string // "dev" | "prod"
 	Level     string

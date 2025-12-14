@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"log/slog"
+	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -39,7 +40,8 @@ func AccessLog(l *slog.Logger) gin.HandlerFunc {
 		)
 
 		// injeta o logger no context da request (usecases/repos podem pegar com logger.FromContext)
-		c.Request = c.Request.WithContext(applog.IntoContext(c.Request.Context(), reqLog))
+		c.Request = c.Request.WithContext(
+			applog.IntoContext(c.Request.Context(), reqLog))
 
 		c.Next()
 
@@ -49,6 +51,11 @@ func AccessLog(l *slog.Logger) gin.HandlerFunc {
 		attrs := []any{
 			slog.Int("status", status),
 			slog.Int64("latency_ms", latency.Milliseconds()),
+			slog.String("client_ip", c.ClientIP()),
+		}
+
+		if userAgent := c.Request.UserAgent(); userAgent != "" {
+			attrs = append(attrs, slog.String("user_agent", userAgent))
 		}
 
 		if u, ok := CurrentUser(c); ok && u != nil {
@@ -63,6 +70,9 @@ func AccessLog(l *slog.Logger) gin.HandlerFunc {
 		switch {
 		case status >= 500:
 			reqLog.Error("request_completed", attrs...)
+		case status == http.StatusUnauthorized || status == http.StatusForbidden:
+			// 401/403 são comuns; logar como Info evita “poluir” de Warn
+			reqLog.Info("request_completed", attrs...)
 		case status >= 400:
 			reqLog.Warn("request_completed", attrs...)
 		default:
