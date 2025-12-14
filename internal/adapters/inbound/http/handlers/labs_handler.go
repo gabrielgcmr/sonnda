@@ -120,11 +120,19 @@ func (h *LabsHandler) handleFileUpload(
 	patientID uuid.UUID,
 ) (string, string, error) {
 
+	const MaxFileSize = 15 * 1024 * 1024 // 10MB
+
 	fileHeader, err := c.FormFile("file")
 	if err != nil {
 		return "", "", fmt.Errorf("file_required: %w", err)
 	}
 
+	// 1. Validação de Tamanho
+	if fileHeader.Size > MaxFileSize {
+		return "", "", fmt.Errorf("file_too_large: maximum allowed size is 10MB")
+	}
+
+	// 2. Validação de Tipo
 	if fileHeader.Size == 0 {
 		return "", "", fmt.Errorf("empty_file")
 	}
@@ -150,7 +158,11 @@ func (h *LabsHandler) handleFileUpload(
 		return "", "", fmt.Errorf("unsupported_mime_type: %s", contentType)
 	}
 
-	objectName := fmt.Sprintf("patients/%s/lab-reports/%s", patientID.String(), fileHeader.Filename)
+	uniqueID := uuid.New().String()
+
+	safeFilename := fmt.Sprintf("%s-%s", uniqueID, fileHeader.Filename)
+
+	objectName := fmt.Sprintf("patients/%s/lab-reports/%s", patientID.String(), safeFilename)
 
 	uri, err := h.storage.Upload(c.Request.Context(), file, objectName, contentType)
 	if err != nil {
