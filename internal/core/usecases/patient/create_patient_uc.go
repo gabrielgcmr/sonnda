@@ -2,7 +2,6 @@ package patient
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"sonnda-api/internal/core/domain"
@@ -60,8 +59,6 @@ func (uc *CreatePatientUseCase) Execute(
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Println("Created patient entity:", patient)
 
 	// 4. Persiste
 	if err := uc.repo.Create(ctx, patient); err != nil {

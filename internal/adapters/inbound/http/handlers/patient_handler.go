@@ -172,7 +172,13 @@ func (h *PatientHandler) UpdateByID(ctx *gin.Context) {
 		return
 	}
 
-	id := ctx.Param("id")
+	idStr := ctx.Param("id")
+
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid_patient_id"})
+		return
+	}
 
 	var input patient.PatientChanges
 	if err := ctx.ShouldBindJSON(&input); err != nil {
@@ -183,7 +189,7 @@ func (h *PatientHandler) UpdateByID(ctx *gin.Context) {
 		return
 	}
 
-	p, err := h.updateUC.Execute(ctx.Request.Context(), user, id, input)
+	p, err := h.updateUC.ExecuteByID(ctx.Request.Context(), user, id, input)
 	if err != nil {
 		handleServiceError(ctx, err)
 		return
@@ -214,7 +220,7 @@ func (h *PatientHandler) UpdateByCPF(ctx *gin.Context) {
 		return
 	}
 
-	p, err := h.updateUC.Execute(ctx.Request.Context(), user, cpf, input)
+	p, err := h.updateUC.ExecuteByCPF(ctx.Request.Context(), user, cpf, input)
 	if err != nil {
 		handleServiceError(ctx, err)
 		return

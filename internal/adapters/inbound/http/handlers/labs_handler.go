@@ -290,6 +290,11 @@ func (h *LabsHandler) UploadAndProcessLabs(c *gin.Context) {
 		})
 	if err != nil {
 		switch err {
+		case domain.ErrLabReportAlreadyExists:
+			c.JSON(http.StatusConflict, gin.H{
+				"error":   "lab_report_already_exists",
+				"message": "Este documento já foi importado anteriormente.",
+			})
 		case domain.ErrInvalidInput, domain.ErrInvalidDocument:
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error":   "invalid_document",
