@@ -1,95 +1,60 @@
-// internal/adapters/secondary/database/supabase/user_repository.go
+// internal/adapters/outbound/database/supabase/user_repository.go
 package supabase
 
 import (
 	"context"
 	"errors"
+	"fmt"
 
+	userssqlc "sonnda-api/internal/adapters/outbound/database/sqlc/users"
 	"sonnda-api/internal/core/domain"
 	"sonnda-api/internal/core/ports/repositories"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 var _ repositories.UserRepository = (*UserRepository)(nil)
 
 type UserRepository struct {
-	client *Client
+	client  *Client
+	queries *userssqlc.Queries
 }
 
 func NewUserRepository(client *Client) *UserRepository {
-	return &UserRepository{client: client}
-}
-
-func scanUser(row pgx.Row) (*domain.User, error) {
-	var u domain.User
-	var idUUID, subjectUUID uuid.UUID
-	var roleStr string
-
-	if err := row.Scan(
-		&idUUID,
-		&u.AuthProvider,
-		&subjectUUID,
-		&u.Email,
-		&roleStr,
-		&u.CreatedAt,
-		&u.UpdatedAt,
-	); err != nil {
-		return nil, err
+	return &UserRepository{
+		client:  client,
+		queries: userssqlc.New(client.Pool()),
 	}
-
-	u.ID = idUUID
-	u.AuthSubject = subjectUUID.String()
-	u.Role = domain.Role(roleStr)
-
-	return &u, nil
 }
 
 func (r *UserRepository) FindByAuthIdentity(
 	ctx context.Context,
 	provider, subject string,
 ) (*domain.User, error) {
-	const query = `
-		select id, 
-				auth_provider, 
-				auth_subject, 
-				email, 
-				role, 
-				created_at, 
-				updated_at
-	from app_users
-	where auth_provider = $1 and auth_subject = $2
-	`
-	row := r.client.Pool().QueryRow(ctx, query, provider, subject)
-
-	u, err := scanUser(row)
+	authSubject, err := parseAuthSubjectUUID(subject)
 	if err != nil {
-		// IMPORTANTE: tratar "não encontrado" como (nil, nil)
+		return nil, err
+	}
+
+	dbUser, err := r.queries.FindUserByAuthIdentity(ctx, userssqlc.FindUserByAuthIdentityParams{
+		AuthProvider: provider,
+		AuthSubject:  authSubject,
+	})
+	if err != nil {
+		// IMPORTANTE: tratar "nao encontrado" como (nil, nil)
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
 		return nil, err
 	}
 
-	return u, nil
+	return dbUserToDomain(dbUser)
 }
 
 func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*domain.User, error) {
-	const query = `
-		select id,
-				auth_provider,
-				auth_subject,
-				email,
-				role,
-				created_at,
-				updated_at
-		from app_users
-		where email = $1
-	`
-	row := r.client.Pool().QueryRow(ctx, query, email)
-
-	u, err := scanUser(row)
+	dbUser, err := r.queries.FindUserByEmail(ctx, email)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
@@ -97,23 +62,16 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*domain
 		return nil, err
 	}
 
-	return u, nil
+	return dbUserToDomain(dbUser)
 }
 
 func (r *UserRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain.User, error) {
-	const query = `
-		select id, auth_provider, auth_subject, email, role, created_at, updated_at
-		from app_users
-		where id = $1
-	`
-	row := r.client.Pool().QueryRow(ctx, query, id)
-
-	u, err := scanUser(row)
+	dbUser, err := r.queries.FindUserByID(ctx, ToPgUUID(id))
 	if err != nil {
 		return nil, err
 	}
 
-	return u, nil
+	return dbUserToDomain(dbUser)
 }
 
 func (r *UserRepository) Create(
@@ -124,30 +82,27 @@ func (r *UserRepository) Create(
 		return errors.New("user is nil")
 	}
 
-	const query = `
-		insert into app_users (auth_provider, auth_subject, email, role)
-		values ($1, $2, $3, $4)
-		returning id, created_at, updated_at
-	`
-
-	var idUUID uuid.UUID
-
-	err := r.client.Pool().QueryRow(ctx, query,
-		u.AuthProvider,
-		u.AuthSubject,
-		u.Email,
-		string(u.Role),
-	).Scan(
-		&idUUID,
-		&u.CreatedAt,
-		&u.UpdatedAt,
-	)
-
+	authSubject, err := parseAuthSubjectUUID(u.AuthSubject)
 	if err != nil {
 		return err
 	}
 
-	u.ID = idUUID
+	dbUser, err := r.queries.CreateUser(ctx, userssqlc.CreateUserParams{
+		AuthProvider: u.AuthProvider,
+		AuthSubject:  authSubject,
+		Email:        u.Email,
+		Role:         string(u.Role),
+	})
+	if err != nil {
+		return err
+	}
+
+	created, err := dbUserToDomain(dbUser)
+	if err != nil {
+		return err
+	}
+
+	*u = *created
 
 	return nil
 }
@@ -157,16 +112,55 @@ func (r *UserRepository) UpdateAuthIdentity(
 	id uuid.UUID,
 	provider, subject string,
 ) (*domain.User, error) {
-	const query = `
-		update app_users
-		set auth_provider = $1,
-			auth_subject = $2,
-			updated_at = now()
-		where id = $3
-		returning id, auth_provider, auth_subject, email, role, created_at, updated_at
-	`
+	authSubject, err := parseAuthSubjectUUID(subject)
+	if err != nil {
+		return nil, err
+	}
 
-	row := r.client.Pool().QueryRow(ctx, query, provider, subject, id)
+	dbUser, err := r.queries.UpdateUserAuthIdentity(ctx, userssqlc.UpdateUserAuthIdentityParams{
+		AuthProvider: provider,
+		AuthSubject:  authSubject,
+		ID:           ToPgUUID(id),
+	})
+	if err != nil {
+		return nil, err
+	}
 
-	return scanUser(row)
+	return dbUserToDomain(dbUser)
+}
+
+func parseAuthSubjectUUID(subject string) (pgtype.UUID, error) {
+	authSubjectUUID, err := ParseUUID(subject)
+	if err != nil {
+		return pgtype.UUID{}, err
+	}
+	return ToPgUUID(authSubjectUUID), nil
+}
+
+func dbUserToDomain(u userssqlc.AppUser) (*domain.User, error) {
+	if !u.ID.Valid {
+		return nil, fmt.Errorf("user id is null")
+	}
+	if !u.AuthSubject.Valid {
+		return nil, fmt.Errorf("user auth_subject is null")
+	}
+
+	createdAt, err := MustTime(u.CreatedAt)
+	if err != nil {
+		return nil, err
+	}
+	updatedAt, err := MustTime(u.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+
+	return &domain.User{
+		ID:           FromPgUUID(u.ID),
+		AuthProvider: u.AuthProvider,
+		AuthSubject:  FromPgUUID(u.AuthSubject).String(),
+		Email:        u.Email,
+		Role:         domain.Role(u.Role),
+		CreatedAt:    createdAt,
+		UpdatedAt:    updatedAt,
+	}, nil
 }

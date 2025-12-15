@@ -3,108 +3,59 @@ package supabase
 import (
 	"context"
 	"errors"
+	"fmt"
 
+	patientssqlc "sonnda-api/internal/adapters/outbound/database/sqlc/patients"
 	"sonnda-api/internal/core/domain"
 	"sonnda-api/internal/core/ports/repositories"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type PatientRepository struct {
-	client *Client
+	client  *Client
+	queries *patientssqlc.Queries
 }
 
 var _ repositories.PatientRepository = (*PatientRepository)(nil)
 
 func NewPatientRepository(client *Client) repositories.PatientRepository {
-	return &PatientRepository{client: client}
-}
-
-/* ==========================
-   SQL CONSTANTS
-   ========================== */
-
-const (
-	patientSelectBase = `SELECT id, cpf, cns, full_name, birth_date, gender, race, avatar_url, phone, created_at, updated_at
-		FROM patients
-	`
-	patientByIDQuery = patientSelectBase + ` WHERE id=$1 LIMIT 1;`
-
-	patientByCPFQuery = patientSelectBase + ` WHERE cpf=$1 LIMIT 1;`
-
-	patientByUserIDQuery = patientSelectBase + ` WHERE app_user_id=$1 LIMIT 1;`
-
-	patientListQuery = patientSelectBase + ` ORDER BY full_name ASC LIMIT $1 OFFSET $2;`
-
-	patientInsertQuery = `
-	INSERT INTO patients (
-		app_user_id, cpf, cns, full_name, birth_date, gender, race, avatar_url, phone
-	)
-	VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
-	RETURNING id, created_at, updated_at;
-	`
-	patientUpdateQuery = `
-		UPDATE patients
-		set cpf = $2,
-		    cns = $3,
-		    full_name = $4,
-		    birth_date = $5,
-		    gender = $6,
-		    race = $7,
-		    avatar_url = $8,
-		    phone = $9,
-		    updated_at = now()
-		WHERE id = $1
-		RETURNING updated_at
-	`
-)
-
-/* ==========================
-   HELPERS
-   ========================== */
-
-func scanPatient(row pgx.Row) (*domain.Patient, error) {
-	var p domain.Patient
-	if err := row.Scan(
-		&p.ID,
-		&p.CPF,
-		&p.CNS,
-		&p.FullName,
-		&p.BirthDate,
-		&p.Gender,
-		&p.Race,
-		&p.AvatarURL,
-		&p.Phone,
-		&p.CreatedAt,
-		&p.UpdatedAt,
-	); err != nil {
-		return nil, err
+	return &PatientRepository{
+		client:  client,
+		queries: patientssqlc.New(client.Pool()),
 	}
-	return &p, nil
 }
 
-/*
-==========================
-
-	PUBLIC METHODS
-	==========================
-*/
 func (r *PatientRepository) Create(ctx context.Context, p *domain.Patient) error {
+	if p == nil {
+		return errors.New("patient is nil")
+	}
 
-	err := r.client.Pool().QueryRow(ctx, patientInsertQuery,
-		p.AppUserID,
-		p.CPF,
-		p.CNS,
-		p.FullName,
-		p.BirthDate,
-		p.Gender,
-		p.Race,
-		p.AvatarURL,
-		p.Phone,
-	).Scan(&p.ID, &p.CreatedAt, &p.UpdatedAt)
+	dbPatient, err := r.queries.CreatePatient(ctx, patientssqlc.CreatePatientParams{
+		AppUserID: ToPgUUIDPtr(p.AppUserID),
+		Cpf:       p.CPF,
+		Cns:       ToText(p.CNS),
+		FullName:  p.FullName,
+		BirthDate: pgtype.Date{Time: p.BirthDate, Valid: true},
+		Gender:    string(p.Gender),
+		Race:      string(p.Race),
+		Phone:     ToText(p.Phone),
+		AvatarUrl: p.AvatarURL,
+	})
+	if err != nil {
+		return err
+	}
 
-	return err
+	created, err := dbPatientToDomain(dbPatient)
+	if err != nil {
+		return err
+	}
+
+	*p = *created
+
+	return nil
 }
 
 // Update atualiza os dados do paciente.
@@ -113,83 +64,125 @@ func (r *PatientRepository) Update(ctx context.Context, p *domain.Patient) error
 		return errors.New("patient is nil")
 	}
 
-	row := r.client.Pool().QueryRow(ctx, patientUpdateQuery,
-		p.ID,
-		p.CPF,
-		p.CNS,
-		p.FullName,
-		p.BirthDate,
-		p.Gender,
-		p.Race,
-		p.AvatarURL,
-		p.Phone,
-	)
-	if err := row.Scan(&p.UpdatedAt); err != nil {
+	dbPatient, err := r.queries.UpdatePatient(ctx, patientssqlc.UpdatePatientParams{
+		ID:        ToPgUUID(p.ID),
+		Cpf:       p.CPF,
+		Cns:       ToText(p.CNS),
+		FullName:  p.FullName,
+		BirthDate: pgtype.Date{Time: p.BirthDate, Valid: true},
+		Gender:    string(p.Gender),
+		Race:      string(p.Race),
+		Phone:     ToText(p.Phone),
+		AvatarUrl: p.AvatarURL,
+	})
+	if err != nil {
 		return err
 	}
+
+	updated, err := dbPatientToDomain(dbPatient)
+	if err != nil {
+		return err
+	}
+
+	*p = *updated
+
 	return nil
 }
 
 // Delete remove um paciente.
 func (r *PatientRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	_, err := r.client.Pool().Exec(ctx, "DELETE FROM patients WHERE id=$1", id)
+	_, err := r.queries.DeletePatient(ctx, ToPgUUID(id))
 	return err
 }
 
 // Busca um paciente pelo user ID.
 func (r *PatientRepository) FindByUserID(ctx context.Context, userID uuid.UUID) (*domain.Patient, error) {
-	row := r.client.Pool().QueryRow(ctx, patientByUserIDQuery, userID)
-	patient, err := scanPatient(row)
+	dbPatient, err := r.queries.FindPatientByUserID(ctx, ToPgUUID(userID))
 	if err != nil {
-		if IsNotFound(err) {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
 		return nil, err
 	}
-	return patient, nil
+	return dbPatientToDomain(dbPatient)
 }
 
 // FindByCPF busca um paciente pelo CPF.
 func (r *PatientRepository) FindByCPF(ctx context.Context, cpf string) (*domain.Patient, error) {
-	row := r.client.Pool().QueryRow(ctx, patientByCPFQuery, cpf)
-	patient, err := scanPatient(row)
+	dbPatient, err := r.queries.FindPatientByCPF(ctx, cpf)
 	if err != nil {
-		if IsNotFound(err) {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
 		return nil, err
 	}
-	return patient, nil
+	return dbPatientToDomain(dbPatient)
 }
 
 func (r *PatientRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain.Patient, error) {
-	row := r.client.Pool().QueryRow(ctx, patientByIDQuery, id)
-	patient, err := scanPatient(row)
+	dbPatient, err := r.queries.FindPatientByID(ctx, ToPgUUID(id))
 	if err != nil {
-		if IsNotFound(err) {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
 		return nil, err
 	}
-	return patient, nil
+	return dbPatientToDomain(dbPatient)
 }
 
 // List retorna pacientes paginados.
 func (r *PatientRepository) List(ctx context.Context, limit, offset int) ([]domain.Patient, error) {
-	rows, err := r.client.Pool().Query(ctx, patientListQuery, limit, offset)
+	rows, err := r.queries.ListPatients(ctx, patientssqlc.ListPatientsParams{
+		Limit:  int32(limit),
+		Offset: int32(offset),
+	})
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 
-	var out []domain.Patient
-	for rows.Next() {
-		p, err := scanPatient(rows)
+	out := make([]domain.Patient, 0, len(rows))
+	for _, row := range rows {
+		patient, err := dbPatientToDomain(row)
 		if err != nil {
 			return nil, err
 		}
-		out = append(out, *p)
+		out = append(out, *patient)
 	}
 
 	return out, nil
+}
+
+func dbPatientToDomain(p patientssqlc.Patient) (*domain.Patient, error) {
+	if !p.ID.Valid {
+		return nil, fmt.Errorf("patient id is null")
+	}
+	if !p.BirthDate.Valid {
+		return nil, fmt.Errorf("patient birth_date is null")
+	}
+
+	createdAt, err := MustTime(p.CreatedAt)
+	if err != nil {
+		return nil, err
+	}
+	updatedAt, err := MustTime(p.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+
+	birthDate := p.BirthDate.Time
+
+	return &domain.Patient{
+		ID:        FromPgUUID(p.ID),
+		AppUserID: FromPgUUIDPtr(p.AppUserID),
+		CPF:       p.Cpf,
+		CNS:       FromText(p.Cns),
+		FullName:  p.FullName,
+		BirthDate: birthDate,
+		Gender:    domain.Gender(p.Gender),
+		Race:      domain.Race(p.Race),
+		AvatarURL: p.AvatarUrl,
+		Phone:     FromText(p.Phone),
+		CreatedAt: createdAt,
+		UpdatedAt: updatedAt,
+	}, nil
 }
