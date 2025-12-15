@@ -3,7 +3,6 @@ package middleware
 
 import (
 	"errors"
-	"log/slog"
 	"net/http"
 	"sonnda-api/internal/core/domain"
 	"sonnda-api/internal/core/ports/repositories"
@@ -165,7 +164,7 @@ func CurrentUser(c *gin.Context) (*domain.User, bool) {
 	return u, ok
 }
 
-func RequireUser(c *gin.Context, log *slog.Logger) (*domain.User, bool) {
+func RequireUser(c *gin.Context) (*domain.User, bool) {
 	u, ok := CurrentUser(c)
 	if !ok || u == nil {
 		c.AbortWithStatusJSON(401, gin.H{"error": "unauthorized"})

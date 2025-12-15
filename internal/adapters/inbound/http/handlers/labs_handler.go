@@ -96,7 +96,7 @@ func (h *LabsHandler) ListFullLabs(c *gin.Context) {
 func (h *LabsHandler) UploadAndProcessLabs(c *gin.Context) {
 	log := applog.FromContext(c.Request.Context())
 
-	user, ok := middleware.RequireUser(c, log)
+	user, ok := middleware.RequireUser(c)
 	if !ok {
 		return
 	}

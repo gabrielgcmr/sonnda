@@ -36,27 +36,25 @@ func (h *PatientHandler) CreateByAuthenticatedPatient(c *gin.Context) {
 	log := applog.FromContext(c.Request.Context())
 	log.Info("patient_create_by_authenticated_patient")
 
-	var input patient.CreatePatientInput
-	if err := c.ShouldBindJSON(&input); err != nil {
+	var req patient.CreatePatientRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
 		RespondError(c, log, http.StatusBadRequest, "invalid_input", err)
 		return
 	}
 
-	user, ok := middleware.CurrentUser(c)
-	if !ok || user == nil {
-		RespondError(c, log, http.StatusUnauthorized, "unauthorized", nil)
-		return
+	user, _ := middleware.RequireUser(c)
+	cmd := patient.CreatePatientCommand{
+		AppUserID:            &user.ID,
+		CreatePatientRequest: req,
 	}
 
 	//impede crianção de paciente para outra pessoa
-	if input.AppUserID != nil && *input.AppUserID != user.ID {
+	if cmd.AppUserID != nil && *cmd.AppUserID != user.ID {
 		RespondError(c, log, http.StatusForbidden, "forbidden", nil)
 		return
 	}
 
-	input.AppUserID = &user.ID
-
-	output, err := h.createUC.Execute(c.Request.Context(), input)
+	output, err := h.createUC.Execute(c.Request.Context(), cmd)
 	if err != nil {
 		RespondDomainError(c, log, err)
 		return
@@ -71,26 +69,19 @@ func (h *PatientHandler) CreateByProfessional(c *gin.Context) {
 	log := applog.FromContext(c.Request.Context())
 	log.Info("patient_create_by_professional")
 
-	var input patient.CreatePatientInput
-	if err := c.ShouldBindJSON(&input); err != nil {
+	var req patient.CreatePatientRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
 		RespondError(c, log, http.StatusBadRequest, "invalid_input", err)
 		return
 	}
 
-	user, ok := middleware.CurrentUser(c)
-	if !ok || user == nil {
-		RespondError(c, log, http.StatusUnauthorized, "unauthorized", nil)
-		return
-	}
-
-	// Protege contra tentativas de injetar app_user_id
-	if input.AppUserID != nil {
-		RespondError(c, log, http.StatusBadRequest, "invalid_input", nil)
-		return
+	cmd := patient.CreatePatientCommand{
+		AppUserID:            nil,
+		CreatePatientRequest: req,
 	}
 
 	// Continua com criação
-	output, err := h.createUC.Execute(c.Request.Context(), input)
+	output, err := h.createUC.Execute(c.Request.Context(), cmd)
 	if err != nil {
 		RespondDomainError(c, log, err)
 		return
