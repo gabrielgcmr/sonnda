@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"log/slog"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -30,7 +29,7 @@ func (h *UserHandler) CreateUserFromIdentity(c *gin.Context) {
 
 	identity, ok := middleware.Identity(c)
 	if !ok {
-		handleUserError(
+		RespondError(
 			c,
 			log,
 			http.StatusUnauthorized,
@@ -42,7 +41,7 @@ func (h *UserHandler) CreateUserFromIdentity(c *gin.Context) {
 
 	u, err := h.createUserFromIdentityUC.Execute(c.Request.Context(), identity)
 	if err != nil {
-		handleUserError(
+		RespondError(
 			c,
 			log,
 			http.StatusInternalServerError,
@@ -60,7 +59,7 @@ func (h *UserHandler) GetCurrentUser(c *gin.Context) {
 	log := applog.FromContext(c.Request.Context())
 	user, ok := middleware.CurrentUser(c)
 	if !ok {
-		handleUserError(
+		RespondError(
 			c,
 			log,
 			http.StatusUnauthorized,
@@ -71,26 +70,4 @@ func (h *UserHandler) GetCurrentUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, user)
-}
-
-func handleUserError(
-	c *gin.Context,
-	log *slog.Logger,
-	status int,
-	code string,
-	err error,
-) {
-	if err != nil {
-		log.Error("handler_error", "status", status, "error", code, "err", err)
-		c.JSON(status, gin.H{
-			"error":   code,
-			"message": err.Error(),
-		})
-		return
-	}
-
-	// Sem err: casos como unauthorized podem ser Warn/Info (aqui usei Warn)
-	log.Warn("handler_error", "status", status, "error", code)
-
-	c.JSON(status, gin.H{"error": code})
 }
