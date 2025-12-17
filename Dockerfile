@@ -1,6 +1,8 @@
 # Etapa 1: build
 FROM golang:1.24-alpine AS builder
 WORKDIR /app
+
+RUN apk add --no-cache ca-certificates tzdata
 # Copia go.mod, go.sum e baixa dependências
 COPY go.mod go.sum ./
 RUN go mod download
@@ -12,8 +14,9 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o api cmd/api/main.go
 # Etapa 2: runtime
 FROM alpine:latest
 WORKDIR /app
-
-COPY --from=builder /app/api .
+RUN apk --no-cache add ca-certificates tzdata
+COPY --from=builder /bin/api /app/api
 # Expõe a porta usada pelo Gin (por padrão 8080)
 EXPOSE 8080
-ENTRYPOINT ["./api"]
+ENTRYPOINT ["./cmd/api"]
+    
