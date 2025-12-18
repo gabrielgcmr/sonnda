@@ -1,8 +1,10 @@
 package http
 
 import (
+	"net/http"
 	"sonnda-api/internal/adapters/inbound/http/handlers"
 	"sonnda-api/internal/adapters/inbound/http/middleware"
+	"sonnda-api/internal/assets"
 
 	"github.com/gin-gonic/gin"
 )
@@ -15,6 +17,11 @@ func SetupRoutes(
 	labsHandler *handlers.LabsHandler,
 
 ) *gin.Engine {
+
+	r.GET("/favicon.ico", func(c *gin.Context) {
+		b, _ := assets.FS.ReadFile("favicon.ico")
+		c.Data(http.StatusOK, "image/x-icon", b)
+	})
 
 	// health check
 	r.GET("/health", func(c *gin.Context) {
@@ -52,15 +59,15 @@ func SetupRoutes(
 		//me.GET("/doctor", userHandler.GetCurrentDoctor)
 	}
 	//Upload Labs
-	protected.POST(":patientID/labs/upload",
+	protected.POST("/:patientID/labs/upload",
 		middleware.RequirePatient(),
 		labsHandler.UploadAndProcessLabs,
 	)
-	protected.GET(":patientID/labs",
+	protected.GET("/:patientID/labs",
 		middleware.RequirePatient(),
 		labsHandler.ListFullLabs,
 	)
-	protected.GET(":patientID/labs/summary",
+	protected.GET("/:patientID/labs/summary",
 		middleware.RequirePatient(),
 		labsHandler.ListLabs,
 	)

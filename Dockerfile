@@ -3,7 +3,7 @@ FROM golang:1.24-alpine AS build
 WORKDIR /app
 
 RUN apk add --no-cache ca-certificates tzdata
-
+# Copia go.mod, go.sum e baixa dependências
 COPY go.mod go.sum ./
 RUN go mod download
 
