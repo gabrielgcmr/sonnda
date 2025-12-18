@@ -118,7 +118,7 @@ func main() {
 	// montar gin e rotas
 	http.SetupRoutes(r, authMiddleware, userHandler, patientHandler, labReportHandler)
 
-	slog.Info("API running", "url", "http://localhost:"+cfg.Port+"/api/v1")
+	slog.Info("API is running", "url", "http://localhost:"+cfg.Port+"/api/v1")
 	if err := r.Run(":" + cfg.Port); err != nil {
 		// 1. Loga o erro com nível Error (estruturado)
 		slog.Error("failed to start server", "error", err)
