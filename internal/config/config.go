@@ -28,7 +28,7 @@ type Config struct {
 
 func Load() (*Config, error) {
 	cfg := &Config{
-		DBURL:           os.Getenv("DATABASE_URL"),
+		DBURL:           os.Getenv("SUPABASE_URL"),
 		GCPProjectID:    os.Getenv("GCP_PROJECT_ID"),
 		GCSBucket:       os.Getenv("GCS_BUCKET"),
 		GCPLocation:     os.Getenv("GCP_LOCATION"),
@@ -48,7 +48,7 @@ func Load() (*Config, error) {
 	var missing []string
 
 	if cfg.DBURL == "" {
-		missing = append(missing, "DATABASE_URL")
+		missing = append(missing, "SUPABASE_URL")
 	}
 	if cfg.GCPProjectID == "" {
 		missing = append(missing, "GCP_PROJECT_ID")
@@ -63,7 +63,7 @@ func Load() (*Config, error) {
 		missing = append(missing, "DOCAI_LABS_PROCESSOR_ID")
 	}
 	if cfg.JWTSecret == "" {
-		missing = append(missing, "JWT_SECRET")
+		missing = append(missing, "SUPABASE_JWT_SECRET")
 	}
 
 	if len(missing) > 0 {
