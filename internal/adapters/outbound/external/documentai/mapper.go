@@ -7,7 +7,7 @@ import (
 	"cloud.google.com/go/documentai/apiv1/documentaipb"
 )
 
-// mapDocumentToExtractedLabReport e helpers ficam no mesmo pacote labtest
+// mapDocumentToExtractedLabReport e helpers ficam no mesmo pacote labs
 
 func extractEntityText(doc *documentaipb.Document, entity *documentaipb.Document_Entity) string {
 	if entity.GetMentionText() != "" {

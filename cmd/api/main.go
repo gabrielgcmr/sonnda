@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"log"
+	"log/slog"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -19,6 +21,7 @@ import (
 	"sonnda-api/internal/core/usecases/labs"
 	"sonnda-api/internal/core/usecases/patient"
 	"sonnda-api/internal/core/usecases/user"
+	"sonnda-api/internal/logger"
 )
 
 func main() {
@@ -33,6 +36,16 @@ func main() {
 	if err != nil {
 		log.Fatal("Erro ao carregar configuração: ", err)
 	}
+
+	//4. Carrega logger
+	appLogger := logger.New(logger.Config{
+		Env:       cfg.Env,
+		Level:     cfg.LogLevel,
+		Format:    cfg.LogFormat,
+		AppName:   "sonnda-api",
+		AddSource: cfg.Env == "dev",
+	})
+	slog.SetDefault(appLogger)
 
 	// 4. Conectar db (Supabase via pgxpool)
 	dbClient, err := supabase.NewClient(config.SupabaseConfig(*cfg))
@@ -58,7 +71,7 @@ func main() {
 
 	docExtractor := documentai.NewDocumentAIAdapter(
 		*docAIClient,
-		cfg.LabtestProcessorID,
+		cfg.LabsProcessorID,
 	)
 
 	//6. Carregando módulos
@@ -96,13 +109,22 @@ func main() {
 	)
 
 	// 7.Configura o Gin
-	r := gin.Default()
+	gin.SetMode(gin.ReleaseMode)
+	r := gin.New()
+	r.Use(gin.Recovery())
+	r.Use(middleware.RequestID())
+	r.Use(middleware.AccessLog(appLogger))
 
 	// montar gin e rotas
 	http.SetupRoutes(r, authMiddleware, userHandler, patientHandler, labReportHandler)
 
-	log.Printf("API running at http://localhost:%s", cfg.Port)
+	slog.Info("API running", "url", "http://localhost:"+cfg.Port+"/api/v1")
 	if err := r.Run(":" + cfg.Port); err != nil {
-		log.Fatal(err)
+		// 1. Loga o erro com nível Error (estruturado)
+		slog.Error("failed to start server", "error", err)
+
+		// 2. Encerra o programa manualmente com código de erro 1
+		os.Exit(1)
 	}
+
 }

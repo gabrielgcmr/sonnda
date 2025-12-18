@@ -10,7 +10,7 @@ import (
 )
 
 // Client é o contrato genérico de acesso ao Document AI.
-// Ele não conhece nenhum domínio (labtest, examImage, etc.):
+// Ele não conhece nenhum domínio (labs, examImage, etc.):
 // recebe um processorID e uma URI do GCS e devolve o Document cru.
 type Client struct {
 	client    *documentai.DocumentProcessorClient

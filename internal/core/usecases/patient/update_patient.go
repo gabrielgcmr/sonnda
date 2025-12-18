@@ -6,6 +6,8 @@ import (
 	"sonnda-api/internal/core/domain"
 	"sonnda-api/internal/core/ports/repositories"
 	"sonnda-api/internal/core/ports/services"
+
+	"github.com/google/uuid"
 )
 
 type PatientChanges struct {
@@ -32,7 +34,7 @@ func NewUpdatePatient(
 	}
 }
 
-func (uc *UpdatePatientUseCase) Execute(
+func (uc *UpdatePatientUseCase) ExecuteByCPF(
 	ctx context.Context,
 	currentUser *domain.User,
 	cpf string,
@@ -40,6 +42,44 @@ func (uc *UpdatePatientUseCase) Execute(
 ) (*domain.Patient, error) {
 	// 1) Busca paciente
 	patient, err := uc.repo.FindByCPF(ctx, cpf)
+	if err != nil {
+		return nil, err
+	}
+	if patient == nil {
+		return nil, domain.ErrPatientNotFound
+	}
+
+	//2) Verifica autorização
+	if !uc.authorization.CanEditPatient(ctx, currentUser, patient) {
+		return nil, domain.ErrForbidden
+	}
+
+	//3) Aplica mudanças de dominio
+	patient.ApplyUpdate(
+		input.FullName,
+		input.Phone,
+		input.AvatarURL,
+		input.Gender,
+		input.Race,
+		input.CNS,
+	)
+
+	// 4) Persiste
+	if err := uc.repo.Update(ctx, patient); err != nil {
+		return nil, err
+	}
+
+	return patient, nil
+}
+
+func (uc *UpdatePatientUseCase) ExecuteByID(
+	ctx context.Context,
+	currentUser *domain.User,
+	id uuid.UUID,
+	input PatientChanges,
+) (*domain.Patient, error) {
+	// 1) Busca paciente
+	patient, err := uc.repo.FindByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}

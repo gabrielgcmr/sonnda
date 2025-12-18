@@ -6,7 +6,7 @@ import (
 	"sonnda-api/internal/core/ports/services"
 )
 
-// LabReportExtractor já está definido em labtest/ai.go
+// LabReportExtractor já está definido em labs/ai.go
 // type LabReportExtractor interface {
 //     ExtractLabReport(ctx context.Context, gcsURI, mimeType string) (*ExtractedLabReport, error)
 // }

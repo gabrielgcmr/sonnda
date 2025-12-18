@@ -106,7 +106,7 @@ func (m *AuthMiddleware) Authenticate() gin.HandlerFunc {
 				}
 			} else {
 				user = &domain.User{
-					ID:           uuid.NewString(),
+					ID:           uuid.New(),
 					AuthProvider: identity.Provider,
 					AuthSubject:  identity.Subject,
 					Email:        identity.Email,
@@ -162,4 +162,13 @@ func CurrentUser(c *gin.Context) (*domain.User, bool) {
 
 	u, ok := user.(*domain.User)
 	return u, ok
+}
+
+func RequireUser(c *gin.Context) (*domain.User, bool) {
+	u, ok := CurrentUser(c)
+	if !ok || u == nil {
+		c.AbortWithStatusJSON(401, gin.H{"error": "unauthorized"})
+		return nil, false
+	}
+	return u, true
 }
