@@ -46,12 +46,12 @@ type LabResult struct {
 	ReleaseAt   *time.Time `db:"release_at"   json:"release_at,omitempty"`
 
 	// Carregado via JOIN quando necessário
-	Items []LabsItem `json:"items,omitempty"`
+	Items []LabResultItem `json:"items,omitempty"`
 }
 
-// LabsItem representa uma linha/paramêtro dentro de um teste
-// (ex.: Hemoglobina, Creatinina, LDL). Uma linha em lab_items.
-type LabsItem struct {
+// LabResultItem representa uma linha/paramêtro dentro de um teste
+// (ex.: Hemoglobina, Creatinina, LDL). Uma linha em lab_result_items.
+type LabResultItem struct {
 	ID          string `db:"id"                 json:"id"`
 	LabResultID string `db:"lab_result_id" json:"lab_result_id"`
 
@@ -179,7 +179,7 @@ func ProcessLabReport(projectID, location, processorID, filePath string) (*LabRe
 
 				// --- Mapeamento dos Itens (Nível TestItem) ---
 				case "test_item":
-					item := LabsItem{}
+					item := LabResultItem{}
 					for _, subProp := range prop.Properties {
 						subText := subProp.MentionText
 						switch subProp.Type {

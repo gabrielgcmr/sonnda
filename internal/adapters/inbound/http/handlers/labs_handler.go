@@ -153,7 +153,7 @@ func (h *LabsHandler) handleFileUpload(
 
 	// Validação de Tamanho
 	if fileHeader.Size > MaxFileSize {
-		return "", "", fmt.Errorf("file_too_large: maximum allowed size is 15MB")
+		return "", "", fmt.Errorf("file_too_large")
 	}
 
 	file, err := fileHeader.Open()
