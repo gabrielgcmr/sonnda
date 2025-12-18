@@ -1,5 +1,5 @@
 # Etapa 1: build
-FROM golang:1.24-alpine AS builder
+FROM golang:1.24-alpine AS build
 WORKDIR /app
 
 RUN apk add --no-cache ca-certificates tzdata
@@ -9,14 +9,17 @@ RUN go mod download
 
 # Copia o código e compila
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -o api cmd/api/main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /bin/sonnda-api ./cmd/api
 
 # Etapa 2: runtime
-FROM alpine:latest
+FROM alpine:3.20
 WORKDIR /app
-RUN apk --no-cache add ca-certificates tzdata
-COPY --from=builder /bin/api /app/api
+RUN apk add --no-cache ca-certificates tzdata
+
+COPY --from=build /bin/sonnda-api /app/sonnda-api
+
 # Expõe a porta usada pelo Gin (por padrão 8080)
+ENV PORT=8080
 EXPOSE 8080
-ENTRYPOINT ["./cmd/api"]
-    
+
+ENTRYPOINT ["/app/sonnda-api"]
