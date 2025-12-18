@@ -109,6 +109,7 @@ func main() {
 	)
 
 	// 7.Configura o Gin
+	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
 	r.Use(gin.Recovery())
 	r.Use(middleware.RequestID())
