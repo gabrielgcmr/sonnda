@@ -65,7 +65,7 @@ type CreateLabReportParams struct {
 	Fingerprint       pgtype.Text `json:"fingerprint"`
 }
 
-// internal/adapters/secondary/database/sqlc/labs/queries.sql
+// internal/adapters/outbound/database/sqlc/labs/queries.sql
 // ============================================================
 // Creators
 // ============================================================
