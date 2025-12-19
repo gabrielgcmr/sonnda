@@ -1,13 +1,17 @@
 package labs
 
-import "time"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 // CreateFromDocumentInput é o input do use case
 type CreateFromDocumentInput struct {
-	PatientID        string
+	PatientID        uuid.UUID
 	DocumentURI      string
 	MimeType         string
-	UploadedByUserID string
+	UploadedByUserID uuid.UUID
 }
 
 // LabReportOutput é o output do use case
@@ -22,7 +26,7 @@ type LabReportOutput struct {
 	RequestingDoctor  *string
 	TechnicalManager  *string
 	ReportDate        *time.Time
-	UploadedByUserID  *string
+	UploadedByUserID  string
 	Fingerprint       *string
 	TestResults       []TestResultOutput
 	CreatedAt         time.Time
@@ -57,8 +61,8 @@ type LabReportSummaryOutput struct {
 
 // Um teste resumido (ex.: "Creatinina", "Hemoglobina")
 type LabResultSummaryOutput struct {
-	TestName    string `json:"test_name"`
-	CollectedAt *time.Time
+	TestName    string                    `json:"test_name"`
+	CollectedAt *time.Time                `json:"collected_at,omitempty"`
 	Items       []ResultItemSummaryOutput `json:"key_results"`
 }
 

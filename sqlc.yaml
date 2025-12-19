@@ -6,7 +6,31 @@ sql:
     gen:
       go:
         package: "labssqlc"
-        out: " internal/adapters/secondary/database/sqlc/labs"
+        out: "internal/adapters/outbound/database/sqlc/labs"
+        sql_package: "pgx/v5"
+        emit_json_tags: true
+        emit_prepared_queries: false
+        emit_interface: false
+        emit_db_tags: false
+  - engine: "postgresql"
+    schema: "internal/adapters/outbound/database/sqlc/users/schema.sql"
+    queries: "internal/adapters/outbound/database/sqlc/users/queries.sql"
+    gen:
+      go:
+        package: "userssqlc"
+        out: "internal/adapters/outbound/database/sqlc/users"
+        sql_package: "pgx/v5"
+        emit_json_tags: true
+        emit_prepared_queries: false
+        emit_interface: false
+        emit_db_tags: false
+  - engine: "postgresql"
+    schema: "internal/adapters/outbound/database/sqlc/patients/schema.sql"
+    queries: "internal/adapters/outbound/database/sqlc/patients/queries.sql"
+    gen:
+      go:
+        package: "patientssqlc"
+        out: "internal/adapters/outbound/database/sqlc/patients"
         sql_package: "pgx/v5"
         emit_json_tags: true
         emit_prepared_queries: false

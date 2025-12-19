@@ -13,4 +13,5 @@ postgres-data/
 .idea/
 
 samples/
+secrets/
 

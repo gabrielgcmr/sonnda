@@ -20,9 +20,7 @@ var (
 var (
 	ErrPatientNotFound  = errors.New("paciente não encontrado")
 	ErrCPFAlreadyExists = errors.New("CPF já cadastrado")
-
 	ErrInvalidBirthDate = errors.New("data de nascimento inválida")
-	ErrPatientTooYoung  = errors.New("paciente deve ter pelo menos 18 anos")
 )
 
 // labs

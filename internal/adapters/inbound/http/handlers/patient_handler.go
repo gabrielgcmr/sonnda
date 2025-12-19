@@ -3,11 +3,12 @@ package handlers
 import (
 	"net/http"
 
-	"sonnda-api/internal/adapters/inbound/http/middleware"
-	"sonnda-api/internal/core/domain"
-	"sonnda-api/internal/core/usecases/patient"
-
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+
+	"sonnda-api/internal/adapters/inbound/http/middleware"
+	"sonnda-api/internal/core/usecases/patient"
+	applog "sonnda-api/internal/logger"
 )
 
 type PatientHandler struct {
@@ -32,77 +33,57 @@ func NewPatientHandler(
 }
 
 func (h *PatientHandler) CreateByAuthenticatedPatient(c *gin.Context) {
-	var input patient.CreatePatientInput
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "invalid_input",
-			"details": err.Error(),
-		})
+	log := applog.FromContext(c.Request.Context())
+	log.Info("patient_create_by_authenticated_patient")
+
+	var req patient.CreatePatientRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		RespondError(c, log, http.StatusBadRequest, "invalid_input", err)
 		return
 	}
 
-	user, ok := middleware.CurrentUser(c)
-	if !ok || user == nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error":   "unauthorized",
-			"message": "usuário não autenticado",
-		})
-		return
+	user, _ := middleware.RequireUser(c)
+	cmd := patient.CreatePatientCommand{
+		AppUserID:            &user.ID,
+		CreatePatientRequest: req,
 	}
 
 	//impede crianção de paciente para outra pessoa
-	if input.AppUserID != nil && *input.AppUserID != user.ID {
-		c.JSON(http.StatusForbidden, gin.H{
-			"error":   "forbidden",
-			"message": "você não tem permissão para criar paciente para outro paciente",
-		})
+	if cmd.AppUserID != nil && *cmd.AppUserID != user.ID {
+		RespondError(c, log, http.StatusForbidden, "forbidden", nil)
 		return
 	}
 
-	input.AppUserID = &user.ID
-
-	output, err := h.createUC.Execute(c.Request.Context(), input)
+	output, err := h.createUC.Execute(c.Request.Context(), cmd)
 	if err != nil {
-		handleServiceError(c, err)
+		RespondDomainError(c, log, err)
 		return
 	}
 
+	log.Info("patient_created", "patient_id", output.ID)
 	c.JSON(http.StatusCreated, output)
 
 }
 
 func (h *PatientHandler) CreateByProfessional(c *gin.Context) {
-	var input patient.CreatePatientInput
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "invalid_input",
-			"details": err.Error(),
-		})
+	log := applog.FromContext(c.Request.Context())
+	log.Info("patient_create_by_professional")
+
+	var req patient.CreatePatientRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		RespondError(c, log, http.StatusBadRequest, "invalid_input", err)
 		return
 	}
 
-	user, ok := middleware.CurrentUser(c)
-	if !ok || user == nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error":   "unauthorized",
-			"message": "usuário não autenticado",
-		})
-		return
-	}
-
-	// Protege contra tentativas de injetar app_user_id
-	if input.AppUserID != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "invalid_input",
-			"message": "médicos não devem informar app_user_id",
-		})
-		return
+	cmd := patient.CreatePatientCommand{
+		AppUserID:            nil,
+		CreatePatientRequest: req,
 	}
 
 	// Continua com criação
-	output, err := h.createUC.Execute(c.Request.Context(), input)
+	output, err := h.createUC.Execute(c.Request.Context(), cmd)
 	if err != nil {
-		handleServiceError(c, err)
+		RespondDomainError(c, log, err)
 		return
 	}
 
@@ -110,20 +91,20 @@ func (h *PatientHandler) CreateByProfessional(c *gin.Context) {
 }
 
 func (h *PatientHandler) GetMyProfile(c *gin.Context) {
+	log := applog.FromContext(c.Request.Context())
+	log.Info("patient_get_my_profile")
+
 	// 1. Recupera o usuário autenticado
 	user, ok := middleware.CurrentUser(c)
 	if !ok || user == nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error":   "unauthorized",
-			"message": "usuário não autenticado",
-		})
+		RespondError(c, log, http.StatusUnauthorized, "unauthorized", nil)
 		return
 	}
 
 	// 2. Chama um método específico do use case
 	p, err := h.getUC.ExecuteByUserID(c.Request.Context(), user.ID)
 	if err != nil {
-		handleServiceError(c, err)
+		RespondDomainError(c, log, err)
 		return
 	}
 
@@ -131,11 +112,19 @@ func (h *PatientHandler) GetMyProfile(c *gin.Context) {
 }
 
 func (h *PatientHandler) GetByID(c *gin.Context) {
-	id := c.Param("id")
+	log := applog.FromContext(c.Request.Context())
+
+	idStr := c.Param("id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		RespondError(c, log, http.StatusBadRequest, "invalid_patient_id", err)
+		return
+
+	}
 
 	p, err := h.getUC.ExecuteByID(c.Request.Context(), id)
 	if err != nil {
-		handleServiceError(c, err)
+		RespondDomainError(c, log, err)
 		return
 	}
 
@@ -143,103 +132,100 @@ func (h *PatientHandler) GetByID(c *gin.Context) {
 }
 
 func (h *PatientHandler) GetByCPF(c *gin.Context) {
+	log := applog.FromContext(c.Request.Context())
+
 	cpf := c.Param("cpf")
+	if cpf == "" {
+		RespondError(c, log, http.StatusBadRequest, "missing_cpf", nil)
+		return
+	}
 
 	p, err := h.getUC.ExecuteByCPF(c.Request.Context(), cpf)
 	if err != nil {
-		handleServiceError(c, err)
+		RespondDomainError(c, log, err)
 		return
 	}
 
 	c.JSON(http.StatusOK, p)
 }
 
-func (h *PatientHandler) UpdateByID(ctx *gin.Context) {
+func (h *PatientHandler) UpdateByID(c *gin.Context) {
+	log := applog.FromContext(c.Request.Context())
+	log.Info("patient_update_by_id")
+
 	//Recuperar o usuário do contexto
-	user, ok := middleware.CurrentUser(ctx)
-	if !ok {
-		ctx.JSON(http.StatusUnauthorized, gin.H{
-			"error":   "unauthorized",
-			"message": "usuário não autenticado",
-		})
+	user, ok := middleware.CurrentUser(c)
+	if !ok || user == nil {
+		RespondError(c, log, http.StatusUnauthorized, "unauthorized", nil)
 		return
 	}
 
-	id := ctx.Param("id")
+	idStr := c.Param("id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		RespondError(c, log, http.StatusBadRequest, "invalid_patient_id", err)
+		return
+	}
 
 	var input patient.PatientChanges
-	if err := ctx.ShouldBindJSON(&input); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error":   "invalid_input",
-			"details": err.Error(),
-		})
+	if err := c.ShouldBindJSON(&input); err != nil {
+		RespondError(c, log, http.StatusBadRequest, "invalid_input", err)
 		return
 	}
 
-	p, err := h.updateUC.Execute(ctx.Request.Context(), user, id, input)
+	p, err := h.updateUC.ExecuteByID(c.Request.Context(), user, id, input)
 	if err != nil {
-		handleServiceError(ctx, err)
+		RespondDomainError(c, log, err)
 		return
 	}
 
-	ctx.JSON(http.StatusOK, p)
+	c.JSON(http.StatusOK, p)
 }
 
-func (h *PatientHandler) UpdateByCPF(ctx *gin.Context) {
+func (h *PatientHandler) UpdateByCPF(c *gin.Context) {
+	log := applog.FromContext(c.Request.Context())
+	log.Info("patient_update_by_cpf")
+
 	//Recuperar o usuário do contexto
-	user, ok := middleware.CurrentUser(ctx)
-	if !ok {
-		ctx.JSON(http.StatusUnauthorized, gin.H{
-			"error":   "unauthorized",
-			"message": "usuário não autenticado",
-		})
+	user, ok := middleware.CurrentUser(c)
+	if !ok || user == nil {
+		RespondError(c, log, http.StatusUnauthorized, "unauthorized", nil)
 		return
 	}
 
-	cpf := ctx.Param("cpf")
+	cpf := c.Param("cpf")
+	if cpf == "" {
+		RespondError(c, log, http.StatusBadRequest, "missing_cpf", nil)
+		return
+	}
 
 	var input patient.PatientChanges
-	if err := ctx.ShouldBindJSON(&input); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error":   "invalid_input",
-			"details": err.Error(),
-		})
+	if err := c.ShouldBindJSON(&input); err != nil {
+		RespondError(c, log, http.StatusBadRequest, "invalid_input", err)
 		return
 	}
 
-	p, err := h.updateUC.Execute(ctx.Request.Context(), user, cpf, input)
+	p, err := h.updateUC.ExecuteByCPF(c.Request.Context(), user, cpf, input)
 	if err != nil {
-		handleServiceError(ctx, err)
+		RespondDomainError(c, log, err)
 		return
 	}
 
-	ctx.JSON(http.StatusOK, p)
+	c.JSON(http.StatusOK, p)
 }
 
-func (h *PatientHandler) List(ctx *gin.Context) {
-	list, err := h.listUC.Execute(ctx.Request.Context(), 100, 0)
+func (h *PatientHandler) List(c *gin.Context) {
+	log := applog.FromContext(c.Request.Context())
+	log.Info("patient_list")
+	list, err := h.listUC.Execute(c.Request.Context(), 100, 0)
 	if err != nil {
-		handleServiceError(ctx, err)
+		RespondDomainError(c, log, err)
 		return
 	}
 
-	ctx.JSON(http.StatusOK, list)
+	c.JSON(http.StatusOK, list)
 }
 
-func handleServiceError(c *gin.Context, err error) {
-	switch err {
-	case domain.ErrCPFAlreadyExists:
-		c.JSON(http.StatusConflict, gin.H{"error": "cpf_already_exists"})
-	case domain.ErrPatientNotFound:
-		c.JSON(http.StatusNotFound, gin.H{"error": "patient_not_found"})
-	case domain.ErrInvalidBirthDate:
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid_birth_date"})
-	case domain.ErrPatientTooYoung:
-		c.JSON(http.StatusBadRequest, gin.H{"error": "patient_too_young"})
-	default:
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "server_error",
-			"details": err.Error(),
-		})
-	}
-}
+/* ============================================================
+   Error helpers (centraliza log + resposta)
+   ============================================================ */

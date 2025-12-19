@@ -3,178 +3,30 @@ package supabase
 
 import (
 	"context"
-	"database/sql"
 	"errors"
-
+	labssqlc "sonnda-api/internal/adapters/outbound/database/sqlc/labs"
 	"sonnda-api/internal/core/domain"
 	"sonnda-api/internal/core/ports/repositories"
+	"strings"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
 
 type LabsRepository struct {
-	client *Client
+	client  *Client
+	queries *labssqlc.Queries
 }
 
 // Garantia em tempo de compilação de que implementa repositories.LabsRepository
 var _ repositories.LabsRepository = (*LabsRepository)(nil)
 
 func NewLabsRepository(client *Client) repositories.LabsRepository {
-	return &LabsRepository{client: client}
+	return &LabsRepository{
+		client:  client,
+		queries: labssqlc.New(client.Pool()),
+	}
 }
-
-/* ============================================================
-   SQL CONSTANTS
-   ============================================================ */
-
-const (
-	insertLabReportSQL = `
-		INSERT INTO lab_reports (
-			patient_id,
-			patient_name,
-			patient_dob,
-			lab_name,
-			lab_phone,
-			insurance_provider,
-			requesting_doctor,
-			technical_manager,
-			report_date,
-			raw_text,
-			uploaded_by_user_id,
-			fingerprint
-		)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
-		RETURNING id, created_at, updated_at, uploaded_by_user_id,fingerprint
-	`
-
-	insertLabTestResultSQL = `
-		INSERT INTO lab_test_results (
-			lab_report_id,
-			test_name,
-			material,
-			method,
-			collected_at,
-			release_at
-		)
-		VALUES ($1,$2,$3,$4,$5,$6)
-		RETURNING id
-	`
-
-	insertLabTestItemSQL = `
-		INSERT INTO lab_test_items (
-			lab_test_result_id,
-			parameter_name,
-			result_value,
-			result_unit,
-			reference_text
-		)
-		VALUES ($1,$2,$3,$4,$5)
-		RETURNING id
-	`
-
-	selectLabReportByIDSQL = `
-		SELECT
-			id,
-			patient_id,
-			patient_name,
-			patient_dob,
-			lab_name,
-			lab_phone,
-			insurance_provider,
-			requesting_doctor,
-			technical_manager,
-			report_date,
-			raw_text,
-			uploaded_by_user_id,
-			fingerprint
-			created_at,
-			updated_at
-		FROM lab_reports
-		WHERE id = $1
-	`
-
-	selectLabTestResultsByReportIDSQL = `
-		SELECT
-			id,
-			test_name,
-			material,
-			method,
-			collected_at,
-			release_at
-		FROM lab_test_results
-		WHERE lab_report_id = $1
-		ORDER BY test_name
-	`
-
-	selectLabTestItemsByResultIDSQL = `
-		SELECT
-			id,
-			parameter_name,
-			result_value,
-			result_unit,
-			reference_text
-		FROM lab_test_items
-		WHERE lab_test_result_id = $1
-		ORDER BY parameter_name
-	`
-
-	selectLabReportsByPatientIDSQL = `
-		SELECT
-			id,
-			patient_id,
-			patient_name,
-			lab_name,
-			report_date,
-			uploaded_by_user_id,
-			fingerprint,
-			created_at,
-			updated_at
-		FROM lab_reports
-		WHERE patient_id = $1
-		ORDER BY report_date DESC NULLS LAST, created_at DESC
-		LIMIT $2 OFFSET $3
-	`
-
-	deleteLabReportSQL = `
-		DELETE FROM lab_reports
-		WHERE id = $1
-	`
-
-	selectLabReportByPatientAndRawTextSQL = `
-	SELECT 1
-	FROM lab_reports
-	WHERE patient_id = $1
-		AND raw_text   = $2
-	LIMIT 1
-	`
-
-	selectLabReportByPatientAndFingerprint = `
-		SELECT 1
-		FROM lab_reports
-		WHERE patient_id = $1
-			AND fingerprint = $2
-		LIMIT 1
-	`
-
-	selectItemsTimelineByPatientAndParamSQL = `
-		SELECT
-			lr.id          AS report_id,
-			ltr.id         AS test_result_id,
-			lti.id         AS item_id,
-			lr.report_date AS report_date,
-			ltr.test_name  AS test_name,
-			lti.parameter_name,
-			lti.result_value,
-			lti.result_unit
-		FROM lab_test_items lti
-		JOIN lab_test_results ltr ON lti.lab_test_result_id = ltr.id
-		JOIN lab_reports      lr  ON ltr.lab_report_id      = lr.id
-		WHERE lr.patient_id      = $1
-		  AND lti.parameter_name = $2
-		ORDER BY lr.report_date DESC NULLS LAST, lr.created_at DESC
-		LIMIT $3 OFFSET $4
-	`
-)
 
 /* ============================================================
    CREATE
@@ -194,63 +46,76 @@ func (r *LabsRepository) Create(ctx context.Context, report *domain.LabReport) (
 		}
 	}()
 
+	qtx := labssqlc.New(tx)
+
+	// ---------
 	// 1) lab_reports
-	row := tx.QueryRow(ctx, insertLabReportSQL,
-		report.PatientID,
-		report.PatientName,
-		report.PatientDOB,
-		report.LabName,
-		report.LabPhone,
-		report.InsuranceProvider,
-		report.RequestingDoctor,
-		report.TechnicalManager,
-		report.ReportDate,
-		report.RawText,
-		report.UploadedByUserID,
-		report.Fingerprint,
-	)
+	// ---------
 
-	var uploadedBy sql.NullString
-	var fingerprint sql.NullString
+	dbReport, err := qtx.CreateLabReport(ctx, labssqlc.CreateLabReportParams{
+		PatientID:         ToPgUUID(report.PatientID),
+		PatientName:       ToText(report.PatientName),
+		PatientDob:        ToDate(report.PatientDOB),
+		LabName:           ToText(report.LabName),
+		LabPhone:          ToText(report.LabPhone),
+		InsuranceProvider: ToText(report.InsuranceProvider),
+		RequestingDoctor:  ToText(report.RequestingDoctor),
+		TechnicalManager:  ToText(report.TechnicalManager),
+		ReportDate:        ToDate(report.ReportDate),
+		RawText:           ToText(report.RawText),
+		UploadedByUserID:  ToPgUUID(report.UploadedByUserID),
+		Fingerprint:       ToText(report.Fingerprint),
+	})
 
-	if err = row.Scan(&report.ID, &report.CreatedAt, &report.UpdatedAt, &uploadedBy, &fingerprint); err != nil {
+	if err != nil {
 		return err
 	}
-	report.UploadedByUserID = nullableString(uploadedBy)
 
-	// 2) lab_test_results + lab_test_items
+	// Atualiza o domain com o que voltou do banco (sem Scan!)
+	report.ID = FromPgUUID(dbReport.ID)
+	report.CreatedAt = dbReport.CreatedAt.Time
+	report.UpdatedAt = dbReport.UpdatedAt.Time
+	report.UploadedByUserID = FromPgUUID(dbReport.UploadedByUserID)
+	report.Fingerprint = FromText(dbReport.Fingerprint)
+
+	// ---------
+	// 2) lab_results + lab_result_items
+	// ---------
+
 	for i := range report.TestResults {
 		tr := &report.TestResults[i]
 
-		row := tx.QueryRow(ctx, insertLabTestResultSQL,
-			report.ID,
-			tr.TestName,
-			tr.Material,
-			tr.Method,
-			tr.CollectedAt,
-			tr.ReleaseAt,
-		)
-
-		if err = row.Scan(&tr.ID); err != nil {
+		dbResID, err := qtx.CreateLabResult(ctx, labssqlc.CreateLabResultParams{
+			LabReportID: ToPgUUID(report.ID), // helper abaixo
+			TestName:    tr.TestName,
+			Material:    ToText(tr.Material),
+			Method:      ToText(tr.Method),
+			CollectedAt: ToTimestamptz(tr.CollectedAt),
+			ReleaseAt:   ToTimestamptz(tr.ReleaseAt),
+		})
+		if err != nil {
 			return err
 		}
+
+		tr.ID = FromPgUUID(dbResID)
 		tr.LabReportID = report.ID
 
 		for j := range tr.Items {
 			item := &tr.Items[j]
 
-			row := tx.QueryRow(ctx, insertLabTestItemSQL,
-				tr.ID,
-				item.ParameterName,
-				item.ResultValue,
-				item.ResultUnit,
-				item.ReferenceText,
-			)
-
-			if err = row.Scan(&item.ID); err != nil {
+			dbItemID, err := qtx.CreateLabResultItem(ctx, labssqlc.CreateLabResultItemParams{
+				LabResultID:   dbResID,
+				ParameterName: item.ParameterName,
+				ResultValue:   ToText(item.ResultValue),
+				ResultUnit:    ToText(item.ResultUnit),
+				ReferenceText: ToText(item.ReferenceText),
+			})
+			if err != nil {
 				return err
 			}
-			item.LabTestResultID = tr.ID
+
+			item.ID = FromPgUUID(dbItemID)
+			item.LabResultID = tr.ID
 		}
 	}
 
@@ -262,143 +127,78 @@ func (r *LabsRepository) Create(ctx context.Context, report *domain.LabReport) (
    ============================================================ */
 
 // FindByID busca um laudo completo, incluindo testes e itens.
-func (r *LabsRepository) FindByID(ctx context.Context, reportID string) (*domain.LabReport, error) {
-	var lr domain.LabReport
+func (r *LabsRepository) FindByID(ctx context.Context, reportID uuid.UUID) (*domain.LabReport, error) {
+	q := labssqlc.New(r.client.Pool())
 
 	// 1) lab_reports
-	var (
-		patientName, labName, labPhone, insuranceProvider,
-		requestingDoctor, technicalManager, rawText, uploadedBy sql.NullString
-		patientDOB, reportDate, updatedAt sql.NullTime
-	)
-
-	row := r.client.Pool().QueryRow(ctx, selectLabReportByIDSQL, reportID)
-
-	if err := row.Scan(
-		&lr.ID,
-		&lr.PatientID,
-		&patientName,
-		&patientDOB,
-		&labName,
-		&labPhone,
-		&insuranceProvider,
-		&requestingDoctor,
-		&technicalManager,
-		&reportDate,
-		&rawText,
-		&uploadedBy,
-		&lr.CreatedAt,
-		&updatedAt,
-	); err != nil {
+	dbReport, err := q.GetLabReportByID(ctx, ToPgUUID(reportID))
+	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
 		return nil, err
 	}
 
-	lr.PatientName = nullableString(patientName)
-	lr.PatientDOB = nullableTime(patientDOB)
-	lr.LabName = nullableString(labName)
-	lr.LabPhone = nullableString(labPhone)
-	lr.InsuranceProvider = nullableString(insuranceProvider)
-	lr.RequestingDoctor = nullableString(requestingDoctor)
-	lr.TechnicalManager = nullableString(technicalManager)
-	lr.ReportDate = nullableTime(reportDate)
-	lr.RawText = nullableString(rawText)
-	lr.UploadedByUserID = nullableString(uploadedBy)
-	if t := nullableTime(updatedAt); t != nil {
-		lr.UpdatedAt = *t
+	lr := &domain.LabReport{
+		ID:                FromPgUUID(dbReport.ID),
+		PatientID:         FromPgUUID(dbReport.PatientID),
+		PatientName:       FromText(dbReport.PatientName),
+		PatientDOB:        FromDate(dbReport.PatientDob),
+		LabName:           FromText(dbReport.LabName),
+		LabPhone:          FromText(dbReport.LabPhone),
+		InsuranceProvider: FromText(dbReport.InsuranceProvider),
+		RequestingDoctor:  FromText(dbReport.RequestingDoctor),
+		TechnicalManager:  FromText(dbReport.TechnicalManager),
+		ReportDate:        FromDate(dbReport.ReportDate),
+		RawText:           FromText(dbReport.RawText),
+		UploadedByUserID:  FromPgUUID(dbReport.UploadedByUserID),
+		Fingerprint:       FromText(dbReport.Fingerprint),
+		CreatedAt:         dbReport.CreatedAt.Time,
+		UpdatedAt:         dbReport.UpdatedAt.Time,
 	}
 
-	// 2) lab_test_results
-	rows, err := r.client.Pool().Query(ctx, selectLabTestResultsByReportIDSQL, reportID)
+	// 2) lab_results
+	dbResults, err := q.ListLabResultsByReportID(ctx, dbReport.ID)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 
-	var testResults []domain.LabTestResult
+	lr.TestResults = make([]domain.LabResult, 0, len(dbResults))
 
-	for rows.Next() {
-		var (
-			tr                     domain.LabTestResult
-			material, method       sql.NullString
-			collectedAt, releaseAt sql.NullTime
-		)
-
-		if err := rows.Scan(
-			&tr.ID,
-			&tr.TestName,
-			&material,
-			&method,
-			&collectedAt,
-			&releaseAt,
-		); err != nil {
-			return nil, err
+	for _, rrow := range dbResults {
+		tr := domain.LabResult{
+			ID:          FromPgUUID(rrow.ID),
+			LabReportID: lr.ID,
+			TestName:    rrow.TestName,
+			Material:    FromText(rrow.Material),
+			Method:      FromText(rrow.Method),
+			CollectedAt: FromTimestamptz(rrow.CollectedAt),
+			ReleaseAt:   FromTimestamptz(rrow.ReleaseAt),
 		}
 
-		tr.LabReportID = lr.ID
-		tr.Material = nullableString(material)
-		tr.Method = nullableString(method)
-		tr.CollectedAt = nullableTime(collectedAt)
-		tr.ReleaseAt = nullableTime(releaseAt)
-
-		testResults = append(testResults, tr)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	// 3) lab_test_items para cada test_result
-	for i := range testResults {
-		tr := &testResults[i]
-
-		itemRows, err := r.client.Pool().Query(ctx, selectLabTestItemsByResultIDSQL, tr.ID)
+		// 3) items do result
+		dbItems, err := q.ListLabResultItemsByResultID(ctx, rrow.ID)
 		if err != nil {
 			return nil, err
 		}
 
-		var items []domain.LabTestItem
-
-		for itemRows.Next() {
-			var (
-				item                    domain.LabTestItem
-				resultValue, resultUnit sql.NullString
-				referenceText           sql.NullString
-			)
-
-			if err := itemRows.Scan(
-				&item.ID,
-				&item.ParameterName,
-				&resultValue,
-				&resultUnit,
-				&referenceText,
-			); err != nil {
-				itemRows.Close()
-				return nil, err
+		tr.Items = make([]domain.LabResultItem, 0, len(dbItems))
+		for _, irow := range dbItems {
+			item := domain.LabResultItem{
+				ID:            FromPgUUID(irow.ID),
+				LabResultID:   tr.ID,
+				ParameterName: irow.ParameterName,
+				ResultValue:   FromText(irow.ResultValue),
+				ResultUnit:    FromText(irow.ResultUnit),
+				ReferenceText: FromText(irow.ReferenceText),
 			}
-
-			item.LabTestResultID = tr.ID
-			item.ResultValue = nullableString(resultValue)
-			item.ResultUnit = nullableString(resultUnit)
-			item.ReferenceText = nullableString(referenceText)
-
-			items = append(items, item)
+			tr.Items = append(tr.Items, item)
 		}
 
-		itemRows.Close()
-
-		if err := itemRows.Err(); err != nil {
-			return nil, err
-		}
-
-		tr.Items = items
+		lr.TestResults = append(lr.TestResults, tr)
 	}
 
-	lr.TestResults = testResults
-
-	return &lr, nil
+	return lr, nil
 }
 
 /* ============================================================
@@ -407,7 +207,7 @@ func (r *LabsRepository) FindByID(ctx context.Context, reportID string) (*domain
 
 // FindByPatientID retorna apenas os cabeçalhos dos laudos do paciente.
 func (r *LabsRepository) FindByPatientID(ctx context.Context,
-	patientID string,
+	patientID uuid.UUID,
 	limit, offset int,
 ) ([]domain.LabReport, error) {
 	const (
@@ -422,61 +222,77 @@ func (r *LabsRepository) FindByPatientID(ctx context.Context,
 		offset = defaultOffset
 	}
 
-	rows, err := r.client.Pool().Query(ctx, selectLabReportsByPatientIDSQL, patientID, limit, offset)
+	q := labssqlc.New(r.client.Pool())
+
+	rows, err := q.ListLabReportsByPatientID(ctx, labssqlc.ListLabReportsByPatientIDParams{
+		PatientID: ToPgUUID(patientID),
+		Limit:     int32(limit),
+		Offset:    int32(offset),
+	})
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 
-	var result []domain.LabReport
+	out := make([]domain.LabReport, 0, len(rows))
 
-	for rows.Next() {
-		var (
-			lr                   domain.LabReport
-			patientName, labName sql.NullString
-			reportDate           sql.NullTime
-			uploadedBy           sql.NullString
-			updatedAt            sql.NullTime
-		)
-
-		if err := rows.Scan(
-			&lr.ID,
-			&lr.PatientID,
-			&patientName,
-			&labName,
-			&reportDate,
-			&uploadedBy,
-			&lr.CreatedAt,
-			&updatedAt,
-		); err != nil {
+	for _, row := range rows {
+		createdAt, err := MustTime(row.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+		updatedAt, err := MustTime(row.UpdatedAt)
+		if err != nil {
 			return nil, err
 		}
 
-		lr.PatientName = nullableString(patientName)
-		lr.LabName = nullableString(labName)
-		lr.ReportDate = nullableTime(reportDate)
-		lr.UploadedByUserID = nullableString(uploadedBy)
-		if t := nullableTime(updatedAt); t != nil {
-			lr.UpdatedAt = *t
+		lr := domain.LabReport{
+			ID:               FromPgUUID(row.ID),
+			PatientID:        FromPgUUID(row.PatientID),
+			PatientName:      FromText(row.PatientName),
+			LabName:          FromText(row.LabName),
+			ReportDate:       FromDate(row.ReportDate),
+			CreatedAt:        createdAt,
+			UpdatedAt:        updatedAt,
+			UploadedByUserID: FromPgUUID(row.UploadedByUserID),
+			Fingerprint:      FromText(row.Fingerprint),
 		}
 
-		result = append(result, lr)
+		out = append(out, lr)
 	}
 
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return result, nil
+	return out, nil
 }
 
 /* ============================================================
    DELETE
    ============================================================ */
 
-func (r *LabsRepository) Delete(ctx context.Context, reportID string) error {
-	_, err := r.client.Pool().Exec(ctx, deleteLabReportSQL, reportID)
-	return err
+func (r *LabsRepository) Delete(ctx context.Context, reportID uuid.UUID) error {
+	tx, err := r.client.BeginTx(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback(ctx)
+		} else {
+			err = tx.Commit(ctx)
+		}
+	}()
+
+	qtx := labssqlc.New(tx)
+
+	affected, err := qtx.DeleteLabReport(ctx, ToPgUUID(reportID))
+	if err != nil {
+		return err
+	}
+
+	if affected == 0 {
+		return nil
+	}
+
+	return nil
+
 }
 
 /* ============================================================
@@ -487,98 +303,74 @@ func (r *LabsRepository) Delete(ctx context.Context, reportID string) error {
 // (ex.: todas as creatininas) para um paciente.
 func (r *LabsRepository) ListItemsByPatientAndParameter(
 	ctx context.Context,
-	patientID string,
+	patientID uuid.UUID,
 	parameterName string,
 	limit, offset int,
-) ([]domain.LabTestItemTimeline, error) {
+) ([]domain.LabResultItemTimeline, error) {
 	if limit <= 0 {
 		limit = 50
 	}
 	if offset < 0 {
 		offset = 0
 	}
+	if strings.TrimSpace(parameterName) == "" {
+		return nil, domain.ErrInvalidInput
+	}
 
-	rows, err := r.client.Pool().Query(ctx, selectItemsTimelineByPatientAndParamSQL,
-		patientID, parameterName, limit, offset,
+	q := labssqlc.New(r.client.Pool())
+
+	rows, err := q.ListLabItemTimelineByPatientAndParameter(
+		ctx,
+		labssqlc.ListLabItemTimelineByPatientAndParameterParams{
+			PatientID:     ToPgUUID(patientID),
+			ParameterName: parameterName,
+			Limit:         int32(limit),
+			Offset:        int32(offset),
+		},
 	)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 
-	var result []domain.LabTestItemTimeline
-
-	for rows.Next() {
-		var (
-			item                    domain.LabTestItemTimeline
-			reportDate              sql.NullTime
-			resultValue, resultUnit sql.NullString
-		)
-
-		if err := rows.Scan(
-			&item.ReportID,
-			&item.TestResultID,
-			&item.ItemID,
-			&reportDate,
-			&item.TestName,
-			&item.ParameterName,
-			&resultValue,
-			&resultUnit,
-		); err != nil {
-			return nil, err
+	out := make([]domain.LabResultItemTimeline, 0, len(rows))
+	for _, row := range rows {
+		item := domain.LabResultItemTimeline{
+			ReportID:      FromPgUUID(row.ReportID),
+			LabResultID:   FromPgUUID(row.LabResultID),
+			ItemID:        FromPgUUID(row.ItemID),
+			ReportDate:    FromDate(row.ReportDate), // report_date é DATE no Supabase
+			TestName:      row.TestName,
+			ParameterName: row.ParameterName,
+			ResultValue:   FromText(row.ResultValue),
+			ResultUnit:    FromText(row.ResultUnit),
 		}
 
-		item.ReportDate = nullableTime(reportDate)
-		item.ResultValue = nullableString(resultValue)
-		item.ResultUnit = nullableString(resultUnit)
-
-		result = append(result, item)
+		out = append(out, item)
 	}
 
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return result, nil
+	return out, nil
 }
 
 /* ============================================================
-   DELETE
+   Dedupe
    ============================================================ */
 
-func (r *LabsRepository) ExistsByPatientAndRawText(
-	ctx context.Context,
-	patientID string,
-	rawText string,
-) (bool, error) {
-	row := r.client.Pool().QueryRow(ctx, selectLabReportByPatientAndRawTextSQL, patientID, rawText)
-
-	var dummy int
-	if err := row.Scan(&dummy); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return false, nil
-		}
-		return false, err
-	}
-
-	return true, nil
-}
-
-// Verifica se já existe um laudo de exame laboratorial com a mesma assinatura
+// Verifica se já existe um laudo com a mesma assinatura
 func (r *LabsRepository) ExistsBySignature(
 	ctx context.Context,
-	patientID, fingerprint string,
+	patientID uuid.UUID,
+	fingerprint string,
 ) (bool, error) {
+	q := labssqlc.New(r.client.Pool())
 
-	row := r.client.Pool().QueryRow(ctx, selectLabReportByPatientAndFingerprint, patientID, fingerprint)
-
-	var dummy int
-	if err := row.Scan(&dummy); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return false, nil
-		}
+	exists, err := q.ExistsLabReportByPatientAndFingerprint(ctx,
+		labssqlc.ExistsLabReportByPatientAndFingerprintParams{
+			PatientID:   ToPgUUID(patientID),
+			Fingerprint: ToTextValue(fingerprint),
+		},
+	)
+	if err != nil {
 		return false, err
 	}
-
-	return true, nil
+	return exists, nil
 }
