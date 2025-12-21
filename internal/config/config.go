@@ -17,7 +17,8 @@ type Config struct {
 	GCPLocation     string
 	LabsProcessorID string
 
-	JWTSecret string
+	FirebaseProjectID       string
+	FirebaseCredentialsFile string
 
 	Port string // porta HTTP (ex.: "8080")
 	Env  string // ex.: "dev", "prod"
@@ -28,16 +29,17 @@ type Config struct {
 
 func Load() (*Config, error) {
 	cfg := &Config{
-		DBURL:           os.Getenv("SUPABASE_URL"),
-		GCPProjectID:    os.Getenv("GCP_PROJECT_ID"),
-		GCSBucket:       os.Getenv("GCS_BUCKET"),
-		GCPLocation:     os.Getenv("GCP_LOCATION"),
-		LabsProcessorID: os.Getenv("DOCAI_LABS_PROCESSOR_ID"),
-		JWTSecret:       os.Getenv("SUPABASE_JWT_SECRET"),
-		Port:            getEnvOrDefault("PORT", "8080"),
-		Env:             getEnvOrDefault("APP_ENV", "dev"),
-		LogLevel:        getEnvOrDefault("LOG_LEVEL", "info"),
-		LogFormat:       getEnvOrDefault("LOG_FORMAT", "text"),
+		DBURL:                   os.Getenv("SUPABASE_URL"),
+		GCPProjectID:            os.Getenv("GCP_PROJECT_ID"),
+		GCSBucket:               os.Getenv("GCS_BUCKET"),
+		GCPLocation:             os.Getenv("GCP_LOCATION"),
+		LabsProcessorID:         os.Getenv("DOCAI_LABS_PROCESSOR_ID"),
+		FirebaseProjectID:       os.Getenv("FIREBASE_PROJECT_ID"),
+		FirebaseCredentialsFile: os.Getenv("FIREBASE_CREDENTIALS_FILE"),
+		Port:                    getEnvOrDefault("PORT", "8080"),
+		Env:                     getEnvOrDefault("APP_ENV", "dev"),
+		LogLevel:                getEnvOrDefault("LOG_LEVEL", "info"),
+		LogFormat:               getEnvOrDefault("LOG_FORMAT", "text"),
 	}
 
 	if cfg.Env == "prod" && cfg.LogFormat == "text" {
@@ -62,8 +64,8 @@ func Load() (*Config, error) {
 	if cfg.LabsProcessorID == "" {
 		missing = append(missing, "DOCAI_LABS_PROCESSOR_ID")
 	}
-	if cfg.JWTSecret == "" {
-		missing = append(missing, "SUPABASE_JWT_SECRET")
+	if cfg.FirebaseCredentialsFile == "" && os.Getenv("GOOGLE_APPLICATION_CREDENTIALS") == "" {
+		missing = append(missing, "FIREBASE_CREDENTIALS_FILE or GOOGLE_APPLICATION_CREDENTIALS")
 	}
 
 	if len(missing) > 0 {

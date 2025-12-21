@@ -11,7 +11,7 @@ import (
 type AppUser struct {
 	ID           pgtype.UUID        `json:"id"`
 	AuthProvider string             `json:"auth_provider"`
-	AuthSubject  pgtype.UUID        `json:"auth_subject"`
+	AuthSubject  string             `json:"auth_subject"`
 	Email        string             `json:"email"`
 	Role         string             `json:"role"`
 	CreatedAt    pgtype.Timestamptz `json:"created_at"`

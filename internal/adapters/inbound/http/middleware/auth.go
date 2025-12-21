@@ -47,7 +47,7 @@ func (m *AuthMiddleware) Authenticate() gin.HandlerFunc {
 			return
 		}
 
-		// 2. Usa o AuthService (que hoje é o SupabaseAuthService)
+		// 2. Usa o AuthService (ex.: FirebaseAuthService)
 		identity, err := m.authService.VerifyToken(ctx.Request.Context(), token)
 		if err != nil {
 			ctx.JSON(http.StatusUnauthorized, gin.H{
@@ -59,7 +59,7 @@ func (m *AuthMiddleware) Authenticate() gin.HandlerFunc {
 		}
 		ctx.Set(identityKey, identity)
 
-		// 3. Carrega/cria o User da aplicação (tabela app_users) a partir da identidade do Supabase
+		// 3. Carrega/cria o User da aplicação (tabela app_users) a partir da identidade do provider
 		user, err := m.userRepo.FindByAuthIdentity(
 			ctx.Request.Context(),
 			identity.Provider,

@@ -76,9 +76,15 @@ func main() {
 
 	//6. Carregando módulos
 	//6.1 Auth Service e Auth Middleware
-	authService := auth.NewSupabaseAuthService()
+	authService, err := auth.NewFirebaseAuthService(ctx, auth.FirebaseConfig{
+		ProjectID:       cfg.FirebaseProjectID,
+		CredentialsFile: cfg.FirebaseCredentialsFile,
+	})
+	if err != nil {
+		log.Fatalf("falha ao criar auth firebase: %v", err)
+	}
 	userRepo := supabase.NewUserRepository(dbClient)
-	createUserFromIdentityUC := user.NewCreateUserFromIdentity(userRepo) //pega a identidade do supabase para autenticação.
+	createUserFromIdentityUC := user.NewCreateUserFromIdentity(userRepo) // pega a identidade do provider para autenticacao.
 	userHandler := handlers.NewUserHandler(createUserFromIdentityUC)
 	authMiddleware := middleware.NewAuthMiddleware(authService, userRepo)
 	authorizationService := authorization.NewAuthorizationService()

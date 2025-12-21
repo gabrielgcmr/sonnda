@@ -25,10 +25,10 @@ RETURNING
 `
 
 type CreateUserParams struct {
-	AuthProvider string      `json:"auth_provider"`
-	AuthSubject  pgtype.UUID `json:"auth_subject"`
-	Email        string      `json:"email"`
-	Role         string      `json:"role"`
+	AuthProvider string `json:"auth_provider"`
+	AuthSubject  string `json:"auth_subject"`
+	Email        string `json:"email"`
+	Role         string `json:"role"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (AppUser, error) {
@@ -67,8 +67,8 @@ WHERE auth_provider = $1
 `
 
 type FindUserByAuthIdentityParams struct {
-	AuthProvider string      `json:"auth_provider"`
-	AuthSubject  pgtype.UUID `json:"auth_subject"`
+	AuthProvider string `json:"auth_provider"`
+	AuthSubject  string `json:"auth_subject"`
 }
 
 // internal/adapters/outbound/database/sqlc/users/queries.sql
@@ -161,7 +161,7 @@ RETURNING
 
 type UpdateUserAuthIdentityParams struct {
 	AuthProvider string      `json:"auth_provider"`
-	AuthSubject  pgtype.UUID `json:"auth_subject"`
+	AuthSubject  string      `json:"auth_subject"`
 	ID           pgtype.UUID `json:"id"`
 }
 

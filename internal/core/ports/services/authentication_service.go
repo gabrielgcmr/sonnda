@@ -6,8 +6,8 @@ import (
 )
 
 type Identity struct {
-	Provider string // ex: "supabase"
-	Subject  string // auth.users.id
+	Provider string // ex: "firebase"
+	Subject  string // firebase uid
 	Email    string
 }
 

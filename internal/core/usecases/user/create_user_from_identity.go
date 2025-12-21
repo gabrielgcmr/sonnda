@@ -29,7 +29,7 @@ func (uc *CreateUserFromIdentity) Execute(
 	//1. Normaliza o provider antes de buscar
 	provider := identity.Provider
 	if provider == "" {
-		provider = "supabase"
+		provider = "firebase"
 	}
 
 	// 2. Verifica se já existe

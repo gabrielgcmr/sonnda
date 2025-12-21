@@ -12,7 +12,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 var _ repositories.UserRepository = (*UserRepository)(nil)
@@ -33,14 +32,9 @@ func (r *UserRepository) FindByAuthIdentity(
 	ctx context.Context,
 	provider, subject string,
 ) (*domain.User, error) {
-	authSubject, err := parseAuthSubjectUUID(subject)
-	if err != nil {
-		return nil, err
-	}
-
 	dbUser, err := r.queries.FindUserByAuthIdentity(ctx, userssqlc.FindUserByAuthIdentityParams{
 		AuthProvider: provider,
-		AuthSubject:  authSubject,
+		AuthSubject:  subject,
 	})
 	if err != nil {
 		// IMPORTANTE: tratar "nao encontrado" como (nil, nil)
@@ -82,14 +76,9 @@ func (r *UserRepository) Create(
 		return errors.New("user is nil")
 	}
 
-	authSubject, err := parseAuthSubjectUUID(u.AuthSubject)
-	if err != nil {
-		return err
-	}
-
 	dbUser, err := r.queries.CreateUser(ctx, userssqlc.CreateUserParams{
 		AuthProvider: u.AuthProvider,
-		AuthSubject:  authSubject,
+		AuthSubject:  u.AuthSubject,
 		Email:        u.Email,
 		Role:         string(u.Role),
 	})
@@ -112,14 +101,9 @@ func (r *UserRepository) UpdateAuthIdentity(
 	id uuid.UUID,
 	provider, subject string,
 ) (*domain.User, error) {
-	authSubject, err := parseAuthSubjectUUID(subject)
-	if err != nil {
-		return nil, err
-	}
-
 	dbUser, err := r.queries.UpdateUserAuthIdentity(ctx, userssqlc.UpdateUserAuthIdentityParams{
 		AuthProvider: provider,
-		AuthSubject:  authSubject,
+		AuthSubject:  subject,
 		ID:           ToPgUUID(id),
 	})
 	if err != nil {
@@ -129,20 +113,9 @@ func (r *UserRepository) UpdateAuthIdentity(
 	return dbUserToDomain(dbUser)
 }
 
-func parseAuthSubjectUUID(subject string) (pgtype.UUID, error) {
-	authSubjectUUID, err := ParseUUID(subject)
-	if err != nil {
-		return pgtype.UUID{}, err
-	}
-	return ToPgUUID(authSubjectUUID), nil
-}
-
 func dbUserToDomain(u userssqlc.AppUser) (*domain.User, error) {
 	if !u.ID.Valid {
 		return nil, fmt.Errorf("user id is null")
-	}
-	if !u.AuthSubject.Valid {
-		return nil, fmt.Errorf("user auth_subject is null")
 	}
 
 	createdAt, err := MustTime(u.CreatedAt)
@@ -157,7 +130,7 @@ func dbUserToDomain(u userssqlc.AppUser) (*domain.User, error) {
 	return &domain.User{
 		ID:           FromPgUUID(u.ID),
 		AuthProvider: u.AuthProvider,
-		AuthSubject:  FromPgUUID(u.AuthSubject).String(),
+		AuthSubject:  u.AuthSubject,
 		Email:        u.Email,
 		Role:         domain.Role(u.Role),
 		CreatedAt:    createdAt,
