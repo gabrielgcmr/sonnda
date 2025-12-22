@@ -18,7 +18,7 @@ import (
 	"sonnda-api/internal/adapters/outbound/external/documentai"
 	"sonnda-api/internal/adapters/outbound/storage"
 	"sonnda-api/internal/config"
-	"sonnda-api/internal/core/usecases/labs"
+	"sonnda-api/internal/core/usecases/lab"
 	"sonnda-api/internal/core/usecases/patient"
 	"sonnda-api/internal/core/usecases/user"
 	"sonnda-api/internal/logger"
@@ -104,9 +104,9 @@ func main() {
 
 	//6.3 Módulo Lab Reports
 	labReportRepo := supabase.NewLabsRepository(dbClient)
-	createLabReportUC := labs.NewExtractLabs(labReportRepo, docExtractor)
-	listLabsUC := labs.NewListLabs(patientRepo, labReportRepo)
-	listFullLabsUC := labs.NewListFullLabs(patientRepo, labReportRepo)
+	createLabReportUC := lab.NewExtractLabs(labReportRepo, docExtractor)
+	listLabsUC := lab.NewListLabs(patientRepo, labReportRepo)
+	listFullLabsUC := lab.NewListFullLabs(patientRepo, labReportRepo)
 	labReportHandler := handlers.NewLabsHandler(
 		createLabReportUC,
 		listLabsUC,

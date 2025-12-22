@@ -59,7 +59,7 @@ func AccessLog(l *slog.Logger) gin.HandlerFunc {
 		}
 
 		if u, ok := CurrentUser(c); ok && u != nil {
-			attrs = append(attrs, slog.String("user_id", u.ID.String()))
+			attrs = append(attrs, slog.String("user_id", u.ID))
 		}
 
 		if len(c.Errors) > 0 {

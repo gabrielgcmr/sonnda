@@ -7,10 +7,10 @@ import (
 	"fmt"
 
 	userssqlc "sonnda-api/internal/adapters/outbound/database/sqlc/users"
-	"sonnda-api/internal/core/domain"
+
+	"sonnda-api/internal/core/domain/identity"
 	"sonnda-api/internal/core/ports/repositories"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -31,7 +31,7 @@ func NewUserRepository(client *Client) *UserRepository {
 func (r *UserRepository) FindByAuthIdentity(
 	ctx context.Context,
 	provider, subject string,
-) (*domain.User, error) {
+) (*identity.User, error) {
 	dbUser, err := r.queries.FindUserByAuthIdentity(ctx, userssqlc.FindUserByAuthIdentityParams{
 		AuthProvider: provider,
 		AuthSubject:  subject,
@@ -47,7 +47,7 @@ func (r *UserRepository) FindByAuthIdentity(
 	return dbUserToDomain(dbUser)
 }
 
-func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*domain.User, error) {
+func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*identity.User, error) {
 	dbUser, err := r.queries.FindUserByEmail(ctx, email)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -59,7 +59,7 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*domain
 	return dbUserToDomain(dbUser)
 }
 
-func (r *UserRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain.User, error) {
+func (r *UserRepository) FindByID(ctx context.Context, id string) (*identity.User, error) {
 	dbUser, err := r.queries.FindUserByID(ctx, ToPgUUID(id))
 	if err != nil {
 		return nil, err
@@ -70,7 +70,7 @@ func (r *UserRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain.Us
 
 func (r *UserRepository) Create(
 	ctx context.Context,
-	u *domain.User,
+	u *identity.User,
 ) error {
 	if u == nil {
 		return errors.New("user is nil")
@@ -98,9 +98,9 @@ func (r *UserRepository) Create(
 
 func (r *UserRepository) UpdateAuthIdentity(
 	ctx context.Context,
-	id uuid.UUID,
+	id string,
 	provider, subject string,
-) (*domain.User, error) {
+) (*identity.User, error) {
 	dbUser, err := r.queries.UpdateUserAuthIdentity(ctx, userssqlc.UpdateUserAuthIdentityParams{
 		AuthProvider: provider,
 		AuthSubject:  subject,
@@ -113,7 +113,7 @@ func (r *UserRepository) UpdateAuthIdentity(
 	return dbUserToDomain(dbUser)
 }
 
-func dbUserToDomain(u userssqlc.AppUser) (*domain.User, error) {
+func dbUserToDomain(u userssqlc.AppUser) (*identity.User, error) {
 	if !u.ID.Valid {
 		return nil, fmt.Errorf("user id is null")
 	}
@@ -127,12 +127,12 @@ func dbUserToDomain(u userssqlc.AppUser) (*domain.User, error) {
 		return nil, err
 	}
 
-	return &domain.User{
+	return &identity.User{
 		ID:           FromPgUUID(u.ID),
 		AuthProvider: u.AuthProvider,
 		AuthSubject:  u.AuthSubject,
 		Email:        u.Email,
-		Role:         domain.Role(u.Role),
+		Role:         identity.Role(u.Role),
 		CreatedAt:    createdAt,
 		UpdatedAt:    updatedAt,
 	}, nil

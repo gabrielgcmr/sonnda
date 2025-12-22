@@ -1,11 +1,11 @@
-package labs
+package lab
 
 import (
 	"context"
-	"sonnda-api/internal/core/domain"
-	"sonnda-api/internal/core/ports/repositories"
 
-	"github.com/google/uuid"
+	"sonnda-api/internal/core/domain/medicalRecord/exam/lab"
+	"sonnda-api/internal/core/domain/patient"
+	"sonnda-api/internal/core/ports/repositories"
 )
 
 type ListFullLabsUseCase struct {
@@ -25,22 +25,22 @@ func NewListFullLabs(
 
 func (uc *ListFullLabsUseCase) Execute(
 	ctx context.Context,
-	patientID uuid.UUID,
+	patientID string,
 	limit, offset int,
 ) ([]*LabReportOutput, error) {
-	if patientID == uuid.Nil {
-		return nil, domain.ErrInvalidInput
+	if patientID == "" {
+		return nil, lab.ErrInvalidInput
 	}
 
-	patient, err := uc.patientRepo.FindByID(ctx, patientID)
+	p, err := uc.patientRepo.FindByID(ctx, patientID)
 	if err != nil {
 		return nil, err
 	}
-	if patient == nil {
-		return nil, domain.ErrPatientNotFound
+	if p == nil {
+		return nil, patient.ErrPatientNotFound
 	}
 
-	headers, err := uc.labsRepo.FindByPatientID(ctx, patient.ID, limit, offset)
+	headers, err := uc.labsRepo.FindByPatientID(ctx, p.ID, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -65,10 +65,10 @@ func (uc *ListFullLabsUseCase) Execute(
 	return out, nil
 }
 
-func mapDomainReportToOutput(report *domain.LabReport) *LabReportOutput {
+func mapDomainReportToOutput(report *lab.LabReport) *LabReportOutput {
 	output := &LabReportOutput{
-		ID:                report.ID.String(),
-		PatientID:         report.PatientID.String(),
+		ID:                report.ID,
+		PatientID:         report.PatientID,
 		PatientName:       report.PatientName,
 		PatientDOB:        report.PatientDOB,
 		LabName:           report.LabName,
@@ -77,7 +77,7 @@ func mapDomainReportToOutput(report *domain.LabReport) *LabReportOutput {
 		RequestingDoctor:  report.RequestingDoctor,
 		TechnicalManager:  report.TechnicalManager,
 		ReportDate:        report.ReportDate,
-		UploadedByUserID:  report.UploadedByUserID.String(),
+		UploadedByUserID:  report.UploadedByUserID,
 		Fingerprint:       report.Fingerprint,
 		CreatedAt:         report.CreatedAt,
 		UpdatedAt:         report.UpdatedAt,
@@ -85,7 +85,7 @@ func mapDomainReportToOutput(report *domain.LabReport) *LabReportOutput {
 
 	for _, tr := range report.TestResults {
 		testOutput := TestResultOutput{
-			ID:          tr.ID.String(),
+			ID:          tr.ID,
 			TestName:    tr.TestName,
 			Material:    tr.Material,
 			Method:      tr.Method,
@@ -95,7 +95,7 @@ func mapDomainReportToOutput(report *domain.LabReport) *LabReportOutput {
 
 		for _, item := range tr.Items {
 			testOutput.Items = append(testOutput.Items, TestItemOutput{
-				ID:            item.ID.String(),
+				ID:            item.ID,
 				ParameterName: item.ParameterName,
 				ResultValue:   item.ResultValue,
 				ResultUnit:    item.ResultUnit,

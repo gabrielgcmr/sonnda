@@ -1,4 +1,4 @@
-package domain
+package demographics
 
 import (
 	"errors"

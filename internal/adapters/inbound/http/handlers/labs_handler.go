@@ -14,21 +14,22 @@ import (
 
 	"sonnda-api/internal/adapters/inbound/http/middleware"
 	"sonnda-api/internal/core/ports/services"
-	"sonnda-api/internal/core/usecases/labs"
+	"sonnda-api/internal/core/usecases/medicalRecord/lab"
+
 	applog "sonnda-api/internal/logger"
 )
 
 type LabsHandler struct {
-	createUC     *labs.ExtractLabsUseCase
-	listLabs     *labs.ListLabsUseCase
-	listFullLabs *labs.ListFullLabsUseCase
+	createUC     *lab.ExtractLabsUseCase
+	listLabs     *lab.ListLabsUseCase
+	listFullLabs *lab.ListFullLabsUseCase
 	storage      services.StorageService
 }
 
 func NewLabsHandler(
-	createUC *labs.ExtractLabsUseCase,
-	listLabs *labs.ListLabsUseCase,
-	listFullLabs *labs.ListFullLabsUseCase,
+	createUC *lab.ExtractLabsUseCase,
+	listLabs *lab.ListLabsUseCase,
+	listFullLabs *lab.ListFullLabsUseCase,
 	storageClient services.StorageService,
 ) *LabsHandler {
 	return &LabsHandler{
@@ -116,7 +117,7 @@ func (h *LabsHandler) UploadAndProcessLabs(c *gin.Context) {
 
 	output, err := h.createUC.Execute(
 		c.Request.Context(),
-		labs.CreateFromDocumentInput{
+		lab.CreateFromDocumentInput{
 			PatientID:        patientID,
 			DocumentURI:      documentURI,
 			MimeType:         mimeType,

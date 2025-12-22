@@ -5,11 +5,11 @@ import (
 	"context"
 	"errors"
 	labssqlc "sonnda-api/internal/adapters/outbound/database/sqlc/labs"
-	"sonnda-api/internal/core/domain"
+
+	"sonnda-api/internal/core/domain/medicalRecord/exam/lab"
 	"sonnda-api/internal/core/ports/repositories"
 	"strings"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -32,7 +32,7 @@ func NewLabsRepository(client *Client) repositories.LabsRepository {
    CREATE
    ============================================================ */
 
-func (r *LabsRepository) Create(ctx context.Context, report *domain.LabReport) (err error) {
+func (r *LabsRepository) Create(ctx context.Context, report *lab.LabReport) (err error) {
 	tx, err := r.client.BeginTx(ctx)
 	if err != nil {
 		return err
@@ -127,7 +127,7 @@ func (r *LabsRepository) Create(ctx context.Context, report *domain.LabReport) (
    ============================================================ */
 
 // FindByID busca um laudo completo, incluindo testes e itens.
-func (r *LabsRepository) FindByID(ctx context.Context, reportID uuid.UUID) (*domain.LabReport, error) {
+func (r *LabsRepository) FindByID(ctx context.Context, reportID string) (*lab.LabReport, error) {
 	q := labssqlc.New(r.client.Pool())
 
 	// 1) lab_reports
@@ -163,10 +163,10 @@ func (r *LabsRepository) FindByID(ctx context.Context, reportID uuid.UUID) (*dom
 		return nil, err
 	}
 
-	lr.TestResults = make([]domain.LabResult, 0, len(dbResults))
+	lr.TestResults = make([]lab.LabResult, 0, len(dbResults))
 
 	for _, rrow := range dbResults {
-		tr := domain.LabResult{
+		tr := lab.LabResult{
 			ID:          FromPgUUID(rrow.ID),
 			LabReportID: lr.ID,
 			TestName:    rrow.TestName,
@@ -182,9 +182,9 @@ func (r *LabsRepository) FindByID(ctx context.Context, reportID uuid.UUID) (*dom
 			return nil, err
 		}
 
-		tr.Items = make([]domain.LabResultItem, 0, len(dbItems))
+		tr.Items = make([]lab.LabResultItem, 0, len(dbItems))
 		for _, irow := range dbItems {
-			item := domain.LabResultItem{
+			item := lab.LabResultItem{
 				ID:            FromPgUUID(irow.ID),
 				LabResultID:   tr.ID,
 				ParameterName: irow.ParameterName,
@@ -207,9 +207,9 @@ func (r *LabsRepository) FindByID(ctx context.Context, reportID uuid.UUID) (*dom
 
 // FindByPatientID retorna apenas os cabeçalhos dos laudos do paciente.
 func (r *LabsRepository) FindByPatientID(ctx context.Context,
-	patientID uuid.UUID,
+	patientID string,
 	limit, offset int,
-) ([]domain.LabReport, error) {
+) ([]lab.LabReport, error) {
 	const (
 		defaultLimit  = 100
 		defaultOffset = 0
@@ -233,7 +233,7 @@ func (r *LabsRepository) FindByPatientID(ctx context.Context,
 		return nil, err
 	}
 
-	out := make([]domain.LabReport, 0, len(rows))
+	out := make([]lab.LabReport, 0, len(rows))
 
 	for _, row := range rows {
 		createdAt, err := MustTime(row.CreatedAt)
@@ -245,7 +245,7 @@ func (r *LabsRepository) FindByPatientID(ctx context.Context,
 			return nil, err
 		}
 
-		lr := domain.LabReport{
+		lr := lab.LabReport{
 			ID:               FromPgUUID(row.ID),
 			PatientID:        FromPgUUID(row.PatientID),
 			PatientName:      FromText(row.PatientName),
@@ -267,7 +267,7 @@ func (r *LabsRepository) FindByPatientID(ctx context.Context,
    DELETE
    ============================================================ */
 
-func (r *LabsRepository) Delete(ctx context.Context, reportID uuid.UUID) error {
+func (r *LabsRepository) Delete(ctx context.Context, reportID string) error {
 	tx, err := r.client.BeginTx(ctx)
 	if err != nil {
 		return err
@@ -303,10 +303,10 @@ func (r *LabsRepository) Delete(ctx context.Context, reportID uuid.UUID) error {
 // (ex.: todas as creatininas) para um paciente.
 func (r *LabsRepository) ListItemsByPatientAndParameter(
 	ctx context.Context,
-	patientID uuid.UUID,
+	patientID string,
 	parameterName string,
 	limit, offset int,
-) ([]domain.LabResultItemTimeline, error) {
+) ([]lab.LabResultItemTimeline, error) {
 	if limit <= 0 {
 		limit = 50
 	}
@@ -314,7 +314,7 @@ func (r *LabsRepository) ListItemsByPatientAndParameter(
 		offset = 0
 	}
 	if strings.TrimSpace(parameterName) == "" {
-		return nil, domain.ErrInvalidInput
+		return nil, lab.ErrInvalidInput
 	}
 
 	q := labssqlc.New(r.client.Pool())
@@ -332,9 +332,9 @@ func (r *LabsRepository) ListItemsByPatientAndParameter(
 		return nil, err
 	}
 
-	out := make([]domain.LabResultItemTimeline, 0, len(rows))
+	out := make([]lab.LabResultItemTimeline, 0, len(rows))
 	for _, row := range rows {
-		item := domain.LabResultItemTimeline{
+		item := lab.LabResultItemTimeline{
 			ReportID:      FromPgUUID(row.ReportID),
 			LabResultID:   FromPgUUID(row.LabResultID),
 			ItemID:        FromPgUUID(row.ItemID),
@@ -358,7 +358,7 @@ func (r *LabsRepository) ListItemsByPatientAndParameter(
 // Verifica se já existe um laudo com a mesma assinatura
 func (r *LabsRepository) ExistsBySignature(
 	ctx context.Context,
-	patientID uuid.UUID,
+	patientID string,
 	fingerprint string,
 ) (bool, error) {
 	q := labssqlc.New(r.client.Pool())

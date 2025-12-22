@@ -1,10 +1,6 @@
-package domain
+package identity
 
-import (
-	"time"
-
-	"github.com/google/uuid"
-)
+import "time"
 
 type Role string
 
@@ -16,14 +12,13 @@ const (
 )
 
 type User struct {
-	ID           uuid.UUID `json:"id"`
-	AuthProvider string    `json:"auth_provider"`
-	AuthSubject  string    `json:"auth_subject"`
-	Email        string    `json:"email"`
-	Role         Role      `json:"role"`
-
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID           string
+	AuthProvider string
+	AuthSubject  string
+	Email        string
+	Role         Role
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
 }
 
 func (u *User) IsDoctor() bool { return u.Role == RoleDoctor }
@@ -32,7 +27,6 @@ func (u *User) IsAdmin() bool  { return u.Role == RoleAdmin }
 func NewUser(
 	authProvider, authSubject, email string,
 	role Role,
-	ubsID *string,
 ) (*User, error) {
 	if authProvider == "" {
 		return nil, ErrInvalidAuthProvider

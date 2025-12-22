@@ -3,19 +3,19 @@ package patient
 import (
 	"context"
 
-	"sonnda-api/internal/core/domain"
+	"sonnda-api/internal/core/domain/demographics"
+	"sonnda-api/internal/core/domain/identity"
+	"sonnda-api/internal/core/domain/patient"
 	"sonnda-api/internal/core/ports/repositories"
 	"sonnda-api/internal/core/ports/services"
-
-	"github.com/google/uuid"
 )
 
 type PatientChanges struct {
-	FullName  *string        `json:"full_name,omitempty"`
-	Phone     *string        `json:"phone,omitempty"`
-	AvatarURL *string        `json:"avatar_url,omitempty"`
-	Gender    *domain.Gender `json:"gender,omitempty"`
-	Race      *domain.Race   `json:"race,omitempty"`
+	FullName  *string              `json:"full_name,omitempty"`
+	Phone     *string              `json:"phone,omitempty"`
+	AvatarURL *string              `json:"avatar_url,omitempty"`
+	Gender    *demographics.Gender `json:"gender,omitempty"`
+	Race      *demographics.Race   `json:"race,omitempty"`
 	// Se um dia você quiser permitir corrigir CNS:
 	CNS *string `json:"cns,omitempty"`
 }
@@ -36,26 +36,26 @@ func NewUpdatePatient(
 
 func (uc *UpdatePatientUseCase) ExecuteByCPF(
 	ctx context.Context,
-	currentUser *domain.User,
+	currentUser *identity.User,
 	cpf string,
 	input PatientChanges,
-) (*domain.Patient, error) {
+) (*patient.Patient, error) {
 	// 1) Busca paciente
-	patient, err := uc.repo.FindByCPF(ctx, cpf)
+	p, err := uc.repo.FindByCPF(ctx, cpf)
 	if err != nil {
 		return nil, err
 	}
-	if patient == nil {
-		return nil, domain.ErrPatientNotFound
+	if p == nil {
+		return nil, patient.ErrPatientNotFound
 	}
 
 	//2) Verifica autorização
-	if !uc.authorization.CanEditPatient(ctx, currentUser, patient) {
-		return nil, domain.ErrForbidden
+	if !uc.authorization.CanEditPatient(ctx, currentUser, p) {
+		return nil, identity.ErrAuthorizationForbidden
 	}
 
 	//3) Aplica mudanças de dominio
-	patient.ApplyUpdate(
+	p.ApplyUpdate(
 		input.FullName,
 		input.Phone,
 		input.AvatarURL,
@@ -65,35 +65,35 @@ func (uc *UpdatePatientUseCase) ExecuteByCPF(
 	)
 
 	// 4) Persiste
-	if err := uc.repo.Update(ctx, patient); err != nil {
+	if err := uc.repo.Update(ctx, p); err != nil {
 		return nil, err
 	}
 
-	return patient, nil
+	return p, nil
 }
 
 func (uc *UpdatePatientUseCase) ExecuteByID(
 	ctx context.Context,
-	currentUser *domain.User,
-	id uuid.UUID,
+	currentUser *identity.User,
+	id string,
 	input PatientChanges,
-) (*domain.Patient, error) {
+) (*patient.Patient, error) {
 	// 1) Busca paciente
-	patient, err := uc.repo.FindByID(ctx, id)
+	p, err := uc.repo.FindByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-	if patient == nil {
-		return nil, domain.ErrPatientNotFound
+	if p == nil {
+		return nil, patient.ErrPatientNotFound
 	}
 
 	//2) Verifica autorização
-	if !uc.authorization.CanEditPatient(ctx, currentUser, patient) {
-		return nil, domain.ErrForbidden
+	if !uc.authorization.CanEditPatient(ctx, currentUser, p) {
+		return nil, identity.ErrAuthorizationForbidden
 	}
 
 	//3) Aplica mudanças de dominio
-	patient.ApplyUpdate(
+	p.ApplyUpdate(
 		input.FullName,
 		input.Phone,
 		input.AvatarURL,
@@ -103,9 +103,9 @@ func (uc *UpdatePatientUseCase) ExecuteByID(
 	)
 
 	// 4) Persiste
-	if err := uc.repo.Update(ctx, patient); err != nil {
+	if err := uc.repo.Update(ctx, p); err != nil {
 		return nil, err
 	}
 
-	return patient, nil
+	return p, nil
 }

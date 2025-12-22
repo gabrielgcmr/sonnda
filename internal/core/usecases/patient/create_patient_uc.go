@@ -4,27 +4,26 @@ import (
 	"context"
 	"time"
 
-	"sonnda-api/internal/core/domain"
+	"sonnda-api/internal/core/domain/demographics"
+	"sonnda-api/internal/core/domain/patient"
 	"sonnda-api/internal/core/ports/repositories"
-
-	"github.com/google/uuid"
 )
 
 // vindo do HTTP (NÃO tem AppUserID)
 type CreatePatientRequest struct {
-	CPF       string        `json:"cpf"`
-	CNS       *string       `json:"cns,omitempty"`
-	FullName  string        `json:"full_name"`
-	BirthDate time.Time     `json:"birth_date"`
-	Gender    domain.Gender `json:"gender"`
-	Race      domain.Race   `json:"race"`
-	Phone     *string       `json:"phone,omitempty"`
-	AvatarURL string        `json:"avatar_url"`
+	CPF       string              `json:"cpf"`
+	CNS       *string             `json:"cns,omitempty"`
+	FullName  string              `json:"full_name"`
+	BirthDate time.Time           `json:"birth_date"`
+	Gender    demographics.Gender `json:"gender"`
+	Race      demographics.Race   `json:"race"`
+	Phone     *string             `json:"phone,omitempty"`
+	AvatarURL string              `json:"avatar_url"`
 }
 
 // comando interno (tem AppUserID)
 type CreatePatientCommand struct {
-	AppUserID *uuid.UUID
+	AppUserID *string
 	CreatePatientRequest
 }
 
@@ -39,7 +38,7 @@ func NewCreatePatient(repo repositories.PatientRepository) *CreatePatientUseCase
 func (uc *CreatePatientUseCase) Execute(
 	ctx context.Context,
 	cmd CreatePatientCommand,
-) (*domain.Patient, error) {
+) (*patient.Patient, error) {
 
 	// 1. Verifica duplicidade
 	existing, err := uc.repo.FindByCPF(ctx, cmd.CPF)
@@ -47,11 +46,11 @@ func (uc *CreatePatientUseCase) Execute(
 		return nil, err
 	}
 	if existing != nil {
-		return nil, domain.ErrCPFAlreadyExists
+		return nil, patient.ErrCPFAlreadyExists
 	}
 
 	// 2. Cria entidade de domínio
-	patient, err := domain.NewPatient(
+	p, err := patient.NewPatient(
 		cmd.AppUserID,
 		cmd.CPF,
 		cmd.CNS,
@@ -67,10 +66,10 @@ func (uc *CreatePatientUseCase) Execute(
 	}
 
 	// 4. Persiste
-	if err := uc.repo.Create(ctx, patient); err != nil {
+	if err := uc.repo.Create(ctx, p); err != nil {
 		return nil, err
 	}
 
 	// 5. Retorna output
-	return patient, nil
+	return p, nil
 }

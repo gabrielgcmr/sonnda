@@ -1,17 +1,13 @@
-package labs
+package lab
 
-import (
-	"time"
-
-	"github.com/google/uuid"
-)
+import "time"
 
 // CreateFromDocumentInput é o input do use case
 type CreateFromDocumentInput struct {
-	PatientID        uuid.UUID
+	PatientID        string
 	DocumentURI      string
 	MimeType         string
-	UploadedByUserID uuid.UUID
+	UploadedByUserID string
 }
 
 // LabReportOutput é o output do use case

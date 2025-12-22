@@ -1,4 +1,4 @@
-package labs
+package lab
 
 import (
 	"context"
@@ -8,11 +8,9 @@ import (
 	"sort"
 	"time"
 
-	"sonnda-api/internal/core/domain"
+	"sonnda-api/internal/core/domain/medicalRecord/exam/lab"
 	"sonnda-api/internal/core/ports/repositories"
 	"sonnda-api/internal/core/ports/services"
-
-	"github.com/google/uuid"
 )
 
 type ExtractLabsUseCase struct {
@@ -46,7 +44,7 @@ func (uc *ExtractLabsUseCase) Execute(
 	// 2. Extrai dados do documento via Document AI
 	extracted, err := uc.extractor.ExtractLabReport(ctx, input.DocumentURI, input.MimeType)
 	if err != nil {
-		return nil, domain.ErrDocumentProcessing
+		return nil, lab.ErrDocumentProcessing
 	}
 
 	// 3. Converte ExtractedLabReport -> Domain Entity
@@ -64,7 +62,7 @@ func (uc *ExtractLabsUseCase) Execute(
 		return nil, err
 	}
 	if exists {
-		return nil, domain.ErrLabReportAlreadyExists
+		return nil, lab.ErrLabReportAlreadyExists
 	}
 
 	// 5. Persiste no banco
@@ -78,11 +76,11 @@ func (uc *ExtractLabsUseCase) Execute(
 }
 
 func (uc *ExtractLabsUseCase) validate(input CreateFromDocumentInput) error {
-	if input.PatientID == uuid.Nil {
-		return domain.ErrInvalidInput
+	if input.PatientID == "" {
+		return lab.ErrInvalidInput
 	}
 	if input.DocumentURI == "" {
-		return domain.ErrInvalidDocument
+		return lab.ErrInvalidDocument
 	}
 
 	validMimeTypes := []string{"application/pdf", "image/jpeg", "image/png"}
@@ -94,20 +92,20 @@ func (uc *ExtractLabsUseCase) validate(input CreateFromDocumentInput) error {
 		}
 	}
 	if !isValid {
-		return domain.ErrInvalidDocument
+		return lab.ErrInvalidDocument
 	}
 
 	return nil
 }
 
 func (uc *ExtractLabsUseCase) mapExtractedToDomain(
-	patientID uuid.UUID,
-	uploadedByUserID uuid.UUID,
+	patientID string,
+	uploadedByUserID string,
 	extracted *services.ExtractedLabReport,
-) (*domain.LabReport, error) {
+) (*lab.LabReport, error) {
 	now := time.Now()
 
-	report := &domain.LabReport{
+	report := &lab.LabReport{
 		PatientID:         patientID,
 		PatientName:       extracted.PatientName,
 		LabName:           extracted.LabName,
@@ -135,7 +133,7 @@ func (uc *ExtractLabsUseCase) mapExtractedToDomain(
 
 	// Mapeia testes
 	for _, et := range extracted.Tests {
-		testResult := domain.LabResult{
+		testResult := lab.LabResult{
 			TestName: et.TestName,
 			Material: et.Material,
 			Method:   et.Method,
@@ -155,7 +153,7 @@ func (uc *ExtractLabsUseCase) mapExtractedToDomain(
 
 		// Mapeia itens
 		for _, ei := range et.Items {
-			item := domain.LabResultItem{
+			item := lab.LabResultItem{
 				ParameterName: ei.ParameterName,
 				ResultValue:   ei.ResultValue,
 				ResultUnit:    ei.ResultUnit,
@@ -171,7 +169,7 @@ func (uc *ExtractLabsUseCase) mapExtractedToDomain(
 }
 
 // Gera a assinatura do laudo com base nos dados chave
-func generateLabFingerprint(patientID uuid.UUID, labReport *domain.LabReport) string {
+func generateLabFingerprint(patientID string, labReport *lab.LabReport) string {
 	var parts []string
 
 	for _, tr := range labReport.TestResults {
@@ -209,11 +207,11 @@ func generateLabFingerprint(patientID uuid.UUID, labReport *domain.LabReport) st
 
 }
 
-func (uc *ExtractLabsUseCase) toOutput(report *domain.LabReport) *LabReportOutput {
+func (uc *ExtractLabsUseCase) toOutput(report *lab.LabReport) *LabReportOutput {
 
 	output := &LabReportOutput{
-		ID:                report.ID.String(),
-		PatientID:         report.PatientID.String(),
+		ID:                report.ID,
+		PatientID:         report.PatientID,
 		PatientName:       report.PatientName,
 		PatientDOB:        report.PatientDOB,
 		LabName:           report.LabName,
@@ -222,14 +220,14 @@ func (uc *ExtractLabsUseCase) toOutput(report *domain.LabReport) *LabReportOutpu
 		RequestingDoctor:  report.RequestingDoctor,
 		TechnicalManager:  report.TechnicalManager,
 		ReportDate:        report.ReportDate,
-		UploadedByUserID:  report.UploadedByUserID.String(),
+		UploadedByUserID:  report.UploadedByUserID,
 		CreatedAt:         report.CreatedAt,
 		UpdatedAt:         report.UpdatedAt,
 	}
 
 	for _, tr := range report.TestResults {
 		testOutput := TestResultOutput{
-			ID:          tr.ID.String(),
+			ID:          tr.ID,
 			TestName:    tr.TestName,
 			Material:    tr.Material,
 			Method:      tr.Method,
@@ -239,7 +237,7 @@ func (uc *ExtractLabsUseCase) toOutput(report *domain.LabReport) *LabReportOutpu
 
 		for _, item := range tr.Items {
 			testOutput.Items = append(testOutput.Items, TestItemOutput{
-				ID:            item.ID.String(),
+				ID:            item.ID,
 				ParameterName: item.ParameterName,
 				ResultValue:   item.ResultValue,
 				ResultUnit:    item.ResultUnit,

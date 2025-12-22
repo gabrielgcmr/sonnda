@@ -6,10 +6,12 @@ import (
 	"fmt"
 
 	patientssqlc "sonnda-api/internal/adapters/outbound/database/sqlc/patients"
-	"sonnda-api/internal/core/domain"
+
+	"sonnda-api/internal/core/domain/demographics"
+	"sonnda-api/internal/core/domain/patient"
+
 	"sonnda-api/internal/core/ports/repositories"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -28,7 +30,7 @@ func NewPatientRepository(client *Client) repositories.PatientRepository {
 	}
 }
 
-func (r *PatientRepository) Create(ctx context.Context, p *domain.Patient) error {
+func (r *PatientRepository) Create(ctx context.Context, p *patient.Patient) error {
 	if p == nil {
 		return errors.New("patient is nil")
 	}
@@ -59,7 +61,7 @@ func (r *PatientRepository) Create(ctx context.Context, p *domain.Patient) error
 }
 
 // Update atualiza os dados do paciente.
-func (r *PatientRepository) Update(ctx context.Context, p *domain.Patient) error {
+func (r *PatientRepository) Update(ctx context.Context, p *patient.Patient) error {
 	if p == nil {
 		return errors.New("patient is nil")
 	}
@@ -90,13 +92,13 @@ func (r *PatientRepository) Update(ctx context.Context, p *domain.Patient) error
 }
 
 // Delete remove um paciente.
-func (r *PatientRepository) Delete(ctx context.Context, id uuid.UUID) error {
+func (r *PatientRepository) Delete(ctx context.Context, id string) error {
 	_, err := r.queries.DeletePatient(ctx, ToPgUUID(id))
 	return err
 }
 
 // Busca um paciente pelo user ID.
-func (r *PatientRepository) FindByUserID(ctx context.Context, userID uuid.UUID) (*domain.Patient, error) {
+func (r *PatientRepository) FindByUserID(ctx context.Context, userID string) (*patient.Patient, error) {
 	dbPatient, err := r.queries.FindPatientByUserID(ctx, ToPgUUID(userID))
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -108,7 +110,7 @@ func (r *PatientRepository) FindByUserID(ctx context.Context, userID uuid.UUID) 
 }
 
 // FindByCPF busca um paciente pelo CPF.
-func (r *PatientRepository) FindByCPF(ctx context.Context, cpf string) (*domain.Patient, error) {
+func (r *PatientRepository) FindByCPF(ctx context.Context, cpf string) (*patient.Patient, error) {
 	dbPatient, err := r.queries.FindPatientByCPF(ctx, cpf)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -119,7 +121,7 @@ func (r *PatientRepository) FindByCPF(ctx context.Context, cpf string) (*domain.
 	return dbPatientToDomain(dbPatient)
 }
 
-func (r *PatientRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain.Patient, error) {
+func (r *PatientRepository) FindByID(ctx context.Context, id string) (*patient.Patient, error) {
 	dbPatient, err := r.queries.FindPatientByID(ctx, ToPgUUID(id))
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -131,7 +133,7 @@ func (r *PatientRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain
 }
 
 // List retorna pacientes paginados.
-func (r *PatientRepository) List(ctx context.Context, limit, offset int) ([]domain.Patient, error) {
+func (r *PatientRepository) List(ctx context.Context, limit, offset int) ([]patient.Patient, error) {
 	rows, err := r.queries.ListPatients(ctx, patientssqlc.ListPatientsParams{
 		Limit:  int32(limit),
 		Offset: int32(offset),
@@ -140,7 +142,7 @@ func (r *PatientRepository) List(ctx context.Context, limit, offset int) ([]doma
 		return nil, err
 	}
 
-	out := make([]domain.Patient, 0, len(rows))
+	out := make([]patient.Patient, 0, len(rows))
 	for _, row := range rows {
 		patient, err := dbPatientToDomain(row)
 		if err != nil {
@@ -152,7 +154,7 @@ func (r *PatientRepository) List(ctx context.Context, limit, offset int) ([]doma
 	return out, nil
 }
 
-func dbPatientToDomain(p patientssqlc.Patient) (*domain.Patient, error) {
+func dbPatientToDomain(p patientssqlc.Patient) (*patient.Patient, error) {
 	if !p.ID.Valid {
 		return nil, fmt.Errorf("patient id is null")
 	}
@@ -171,15 +173,15 @@ func dbPatientToDomain(p patientssqlc.Patient) (*domain.Patient, error) {
 
 	birthDate := p.BirthDate.Time
 
-	return &domain.Patient{
+	return &patient.Patient{
 		ID:        FromPgUUID(p.ID),
 		AppUserID: FromPgUUIDPtr(p.AppUserID),
 		CPF:       p.Cpf,
 		CNS:       FromText(p.Cns),
 		FullName:  p.FullName,
 		BirthDate: birthDate,
-		Gender:    domain.Gender(p.Gender),
-		Race:      domain.Race(p.Race),
+		Gender:    demographics.Gender(p.Gender),
+		Race:      demographics.Race(p.Race),
 		AvatarURL: p.AvatarUrl,
 		Phone:     FromText(p.Phone),
 		CreatedAt: createdAt,

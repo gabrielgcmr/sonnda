@@ -1,6 +1,6 @@
 CREATE TABLE patients (
-    id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    app_user_id  uuid REFERENCES app_users(id),
+    id           TEXT PRIMARY KEY,
+    app_user_id  text REFERENCES app_users(id),
     cpf          text NOT NULL,
     cns          text,
     full_name    text NOT NULL,

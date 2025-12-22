@@ -2,10 +2,10 @@ package patient
 
 import (
 	"context"
-	"sonnda-api/internal/core/domain"
-	"sonnda-api/internal/core/ports/repositories"
 
-	"github.com/google/uuid"
+	"sonnda-api/internal/core/domain/identity"
+	"sonnda-api/internal/core/domain/patient"
+	"sonnda-api/internal/core/ports/repositories"
 )
 
 type GetPatientUseCase struct {
@@ -16,52 +16,52 @@ func NewGetPatient(repo repositories.PatientRepository) *GetPatientUseCase {
 	return &GetPatientUseCase{repo: repo}
 }
 
-func (uc *GetPatientUseCase) ExecuteByCPF(ctx context.Context, cpf string) (*domain.Patient, error) {
-	patient, err := uc.repo.FindByCPF(ctx, cpf)
+func (uc *GetPatientUseCase) ExecuteByCPF(ctx context.Context, cpf string) (*patient.Patient, error) {
+	p, err := uc.repo.FindByCPF(ctx, cpf)
 	if err != nil {
 		return nil, err
 	}
-	if patient == nil {
-		return nil, domain.ErrPatientNotFound
+	if p == nil {
+		return nil, patient.ErrPatientNotFound
 	}
 
-	return patient, nil
+	return p, nil
 }
 
-func (uc *GetPatientUseCase) ExecuteByID(ctx context.Context, id uuid.UUID) (*domain.Patient, error) {
-	patient, err := uc.repo.FindByID(ctx, id)
+func (uc *GetPatientUseCase) ExecuteByID(ctx context.Context, id string) (*patient.Patient, error) {
+	p, err := uc.repo.FindByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-	if patient == nil {
-		return nil, domain.ErrPatientNotFound
+	if p == nil {
+		return nil, patient.ErrPatientNotFound
 	}
 
-	return patient, nil
+	return p, nil
 }
 
-func (uc *GetPatientUseCase) ExecuteByUserID(ctx context.Context, userID uuid.UUID) (*domain.Patient, error) {
-	patient, err := uc.repo.FindByUserID(ctx, userID)
+func (uc *GetPatientUseCase) ExecuteByUserID(ctx context.Context, userID string) (*patient.Patient, error) {
+	p, err := uc.repo.FindByUserID(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
-	if patient == nil {
-		return nil, domain.ErrPatientNotFound
+	if p == nil {
+		return nil, patient.ErrPatientNotFound
 	}
 
-	return patient, nil
+	return p, nil
 }
 
 func (uc *GetPatientUseCase) ExecuteForUser(
 	ctx context.Context,
-	user *domain.User,
-) (*domain.Patient, error) {
+	user *identity.User,
+) (*patient.Patient, error) {
 
-	patient, err := uc.ExecuteByID(ctx, user.ID)
+	p, err := uc.ExecuteByID(ctx, user.ID)
 	if err != nil {
 		return nil, err
 	}
 
 	// converte domain.Patient -> PatientOutput como você já faz
-	return patient, nil
+	return p, nil
 }

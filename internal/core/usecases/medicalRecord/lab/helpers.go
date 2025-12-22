@@ -1,10 +1,10 @@
-package labs
+package lab
 
 import (
 	"strings"
 	"time"
 
-	"sonnda-api/internal/core/domain"
+	lab "sonnda-api/internal/core/domain/medicalRecord/exam/lab"
 )
 
 // Helpers de parsing de datas
@@ -23,7 +23,7 @@ func (uc *ExtractLabsUseCase) parseDate(s string) (time.Time, error) {
 		}
 	}
 
-	return time.Time{}, domain.ErrInvalidDateFormat
+	return time.Time{}, lab.ErrInvalidDateFormat
 }
 
 func (uc *ExtractLabsUseCase) parseDateTime(s string) (time.Time, error) {
@@ -58,7 +58,7 @@ func (uc *ExtractLabsUseCase) parseDateTime(s string) (time.Time, error) {
 
 func normalize(s string) string {
 	s = strings.TrimSpace(strings.ToUpper(s))
-	// aqui dá pra remover acentos se quiser ser mais agressivo
+	// aqui da pra remover acentos se quiser ser mais agressivo
 	// ex: usar norm.NFD + remover runas com categoria Mn
 	return s
 }
@@ -68,6 +68,6 @@ func normalizeValue(v *string) string {
 		return ""
 	}
 	s := strings.TrimSpace(*v)
-	// se quiser, limpa espaços, troca vírgula por ponto, etc.
+	// se quiser, limpa espacos, troca virgula por ponto, etc.
 	return s
 }

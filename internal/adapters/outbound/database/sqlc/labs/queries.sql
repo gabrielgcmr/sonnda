@@ -6,6 +6,7 @@
 
 -- name: CreateLabReport :one
 INSERT INTO lab_reports (
+    id,
     patient_id,
     patient_name,
     patient_dob,
@@ -21,7 +22,8 @@ INSERT INTO lab_reports (
 )
 VALUES (
     $1, $2, $3, $4, $5, $6,
-    $7, $8, $9, $10, $11, $12
+    $7, $8, $9, $10, $11, $12,
+    $13
 )
 RETURNING
     id,
@@ -42,6 +44,7 @@ RETURNING
 
 -- name: CreateLabResult :one
 INSERT INTO lab_results(
+    id,
     lab_report_id,
     test_name,
     material,
@@ -49,18 +52,19 @@ INSERT INTO lab_results(
     collected_at,
     release_at
 )
-VALUES ($1,$2,$3,$4,$5,$6)
+VALUES ($1,$2,$3,$4,$5,$6,$7)
 RETURNING id;
 
 -- name: CreateLabResultItem :one
 INSERT INTO lab_result_items (
+    id,
     lab_result_id,
     parameter_name,
     result_value,
     result_unit,
     reference_text
 )
-VALUES ($1,$2,$3,$4,$5)
+VALUES ($1,$2,$3,$4,$5,$6)
 RETURNING id;
 
 -- ============================================================

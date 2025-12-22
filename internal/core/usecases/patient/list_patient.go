@@ -2,7 +2,7 @@ package patient
 
 import (
 	"context"
-	"sonnda-api/internal/core/domain"
+	"sonnda-api/internal/core/domain/patient"
 	"sonnda-api/internal/core/ports/repositories"
 )
 
@@ -17,13 +17,13 @@ func NewListPatients(repo repositories.PatientRepository) *ListPatientsUseCase {
 func (uc *ListPatientsUseCase) Execute(
 	ctx context.Context,
 	limit, offset int,
-) ([]*domain.Patient, error) {
+) ([]*patient.Patient, error) {
 	patients, err := uc.repo.List(ctx, limit, offset)
 	if err != nil {
 		return nil, err
 	}
 
-	outputs := make([]*domain.Patient, len(patients))
+	outputs := make([]*patient.Patient, len(patients))
 	for i, p := range patients {
 		outputs[i] = &p
 	}

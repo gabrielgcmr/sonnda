@@ -3,7 +3,9 @@ package authorization
 import (
 	"context"
 
-	"sonnda-api/internal/core/domain"
+	"sonnda-api/internal/core/domain/identity"
+	"sonnda-api/internal/core/domain/medicalRecord/exam/lab"
+	"sonnda-api/internal/core/domain/patient"
 	"sonnda-api/internal/core/ports/services"
 )
 
@@ -24,15 +26,15 @@ func NewAuthorizationService() *SimpleAuthorizationService {
 
 func (s *SimpleAuthorizationService) CanCreateDoctor(
 	ctx context.Context,
-	actor *domain.User,
-	newUser *domain.User,
+	actor *identity.User,
+	newUser *identity.User,
 ) bool {
 	if actor == nil || newUser == nil {
 		return false
 	}
 
 	// 1) Só admins podem criar médicos
-	if actor.Role != domain.RoleAdmin {
+	if actor.Role != identity.RoleAdmin {
 		return false
 	}
 
@@ -45,13 +47,13 @@ func (s *SimpleAuthorizationService) CanCreateDoctor(
 	return true
 }
 
-func (s *SimpleAuthorizationService) CanCreatePatient(ctx context.Context, user *domain.User) bool {
+func (s *SimpleAuthorizationService) CanCreatePatient(ctx context.Context, user *identity.User) bool {
 	if user == nil {
 		return false
 	}
 
 	switch user.Role {
-	case domain.RoleAdmin, domain.RoleDoctor:
+	case identity.RoleAdmin, identity.RoleDoctor:
 		return true
 	default:
 		return false
@@ -60,45 +62,45 @@ func (s *SimpleAuthorizationService) CanCreatePatient(ctx context.Context, user 
 
 func (s *SimpleAuthorizationService) CanViewPatient(
 	ctx context.Context,
-	user *domain.User,
-	patient *domain.Patient,
+	user *identity.User,
+	patient *patient.Patient,
 ) bool {
 	if user == nil || patient == nil {
 		return false
 	}
 
 	// Admin vê tudo
-	if user.Role == domain.RoleAdmin {
+	if user.Role == identity.RoleAdmin {
 		return true
 	}
 
 	// Médicos — regra simples inicial: podem ver qualquer paciente.
 	// (depois você pode restringir a pacientes vinculados)
-	if user.Role == domain.RoleDoctor {
+	if user.Role == identity.RoleDoctor {
 		return true
 	}
 
 	// Paciente só vê a si mesmo (owner).
-	if user.Role == domain.RolePatient {
+	if user.Role == identity.RolePatient {
 		return patient.AppUserID != nil && *patient.AppUserID == user.ID
 	}
 
 	return false
 }
 
-func (s *SimpleAuthorizationService) CanEditPatient(ctx context.Context, user *domain.User, patient *domain.Patient) bool {
+func (s *SimpleAuthorizationService) CanEditPatient(ctx context.Context, user *identity.User, patient *patient.Patient) bool {
 	if user == nil || patient == nil {
 		return false
 	}
 
 	// Admin pode editar qualquer paciente.
-	if user.Role == domain.RoleAdmin {
+	if user.Role == identity.RoleAdmin {
 		return true
 	}
 
 	// Médico pode editar pacientes.
 	// (depois você pode checar vínculo médico↔paciente)
-	if user.Role == domain.RoleDoctor {
+	if user.Role == identity.RoleDoctor {
 		return true
 	}
 
@@ -112,25 +114,25 @@ func (s *SimpleAuthorizationService) CanEditPatient(ctx context.Context, user *d
 
 func (s *SimpleAuthorizationService) CanViewLabReport(
 	ctx context.Context,
-	user *domain.User,
-	report *domain.LabReport,
+	user *identity.User,
+	report *lab.LabReport,
 ) bool {
 	if user == nil || report == nil {
 		return false
 	}
 
 	// Admin vê tudo.
-	if user.Role == domain.RoleAdmin {
+	if user.Role == identity.RoleAdmin {
 		return true
 	}
 
 	// Médico vê qualquer laudo do paciente (regra simples).
-	if user.Role == domain.RoleDoctor {
+	if user.Role == identity.RoleDoctor {
 		return true
 	}
 
 	// Paciente vê laudos que pertencem a ele.
-	if user.Role == domain.RolePatient {
+	if user.Role == identity.RolePatient {
 		// aqui precisamos comparar o PatientID do laudo com o Patient ligado ao user.
 		// se você tiver um campo PatientID ligado a app_users, pode ajustar.
 		// exemplo simples: se o ID do paciente (PatientID) for igual ao User.ID
@@ -146,19 +148,19 @@ func (s *SimpleAuthorizationService) CanViewLabReport(
 	return false
 }
 
-func (s *SimpleAuthorizationService) CanCreateLabReportFromDocument(ctx context.Context, user *domain.User, patient *domain.Patient) bool {
+func (s *SimpleAuthorizationService) CanCreateLabReportFromDocument(ctx context.Context, user *identity.User, patient *patient.Patient) bool {
 	if user == nil || patient == nil {
 		return false
 	}
 
 	// Admin pode criar laudo para qualquer paciente.
-	if user.Role == domain.RoleAdmin {
+	if user.Role == identity.RoleAdmin {
 		return true
 	}
 
 	// Médico pode criar laudo para qualquer paciente (regra simples).
 	// Depois você pode restringir a pacientes vinculados.
-	if user.Role == domain.RoleDoctor {
+	if user.Role == identity.RoleDoctor {
 		return true
 	}
 

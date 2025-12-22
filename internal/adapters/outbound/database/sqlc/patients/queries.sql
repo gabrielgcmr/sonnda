@@ -5,6 +5,7 @@
 
 -- name: CreatePatient :one
 INSERT INTO patients (
+    id,
     app_user_id,
     cpf,
     cns,
@@ -15,7 +16,7 @@ INSERT INTO patients (
     phone,
     avatar_url
 )
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 RETURNING
     id,
     app_user_id,

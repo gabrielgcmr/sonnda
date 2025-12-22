@@ -1,5 +1,5 @@
 CREATE TABLE app_users (
-    id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    id            TEXT PRIMARY KEY,
     auth_provider text NOT NULL,
     auth_subject  text NOT NULL,
     email         text NOT NULL,

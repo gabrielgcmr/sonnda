@@ -2,13 +2,13 @@ package middleware
 
 import (
 	"net/http"
-	"sonnda-api/internal/core/domain"
+	"sonnda-api/internal/core/domain/identity"
 
 	"github.com/gin-gonic/gin"
 )
 
 // RequireRole retorna um middleware que verifica se o usuário tem a role necessária
-func RequireRole(allowedRoles ...domain.Role) gin.HandlerFunc {
+func RequireRole(allowedRoles ...identity.Role) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		user, ok := CurrentUser(c)
 		if !ok {
@@ -40,15 +40,15 @@ func RequireRole(allowedRoles ...domain.Role) gin.HandlerFunc {
 
 // RequireProfessional middleware específico para rotas de médicos
 func RequireProfessional() gin.HandlerFunc {
-	return RequireRole(domain.RoleDoctor, domain.RoleAdmin)
+	return RequireRole(identity.RoleDoctor, identity.RoleAdmin)
 }
 
 // RequirePatient middleware específico para rotas de pacientes
 func RequirePatient() gin.HandlerFunc {
-	return RequireRole(domain.RolePatient, domain.RoleAdmin)
+	return RequireRole(identity.RolePatient, identity.RoleAdmin)
 }
 
 // RequireAdmin middleware específico para rotas de administradores
 func RequireAdmin() gin.HandlerFunc {
-	return RequireRole(domain.RoleAdmin)
+	return RequireRole(identity.RoleAdmin)
 }

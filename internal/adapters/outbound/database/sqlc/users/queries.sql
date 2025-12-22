@@ -38,8 +38,8 @@ FROM app_users
 WHERE id = $1;
 
 -- name: CreateUser :one
-INSERT INTO app_users (auth_provider, auth_subject, email, role)
-VALUES ($1, $2, $3, $4)
+INSERT INTO app_users (id, auth_provider, auth_subject, email, role)
+VALUES ($1, $2, $3, $4, $5)
 RETURNING
     id,
     auth_provider,

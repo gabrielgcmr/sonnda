@@ -4,7 +4,8 @@ package middleware
 import (
 	"errors"
 	"net/http"
-	"sonnda-api/internal/core/domain"
+
+	"sonnda-api/internal/core/domain/identity"
 	"sonnda-api/internal/core/ports/repositories"
 	"sonnda-api/internal/core/ports/services"
 	"strings"
@@ -48,7 +49,7 @@ func (m *AuthMiddleware) Authenticate() gin.HandlerFunc {
 		}
 
 		// 2. Usa o AuthService (ex.: FirebaseAuthService)
-		identity, err := m.authService.VerifyToken(ctx.Request.Context(), token)
+		i, err := m.authService.VerifyToken(ctx.Request.Context(), token)
 		if err != nil {
 			ctx.JSON(http.StatusUnauthorized, gin.H{
 				"error":   "unauthorized",
@@ -57,13 +58,13 @@ func (m *AuthMiddleware) Authenticate() gin.HandlerFunc {
 			ctx.Abort()
 			return
 		}
-		ctx.Set(identityKey, identity)
+		ctx.Set(identityKey, i)
 
 		// 3. Carrega/cria o User da aplicação (tabela app_users) a partir da identidade do provider
 		user, err := m.userRepo.FindByAuthIdentity(
 			ctx.Request.Context(),
-			identity.Provider,
-			identity.Subject,
+			i.Provider,
+			i.Subject,
 		)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{
@@ -77,7 +78,7 @@ func (m *AuthMiddleware) Authenticate() gin.HandlerFunc {
 
 		if user == nil {
 			// tenta reaproveitar por email, caso o subject tenha mudado
-			existingByEmail, err := m.userRepo.FindByEmail(ctx.Request.Context(), identity.Email)
+			existingByEmail, err := m.userRepo.FindByEmail(ctx.Request.Context(), i.Email)
 			if err != nil {
 				ctx.JSON(http.StatusInternalServerError, gin.H{
 					"error":   "internal_error",
@@ -92,8 +93,8 @@ func (m *AuthMiddleware) Authenticate() gin.HandlerFunc {
 				user, err = m.userRepo.UpdateAuthIdentity(
 					ctx.Request.Context(),
 					existingByEmail.ID,
-					identity.Provider,
-					identity.Subject,
+					i.Provider,
+					i.Subject,
 				)
 				if err != nil {
 					ctx.JSON(http.StatusInternalServerError, gin.H{
@@ -105,12 +106,12 @@ func (m *AuthMiddleware) Authenticate() gin.HandlerFunc {
 					return
 				}
 			} else {
-				user = &domain.User{
-					ID:           uuid.New(),
-					AuthProvider: identity.Provider,
-					AuthSubject:  identity.Subject,
-					Email:        identity.Email,
-					Role:         domain.RolePatient,
+				user = &identity.User{
+					ID:           uuid.New().String(),
+					AuthProvider: i.Provider,
+					AuthSubject:  i.Subject,
+					Email:        i.Email,
+					Role:         identity.RolePatient,
 					CreatedAt:    time.Now(),
 					UpdatedAt:    time.Now(),
 				}
@@ -154,17 +155,17 @@ func Identity(c *gin.Context) (*services.Identity, bool) {
 	return id, ok
 }
 
-func CurrentUser(c *gin.Context) (*domain.User, bool) {
+func CurrentUser(c *gin.Context) (*identity.User, bool) {
 	user, exists := c.Get(currentUserKey)
 	if !exists {
 		return nil, false
 	}
 
-	u, ok := user.(*domain.User)
+	u, ok := user.(*identity.User)
 	return u, ok
 }
 
-func RequireUser(c *gin.Context) (*domain.User, bool) {
+func RequireUser(c *gin.Context) (*identity.User, bool) {
 	u, ok := CurrentUser(c)
 	if !ok || u == nil {
 		c.AbortWithStatusJSON(401, gin.H{"error": "unauthorized"})

@@ -1,12 +1,11 @@
-package labs
+package lab
 
 import (
 	"context"
 
-	"sonnda-api/internal/core/domain"
+	"sonnda-api/internal/core/domain/medicalRecord/exam/lab"
+	"sonnda-api/internal/core/domain/patient"
 	"sonnda-api/internal/core/ports/repositories"
-
-	"github.com/google/uuid"
 )
 
 type ListLabsUseCase struct {
@@ -26,22 +25,22 @@ func NewListLabs(
 
 func (uc *ListLabsUseCase) Execute(
 	ctx context.Context,
-	patientID uuid.UUID,
+	patientID string,
 	limit, offset int,
 ) ([]LabReportSummaryOutput, error) {
-	if patientID == uuid.Nil {
-		return nil, domain.ErrInvalidInput
+	if patientID == "" {
+		return nil, lab.ErrInvalidInput
 	}
 
-	patient, err := uc.patientRepo.FindByID(ctx, patientID)
+	p, err := uc.patientRepo.FindByID(ctx, patientID)
 	if err != nil {
 		return nil, err
 	}
-	if patient == nil {
-		return nil, domain.ErrPatientNotFound
+	if p == nil {
+		return nil, patient.ErrPatientNotFound
 	}
 
-	reports, err := uc.labsRepo.FindByPatientID(ctx, patient.ID, limit, offset)
+	reports, err := uc.labsRepo.FindByPatientID(ctx, p.ID, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -59,8 +58,8 @@ func (uc *ListLabsUseCase) Execute(
 		}
 
 		summary := LabReportSummaryOutput{
-			ID:         fullReport.ID.String(),
-			PatientID:  fullReport.PatientID.String(),
+			ID:         fullReport.ID,
+			PatientID:  fullReport.PatientID,
 			ReportDate: fullReport.ReportDate,
 			// vamos preencher SummaryTests abaixo
 		}

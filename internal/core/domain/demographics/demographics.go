@@ -1,4 +1,4 @@
-package domain
+package demographics
 
 type Gender string
 

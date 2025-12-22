@@ -3,7 +3,10 @@ package handlers
 import (
 	"log/slog"
 	"net/http"
-	"sonnda-api/internal/core/domain"
+	"sonnda-api/internal/core/domain/identity"
+	"sonnda-api/internal/core/domain/medicalRecord/exam/lab"
+	"sonnda-api/internal/core/domain/patient"
+
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -68,36 +71,36 @@ func RespondError(c *gin.Context, log *slog.Logger, status int, code string, err
 func RespondDomainError(c *gin.Context, log *slog.Logger, err error) {
 	switch err {
 	// auth
-	case domain.ErrInvalidAuthProvider, domain.ErrInvalidAuthSubject, domain.ErrInvalidEmail, domain.ErrInvalidRole:
+	case identity.ErrInvalidAuthProvider, identity.ErrInvalidAuthSubject, identity.ErrInvalidEmail, identity.ErrInvalidRole:
 		RespondError(c, log, http.StatusBadRequest, "invalid_auth", err)
-	case domain.ErrEmailAlreadyExists:
+	case identity.ErrEmailAlreadyExists:
 		RespondError(c, log, http.StatusConflict, "email_already_exists", err)
 
 	// authorization
-	case domain.ErrForbidden:
+	case identity.ErrAuthorizationForbidden:
 		RespondError(c, log, http.StatusForbidden, "forbidden", nil)
 
 	// patient
-	case domain.ErrPatientNotFound:
+	case patient.ErrPatientNotFound:
 		RespondError(c, log, http.StatusNotFound, "patient_not_found", nil)
-	case domain.ErrCPFAlreadyExists:
+	case patient.ErrCPFAlreadyExists:
 		RespondError(c, log, http.StatusConflict, "cpf_already_exists", nil)
-	case domain.ErrInvalidBirthDate:
+	case patient.ErrInvalidBirthDate:
 		RespondError(c, log, http.StatusBadRequest, "invalid_birth_date", err)
 
 	// labs
-	case domain.ErrLabReportNotFound:
+	case lab.ErrLabReportNotFound:
 		RespondError(c, log, http.StatusNotFound, "lab_report_not_found", nil)
-	case domain.ErrLabReportAlreadyExists:
+	case lab.ErrLabReportAlreadyExists:
 		RespondError(c, log, http.StatusConflict, "lab_report_already_exists", nil)
-	case domain.ErrInvalidDocument:
+	case lab.ErrInvalidDocument:
 		RespondError(c, log, http.StatusBadRequest, "invalid_document", err)
-	case domain.ErrInvalidInput, domain.ErrMissingIdentifiers:
+	case lab.ErrInvalidInput, lab.ErrMissingIdentifiers:
 		RespondError(c, log, http.StatusBadRequest, "invalid_input", err)
-	case domain.ErrDocumentProcessing:
+	case lab.ErrDocumentProcessing:
 		// serviço externo falhou -> 502
 		RespondError(c, log, http.StatusBadGateway, "document_processing_failed", err)
-	case domain.ErrInvalidDateFormat:
+	case lab.ErrInvalidDateFormat:
 		RespondError(c, log, http.StatusBadRequest, "invalid_date_format", err)
 
 	default:

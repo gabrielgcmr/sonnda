@@ -3,7 +3,9 @@ package services
 
 import (
 	"context"
-	"sonnda-api/internal/core/domain"
+	"sonnda-api/internal/core/domain/identity"
+	"sonnda-api/internal/core/domain/medicalRecord/exam/lab"
+	"sonnda-api/internal/core/domain/patient"
 )
 
 // AuthorizationService define as regras de autorização de alto nível.
@@ -11,14 +13,14 @@ import (
 // não coisas genéricas tipo "subject/object/action".
 type AuthorizationService interface {
 	//User
-	CanCreateDoctor(ctx context.Context, actor *domain.User, newUser *domain.User) bool
+	CanCreateDoctor(ctx context.Context, actor *identity.User, newUser *identity.User) bool
 
 	// Pacientes
-	CanViewPatient(ctx context.Context, user *domain.User, patient *domain.Patient) bool
-	CanEditPatient(ctx context.Context, user *domain.User, patient *domain.Patient) bool
-	CanCreatePatient(ctx context.Context, user *domain.User) bool
+	CanViewPatient(ctx context.Context, user *identity.User, patient *patient.Patient) bool
+	CanEditPatient(ctx context.Context, user *identity.User, patient *patient.Patient) bool
+	CanCreatePatient(ctx context.Context, user *identity.User) bool
 
 	// Laudos laboratoriais
-	CanViewLabReport(ctx context.Context, user *domain.User, report *domain.LabReport) bool
-	CanCreateLabReportFromDocument(ctx context.Context, user *domain.User, patient *domain.Patient) bool
+	CanViewLabReport(ctx context.Context, user *identity.User, report *lab.LabReport) bool
+	CanCreateLabReportFromDocument(ctx context.Context, user *identity.User, patient *patient.Patient) bool
 }
