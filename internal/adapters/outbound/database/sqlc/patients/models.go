@@ -9,8 +9,8 @@ import (
 )
 
 type Patient struct {
-	ID        pgtype.UUID        `json:"id"`
-	AppUserID pgtype.UUID        `json:"app_user_id"`
+	ID        string             `json:"id"`
+	AppUserID pgtype.Text        `json:"app_user_id"`
 	Cpf       string             `json:"cpf"`
 	Cns       pgtype.Text        `json:"cns"`
 	FullName  string             `json:"full_name"`

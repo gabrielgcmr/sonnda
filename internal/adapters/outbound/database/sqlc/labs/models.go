@@ -9,8 +9,8 @@ import (
 )
 
 type LabReport struct {
-	ID                pgtype.UUID        `json:"id"`
-	PatientID         pgtype.UUID        `json:"patient_id"`
+	ID                string             `json:"id"`
+	PatientID         string             `json:"patient_id"`
 	PatientName       pgtype.Text        `json:"patient_name"`
 	PatientDob        pgtype.Date        `json:"patient_dob"`
 	LabName           pgtype.Text        `json:"lab_name"`
@@ -20,15 +20,15 @@ type LabReport struct {
 	TechnicalManager  pgtype.Text        `json:"technical_manager"`
 	ReportDate        pgtype.Date        `json:"report_date"`
 	RawText           pgtype.Text        `json:"raw_text"`
-	UploadedByUserID  pgtype.UUID        `json:"uploaded_by_user_id"`
+	UploadedByUserID  pgtype.Text        `json:"uploaded_by_user_id"`
 	Fingerprint       pgtype.Text        `json:"fingerprint"`
 	CreatedAt         pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
 }
 
 type LabResult struct {
-	ID          pgtype.UUID        `json:"id"`
-	LabReportID pgtype.UUID        `json:"lab_report_id"`
+	ID          string             `json:"id"`
+	LabReportID string             `json:"lab_report_id"`
 	TestName    string             `json:"test_name"`
 	Material    pgtype.Text        `json:"material"`
 	Method      pgtype.Text        `json:"method"`
@@ -37,8 +37,8 @@ type LabResult struct {
 }
 
 type LabResultItem struct {
-	ID            pgtype.UUID `json:"id"`
-	LabResultID   pgtype.UUID `json:"lab_result_id"`
+	ID            string      `json:"id"`
+	LabResultID   string      `json:"lab_result_id"`
 	ParameterName string      `json:"parameter_name"`
 	ResultValue   pgtype.Text `json:"result_value"`
 	ResultUnit    pgtype.Text `json:"result_unit"`

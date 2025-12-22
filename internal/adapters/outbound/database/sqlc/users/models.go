@@ -9,7 +9,7 @@ import (
 )
 
 type AppUser struct {
-	ID           pgtype.UUID        `json:"id"`
+	ID           string             `json:"id"`
 	AuthProvider string             `json:"auth_provider"`
 	AuthSubject  string             `json:"auth_subject"`
 	Email        string             `json:"email"`

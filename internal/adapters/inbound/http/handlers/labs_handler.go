@@ -44,9 +44,9 @@ func (h *LabsHandler) ListLabs(c *gin.Context) {
 	log := applog.FromContext(c.Request.Context())
 
 	// 1) Paciente alvo (dono do laudo)
-
-	patientID, ok := parsePatientID(c, log)
-	if !ok {
+	patientID := c.Param("patientID")
+	if patientID == "" {
+		RespondError(c, log, http.StatusBadRequest, "missing_patient_id", nil)
 		return
 	}
 
@@ -70,8 +70,9 @@ func (h *LabsHandler) ListFullLabs(c *gin.Context) {
 	log := applog.FromContext(c.Request.Context())
 
 	// 1) Paciente alvo (dono do laudo)
-	patientID, ok := parsePatientID(c, log)
-	if !ok {
+	patientID := c.Param("patientID")
+	if patientID == "" {
+		RespondError(c, log, http.StatusBadRequest, "missing_patient_id", nil)
 		return
 	}
 
@@ -103,8 +104,9 @@ func (h *LabsHandler) UploadAndProcessLabs(c *gin.Context) {
 	}
 
 	// 1) Paciente alvo (dono do laudo)
-	patientID, ok := parsePatientID(c, log)
-	if !ok {
+	patientID := c.Param("patientID")
+	if patientID == "" {
+		RespondError(c, log, http.StatusBadRequest, "missing_patient_id", nil)
 		return
 	}
 
@@ -128,7 +130,7 @@ func (h *LabsHandler) UploadAndProcessLabs(c *gin.Context) {
 		return
 	}
 
-	log.Info("labs_report_created", slog.String("patient_id", patientID.String()))
+	log.Info("labs_report_created", slog.String("patient_id", patientID))
 	c.JSON(http.StatusCreated, output)
 }
 
@@ -204,25 +206,6 @@ func (h *LabsHandler) handleFileUpload(
 	}
 
 	return uri, contentType, nil
-}
-
-func parsePatientID(c *gin.Context, log *slog.Logger) (uuid.UUID, bool) {
-	idStr := c.Param("patientID")
-	if idStr == "" {
-		idStr = c.Param("id")
-	}
-	if idStr == "" {
-		RespondError(c, log, http.StatusBadRequest, "missing_patient_id", nil)
-		return uuid.Nil, false
-	}
-
-	id, err := uuid.Parse(idStr)
-	if err != nil {
-		RespondError(c, log, http.StatusBadRequest, "invalid_patient_id", err)
-		return uuid.Nil, false
-	}
-
-	return id, true
 }
 
 func parsePagination(c *gin.Context, log *slog.Logger, defaultLimit, defaultOffset int) (limit, offset int, ok bool) {

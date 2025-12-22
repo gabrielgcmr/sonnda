@@ -6,12 +6,11 @@ import (
 	"fmt"
 
 	patientssqlc "sonnda-api/internal/adapters/outbound/database/sqlc/patients"
-
 	"sonnda-api/internal/core/domain/demographics"
 	"sonnda-api/internal/core/domain/patient"
-
 	"sonnda-api/internal/core/ports/repositories"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -35,8 +34,13 @@ func (r *PatientRepository) Create(ctx context.Context, p *patient.Patient) erro
 		return errors.New("patient is nil")
 	}
 
+	if p.ID == "" {
+		p.ID = uuid.NewString()
+	}
+
 	dbPatient, err := r.queries.CreatePatient(ctx, patientssqlc.CreatePatientParams{
-		AppUserID: ToPgUUIDPtr(p.AppUserID),
+		ID:        p.ID,
+		AppUserID: ToText(p.AppUserID),
 		Cpf:       p.CPF,
 		Cns:       ToText(p.CNS),
 		FullName:  p.FullName,
@@ -67,7 +71,7 @@ func (r *PatientRepository) Update(ctx context.Context, p *patient.Patient) erro
 	}
 
 	dbPatient, err := r.queries.UpdatePatient(ctx, patientssqlc.UpdatePatientParams{
-		ID:        ToPgUUID(p.ID),
+		ID:        p.ID,
 		Cpf:       p.CPF,
 		Cns:       ToText(p.CNS),
 		FullName:  p.FullName,
@@ -93,13 +97,13 @@ func (r *PatientRepository) Update(ctx context.Context, p *patient.Patient) erro
 
 // Delete remove um paciente.
 func (r *PatientRepository) Delete(ctx context.Context, id string) error {
-	_, err := r.queries.DeletePatient(ctx, ToPgUUID(id))
+	_, err := r.queries.DeletePatient(ctx, id)
 	return err
 }
 
 // Busca um paciente pelo user ID.
 func (r *PatientRepository) FindByUserID(ctx context.Context, userID string) (*patient.Patient, error) {
-	dbPatient, err := r.queries.FindPatientByUserID(ctx, ToPgUUID(userID))
+	dbPatient, err := r.queries.FindPatientByUserID(ctx, ToTextValue(userID))
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
@@ -122,7 +126,7 @@ func (r *PatientRepository) FindByCPF(ctx context.Context, cpf string) (*patient
 }
 
 func (r *PatientRepository) FindByID(ctx context.Context, id string) (*patient.Patient, error) {
-	dbPatient, err := r.queries.FindPatientByID(ctx, ToPgUUID(id))
+	dbPatient, err := r.queries.FindPatientByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
@@ -155,8 +159,8 @@ func (r *PatientRepository) List(ctx context.Context, limit, offset int) ([]pati
 }
 
 func dbPatientToDomain(p patientssqlc.Patient) (*patient.Patient, error) {
-	if !p.ID.Valid {
-		return nil, fmt.Errorf("patient id is null")
+	if p.ID == "" {
+		return nil, fmt.Errorf("patient id is empty")
 	}
 	if !p.BirthDate.Valid {
 		return nil, fmt.Errorf("patient birth_date is null")
@@ -174,8 +178,8 @@ func dbPatientToDomain(p patientssqlc.Patient) (*patient.Patient, error) {
 	birthDate := p.BirthDate.Time
 
 	return &patient.Patient{
-		ID:        FromPgUUID(p.ID),
-		AppUserID: FromPgUUIDPtr(p.AppUserID),
+		ID:        p.ID,
+		AppUserID: FromText(p.AppUserID),
 		CPF:       p.Cpf,
 		CNS:       FromText(p.Cns),
 		FullName:  p.FullName,

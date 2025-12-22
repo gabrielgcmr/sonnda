@@ -4,12 +4,13 @@ package supabase
 import (
 	"context"
 	"errors"
-	labssqlc "sonnda-api/internal/adapters/outbound/database/sqlc/labs"
-
-	"sonnda-api/internal/core/domain/medicalRecord/exam/lab"
-	"sonnda-api/internal/core/ports/repositories"
 	"strings"
 
+	labssqlc "sonnda-api/internal/adapters/outbound/database/sqlc/labs"
+	"sonnda-api/internal/core/domain/medicalRecord/exam/lab"
+	"sonnda-api/internal/core/ports/repositories"
+
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -52,8 +53,13 @@ func (r *LabsRepository) Create(ctx context.Context, report *lab.LabReport) (err
 	// 1) lab_reports
 	// ---------
 
+	if report.ID == "" {
+		report.ID = uuid.NewString()
+	}
+
 	dbReport, err := qtx.CreateLabReport(ctx, labssqlc.CreateLabReportParams{
-		PatientID:         ToPgUUID(report.PatientID),
+		ID:                report.ID,
+		PatientID:         report.PatientID,
 		PatientName:       ToText(report.PatientName),
 		PatientDob:        ToDate(report.PatientDOB),
 		LabName:           ToText(report.LabName),
@@ -63,7 +69,7 @@ func (r *LabsRepository) Create(ctx context.Context, report *lab.LabReport) (err
 		TechnicalManager:  ToText(report.TechnicalManager),
 		ReportDate:        ToDate(report.ReportDate),
 		RawText:           ToText(report.RawText),
-		UploadedByUserID:  ToPgUUID(report.UploadedByUserID),
+		UploadedByUserID:  ToTextValue(report.UploadedByUserID),
 		Fingerprint:       ToText(report.Fingerprint),
 	})
 
@@ -72,10 +78,10 @@ func (r *LabsRepository) Create(ctx context.Context, report *lab.LabReport) (err
 	}
 
 	// Atualiza o domain com o que voltou do banco (sem Scan!)
-	report.ID = FromPgUUID(dbReport.ID)
+	report.ID = dbReport.ID
 	report.CreatedAt = dbReport.CreatedAt.Time
 	report.UpdatedAt = dbReport.UpdatedAt.Time
-	report.UploadedByUserID = FromPgUUID(dbReport.UploadedByUserID)
+	report.UploadedByUserID = *FromText(dbReport.UploadedByUserID)
 	report.Fingerprint = FromText(dbReport.Fingerprint)
 
 	// ---------
@@ -85,8 +91,13 @@ func (r *LabsRepository) Create(ctx context.Context, report *lab.LabReport) (err
 	for i := range report.TestResults {
 		tr := &report.TestResults[i]
 
+		if tr.ID == "" {
+			tr.ID = uuid.NewString()
+		}
+
 		dbResID, err := qtx.CreateLabResult(ctx, labssqlc.CreateLabResultParams{
-			LabReportID: ToPgUUID(report.ID), // helper abaixo
+			ID:          tr.ID,
+			LabReportID: report.ID,
 			TestName:    tr.TestName,
 			Material:    ToText(tr.Material),
 			Method:      ToText(tr.Method),
@@ -97,13 +108,18 @@ func (r *LabsRepository) Create(ctx context.Context, report *lab.LabReport) (err
 			return err
 		}
 
-		tr.ID = FromPgUUID(dbResID)
+		tr.ID = dbResID
 		tr.LabReportID = report.ID
 
 		for j := range tr.Items {
 			item := &tr.Items[j]
 
+			if item.ID == "" {
+				item.ID = uuid.NewString()
+			}
+
 			dbItemID, err := qtx.CreateLabResultItem(ctx, labssqlc.CreateLabResultItemParams{
+				ID:            item.ID,
 				LabResultID:   dbResID,
 				ParameterName: item.ParameterName,
 				ResultValue:   ToText(item.ResultValue),
@@ -114,7 +130,7 @@ func (r *LabsRepository) Create(ctx context.Context, report *lab.LabReport) (err
 				return err
 			}
 
-			item.ID = FromPgUUID(dbItemID)
+			item.ID = dbItemID
 			item.LabResultID = tr.ID
 		}
 	}
@@ -131,7 +147,7 @@ func (r *LabsRepository) FindByID(ctx context.Context, reportID string) (*lab.La
 	q := labssqlc.New(r.client.Pool())
 
 	// 1) lab_reports
-	dbReport, err := q.GetLabReportByID(ctx, ToPgUUID(reportID))
+	dbReport, err := q.GetLabReportByID(ctx, reportID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
@@ -139,9 +155,9 @@ func (r *LabsRepository) FindByID(ctx context.Context, reportID string) (*lab.La
 		return nil, err
 	}
 
-	lr := &domain.LabReport{
-		ID:                FromPgUUID(dbReport.ID),
-		PatientID:         FromPgUUID(dbReport.PatientID),
+	lr := &lab.LabReport{
+		ID:                dbReport.ID,
+		PatientID:         dbReport.PatientID,
 		PatientName:       FromText(dbReport.PatientName),
 		PatientDOB:        FromDate(dbReport.PatientDob),
 		LabName:           FromText(dbReport.LabName),
@@ -151,7 +167,7 @@ func (r *LabsRepository) FindByID(ctx context.Context, reportID string) (*lab.La
 		TechnicalManager:  FromText(dbReport.TechnicalManager),
 		ReportDate:        FromDate(dbReport.ReportDate),
 		RawText:           FromText(dbReport.RawText),
-		UploadedByUserID:  FromPgUUID(dbReport.UploadedByUserID),
+		UploadedByUserID:  *FromText(dbReport.UploadedByUserID),
 		Fingerprint:       FromText(dbReport.Fingerprint),
 		CreatedAt:         dbReport.CreatedAt.Time,
 		UpdatedAt:         dbReport.UpdatedAt.Time,
@@ -167,7 +183,7 @@ func (r *LabsRepository) FindByID(ctx context.Context, reportID string) (*lab.La
 
 	for _, rrow := range dbResults {
 		tr := lab.LabResult{
-			ID:          FromPgUUID(rrow.ID),
+			ID:          rrow.ID,
 			LabReportID: lr.ID,
 			TestName:    rrow.TestName,
 			Material:    FromText(rrow.Material),
@@ -185,7 +201,7 @@ func (r *LabsRepository) FindByID(ctx context.Context, reportID string) (*lab.La
 		tr.Items = make([]lab.LabResultItem, 0, len(dbItems))
 		for _, irow := range dbItems {
 			item := lab.LabResultItem{
-				ID:            FromPgUUID(irow.ID),
+				ID:            irow.ID,
 				LabResultID:   tr.ID,
 				ParameterName: irow.ParameterName,
 				ResultValue:   FromText(irow.ResultValue),
@@ -225,7 +241,7 @@ func (r *LabsRepository) FindByPatientID(ctx context.Context,
 	q := labssqlc.New(r.client.Pool())
 
 	rows, err := q.ListLabReportsByPatientID(ctx, labssqlc.ListLabReportsByPatientIDParams{
-		PatientID: ToPgUUID(patientID),
+		PatientID: patientID,
 		Limit:     int32(limit),
 		Offset:    int32(offset),
 	})
@@ -246,14 +262,14 @@ func (r *LabsRepository) FindByPatientID(ctx context.Context,
 		}
 
 		lr := lab.LabReport{
-			ID:               FromPgUUID(row.ID),
-			PatientID:        FromPgUUID(row.PatientID),
+			ID:               row.ID,
+			PatientID:        row.PatientID,
 			PatientName:      FromText(row.PatientName),
 			LabName:          FromText(row.LabName),
 			ReportDate:       FromDate(row.ReportDate),
 			CreatedAt:        createdAt,
 			UpdatedAt:        updatedAt,
-			UploadedByUserID: FromPgUUID(row.UploadedByUserID),
+			UploadedByUserID: *FromText(row.UploadedByUserID),
 			Fingerprint:      FromText(row.Fingerprint),
 		}
 
@@ -282,7 +298,7 @@ func (r *LabsRepository) Delete(ctx context.Context, reportID string) error {
 
 	qtx := labssqlc.New(tx)
 
-	affected, err := qtx.DeleteLabReport(ctx, ToPgUUID(reportID))
+	affected, err := qtx.DeleteLabReport(ctx, reportID)
 	if err != nil {
 		return err
 	}
@@ -322,7 +338,7 @@ func (r *LabsRepository) ListItemsByPatientAndParameter(
 	rows, err := q.ListLabItemTimelineByPatientAndParameter(
 		ctx,
 		labssqlc.ListLabItemTimelineByPatientAndParameterParams{
-			PatientID:     ToPgUUID(patientID),
+			PatientID:     patientID,
 			ParameterName: parameterName,
 			Limit:         int32(limit),
 			Offset:        int32(offset),
@@ -335,9 +351,9 @@ func (r *LabsRepository) ListItemsByPatientAndParameter(
 	out := make([]lab.LabResultItemTimeline, 0, len(rows))
 	for _, row := range rows {
 		item := lab.LabResultItemTimeline{
-			ReportID:      FromPgUUID(row.ReportID),
-			LabResultID:   FromPgUUID(row.LabResultID),
-			ItemID:        FromPgUUID(row.ItemID),
+			ReportID:      row.ReportID,
+			LabResultID:   row.LabResultID,
+			ItemID:        row.ItemID,
 			ReportDate:    FromDate(row.ReportDate), // report_date é DATE no Supabase
 			TestName:      row.TestName,
 			ParameterName: row.ParameterName,
@@ -365,7 +381,7 @@ func (r *LabsRepository) ExistsBySignature(
 
 	exists, err := q.ExistsLabReportByPatientAndFingerprint(ctx,
 		labssqlc.ExistsLabReportByPatientAndFingerprintParams{
-			PatientID:   ToPgUUID(patientID),
+			PatientID:   patientID,
 			Fingerprint: ToTextValue(fingerprint),
 		},
 	)

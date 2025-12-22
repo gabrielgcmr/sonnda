@@ -18,7 +18,7 @@ import (
 	"sonnda-api/internal/adapters/outbound/external/documentai"
 	"sonnda-api/internal/adapters/outbound/storage"
 	"sonnda-api/internal/config"
-	"sonnda-api/internal/core/usecases/lab"
+	"sonnda-api/internal/core/usecases/medicalRecord/lab"
 	"sonnda-api/internal/core/usecases/patient"
 	"sonnda-api/internal/core/usecases/user"
 	"sonnda-api/internal/logger"

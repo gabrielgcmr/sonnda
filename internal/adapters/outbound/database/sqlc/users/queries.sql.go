@@ -7,13 +7,11 @@ package userssqlc
 
 import (
 	"context"
-
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO app_users (auth_provider, auth_subject, email, role)
-VALUES ($1, $2, $3, $4)
+INSERT INTO app_users (id, auth_provider, auth_subject, email, role)
+VALUES ($1, $2, $3, $4, $5)
 RETURNING
     id,
     auth_provider,
@@ -25,6 +23,7 @@ RETURNING
 `
 
 type CreateUserParams struct {
+	ID           string `json:"id"`
 	AuthProvider string `json:"auth_provider"`
 	AuthSubject  string `json:"auth_subject"`
 	Email        string `json:"email"`
@@ -33,6 +32,7 @@ type CreateUserParams struct {
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (AppUser, error) {
 	row := q.db.QueryRow(ctx, createUser,
+		arg.ID,
 		arg.AuthProvider,
 		arg.AuthSubject,
 		arg.Email,
@@ -128,7 +128,7 @@ FROM app_users
 WHERE id = $1
 `
 
-func (q *Queries) FindUserByID(ctx context.Context, id pgtype.UUID) (AppUser, error) {
+func (q *Queries) FindUserByID(ctx context.Context, id string) (AppUser, error) {
 	row := q.db.QueryRow(ctx, findUserByID, id)
 	var i AppUser
 	err := row.Scan(
@@ -160,9 +160,9 @@ RETURNING
 `
 
 type UpdateUserAuthIdentityParams struct {
-	AuthProvider string      `json:"auth_provider"`
-	AuthSubject  string      `json:"auth_subject"`
-	ID           pgtype.UUID `json:"id"`
+	AuthProvider string `json:"auth_provider"`
+	AuthSubject  string `json:"auth_subject"`
+	ID           string `json:"id"`
 }
 
 func (q *Queries) UpdateUserAuthIdentity(ctx context.Context, arg UpdateUserAuthIdentityParams) (AppUser, error) {

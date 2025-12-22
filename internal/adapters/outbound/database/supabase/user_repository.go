@@ -7,10 +7,10 @@ import (
 	"fmt"
 
 	userssqlc "sonnda-api/internal/adapters/outbound/database/sqlc/users"
-
 	"sonnda-api/internal/core/domain/identity"
 	"sonnda-api/internal/core/ports/repositories"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -60,7 +60,7 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*identi
 }
 
 func (r *UserRepository) FindByID(ctx context.Context, id string) (*identity.User, error) {
-	dbUser, err := r.queries.FindUserByID(ctx, ToPgUUID(id))
+	dbUser, err := r.queries.FindUserByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +76,12 @@ func (r *UserRepository) Create(
 		return errors.New("user is nil")
 	}
 
+	if u.ID == "" {
+		u.ID = uuid.NewString()
+	}
+
 	dbUser, err := r.queries.CreateUser(ctx, userssqlc.CreateUserParams{
+		ID:           u.ID,
 		AuthProvider: u.AuthProvider,
 		AuthSubject:  u.AuthSubject,
 		Email:        u.Email,
@@ -104,7 +109,7 @@ func (r *UserRepository) UpdateAuthIdentity(
 	dbUser, err := r.queries.UpdateUserAuthIdentity(ctx, userssqlc.UpdateUserAuthIdentityParams{
 		AuthProvider: provider,
 		AuthSubject:  subject,
-		ID:           ToPgUUID(id),
+		ID:           id,
 	})
 	if err != nil {
 		return nil, err
@@ -114,7 +119,7 @@ func (r *UserRepository) UpdateAuthIdentity(
 }
 
 func dbUserToDomain(u userssqlc.AppUser) (*identity.User, error) {
-	if !u.ID.Valid {
+	if u.ID == "" {
 		return nil, fmt.Errorf("user id is null")
 	}
 
@@ -128,7 +133,7 @@ func dbUserToDomain(u userssqlc.AppUser) (*identity.User, error) {
 	}
 
 	return &identity.User{
-		ID:           FromPgUUID(u.ID),
+		ID:           u.ID,
 		AuthProvider: u.AuthProvider,
 		AuthSubject:  u.AuthSubject,
 		Email:        u.Email,

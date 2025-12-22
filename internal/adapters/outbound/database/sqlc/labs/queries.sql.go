@@ -15,6 +15,7 @@ const createLabReport = `-- name: CreateLabReport :one
 
 
 INSERT INTO lab_reports (
+    id,
     patient_id,
     patient_name,
     patient_dob,
@@ -30,7 +31,8 @@ INSERT INTO lab_reports (
 )
 VALUES (
     $1, $2, $3, $4, $5, $6,
-    $7, $8, $9, $10, $11, $12
+    $7, $8, $9, $10, $11, $12,
+    $13
 )
 RETURNING
     id,
@@ -51,7 +53,8 @@ RETURNING
 `
 
 type CreateLabReportParams struct {
-	PatientID         pgtype.UUID `json:"patient_id"`
+	ID                string      `json:"id"`
+	PatientID         string      `json:"patient_id"`
 	PatientName       pgtype.Text `json:"patient_name"`
 	PatientDob        pgtype.Date `json:"patient_dob"`
 	LabName           pgtype.Text `json:"lab_name"`
@@ -61,7 +64,7 @@ type CreateLabReportParams struct {
 	TechnicalManager  pgtype.Text `json:"technical_manager"`
 	ReportDate        pgtype.Date `json:"report_date"`
 	RawText           pgtype.Text `json:"raw_text"`
-	UploadedByUserID  pgtype.UUID `json:"uploaded_by_user_id"`
+	UploadedByUserID  pgtype.Text `json:"uploaded_by_user_id"`
 	Fingerprint       pgtype.Text `json:"fingerprint"`
 }
 
@@ -71,6 +74,7 @@ type CreateLabReportParams struct {
 // ============================================================
 func (q *Queries) CreateLabReport(ctx context.Context, arg CreateLabReportParams) (LabReport, error) {
 	row := q.db.QueryRow(ctx, createLabReport,
+		arg.ID,
 		arg.PatientID,
 		arg.PatientName,
 		arg.PatientDob,
@@ -107,6 +111,7 @@ func (q *Queries) CreateLabReport(ctx context.Context, arg CreateLabReportParams
 
 const createLabResult = `-- name: CreateLabResult :one
 INSERT INTO lab_results(
+    id,
     lab_report_id,
     test_name,
     material,
@@ -114,12 +119,13 @@ INSERT INTO lab_results(
     collected_at,
     release_at
 )
-VALUES ($1,$2,$3,$4,$5,$6)
+VALUES ($1,$2,$3,$4,$5,$6,$7)
 RETURNING id
 `
 
 type CreateLabResultParams struct {
-	LabReportID pgtype.UUID        `json:"lab_report_id"`
+	ID          string             `json:"id"`
+	LabReportID string             `json:"lab_report_id"`
 	TestName    string             `json:"test_name"`
 	Material    pgtype.Text        `json:"material"`
 	Method      pgtype.Text        `json:"method"`
@@ -127,8 +133,9 @@ type CreateLabResultParams struct {
 	ReleaseAt   pgtype.Timestamptz `json:"release_at"`
 }
 
-func (q *Queries) CreateLabResult(ctx context.Context, arg CreateLabResultParams) (pgtype.UUID, error) {
+func (q *Queries) CreateLabResult(ctx context.Context, arg CreateLabResultParams) (string, error) {
 	row := q.db.QueryRow(ctx, createLabResult,
+		arg.ID,
 		arg.LabReportID,
 		arg.TestName,
 		arg.Material,
@@ -136,40 +143,43 @@ func (q *Queries) CreateLabResult(ctx context.Context, arg CreateLabResultParams
 		arg.CollectedAt,
 		arg.ReleaseAt,
 	)
-	var id pgtype.UUID
+	var id string
 	err := row.Scan(&id)
 	return id, err
 }
 
 const createLabResultItem = `-- name: CreateLabResultItem :one
 INSERT INTO lab_result_items (
+    id,
     lab_result_id,
     parameter_name,
     result_value,
     result_unit,
     reference_text
 )
-VALUES ($1,$2,$3,$4,$5)
+VALUES ($1,$2,$3,$4,$5,$6)
 RETURNING id
 `
 
 type CreateLabResultItemParams struct {
-	LabResultID   pgtype.UUID `json:"lab_result_id"`
+	ID            string      `json:"id"`
+	LabResultID   string      `json:"lab_result_id"`
 	ParameterName string      `json:"parameter_name"`
 	ResultValue   pgtype.Text `json:"result_value"`
 	ResultUnit    pgtype.Text `json:"result_unit"`
 	ReferenceText pgtype.Text `json:"reference_text"`
 }
 
-func (q *Queries) CreateLabResultItem(ctx context.Context, arg CreateLabResultItemParams) (pgtype.UUID, error) {
+func (q *Queries) CreateLabResultItem(ctx context.Context, arg CreateLabResultItemParams) (string, error) {
 	row := q.db.QueryRow(ctx, createLabResultItem,
+		arg.ID,
 		arg.LabResultID,
 		arg.ParameterName,
 		arg.ResultValue,
 		arg.ResultUnit,
 		arg.ReferenceText,
 	)
-	var id pgtype.UUID
+	var id string
 	err := row.Scan(&id)
 	return id, err
 }
@@ -179,7 +189,7 @@ DELETE FROM lab_reports
 WHERE id = $1
 `
 
-func (q *Queries) DeleteLabReport(ctx context.Context, id pgtype.UUID) (int64, error) {
+func (q *Queries) DeleteLabReport(ctx context.Context, id string) (int64, error) {
 	result, err := q.db.Exec(ctx, deleteLabReport, id)
 	if err != nil {
 		return 0, err
@@ -198,7 +208,7 @@ WHERE lab_result_id IN (
 // ============================================================
 // Deletes
 // ============================================================
-func (q *Queries) DeleteLabResultItemsByReportID(ctx context.Context, labReportID pgtype.UUID) (int64, error) {
+func (q *Queries) DeleteLabResultItemsByReportID(ctx context.Context, labReportID string) (int64, error) {
 	result, err := q.db.Exec(ctx, deleteLabResultItemsByReportID, labReportID)
 	if err != nil {
 		return 0, err
@@ -211,7 +221,7 @@ DELETE FROM lab_results
 WHERE lab_report_id = $1
 `
 
-func (q *Queries) DeleteLabResultsByReportID(ctx context.Context, labReportID pgtype.UUID) (int64, error) {
+func (q *Queries) DeleteLabResultsByReportID(ctx context.Context, labReportID string) (int64, error) {
 	result, err := q.db.Exec(ctx, deleteLabResultsByReportID, labReportID)
 	if err != nil {
 		return 0, err
@@ -230,7 +240,7 @@ SELECT EXISTS(
 `
 
 type ExistsLabReportByPatientAndFingerprintParams struct {
-	PatientID   pgtype.UUID `json:"patient_id"`
+	PatientID   string      `json:"patient_id"`
 	Fingerprint pgtype.Text `json:"fingerprint"`
 }
 
@@ -269,7 +279,7 @@ WHERE id = $1
 // ============================================================
 // Getters
 // ============================================================
-func (q *Queries) GetLabReportByID(ctx context.Context, id pgtype.UUID) (LabReport, error) {
+func (q *Queries) GetLabReportByID(ctx context.Context, id string) (LabReport, error) {
 	row := q.db.QueryRow(ctx, getLabReportByID, id)
 	var i LabReport
 	err := row.Scan(
@@ -306,7 +316,7 @@ ORDER BY test_name
 `
 
 type GetLabResultsByReportIDRow struct {
-	ID          pgtype.UUID        `json:"id"`
+	ID          string             `json:"id"`
 	TestName    string             `json:"test_name"`
 	Material    pgtype.Text        `json:"material"`
 	Method      pgtype.Text        `json:"method"`
@@ -314,7 +324,7 @@ type GetLabResultsByReportIDRow struct {
 	ReleaseAt   pgtype.Timestamptz `json:"release_at"`
 }
 
-func (q *Queries) GetLabResultsByReportID(ctx context.Context, labReportID pgtype.UUID) (GetLabResultsByReportIDRow, error) {
+func (q *Queries) GetLabResultsByReportID(ctx context.Context, labReportID string) (GetLabResultsByReportIDRow, error) {
 	row := q.db.QueryRow(ctx, getLabResultsByReportID, labReportID)
 	var i GetLabResultsByReportIDRow
 	err := row.Scan(
@@ -349,16 +359,16 @@ LIMIT $3 OFFSET $4
 `
 
 type ListLabItemTimelineByPatientAndParameterParams struct {
-	PatientID     pgtype.UUID `json:"patient_id"`
-	ParameterName string      `json:"parameter_name"`
-	Limit         int32       `json:"limit"`
-	Offset        int32       `json:"offset"`
+	PatientID     string `json:"patient_id"`
+	ParameterName string `json:"parameter_name"`
+	Limit         int32  `json:"limit"`
+	Offset        int32  `json:"offset"`
 }
 
 type ListLabItemTimelineByPatientAndParameterRow struct {
-	ReportID      pgtype.UUID `json:"report_id"`
-	LabResultID   pgtype.UUID `json:"lab_result_id"`
-	ItemID        pgtype.UUID `json:"item_id"`
+	ReportID      string      `json:"report_id"`
+	LabResultID   string      `json:"lab_result_id"`
+	ItemID        string      `json:"item_id"`
 	ReportDate    pgtype.Date `json:"report_date"`
 	TestName      string      `json:"test_name"`
 	ParameterName string      `json:"parameter_name"`
@@ -422,18 +432,18 @@ LIMIT $2 OFFSET $3
 `
 
 type ListLabReportsByPatientIDParams struct {
-	PatientID pgtype.UUID `json:"patient_id"`
-	Limit     int32       `json:"limit"`
-	Offset    int32       `json:"offset"`
+	PatientID string `json:"patient_id"`
+	Limit     int32  `json:"limit"`
+	Offset    int32  `json:"offset"`
 }
 
 type ListLabReportsByPatientIDRow struct {
-	ID               pgtype.UUID        `json:"id"`
-	PatientID        pgtype.UUID        `json:"patient_id"`
+	ID               string             `json:"id"`
+	PatientID        string             `json:"patient_id"`
 	PatientName      pgtype.Text        `json:"patient_name"`
 	LabName          pgtype.Text        `json:"lab_name"`
 	ReportDate       pgtype.Date        `json:"report_date"`
-	UploadedByUserID pgtype.UUID        `json:"uploaded_by_user_id"`
+	UploadedByUserID pgtype.Text        `json:"uploaded_by_user_id"`
 	Fingerprint      pgtype.Text        `json:"fingerprint"`
 	CreatedAt        pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
@@ -480,7 +490,7 @@ WHERE lab_result_id = $1
 ORDER BY id
 `
 
-func (q *Queries) ListLabResultItemsByResultID(ctx context.Context, labResultID pgtype.UUID) ([]LabResultItem, error) {
+func (q *Queries) ListLabResultItemsByResultID(ctx context.Context, labResultID string) ([]LabResultItem, error) {
 	rows, err := q.db.Query(ctx, listLabResultItemsByResultID, labResultID)
 	if err != nil {
 		return nil, err
@@ -515,7 +525,7 @@ WHERE lab_report_id = $1
 ORDER BY collected_at NULLS LAST, id
 `
 
-func (q *Queries) ListLabResultsByReportID(ctx context.Context, labReportID pgtype.UUID) ([]LabResult, error) {
+func (q *Queries) ListLabResultsByReportID(ctx context.Context, labReportID string) ([]LabResult, error) {
 	rows, err := q.db.Query(ctx, listLabResultsByReportID, labReportID)
 	if err != nil {
 		return nil, err

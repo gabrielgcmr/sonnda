@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 
 	"sonnda-api/internal/adapters/inbound/http/middleware"
 	"sonnda-api/internal/core/usecases/patient"
@@ -114,12 +113,10 @@ func (h *PatientHandler) GetMyProfile(c *gin.Context) {
 func (h *PatientHandler) GetByID(c *gin.Context) {
 	log := applog.FromContext(c.Request.Context())
 
-	idStr := c.Param("id")
-	id, err := uuid.Parse(idStr)
-	if err != nil {
-		RespondError(c, log, http.StatusBadRequest, "invalid_patient_id", err)
+	id := c.Param("id")
+	if id == "" {
+		RespondError(c, log, http.StatusBadRequest, "missing_patient_id", nil)
 		return
-
 	}
 
 	p, err := h.getUC.ExecuteByID(c.Request.Context(), id)
@@ -160,10 +157,9 @@ func (h *PatientHandler) UpdateByID(c *gin.Context) {
 		return
 	}
 
-	idStr := c.Param("id")
-	id, err := uuid.Parse(idStr)
-	if err != nil {
-		RespondError(c, log, http.StatusBadRequest, "invalid_patient_id", err)
+	id := c.Param("id")
+	if id == "" {
+		RespondError(c, log, http.StatusBadRequest, "missing_patient_id", nil)
 		return
 	}
 

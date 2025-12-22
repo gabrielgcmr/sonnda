@@ -15,6 +15,7 @@ const createPatient = `-- name: CreatePatient :one
 
 
 INSERT INTO patients (
+    id,
     app_user_id,
     cpf,
     cns,
@@ -25,7 +26,7 @@ INSERT INTO patients (
     phone,
     avatar_url
 )
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 RETURNING
     id,
     app_user_id,
@@ -42,7 +43,8 @@ RETURNING
 `
 
 type CreatePatientParams struct {
-	AppUserID pgtype.UUID `json:"app_user_id"`
+	ID        string      `json:"id"`
+	AppUserID pgtype.Text `json:"app_user_id"`
 	Cpf       string      `json:"cpf"`
 	Cns       pgtype.Text `json:"cns"`
 	FullName  string      `json:"full_name"`
@@ -58,6 +60,7 @@ type CreatePatientParams struct {
 // id, app_user_id, cpf, cns, full_name, birth_date, gender, race, phone, avatar_url, created_at, updated_at
 func (q *Queries) CreatePatient(ctx context.Context, arg CreatePatientParams) (Patient, error) {
 	row := q.db.QueryRow(ctx, createPatient,
+		arg.ID,
 		arg.AppUserID,
 		arg.Cpf,
 		arg.Cns,
@@ -90,7 +93,7 @@ const deletePatient = `-- name: DeletePatient :execrows
 DELETE FROM patients WHERE id = $1
 `
 
-func (q *Queries) DeletePatient(ctx context.Context, id pgtype.UUID) (int64, error) {
+func (q *Queries) DeletePatient(ctx context.Context, id string) (int64, error) {
 	result, err := q.db.Exec(ctx, deletePatient, id)
 	if err != nil {
 		return 0, err
@@ -156,7 +159,7 @@ WHERE id = $1
 LIMIT 1
 `
 
-func (q *Queries) FindPatientByID(ctx context.Context, id pgtype.UUID) (Patient, error) {
+func (q *Queries) FindPatientByID(ctx context.Context, id string) (Patient, error) {
 	row := q.db.QueryRow(ctx, findPatientByID, id)
 	var i Patient
 	err := row.Scan(
@@ -195,7 +198,7 @@ WHERE app_user_id = $1
 LIMIT 1
 `
 
-func (q *Queries) FindPatientByUserID(ctx context.Context, appUserID pgtype.UUID) (Patient, error) {
+func (q *Queries) FindPatientByUserID(ctx context.Context, appUserID pgtype.Text) (Patient, error) {
 	row := q.db.QueryRow(ctx, findPatientByUserID, appUserID)
 	var i Patient
 	err := row.Scan(
@@ -300,7 +303,7 @@ RETURNING
 `
 
 type UpdatePatientParams struct {
-	ID        pgtype.UUID `json:"id"`
+	ID        string      `json:"id"`
 	Cpf       string      `json:"cpf"`
 	Cns       pgtype.Text `json:"cns"`
 	FullName  string      `json:"full_name"`
