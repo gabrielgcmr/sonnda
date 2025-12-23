@@ -2,7 +2,7 @@ package http
 
 import (
 	"net/http"
-	"sonnda-api/internal/adapters/inbound/http/handlers"
+	"sonnda-api/internal/adapters/inbound/http/api/handlers"
 	"sonnda-api/internal/adapters/inbound/http/middleware"
 	"sonnda-api/internal/assets"
 

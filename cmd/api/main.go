@@ -9,8 +9,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 
-	"sonnda-api/internal/adapters/inbound/http"
-	"sonnda-api/internal/adapters/inbound/http/handlers"
+	http "sonnda-api/internal/adapters/inbound/http/api"
+	"sonnda-api/internal/adapters/inbound/http/api/handlers"
 	"sonnda-api/internal/adapters/inbound/http/middleware"
 	"sonnda-api/internal/adapters/outbound/auth"
 	"sonnda-api/internal/adapters/outbound/authorization"
