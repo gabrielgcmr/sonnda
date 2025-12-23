@@ -9,9 +9,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 
-	http "sonnda-api/internal/adapters/inbound/http/api"
+	mobile "sonnda-api/internal/adapters/inbound/http/api"
 	"sonnda-api/internal/adapters/inbound/http/api/handlers"
 	"sonnda-api/internal/adapters/inbound/http/middleware"
+	web "sonnda-api/internal/adapters/inbound/http/web"
 	"sonnda-api/internal/adapters/outbound/auth"
 	"sonnda-api/internal/adapters/outbound/authorization"
 	"sonnda-api/internal/adapters/outbound/database/supabase"
@@ -122,7 +123,8 @@ func main() {
 	r.Use(middleware.AccessLog(appLogger))
 
 	// montar gin e rotas
-	http.SetupRoutes(r, authMiddleware, userHandler, patientHandler, labReportHandler)
+	web.SetupRoutes(r)
+	mobile.SetupRoutes(r, authMiddleware, userHandler, patientHandler, labReportHandler)
 
 	slog.Info("API is running", "url", "http://localhost:"+cfg.Port+"/api/v1")
 	if err := r.Run(":" + cfg.Port); err != nil {

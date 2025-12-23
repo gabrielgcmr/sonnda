@@ -1,0 +1,10 @@
+/*! tailwindcss v4.1.18 | MIT License | https://tailwindcss.com */
+.container {
+  width: 100%;
+}
+.mx-auto {
+  margin-inline: auto;
+}
+.min-h-screen {
+  min-height: 100vh;
+}
