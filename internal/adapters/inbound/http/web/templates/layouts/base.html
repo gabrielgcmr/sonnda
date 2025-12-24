@@ -7,16 +7,7 @@
     <title>{{.Title}}</title>
     <link rel="stylesheet" href="/static/css/theme.css" />
     <link rel="stylesheet" href="/static/css/tailwind.css" />
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-    <script>
-      (function () {
-        var stored = localStorage.getItem("theme");
-        if (stored === "dark") {
-          document.documentElement.classList.remove("light");
-          document.documentElement.classList.add("dark");
-        }
-      })();
-    </script>
+    {{template "scripts" .}}
   </head>
   <body class="min-h-screen bg-surface text-on-surface antialiased">
     <div class="relative min-h-screen overflow-hidden">
@@ -36,25 +27,6 @@
         {{render .ContentTemplate .}}
       </main>
     </div>
-    <script>
-      (function () {
-        var toggle = document.getElementById("theme-toggle");
-        if (!toggle) return;
-        toggle.addEventListener("click", function () {
-          var root = document.documentElement;
-          var isDark = root.classList.contains("dark");
-          if (isDark) {
-            root.classList.remove("dark");
-            root.classList.add("light");
-            localStorage.setItem("theme", "light");
-            return;
-          }
-          root.classList.remove("light");
-          root.classList.add("dark");
-          localStorage.setItem("theme", "dark");
-        });
-      })();
-    </script>
   </body>
 </html>
 {{end}}

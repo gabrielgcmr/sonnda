@@ -1,0 +1,24 @@
+{{define "dashboard"}}
+<section class="space-y-6">
+  <div>
+    <h1 class="text-3xl font-semibold text-on-surface">Dashboard do medico</h1>
+    <p class="mt-2 text-sm text-on-surface-variant">
+      Visao geral de pacientes, alertas e exames recentes.
+    </p>
+  </div>
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div class="rounded-2xl border border-outline-variant bg-surface-container-lowest p-5">
+      <p class="text-xs text-on-surface-variant">Pacientes ativos</p>
+      <p class="mt-2 text-2xl font-semibold text-on-surface">48</p>
+    </div>
+    <div class="rounded-2xl border border-outline-variant bg-surface-container-lowest p-5">
+      <p class="text-xs text-on-surface-variant">Alertas pendentes</p>
+      <p class="mt-2 text-2xl font-semibold text-on-surface">6</p>
+    </div>
+    <div class="rounded-2xl border border-outline-variant bg-surface-container-lowest p-5">
+      <p class="text-xs text-on-surface-variant">Exames hoje</p>
+      <p class="mt-2 text-2xl font-semibold text-on-surface">12</p>
+    </div>
+  </div>
+</section>
+{{end}}

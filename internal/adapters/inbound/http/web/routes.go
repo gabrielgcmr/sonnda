@@ -40,6 +40,14 @@ func SetupRoutes(r *gin.Engine) {
 		})
 	})
 
+	r.GET("/dashboard", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "app", gin.H{
+			"Title":           "Dashboard - Sonnda",
+			"ContentTemplate": "dashboard",
+			"UserName":        "Dra. Maria Oliveira",
+		})
+	})
+
 	r.GET("/hello", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "hello", gin.H{
 			"Message": "Hello from HTMX",
