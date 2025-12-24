@@ -1,0 +1,64 @@
+{{define "login"}}
+<div class="grid w-full gap-12 lg:grid-cols-[1fr_0.9fr] lg:items-center">
+  <section class="space-y-6">
+    <a class="text-sm font-semibold text-primary" href="/">Voltar</a>
+    <h1 class="text-4xl font-semibold tracking-tight text-on-surface">
+      Bem-vindo de volta.
+    </h1>
+    <p class="text-base text-on-surface-variant sm:text-lg">
+      Acesse rapidamente os prontuarios, exames e alertas da sua agenda.
+    </p>
+    <div class="rounded-2xl border border-outline-variant bg-surface-container-lowest p-6">
+      <p class="text-sm text-on-surface-variant">Atalho rapido</p>
+      <p class="mt-2 text-lg font-semibold text-on-surface">Login com biometria</p>
+      <button
+        class="mt-4 inline-flex items-center justify-center rounded-md bg-secondary px-4 py-2 text-sm font-semibold text-onSecondary"
+        type="button"
+      >
+        Ativar no dispositivo
+      </button>
+    </div>
+  </section>
+  <section class="rounded-2xl border border-outline-variant bg-surface-container-lowest p-8 shadow-[0_20px_60px_rgba(0,0,0,0.08)]">
+    <form class="space-y-5">
+      <div class="space-y-2">
+        <label class="text-sm font-medium text-on-surface" for="email">Email</label>
+        <input
+          class="w-full rounded-md border border-outline-variant bg-surface px-4 py-3 text-sm text-on-surface placeholder:text-on-surface-variant focus:border-primary focus:outline-none focus:ring-2 focus:ring-[color:var(--md-sys-color-primary)]"
+          id="email"
+          name="email"
+          placeholder="voce@clinica.com"
+          type="email"
+        />
+      </div>
+      <div class="space-y-2">
+        <label class="text-sm font-medium text-on-surface" for="password">Senha</label>
+        <input
+          class="w-full rounded-md border border-outline-variant bg-surface px-4 py-3 text-sm text-on-surface placeholder:text-on-surface-variant focus:border-primary focus:outline-none focus:ring-2 focus:ring-[color:var(--md-sys-color-primary)]"
+          id="password"
+          name="password"
+          placeholder="********"
+          type="password"
+        />
+      </div>
+      <div class="flex items-center justify-between text-sm text-on-surface-variant">
+        <label class="flex items-center gap-2">
+          <input class="h-4 w-4 accent-primary" type="checkbox" />
+          Lembrar acesso
+        </label>
+        <a class="font-medium text-primary" href="/forgot">Esqueci minha senha</a>
+      </div>
+      <button
+        class="inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-3 text-sm font-semibold text-on-primary transition hover:brightness-95"
+        type="submit"
+      >
+        Entrar
+      </button>
+      <p class="text-center text-sm text-on-surface-variant">
+        Nao tem conta?
+        <a class="font-semibold text-primary" href="/signup">Criar agora</a>
+      </p>
+    </form>
+  </section>
+</div>
+{{end}}

@@ -1,0 +1,91 @@
+{{define "signup"}}
+<div class="grid w-full gap-12 lg:grid-cols-[1fr_0.9fr] lg:items-center">
+  <section class="space-y-6">
+    <a class="text-sm font-semibold text-primary" href="/">Voltar</a>
+    <h1 class="text-4xl font-semibold tracking-tight text-on-surface">
+      Crie sua conta.
+    </h1>
+    <p class="text-base text-on-surface-variant sm:text-lg">
+      Em poucos passos voce organiza seu fluxo clinico e acompanha seus pacientes.
+    </p>
+    <div class="grid gap-3 sm:grid-cols-2">
+      <div class="rounded-xl border border-outline-variant bg-surface-container-lowest p-4">
+        <p class="text-xs text-on-surface-variant">Equipe</p>
+        <p class="mt-2 text-lg font-semibold text-on-surface">Convide sua equipe</p>
+      </div>
+      <div class="rounded-xl border border-outline-variant bg-surface-container-lowest p-4">
+        <p class="text-xs text-on-surface-variant">Seguranca</p>
+        <p class="mt-2 text-lg font-semibold text-on-surface">Controle de acesso</p>
+      </div>
+    </div>
+  </section>
+  <section class="rounded-2xl border border-outline-variant bg-surface-container-lowest p-8 shadow-[0_20px_60px_rgba(0,0,0,0.08)]">
+    <form class="space-y-5">
+      <div class="grid gap-4 sm:grid-cols-2">
+        <div class="space-y-2">
+          <label class="text-sm font-medium text-on-surface" for="firstName">Nome</label>
+          <input
+            class="w-full rounded-md border border-outline-variant bg-surface px-4 py-3 text-sm text-on-surface placeholder:text-on-surface-variant focus:border-primary focus:outline-none focus:ring-2 focus:ring-[color:var(--md-sys-color-primary)]"
+            id="firstName"
+            name="firstName"
+            placeholder="Maria"
+            type="text"
+          />
+        </div>
+        <div class="space-y-2">
+          <label class="text-sm font-medium text-on-surface" for="lastName">Sobrenome</label>
+          <input
+            class="w-full rounded-md border border-outline-variant bg-surface px-4 py-3 text-sm text-on-surface placeholder:text-on-surface-variant focus:border-primary focus:outline-none focus:ring-2 focus:ring-[color:var(--md-sys-color-primary)]"
+            id="lastName"
+            name="lastName"
+            placeholder="Almeida"
+            type="text"
+          />
+        </div>
+      </div>
+      <div class="space-y-2">
+        <label class="text-sm font-medium text-on-surface" for="email">Email</label>
+        <input
+          class="w-full rounded-md border border-outline-variant bg-surface px-4 py-3 text-sm text-on-surface placeholder:text-on-surface-variant focus:border-primary focus:outline-none focus:ring-2 focus:ring-[color:var(--md-sys-color-primary)]"
+          id="email"
+          name="email"
+          placeholder="voce@clinica.com"
+          type="email"
+        />
+      </div>
+      <div class="space-y-2">
+        <label class="text-sm font-medium text-on-surface" for="password">Senha</label>
+        <input
+          class="w-full rounded-md border border-outline-variant bg-surface px-4 py-3 text-sm text-on-surface placeholder:text-on-surface-variant focus:border-primary focus:outline-none focus:ring-2 focus:ring-[color:var(--md-sys-color-primary)]"
+          id="password"
+          name="password"
+          placeholder="Minimo 8 caracteres"
+          type="password"
+        />
+      </div>
+      <div class="space-y-2">
+        <label class="text-sm font-medium text-on-surface" for="role">Perfil</label>
+        <select
+          class="w-full rounded-md border border-outline-variant bg-surface px-4 py-3 text-sm text-on-surface focus:border-primary focus:outline-none focus:ring-2 focus:ring-[color:var(--md-sys-color-primary)]"
+          id="role"
+          name="role"
+        >
+          <option>Medico</option>
+          <option>Enfermeiro</option>
+          <option>Recepcao</option>
+        </select>
+      </div>
+      <button
+        class="inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-3 text-sm font-semibold text-on-primary transition hover:brightness-95"
+        type="submit"
+      >
+        Criar conta
+      </button>
+      <p class="text-center text-sm text-on-surface-variant">
+        Ja tem conta?
+        <a class="font-semibold text-primary" href="/login">Fazer login</a>
+      </p>
+    </form>
+  </section>
+</div>
+{{end}}

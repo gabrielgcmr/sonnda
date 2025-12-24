@@ -3,7 +3,7 @@
 
 
 APP_NAME := sonnda-api
-MAIN     := cmd/api/main.go
+MAIN     := ./cmd/api
 TAILWIND_BIN   := tools/tailwindcss.exe
 TAILWIND_INPUT := internal/adapters/inbound/http/web/static/css/input.css
 TAILWIND_OUTPUT := internal/adapters/inbound/http/web/static/css/tailwind.css
@@ -18,18 +18,18 @@ build:
 
 # Executar com hot reload (air)
 dev:
-	air
+	air -c .air.toml
 
 # Tailwind CSS
 tailwind:
-	$(TAILWIND_BIN) -i $(TAILWIND_INPUT) -o $(TAILWIND_OUTPUT)
+	$(TAILWIND_BIN) -c tailwind.config.js -i $(TAILWIND_INPUT) -o $(TAILWIND_OUTPUT)
 
 tailwind-watch:
-	$(TAILWIND_BIN) -i $(TAILWIND_INPUT) -o $(TAILWIND_OUTPUT) --watch
+	$(TAILWIND_BIN) -c tailwind.config.js -i $(TAILWIND_INPUT) -o $(TAILWIND_OUTPUT) --watch
 
 # Hot reload + Tailwind watch (Windows)
 dev-web:
-	powershell -NoProfile -Command "Start-Process -WindowStyle Hidden -FilePath '$(TAILWIND_BIN)' -ArgumentList '-i', '$(TAILWIND_INPUT)', '-o', '$(TAILWIND_OUTPUT)', '--watch'; air"
+	powershell -NoProfile -Command "Start-Process -WindowStyle Hidden -FilePath '$(TAILWIND_BIN)' -ArgumentList '-c','tailwind.config.js','-i','$(TAILWIND_INPUT)','-o','$(TAILWIND_OUTPUT)','--watch'; & air -c .air.toml"
 
 #sqlc
 sqlc-check:
