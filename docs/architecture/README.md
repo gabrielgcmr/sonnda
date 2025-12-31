@@ -81,9 +81,9 @@ Essas camadas representam **limites conceituais**, não apenas organização de 
 
 ---
 
-## Módulos e rotas
+## Bootstrap e rotas
 
-- Módulos montam services, policies e repositórios em `internal/app/modules`.
+- O bootstrap faz o wiring (repos, services e handlers) em `internal/app/bootstrap`.
 - As rotas são definidas em `internal/http/api/router.go`.
 - Os níveis de acesso incluem:
   - público
@@ -104,4 +104,3 @@ Os ADRs documentam:
 - consequências
 
 Os ADRs vivem em:
-

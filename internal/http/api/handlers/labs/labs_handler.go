@@ -12,7 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	"sonnda-api/internal/app/usecases/labuc"
+	labsvc "sonnda-api/internal/app/services/labs"
 
 	"sonnda-api/internal/domain/ports/integrations"
 	"sonnda-api/internal/http/api/handlers/common"
@@ -22,27 +22,26 @@ import (
 )
 
 type LabsHandler struct {
-	createUC     *labuc.ExtractLabsUseCase
-	listLabs     *labuc.ListLabsUseCase
-	listFullLabs *labuc.ListFullLabsUseCase
-	storage      integrations.StorageService
+	svc     labsvc.Service
+	storage integrations.StorageService
 }
 
 func NewLabsHandler(
-	createUC *labuc.ExtractLabsUseCase,
-	listLabs *labuc.ListLabsUseCase,
-	listFullLabs *labuc.ListFullLabsUseCase,
+	svc labsvc.Service,
 	storageClient integrations.StorageService,
 ) *LabsHandler {
 	return &LabsHandler{
-		createUC:     createUC,
-		listLabs:     listLabs,
-		listFullLabs: listFullLabs,
-		storage:      storageClient,
+		svc:     svc,
+		storage: storageClient,
 	}
 }
 
 func (h *LabsHandler) ListLabs(c *gin.Context) {
+	if h == nil || h.svc == nil {
+		common.RespondError(c, http.StatusInternalServerError, "labs_not_configured", errors.New("labs service not configured"))
+		return
+	}
+
 	patientID := c.Param("id")
 	if patientID == "" {
 		patientID = c.Param("patientID")
@@ -63,7 +62,7 @@ func (h *LabsHandler) ListLabs(c *gin.Context) {
 		return
 	}
 
-	list, err := h.listLabs.Execute(c.Request.Context(), parsedID, limit, offset)
+	list, err := h.svc.List(c.Request.Context(), parsedID, limit, offset)
 	if err != nil {
 		common.RespondAppError(c, err)
 		return
@@ -73,6 +72,11 @@ func (h *LabsHandler) ListLabs(c *gin.Context) {
 }
 
 func (h *LabsHandler) ListFullLabs(c *gin.Context) {
+	if h == nil || h.svc == nil {
+		common.RespondError(c, http.StatusInternalServerError, "labs_not_configured", errors.New("labs service not configured"))
+		return
+	}
+
 	patientID := c.Param("id")
 	if patientID == "" {
 		patientID = c.Param("patientID")
@@ -93,7 +97,7 @@ func (h *LabsHandler) ListFullLabs(c *gin.Context) {
 		return
 	}
 
-	list, err := h.listFullLabs.Execute(c.Request.Context(), parsedID, limit, offset)
+	list, err := h.svc.ListFull(c.Request.Context(), parsedID, limit, offset)
 	if err != nil {
 		common.RespondAppError(c, err)
 		return
@@ -106,6 +110,11 @@ func (h *LabsHandler) ListFullLabs(c *gin.Context) {
 // POST /:patientID/labs/upload
 // field: file (PDF/JPEG/PNG)
 func (h *LabsHandler) UploadAndProcessLabs(c *gin.Context) {
+	if h == nil || h.svc == nil || h.storage == nil {
+		common.RespondError(c, http.StatusInternalServerError, "labs_not_configured", errors.New("labs dependencies not configured"))
+		return
+	}
+
 	log := applog.FromContext(c.Request.Context())
 
 	user, ok := middleware.GetCurrentUser(c)
@@ -134,15 +143,12 @@ func (h *LabsHandler) UploadAndProcessLabs(c *gin.Context) {
 		return
 	}
 
-	output, err := h.createUC.Execute(
-		c.Request.Context(),
-		labuc.CreateFromDocumentInput{
-			PatientID:        parsedID,
-			DocumentURI:      documentURI,
-			MimeType:         mimeType,
-			UploadedByUserID: user.ID,
-		},
-	)
+	output, err := h.svc.CreateFromDocument(c.Request.Context(), labsvc.CreateFromDocumentInput{
+		PatientID:        parsedID,
+		DocumentURI:      documentURI,
+		MimeType:         mimeType,
+		UploadedByUserID: user.ID,
+	})
 	if err != nil {
 		common.RespondAppError(c, err)
 		return

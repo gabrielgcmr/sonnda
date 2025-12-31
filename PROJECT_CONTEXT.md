@@ -23,7 +23,7 @@
 
 
 ## Usecases (current)
-- Usecases organized under internal/app/usecases (patientuc, useruc, professionaluc, accessuc, medicalrecord, labuc).
+- Services live under `internal/app/services` (patient, user, labs).
 
 ## API (current)
 

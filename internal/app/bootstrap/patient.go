@@ -8,7 +8,7 @@ import (
 	patientrepo "sonnda-api/internal/infrastructure/persistence/repository/patient"
 )
 
-func newPatientModule(db *db.Client) *patienthandler.PatientHandler {
+func NewPatientModule(db *db.Client) *patienthandler.PatientHandler {
 	repo := patientrepo.NewPatientRepository(db)
 
 	svc := patientsvc.New(repo, nil)

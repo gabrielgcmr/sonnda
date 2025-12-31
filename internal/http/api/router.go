@@ -20,6 +20,7 @@ func SetupRoutes(
 	userHandler *user.UserHandler,
 	patientHandler *patient.PatientHandler,
 	labsHandler *labs.LabsHandler,
+
 ) {
 	r.GET("/favicon.ico", func(c *gin.Context) {
 		b, _ := assets.FS.ReadFile("favicon.ico")
@@ -83,11 +84,12 @@ func SetupRoutes(
 		{
 			//Cria paciente
 			patients.POST("", patientHandler.Create)
+			patients.GET("", patientHandler.List)
 			//Lista pacientes que o usuário tem acesso.
 			//patients.GET("", patientHandler.ListAcessiblePatients)
 
 			//Dados básicos do paciente
-			patients.GET("", patientHandler.GetByID)
+			patients.GET("/:id", patientHandler.GetByID)
 
 			//Memberships do paciente
 			//patients.GET("/members", patientHandler.ListPatientMembers)
@@ -97,12 +99,11 @@ func SetupRoutes(
 			//patients.PUT("", patientHandler.UpdatePatientByID)
 			//Deleta paciente
 			//patients.DELETE("", patientHandler.DeletePatientByID)
-
-			professionalRoutes := patients.Group("/medical-records")
+			medicalRecords := patients.Group("/:patientID/medical-records")
 			{
-				professionalRoutes.GET("/labs", labsHandler.ListFullLabs)
-				professionalRoutes.POST("/labs/upload", labsHandler.UploadAndProcessLabs)
-				professionalRoutes.GET("/labs/summary", labsHandler.ListLabs)
+				medicalRecords.GET("/labs", labsHandler.ListFullLabs)
+				medicalRecords.POST("/labs/upload", labsHandler.UploadAndProcessLabs)
+				medicalRecords.GET("/labs/summary", labsHandler.ListLabs)
 			}
 
 		}

@@ -1,4 +1,4 @@
-package labuc
+package labsvc
 
 import (
 	"time"
@@ -6,7 +6,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// CreateFromDocumentInput e o input do use case.
 type CreateFromDocumentInput struct {
 	PatientID        uuid.UUID
 	DocumentURI      string
@@ -14,7 +13,6 @@ type CreateFromDocumentInput struct {
 	UploadedByUserID uuid.UUID
 }
 
-// LabReportOutput e o output do use case.
 type LabReportOutput struct {
 	ID                uuid.UUID
 	PatientID         uuid.UUID
@@ -51,7 +49,7 @@ type TestItemOutput struct {
 	ReferenceText *string
 }
 
-// Usado em: GET /patients/:patientID/labs.
+// Usado em: GET /patients/:patientID/labs/summary.
 type LabReportSummaryOutput struct {
 	ID           uuid.UUID                `json:"id"`
 	PatientID    uuid.UUID                `json:"patient_id"`
@@ -59,14 +57,12 @@ type LabReportSummaryOutput struct {
 	SummaryTests []LabResultSummaryOutput `json:"summary_tests"`
 }
 
-// Um teste resumido (ex.: "Creatinina", "Hemoglobina").
 type LabResultSummaryOutput struct {
 	TestName    string                    `json:"test_name"`
 	CollectedAt *time.Time                `json:"collected_at,omitempty"`
 	Items       []ResultItemSummaryOutput `json:"key_results"`
 }
 
-// Resultado essencial de um parametro (o que importa pro card/lista).
 type ResultItemSummaryOutput struct {
 	ParameterName string  `json:"parameter_name"`
 	ResultValue   *string `json:"result_value,omitempty"`

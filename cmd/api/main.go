@@ -9,17 +9,16 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 
+	"sonnda-api/internal/app/bootstrap"
 	"sonnda-api/internal/app/config"
 	"sonnda-api/internal/app/observability"
 
-	"sonnda-api/internal/app/modules/labs"
-
-	"sonnda-api/internal/app/modules/user"
 	"sonnda-api/internal/http/api"
 
 	"sonnda-api/internal/http/middleware"
 	authinfra "sonnda-api/internal/infrastructure/auth"
 	"sonnda-api/internal/infrastructure/documentai"
+	"sonnda-api/internal/infrastructure/persistence/repository/db"
 	"sonnda-api/internal/infrastructure/storage"
 )
 
@@ -47,7 +46,7 @@ func main() {
 	slog.SetDefault(appLogger)
 
 	// 4. Conectar db (Supabase via pgxpool)
-	dbClient, err := repository.NewClient(config.SupabaseConfig(*cfg))
+	dbClient, err := db.NewClient(config.SupabaseConfig(*cfg))
 	if err != nil {
 		log.Fatalf("falha ao criar client do supabase: %v", err)
 	}
@@ -78,18 +77,13 @@ func main() {
 	if err != nil {
 		log.Fatalf("falha ao criar auth do firebase: %v", err)
 	}
+	authMiddleware := middleware.NewAuthMiddleware(authService)
 
 	//7. Inicializa os repositórios
-	accessRepo := repository.NewPatientAccessRepository(dbClient)
-	patientRepo := repository.NewPatientRepository(dbClient)
-
-	//7 Modules
-	patientModule := patient.New(dbClient)
-	userModule := user.New(dbClient, patientRepo, accessRepo, authService)
-	labsModule := labs.New(dbClient, patientRepo, docExtractor, storageService)
-
-	authMiddleware := middleware.NewAuthMiddleware(authService)
+	patientHandler := bootstrap.NewPatientModule(dbClient)
+	userModule := bootstrap.NewUserModule(dbClient, authService)
 	registrationMiddleware := userModule.RegistrationMiddleware
+	labsHandler := bootstrap.NewLabsModule(dbClient, docExtractor, storageService)
 
 	// 8. Configura o Gin
 	gin.SetMode(gin.ReleaseMode)
@@ -99,7 +93,7 @@ func main() {
 	r.Use(middleware.Recovery(appLogger))
 
 	// 9. Montar rotas
-	api.SetupRoutes(r, authMiddleware, registrationMiddleware, userModule.Handler, patientModule.Handler, labsModule.Handler)
+	api.SetupRoutes(r, authMiddleware, registrationMiddleware, userModule.Handler, patientHandler, labsHandler)
 
 	// 10. Inicia o servidor
 	slog.Info(
