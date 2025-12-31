@@ -85,7 +85,33 @@ func (p *PatientRepository) FindByCPF(ctx context.Context, cpf string) (*patient
 
 // FindByID implements [repositories.PatientRepository].
 func (p *PatientRepository) FindByID(ctx context.Context, id uuid.UUID) (*patient.Patient, error) {
-	panic("unimplemented")
+	row, err := p.queries.GetPatientByID(ctx, id)
+	if err != nil {
+		if helpers.IsPgNotFound(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	userID, err := helpers.FromPgUUIDToNullableUUID(row.UserID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &patient.Patient{
+		ID:        row.ID,
+		UserID:    userID,
+		CPF:       row.Cpf,
+		CNS:       helpers.FromPgTextToNullableString(row.Cns),
+		FullName:  row.FullName,
+		BirthDate: row.BirthDate.Time,
+		Gender:    shared.Gender(row.Gender),
+		Race:      shared.Race(row.Race),
+		AvatarURL: row.AvatarUrl.String,
+		Phone:     helpers.FromPgTextToNullableString(row.Phone),
+		CreatedAt: row.CreatedAt.Time,
+		UpdatedAt: row.UpdatedAt.Time,
+	}, nil
 }
 
 // List implements [repositories.PatientRepository].

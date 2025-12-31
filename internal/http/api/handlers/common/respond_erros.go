@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	applog "sonnda-api/internal/app/observability"
-	"sonnda-api/internal/domain/entities/medicalrecord/lab"
+	"sonnda-api/internal/domain/entities/medicalrecord/labs"
 	"sonnda-api/internal/domain/entities/patient"
 	"sonnda-api/internal/domain/entities/professional"
 	"sonnda-api/internal/domain/entities/shared"
@@ -120,18 +120,18 @@ func RespondDomainError(c *gin.Context, err error) {
 		RespondError(c, http.StatusBadRequest, "invalid_birth_date", err)
 
 	// labs
-	case lab.ErrLabReportNotFound:
+	case labs.ErrLabReportNotFound:
 		RespondError(c, http.StatusNotFound, "lab_report_not_found", nil)
-	case lab.ErrLabReportAlreadyExists:
+	case labs.ErrLabReportAlreadyExists:
 		RespondError(c, http.StatusConflict, "lab_report_already_exists", nil)
-	case lab.ErrInvalidDocument:
+	case labs.ErrInvalidDocument:
 		RespondError(c, http.StatusBadRequest, "invalid_document", err)
-	case lab.ErrInvalidInput, lab.ErrMissingId:
+	case labs.ErrInvalidInput, labs.ErrMissingId:
 		RespondError(c, http.StatusBadRequest, "invalid_input", err)
-	case lab.ErrDocumentProcessing:
+	case labs.ErrDocumentProcessing:
 		// serviço externo falhou -> 502
 		RespondError(c, http.StatusBadGateway, "document_processing_failed", err)
-	case lab.ErrInvalidDateFormat:
+	case labs.ErrInvalidDateFormat:
 		RespondError(c, http.StatusBadRequest, "invalid_date_format", err)
 
 	default:

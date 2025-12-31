@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"sonnda-api/internal/domain/entities/medicalrecord/antecedents"
-	"sonnda-api/internal/domain/entities/medicalrecord/lab"
+	"sonnda-api/internal/domain/entities/medicalrecord/labs"
 	"sonnda-api/internal/domain/entities/medicalrecord/physical"
 	"sonnda-api/internal/domain/entities/medicalrecord/prevention"
 	"sonnda-api/internal/domain/entities/medicalrecord/problem"
@@ -25,7 +25,7 @@ type MedicalRecord struct {
 	Problems      []problem.Problem
 	Preventions   []prevention.Prevention
 	PhysicalExams []physical.PhysicalExam
-	LabReports    []lab.LabReport
+	LabReports    []labs.LabReport
 
 	CreatedAt time.Time
 	UpdatedAt time.Time

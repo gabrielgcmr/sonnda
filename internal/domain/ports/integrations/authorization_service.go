@@ -3,7 +3,7 @@ package integrations
 import (
 	"context"
 
-	"sonnda-api/internal/domain/entities/medicalrecord/lab"
+	"sonnda-api/internal/domain/entities/medicalrecord/labs"
 	"sonnda-api/internal/domain/entities/patient"
 	"sonnda-api/internal/domain/entities/user"
 )
@@ -21,6 +21,6 @@ type AuthorizationService interface {
 	CanCreatePatient(ctx context.Context, user *user.User) bool
 
 	// Laudos laboratoriais
-	CanViewLabReport(ctx context.Context, user *user.User, report *lab.LabReport) bool
+	CanViewLabReport(ctx context.Context, user *user.User, report *labs.LabReport) bool
 	CanCreateLabReportFromDocument(ctx context.Context, user *user.User, patient *patient.Patient) bool
 }

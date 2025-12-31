@@ -10,7 +10,7 @@ import (
 	"time"
 
 	applog "sonnda-api/internal/app/observability"
-	"sonnda-api/internal/domain/entities/medicalrecord/lab"
+	"sonnda-api/internal/domain/entities/medicalrecord/labs"
 	"sonnda-api/internal/domain/entities/patient"
 	"sonnda-api/internal/domain/ports/integrations"
 	"sonnda-api/internal/domain/ports/repositories"
@@ -46,7 +46,7 @@ func (s *service) CreateFromDocument(ctx context.Context, input CreateFromDocume
 	extracted, err := s.extractor.ExtractLabReport(ctx, input.DocumentURI, input.MimeType)
 	if err != nil {
 		applog.FromContext(ctx).Warn("extract_lab_report_failed", "err", err)
-		return nil, lab.ErrDocumentProcessing
+		return nil, labs.ErrDocumentProcessing
 	}
 
 	report, err := s.mapExtractedToDomain(input.PatientID, input.UploadedByUserID, extracted)
@@ -61,7 +61,7 @@ func (s *service) CreateFromDocument(ctx context.Context, input CreateFromDocume
 		return nil, err
 	}
 	if exists {
-		return nil, lab.ErrLabReportAlreadyExists
+		return nil, labs.ErrLabReportAlreadyExists
 	}
 
 	report.Fingerprint = &fingerprint
@@ -74,7 +74,7 @@ func (s *service) CreateFromDocument(ctx context.Context, input CreateFromDocume
 
 func (s *service) List(ctx context.Context, patientID uuid.UUID, limit, offset int) ([]LabReportSummaryOutput, error) {
 	if patientID == uuid.Nil {
-		return nil, lab.ErrInvalidInput
+		return nil, labs.ErrInvalidInput
 	}
 
 	p, err := s.patientRepo.FindByID(ctx, patientID)
@@ -132,7 +132,7 @@ func (s *service) List(ctx context.Context, patientID uuid.UUID, limit, offset i
 
 func (s *service) ListFull(ctx context.Context, patientID uuid.UUID, limit, offset int) ([]*LabReportOutput, error) {
 	if patientID == uuid.Nil {
-		return nil, lab.ErrInvalidInput
+		return nil, labs.ErrInvalidInput
 	}
 
 	p, err := s.patientRepo.FindByID(ctx, patientID)
@@ -168,13 +168,13 @@ func (s *service) ListFull(ctx context.Context, patientID uuid.UUID, limit, offs
 
 func (s *service) validateCreate(input CreateFromDocumentInput) error {
 	if input.PatientID == uuid.Nil {
-		return lab.ErrInvalidInput
+		return labs.ErrInvalidInput
 	}
 	if input.UploadedByUserID == uuid.Nil {
-		return lab.ErrInvalidUploadedByUser
+		return labs.ErrInvalidUploadedByUser
 	}
 	if strings.TrimSpace(input.DocumentURI) == "" {
-		return lab.ErrInvalidDocument
+		return labs.ErrInvalidDocument
 	}
 
 	validMimeTypes := []string{"application/pdf", "image/jpeg", "image/png"}
@@ -184,19 +184,19 @@ func (s *service) validateCreate(input CreateFromDocumentInput) error {
 		}
 	}
 
-	return lab.ErrInvalidDocument
+	return labs.ErrInvalidDocument
 }
 
 func (s *service) mapExtractedToDomain(
 	patientID uuid.UUID,
 	uploadedByUserID uuid.UUID,
 	extracted *integrations.ExtractedLabReport,
-) (*lab.LabReport, error) {
+) (*labs.LabReport, error) {
 	if extracted == nil {
-		return nil, lab.ErrInvalidInput
+		return nil, labs.ErrInvalidInput
 	}
 
-	report, err := lab.NewLabReport(patientID.String(), uploadedByUserID.String())
+	report, err := labs.NewLabReport(patientID.String(), uploadedByUserID.String())
 	if err != nil {
 		return nil, err
 	}
@@ -221,7 +221,7 @@ func (s *service) mapExtractedToDomain(
 	}
 
 	for _, et := range extracted.Tests {
-		result, err := lab.NewLabResult(report.ID.String(), et.TestName)
+		result, err := labs.NewLabResult(report.ID.String(), et.TestName)
 		if err != nil {
 			return nil, err
 		}
@@ -241,7 +241,7 @@ func (s *service) mapExtractedToDomain(
 		}
 
 		for _, ei := range et.Items {
-			item, err := lab.NewLabResultItem(result.ID.String(), ei.ParameterName)
+			item, err := labs.NewLabResultItem(result.ID.String(), ei.ParameterName)
 			if err != nil {
 				return nil, err
 			}
@@ -277,7 +277,7 @@ func (s *service) parseDate(raw string) (time.Time, error) {
 		}
 	}
 
-	return time.Time{}, lab.ErrInvalidDateFormat
+	return time.Time{}, labs.ErrInvalidDateFormat
 }
 
 func (s *service) parseDateTime(raw string) (time.Time, error) {
@@ -319,7 +319,7 @@ func normalizeValue(v *string) string {
 	return strings.TrimSpace(*v)
 }
 
-func generateLabFingerprint(patientID uuid.UUID, labReport *lab.LabReport) string {
+func generateLabFingerprint(patientID uuid.UUID, labReport *labs.LabReport) string {
 	var parts []string
 	patientKey := patientID.String()
 	if patientKey == "" && labReport != nil {
@@ -358,7 +358,7 @@ func generateLabFingerprint(patientID uuid.UUID, labReport *lab.LabReport) strin
 	return hex.EncodeToString(hashBytes)
 }
 
-func (s *service) toOutput(report *lab.LabReport) *LabReportOutput {
+func (s *service) toOutput(report *labs.LabReport) *LabReportOutput {
 	output := &LabReportOutput{
 		ID:                report.ID,
 		PatientID:         report.PatientID,
@@ -402,7 +402,7 @@ func (s *service) toOutput(report *lab.LabReport) *LabReportOutput {
 	return output
 }
 
-func mapDomainReportToOutput(report *lab.LabReport) *LabReportOutput {
+func mapDomainReportToOutput(report *labs.LabReport) *LabReportOutput {
 	output := &LabReportOutput{
 		ID:                report.ID,
 		PatientID:         report.PatientID,

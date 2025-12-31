@@ -99,7 +99,7 @@ func SetupRoutes(
 			//patients.PUT("", patientHandler.UpdatePatientByID)
 			//Deleta paciente
 			//patients.DELETE("", patientHandler.DeletePatientByID)
-			medicalRecords := patients.Group("/:patientID/medical-records")
+			medicalRecords := patients.Group("/:id/medical-records")
 			{
 				medicalRecords.GET("/labs", labsHandler.ListFullLabs)
 				medicalRecords.POST("/labs/upload", labsHandler.UploadAndProcessLabs)

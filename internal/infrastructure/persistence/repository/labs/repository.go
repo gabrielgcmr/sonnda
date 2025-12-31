@@ -1,9 +1,9 @@
-package repository
+package labs
 
 import (
 	"context"
 
-	"sonnda-api/internal/domain/entities/medicalrecord/lab"
+	"sonnda-api/internal/domain/entities/medicalrecord/labs"
 	"sonnda-api/internal/domain/ports/repositories"
 	"sonnda-api/internal/infrastructure/persistence/repository/db"
 	labsqlc "sonnda-api/internal/infrastructure/persistence/sqlc/generated/lab"
@@ -26,7 +26,7 @@ func NewLabsRepository(client *db.Client) repositories.LabRepository {
 }
 
 // Create implements [repositories.LabRepository].
-func (l *LabsRepository) Create(ctx context.Context, report *lab.LabReport) error {
+func (l *LabsRepository) Create(ctx context.Context, report *labs.LabReport) error {
 	panic("unimplemented")
 }
 
@@ -41,16 +41,16 @@ func (l *LabsRepository) ExistsBySignature(ctx context.Context, patientID uuid.U
 }
 
 // FindByID implements [repositories.LabRepository].
-func (l *LabsRepository) FindByID(ctx context.Context, reportID uuid.UUID) (*lab.LabReport, error) {
+func (l *LabsRepository) FindByID(ctx context.Context, reportID uuid.UUID) (*labs.LabReport, error) {
 	panic("unimplemented")
 }
 
 // ListItemsByPatientAndParameter implements [repositories.LabRepository].
-func (l *LabsRepository) ListItemsByPatientAndParameter(ctx context.Context, patientID uuid.UUID, parameterName string, limit int, offset int) ([]lab.LabResultItemTimeline, error) {
+func (l *LabsRepository) ListItemsByPatientAndParameter(ctx context.Context, patientID uuid.UUID, parameterName string, limit int, offset int) ([]labs.LabResultItemTimeline, error) {
 	panic("unimplemented")
 }
 
 // ListLabs implements [repositories.LabRepository].
-func (l *LabsRepository) ListLabs(ctx context.Context, patientID uuid.UUID, limit int, offset int) ([]lab.LabReport, error) {
+func (l *LabsRepository) ListLabs(ctx context.Context, patientID uuid.UUID, limit int, offset int) ([]labs.LabReport, error) {
 	panic("unimplemented")
 }
