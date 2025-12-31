@@ -1,0 +1,68 @@
+version: "2"
+sql:
+  - engine: "postgresql"
+    schema:
+      - "sql/schema/users.sql"
+      - "sql/schema/patient.sql"
+      - "sql/schema/lab.sql"
+    queries: "sql/queries/lab_queries.sql"
+    gen:
+      go:
+        package: "labsqlc"
+        out: "generated/lab"
+        sql_package: "pgx/v5"
+        emit_json_tags: true
+        emit_prepared_queries: false
+        emit_interface: true
+        emit_db_tags: false
+        overrides:
+            - db_type: "uuid"
+              go_type: "github.com/google/uuid.UUID"
+  - engine: "postgresql"
+    schema: "sql/schema/users.sql"
+    queries: "sql/queries/user_queries.sql"
+    gen:
+      go:
+        package: "usersqlc"
+        out: "generated/user"
+        sql_package: "pgx/v5"
+        emit_json_tags: true
+        emit_prepared_queries: false
+        emit_interface: true
+        emit_db_tags: false
+        overrides:
+            - db_type: "uuid"
+              go_type: "github.com/google/uuid.UUID"
+  - engine: "postgresql"
+    schema:
+      - "sql/schema/users.sql"
+      - "sql/schema/patient.sql"
+    queries: "sql/queries/patient_queries.sql"
+    gen:
+      go:
+        package: "patientsqlc"
+        out: "generated/patient"
+        sql_package: "pgx/v5"
+        emit_json_tags: true
+        emit_prepared_queries: false
+        emit_interface: true
+        emit_db_tags: false
+        overrides:
+            - db_type: "uuid"
+              go_type: "github.com/google/uuid.UUID"
+  - engine: "postgresql"
+    schema:
+      - "sql/schema/users.sql"
+      - "sql/schema/patient.sql"
+      - "sql/schema/patientaccess.sql"
+    queries: "sql/queries/patientaccess_queries.sql"
+    gen:
+      go:
+        package: "patientaccesssqlc"
+        out: "generated/patientaccess"
+        sql_package: "pgx/v5"
+        emit_json_tags: true
+        emit_prepared_queries: false
+        emit_interface: true
+        emit_db_tags: false
+

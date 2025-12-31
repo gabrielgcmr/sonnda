@@ -1,0 +1,13 @@
+services:
+  api:
+    build: .
+    container_name: sonnda-api
+    restart: unless-stopped
+    ports:
+    - "${PORT:-8080}:8080"
+    env_file:
+      - .env
+    environment:
+      GOOGLE_APPLICATION_CREDENTIALS: /secrets/sonnda-gcs.json
+    volumes:
+      - ./secrets/sonnda-gcs.json:/secrets/sonnda-gcs.json:ro

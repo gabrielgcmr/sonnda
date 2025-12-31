@@ -1,0 +1,24 @@
+package repositories
+
+import (
+	"context"
+
+	"sonnda-api/internal/domain/entities/medicalrecord"
+
+	"github.com/google/uuid"
+)
+
+type MedicalRecordRepository interface {
+	// CRUD basico
+	Save(ctx context.Context, record *medicalrecord.MedicalRecord) error
+	Update(ctx context.Context, record *medicalrecord.MedicalRecord) error
+	Delete(ctx context.Context, id uuid.UUID) error
+
+	// Finders
+	FindByID(ctx context.Context, id uuid.UUID) (*medicalrecord.MedicalRecord, error)
+	FindByPatientID(ctx context.Context, patientID uuid.UUID) (*medicalrecord.MedicalRecord, error)
+	// Timeline
+	CreateEntry(ctx context.Context, entry *medicalrecord.Entry) error
+	DeleteEntry(ctx context.Context, id uuid.UUID) error
+	ListEntries(ctx context.Context, patientID uuid.UUID, limit, offset int) ([]medicalrecord.Entry, error)
+}
