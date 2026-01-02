@@ -8,8 +8,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 
-	"sonnda-api/internal/domain/entities/rbac"
-	"sonnda-api/internal/domain/entities/user"
+	"sonnda-api/internal/domain/model/rbac"
+	"sonnda-api/internal/domain/model/user"
 	"sonnda-api/internal/domain/ports/repositories"
 	"sonnda-api/internal/infrastructure/persistence/repository/db"
 	"sonnda-api/internal/infrastructure/persistence/repository/helpers"

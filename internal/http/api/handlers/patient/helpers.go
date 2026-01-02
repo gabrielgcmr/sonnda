@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"sonnda-api/internal/app/apperr"
-	"sonnda-api/internal/domain/entities/shared"
+	"sonnda-api/internal/domain/model/shared"
 )
 
 // ParseBirthDate valida e converte a data de nascimento do formato ISO (YYYY-MM-DD).

@@ -1,8 +1,8 @@
 package user
 
 import (
-	"sonnda-api/internal/domain/entities/rbac"
-	"sonnda-api/internal/domain/entities/shared"
+	"sonnda-api/internal/domain/model/rbac"
+	"sonnda-api/internal/domain/model/shared"
 	"strings"
 	"time"
 

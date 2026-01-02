@@ -4,7 +4,7 @@ import (
 	"strings"
 	"time"
 
-	"sonnda-api/internal/domain/entities/shared"
+	"sonnda-api/internal/domain/model/shared"
 
 	"github.com/google/uuid"
 )

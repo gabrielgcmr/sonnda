@@ -3,7 +3,7 @@ package repositories
 import (
 	"context"
 
-	"sonnda-api/internal/domain/entities/medicalrecord"
+	"sonnda-api/internal/domain/model/medicalrecord"
 
 	"github.com/google/uuid"
 )

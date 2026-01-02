@@ -2,7 +2,7 @@
 package patientsvc
 
 import (
-	"sonnda-api/internal/domain/entities/shared"
+	"sonnda-api/internal/domain/model/shared"
 	"time"
 
 	"github.com/google/uuid"

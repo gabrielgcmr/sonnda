@@ -5,11 +5,11 @@ import (
 	"net/http"
 
 	applog "sonnda-api/internal/app/observability"
-	"sonnda-api/internal/domain/entities/medicalrecord/labs"
-	"sonnda-api/internal/domain/entities/patient"
-	"sonnda-api/internal/domain/entities/professional"
-	"sonnda-api/internal/domain/entities/shared"
-	"sonnda-api/internal/domain/entities/user"
+	"sonnda-api/internal/domain/model/medicalrecord/labs"
+	"sonnda-api/internal/domain/model/patient"
+	"sonnda-api/internal/domain/model/shared"
+	"sonnda-api/internal/domain/model/user"
+	"sonnda-api/internal/domain/model/user/professional"
 	"strings"
 
 	"github.com/gin-gonic/gin"

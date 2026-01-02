@@ -1,29 +1,11 @@
 package patientaccess
 
 import (
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
 )
-
-type RequestStatus string
-
-const (
-	RequestPending   RequestStatus = "pending"  // solicitado, aguardando ação
-	RequestApproved  RequestStatus = "approved" // aprovado (opcional; pode ir direto para grant)
-	RequestRejected  RequestStatus = "rejected"
-	RequestCancelled RequestStatus = "cancelled"
-	RequestExpired   RequestStatus = "expired"
-)
-
-func (s RequestStatus) IsValid() bool {
-	switch s {
-	case RequestPending, RequestApproved, RequestRejected, RequestCancelled, RequestExpired:
-		return true
-	default:
-		return false
-	}
-}
 
 type AccessRequest struct {
 	ID        uuid.UUID
@@ -97,7 +79,7 @@ func (ar *AccessRequest) Validate() error {
 		return ErrNilAccessRequest
 	}
 	if ar.ID == uuid.Nil {
-		return ErrInvalidRequestID
+		return errors.New("access request id is required")
 	}
 	if ar.PatientID == uuid.Nil {
 		return ErrInvalidPatientID
@@ -112,7 +94,7 @@ func (ar *AccessRequest) Validate() error {
 		return ErrInvalidTimestamp
 	}
 	if !ar.Status.IsValid() {
-		return ErrInvalidRequestStatus
+		return errors.New("invalid access request status")
 	}
 	if !ar.RequesterRelationType.IsValid() || !ar.TargetRelationType.IsValid() {
 		return ErrInvalidRelationshipType
@@ -128,7 +110,7 @@ func (ar *AccessRequest) Validate() error {
 	}
 	// approved/rejected: deve ter decisão registrada
 	if ar.DecidedBy == nil || ar.DecidedAt == nil {
-		return ErrMissingDecisionFields
+		return errors.New("missing decision fields")
 	}
 	return nil
 }

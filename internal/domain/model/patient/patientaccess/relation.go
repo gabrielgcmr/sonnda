@@ -1,5 +1,7 @@
 package patientaccess
 
+import "errors"
+
 type RelationshipType string //O relacionamento que o usuário tem com o paciente
 
 const (
@@ -20,3 +22,5 @@ func (rt RelationshipType) IsValid() bool {
 		return false
 	}
 }
+
+var ErrInvalidRelationshipType = errors.New("invalid relationship type")

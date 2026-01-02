@@ -4,7 +4,7 @@ package repositories
 import (
 	"context"
 
-	"sonnda-api/internal/domain/entities/user"
+	"sonnda-api/internal/domain/model/user"
 
 	"github.com/google/uuid"
 )

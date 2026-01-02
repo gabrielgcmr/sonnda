@@ -3,7 +3,7 @@ package integrations
 
 import (
 	"context"
-	"sonnda-api/internal/domain/entities/identity"
+	"sonnda-api/internal/domain/model/identity"
 )
 
 type IdentityService interface {

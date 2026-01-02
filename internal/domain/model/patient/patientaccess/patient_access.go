@@ -1,18 +1,18 @@
 package patientaccess
 
 import (
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
 )
 
-//Não foi criado um status para o vínculo, pois ele se ele existe já é ativo ou não ser que tenha sido explicitamente revogado.
-
+// Não foi criado um status para o vínculo, pois ele se ele existe já é ativo ou não ser que tenha sido explicitamente revogado.
 type PatientAccess struct {
 	PatientID uuid.UUID
 	UserID    uuid.UUID
 
-	Type RelationshipType
+	RelationType RelationshipType
 
 	CreatedAt time.Time
 	RevokedAt *time.Time //Se nulo, está ativo
@@ -41,12 +41,12 @@ func NewPatientAccess(
 	}
 
 	pa := &PatientAccess{
-		PatientID: patientID,
-		UserID:    userID,
-		Type:      relType,
-		CreatedAt: now,
-		RevokedAt: nil,
-		GrantedBy: grantedBy,
+		PatientID:    patientID,
+		UserID:       userID,
+		RelationType: relType,
+		CreatedAt:    now,
+		RevokedAt:    nil,
+		GrantedBy:    grantedBy,
 	}
 
 	return pa, nil
@@ -64,7 +64,7 @@ func (pa *PatientAccess) Validate() error {
 		return ErrInvalidUserID
 	}
 
-	if !pa.Type.IsValid() {
+	if !pa.RelationType.IsValid() {
 		return ErrInvalidRelationshipType
 	}
 	if pa.CreatedAt.IsZero() {
@@ -89,7 +89,7 @@ func (pa *PatientAccess) Revoke(revokedAt time.Time) error {
 		return ErrNilPatientAccess
 	}
 	if !pa.IsActive() {
-		return ErrAccessAlreadyRevoked
+		return errors.New("patient access already revoked")
 	}
 	if revokedAt.IsZero() {
 		return ErrInvalidTimestamp

@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"sonnda-api/internal/domain/entities/identity"
-	"sonnda-api/internal/domain/entities/rbac"
-	"sonnda-api/internal/domain/entities/user"
+	"sonnda-api/internal/domain/model/identity"
+	"sonnda-api/internal/domain/model/rbac"
+	"sonnda-api/internal/domain/model/user"
 
 	"github.com/google/uuid"
 )

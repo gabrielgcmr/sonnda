@@ -3,7 +3,7 @@ package usersvc
 import (
 	"time"
 
-	"sonnda-api/internal/domain/entities/rbac"
+	"sonnda-api/internal/domain/model/rbac"
 
 	"github.com/google/uuid"
 )

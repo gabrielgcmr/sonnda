@@ -1,11 +1,11 @@
-﻿// core/ports/repositories/patient_repo.go
+// core/ports/repositories/patient_repo.go
 package repositories
 
 import (
 	"context"
 	"time"
 
-	"sonnda-api/internal/domain/entities/patient"
+	"sonnda-api/internal/domain/model/patient"
 
 	"github.com/google/uuid"
 )

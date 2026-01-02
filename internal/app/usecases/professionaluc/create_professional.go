@@ -3,7 +3,7 @@ package professionaluc
 import (
 	"context"
 
-	"sonnda-api/internal/domain/entities/professional"
+	"sonnda-api/internal/domain/model/user/professional"
 	"sonnda-api/internal/domain/ports/repositories"
 )
 

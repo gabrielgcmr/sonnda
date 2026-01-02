@@ -3,7 +3,7 @@ package labs
 import (
 	"context"
 
-	"sonnda-api/internal/domain/entities/medicalrecord/labs"
+	"sonnda-api/internal/domain/model/medicalrecord/labs"
 	"sonnda-api/internal/domain/ports/repositories"
 	"sonnda-api/internal/infrastructure/persistence/repository/db"
 	labsqlc "sonnda-api/internal/infrastructure/persistence/sqlc/generated/lab"

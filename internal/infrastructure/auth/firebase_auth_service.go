@@ -12,7 +12,7 @@ import (
 	firebaseauth "firebase.google.com/go/v4/auth"
 	"google.golang.org/api/option"
 
-	"sonnda-api/internal/domain/entities/identity"
+	"sonnda-api/internal/domain/model/identity"
 	"sonnda-api/internal/domain/ports/integrations"
 )
 

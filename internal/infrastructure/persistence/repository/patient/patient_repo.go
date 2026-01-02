@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"sonnda-api/internal/domain/entities/patient"
-	"sonnda-api/internal/domain/entities/shared"
+	"sonnda-api/internal/domain/model/patient"
+	"sonnda-api/internal/domain/model/shared"
 	"sonnda-api/internal/domain/ports/repositories"
 	"sonnda-api/internal/infrastructure/persistence/repository/db"
 	"sonnda-api/internal/infrastructure/persistence/repository/helpers"

@@ -10,8 +10,8 @@ import (
 	"time"
 
 	applog "sonnda-api/internal/app/observability"
-	"sonnda-api/internal/domain/entities/medicalrecord/labs"
-	"sonnda-api/internal/domain/entities/patient"
+	"sonnda-api/internal/domain/model/medicalrecord/labs"
+	"sonnda-api/internal/domain/model/patient"
 	"sonnda-api/internal/domain/ports/integrations"
 	"sonnda-api/internal/domain/ports/repositories"
 

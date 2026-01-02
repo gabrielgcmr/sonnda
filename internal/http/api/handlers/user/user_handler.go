@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	usersvc "sonnda-api/internal/app/services/user"
-	"sonnda-api/internal/domain/entities/rbac"
+	"sonnda-api/internal/domain/model/rbac"
 	"sonnda-api/internal/domain/ports/repositories"
 	"sonnda-api/internal/http/api/handlers/common"
 	"sonnda-api/internal/http/middleware"

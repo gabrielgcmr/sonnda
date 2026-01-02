@@ -1,9 +1,9 @@
-﻿package repositories
+package repositories
 
 import (
 	"context"
 
-	"sonnda-api/internal/domain/entities/professional"
+	"sonnda-api/internal/domain/model/user/professional"
 
 	"github.com/google/uuid"
 )

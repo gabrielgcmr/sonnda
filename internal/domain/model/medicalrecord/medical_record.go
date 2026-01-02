@@ -3,11 +3,11 @@ package medicalrecord
 import (
 	"time"
 
-	"sonnda-api/internal/domain/entities/medicalrecord/antecedents"
-	"sonnda-api/internal/domain/entities/medicalrecord/labs"
-	"sonnda-api/internal/domain/entities/medicalrecord/physical"
-	"sonnda-api/internal/domain/entities/medicalrecord/prevention"
-	"sonnda-api/internal/domain/entities/medicalrecord/problem"
+	"sonnda-api/internal/domain/model/medicalrecord/antecedents"
+	"sonnda-api/internal/domain/model/medicalrecord/labs"
+	"sonnda-api/internal/domain/model/medicalrecord/physical"
+	"sonnda-api/internal/domain/model/medicalrecord/prevention"
+	"sonnda-api/internal/domain/model/medicalrecord/problem"
 
 	"github.com/google/uuid"
 )

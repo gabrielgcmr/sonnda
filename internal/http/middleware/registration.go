@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	applog "sonnda-api/internal/app/observability"
-	"sonnda-api/internal/domain/entities/identity"
-	"sonnda-api/internal/domain/entities/user"
+	"sonnda-api/internal/domain/model/identity"
+	"sonnda-api/internal/domain/model/user"
 	"sonnda-api/internal/domain/ports/repositories"
 
 	"github.com/gin-gonic/gin"

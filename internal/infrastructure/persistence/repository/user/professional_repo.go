@@ -3,7 +3,7 @@ package user
 import (
 	"context"
 
-	"sonnda-api/internal/domain/entities/professional"
+	"sonnda-api/internal/domain/model/user/professional"
 	"sonnda-api/internal/domain/ports/repositories"
 	"sonnda-api/internal/infrastructure/persistence/repository/db"
 	professionalsqlc "sonnda-api/internal/infrastructure/persistence/sqlc/generated/professional"

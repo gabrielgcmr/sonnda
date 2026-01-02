@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"sonnda-api/internal/domain/entities/professional"
-	"sonnda-api/internal/domain/entities/rbac"
-	"sonnda-api/internal/domain/entities/user"
+	"sonnda-api/internal/domain/model/rbac"
+	"sonnda-api/internal/domain/model/user"
+	"sonnda-api/internal/domain/model/user/professional"
 	"sonnda-api/internal/domain/ports/integrations"
 	"sonnda-api/internal/domain/ports/repositories"
 
