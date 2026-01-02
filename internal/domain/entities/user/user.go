@@ -1,21 +1,12 @@
 package user
 
 import (
+	"sonnda-api/internal/domain/entities/rbac"
 	"sonnda-api/internal/domain/entities/shared"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
-)
-
-type Role string
-
-const (
-	Roledoctor    Role = "doctor"
-	RoleNurse     Role = "nurse"
-	RoleCaregiver Role = "caregiver"
-	RoleFamily    Role = "family"
-	RoleOwner     Role = "owner"
 )
 
 type User struct {
@@ -24,7 +15,7 @@ type User struct {
 	AuthSubject  string
 	Email        string
 	FullName     string
-	Role         Role
+	Role         rbac.Role
 	BirthDate    time.Time
 	CPF          string
 	Phone        string
@@ -38,7 +29,7 @@ type NewUserParams struct {
 	AuthSubject  string
 	Email        string
 	FullName     string
-	Role         Role
+	Role         rbac.Role
 	BirthDate    time.Time
 	CPF          string
 	Phone        string

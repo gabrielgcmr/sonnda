@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"sonnda-api/internal/domain/entities/identity"
+	"sonnda-api/internal/domain/entities/rbac"
 	"sonnda-api/internal/domain/entities/user"
 
 	"github.com/google/uuid"
@@ -112,7 +113,7 @@ func validRegisterInput() RegisterInput {
 		Provider:  "firebase",
 		Subject:   "sub-123",
 		Email:     "person@example.com",
-		Role:      user.RoleCaregiver,
+		Role:      rbac.RoleDoctor,
 		FullName:  "Pessoa Teste",
 		BirthDate: time.Date(1990, 1, 2, 0, 0, 0, 0, time.UTC),
 		CPF:       "52998224725",

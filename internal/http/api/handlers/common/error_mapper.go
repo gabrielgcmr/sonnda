@@ -12,7 +12,7 @@ import (
 func RespondAppError(c *gin.Context, err error) {
 	ae, ok := apperr.As(err)
 	if !ok {
-		RespondError(c, http.StatusInternalServerError, "server_error", err)
+		RespondDomainError(c, err)
 		return
 	}
 

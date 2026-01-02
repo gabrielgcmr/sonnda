@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"sonnda-api/internal/domain/entities/identity"
-	"sonnda-api/internal/domain/entities/user"
+	"sonnda-api/internal/domain/entities/rbac"
 	"sonnda-api/internal/domain/ports/integrations"
 
 	"github.com/gin-gonic/gin"
@@ -97,11 +97,11 @@ func RequireIdentity(c *gin.Context) (*identity.Identity, bool) {
 	return id, true
 }
 
-func ActorFromCurrentUser(c *gin.Context) (userID string, role user.Role, ok bool) {
+func ActorFromCurrentUser(c *gin.Context) (userID string, role rbac.Role, ok bool) {
 	u, ok := GetCurrentUser(c)
 	if !ok || u == nil {
-		return "", user.Role(""), false
+		return "", rbac.Role(""), false
 	}
 
-	return u.ID.String(), user.Role(u.Role[0]), true
+	return u.ID.String(), rbac.Role(u.Role[0]), true
 }

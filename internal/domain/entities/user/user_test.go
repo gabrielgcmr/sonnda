@@ -2,6 +2,7 @@ package user
 
 import (
 	"errors"
+	"sonnda-api/internal/domain/entities/rbac"
 	"testing"
 	"time"
 )
@@ -13,7 +14,7 @@ func TestNewUser_Success_NormalizesAndSetsUTC(t *testing.T) {
 		AuthProvider: " firebase ",
 		AuthSubject:  " sub-123 ",
 		Email:        " Person@Example.COM ",
-		Role:         RoleCaregiver,
+		Role:         rbac.RoleCommon,
 		FullName:     "  Pessoa Teste  ",
 		BirthDate:    birthDate,
 		CPF:          "529.982.247-25",
@@ -39,8 +40,8 @@ func TestNewUser_Success_NormalizesAndSetsUTC(t *testing.T) {
 	if u.FullName != "Pessoa Teste" {
 		t.Errorf("expected full name trimmed, got '%s'", u.FullName)
 	}
-	if u.Role != RoleCaregiver {
-		t.Errorf("expected caregiver role")
+	if u.Role != rbac.RoleCommon {
+		t.Errorf("expected common role")
 	}
 	if u.Phone != "11999999999" {
 		t.Errorf("expected phone trimmed, got '%s'", u.Phone)
@@ -144,7 +145,7 @@ func validParams(birthDate time.Time) NewUserParams {
 		AuthSubject:  "sub",
 		Email:        "a@b.com",
 		FullName:     "User",
-		Role:         RoleCaregiver,
+		Role:         rbac.RoleCommon,
 		BirthDate:    birthDate,
 		CPF:          "12345678901",
 		Phone:        "11",

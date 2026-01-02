@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	usersvc "sonnda-api/internal/app/services/user"
-	"sonnda-api/internal/domain/entities/user"
+	"sonnda-api/internal/domain/entities/rbac"
 	"sonnda-api/internal/domain/ports/repositories"
 	"sonnda-api/internal/http/api/handlers/common"
 	"sonnda-api/internal/http/middleware"
@@ -78,7 +78,7 @@ func (h *UserHandler) Register(c *gin.Context) {
 	}
 
 	// 4. Dispatcher (Decisão de Roteamento)
-	role := user.Role(strings.ToLower(req.Role))
+	role := rbac.Role(strings.ToLower(req.Role))
 
 	birthDate, err := time.Parse("2006-01-02", req.BirthDate)
 	if err != nil {
@@ -97,7 +97,7 @@ func (h *UserHandler) Register(c *gin.Context) {
 		Phone:     req.Phone,
 	}
 
-	if role == user.RoleProfessional {
+	if role == rbac.RoleDoctor || role == rbac.RoleNurse {
 		// Gin já garantiu required_if, mas mantemos safe-check.
 		if req.Professional == nil {
 			common.RespondError(c, http.StatusBadRequest, "professional_registration_required", errors.New("missing professional"))

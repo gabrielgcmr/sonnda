@@ -16,6 +16,16 @@ type PatientAccessRepository struct {
 	queries *patientaccesssqlc.Queries
 }
 
+// Find implements [repositories.PatientAccessRepository].
+func (p *PatientAccessRepository) Find(ctx context.Context, patientID uuid.UUID, userID uuid.UUID) (*patientaccess.PatientAccess, error) {
+	panic("unimplemented")
+}
+
+// FindActive implements [repositories.PatientAccessRepository].
+func (p *PatientAccessRepository) FindActive(ctx context.Context, patientID uuid.UUID, userID uuid.UUID) ([]*patientaccess.PatientAccess, error) {
+	panic("unimplemented")
+}
+
 var _ repositories.PatientAccessRepository = (*PatientAccessRepository)(nil)
 
 func NewPatientAccessRepository(client *db.Client) repositories.PatientAccessRepository {

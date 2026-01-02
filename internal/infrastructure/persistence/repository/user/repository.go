@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 
+	"sonnda-api/internal/domain/entities/rbac"
 	"sonnda-api/internal/domain/entities/user"
 	"sonnda-api/internal/domain/ports/repositories"
 	"sonnda-api/internal/infrastructure/persistence/repository/db"
@@ -57,7 +58,7 @@ func (r *UserRepository) FindByAuthIdentity(ctx context.Context, provider string
 		BirthDate:    row.BirthDate.Time,
 		CPF:          row.Cpf,
 		Phone:        row.Phone,
-		Role:         user.Role(row.Role),
+		Role:         rbac.Role(row.Role),
 		CreatedAt:    row.CreatedAt.Time,
 		UpdatedAt:    row.UpdatedAt.Time,
 	}, nil
@@ -82,7 +83,7 @@ func (r *UserRepository) FindByCPF(ctx context.Context, cpf string) (*user.User,
 		BirthDate:    row.BirthDate.Time,
 		CPF:          row.Cpf,
 		Phone:        row.Phone,
-		Role:         user.Role(row.Role),
+		Role:         rbac.Role(row.Role),
 		CreatedAt:    row.CreatedAt.Time,
 		UpdatedAt:    row.UpdatedAt.Time,
 	}, nil
@@ -127,7 +128,7 @@ func (r *UserRepository) Save(ctx context.Context, u *user.User) error {
 	u.BirthDate = row.BirthDate.Time
 	u.CPF = row.Cpf
 	u.Phone = row.Phone
-	u.Role = user.Role(row.Role)
+	u.Role = rbac.Role(row.Role)
 	u.CreatedAt = row.CreatedAt.Time
 	u.UpdatedAt = row.UpdatedAt.Time
 
@@ -157,7 +158,7 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*user.U
 		BirthDate:    row.BirthDate.Time,
 		CPF:          row.Cpf,
 		Phone:        row.Phone,
-		Role:         user.Role(row.Role),
+		Role:         rbac.Role(row.Role),
 		CreatedAt:    row.CreatedAt.Time,
 		UpdatedAt:    row.UpdatedAt.Time,
 	}, nil

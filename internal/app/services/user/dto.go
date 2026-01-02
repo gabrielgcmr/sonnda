@@ -3,7 +3,7 @@ package usersvc
 import (
 	"time"
 
-	"sonnda-api/internal/domain/entities/user"
+	"sonnda-api/internal/domain/entities/rbac"
 
 	"github.com/google/uuid"
 )
@@ -18,7 +18,7 @@ type RegisterInput struct {
 	Provider  string
 	Subject   string
 	Email     string
-	Role      user.Role
+	Role      rbac.Role
 	FullName  string
 	BirthDate time.Time
 	CPF       string

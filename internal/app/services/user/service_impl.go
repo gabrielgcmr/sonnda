@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"sonnda-api/internal/domain/entities/professional"
+	"sonnda-api/internal/domain/entities/rbac"
 	"sonnda-api/internal/domain/entities/user"
 	"sonnda-api/internal/domain/ports/integrations"
 	"sonnda-api/internal/domain/ports/repositories"
@@ -35,10 +36,11 @@ func New(
 }
 
 func (s *service) Register(ctx context.Context, input RegisterInput) (*user.User, error) {
-	if input.Role == user.RoleProfessional {
+	if input.Role == rbac.RoleDoctor || input.Role == rbac.RoleNurse {
 		return s.createProfessionalUser(ctx, input)
 	}
 	return s.createUser(ctx, input)
+
 }
 
 func (s *service) createUser(ctx context.Context, input RegisterInput) (*user.User, error) {
