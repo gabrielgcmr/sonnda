@@ -25,16 +25,6 @@ func NewPatientAccessRepository(client *db.Client) repositories.PatientAccessRep
 	}
 }
 
-// Find implements [repositories.PatientAccessRepository].
-func (p *PatientAccessRepository) Find(ctx context.Context, patientID uuid.UUID, userID uuid.UUID) (*patientaccess.PatientAccess, error) {
-	panic("unimplemented")
-}
-
-// HasPermission implements [repositories.PatientAccessRepository].
-func (p *PatientAccessRepository) HasPermission(ctx context.Context, patientID uuid.UUID, userID uuid.UUID, perm patientaccess.Permission) (bool, error) {
-	panic("unimplemented")
-}
-
 // ListByPatient implements [repositories.PatientAccessRepository].
 func (p *PatientAccessRepository) ListByPatient(ctx context.Context, patientID uuid.UUID) ([]*patientaccess.PatientAccess, error) {
 	panic("unimplemented")
@@ -45,12 +35,17 @@ func (p *PatientAccessRepository) ListByUser(ctx context.Context, userID uuid.UU
 	panic("unimplemented")
 }
 
-// Revoke implements [repositories.PatientAccessRepository].
-func (p *PatientAccessRepository) Revoke(ctx context.Context, patientID uuid.UUID, userID uuid.UUID) error {
+// GetByUserAndPatient implements [repositories.PatientAccessRepository].
+func (p *PatientAccessRepository) GetByUserAndPatient(ctx context.Context, userID uuid.UUID, patientID uuid.UUID) (*patientaccess.PatientAccess, error) {
 	panic("unimplemented")
 }
 
 // Upsert implements [repositories.PatientAccessRepository].
 func (p *PatientAccessRepository) Upsert(ctx context.Context, access *patientaccess.PatientAccess) error {
+	panic("unimplemented")
+}
+
+// Revoke implements [repositories.PatientAccessRepository].
+func (p *PatientAccessRepository) Revoke(ctx context.Context, patientID uuid.UUID, userID uuid.UUID) error {
 	panic("unimplemented")
 }

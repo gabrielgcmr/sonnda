@@ -10,19 +10,19 @@ import (
 )
 
 type Patient struct {
-	ID        uuid.UUID          `json:"id"`
-	UserID    pgtype.UUID        `json:"user_id"`
-	Cpf       string             `json:"cpf"`
-	Cns       pgtype.Text        `json:"cns"`
-	FullName  string             `json:"full_name"`
-	BirthDate pgtype.Date        `json:"birth_date"`
-	Gender    string             `json:"gender"`
-	Race      string             `json:"race"`
-	Phone     pgtype.Text        `json:"phone"`
-	AvatarUrl pgtype.Text        `json:"avatar_url"`
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
-	DeletedAt pgtype.Timestamptz `json:"deleted_at"`
+	ID          uuid.UUID          `json:"id"`
+	OwnerUserID pgtype.UUID        `json:"owner_user_id"`
+	Cpf         string             `json:"cpf"`
+	Cns         pgtype.Text        `json:"cns"`
+	FullName    string             `json:"full_name"`
+	BirthDate   pgtype.Date        `json:"birth_date"`
+	Gender      string             `json:"gender"`
+	Race        string             `json:"race"`
+	Phone       pgtype.Text        `json:"phone"`
+	AvatarUrl   pgtype.Text        `json:"avatar_url"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+	DeletedAt   pgtype.Timestamptz `json:"deleted_at"`
 }
 
 type Professional struct {

@@ -39,6 +39,14 @@ A arquitetura foi simplificada em camadas diretas, com baixo acoplamento:
 
 ---
 
+## Autorizacao (ReBAC)
+
+Este projeto segue a direcao de **ReBAC** (Relationship-Based Access Control): o acesso a dados do paciente e decidido pelo **vinculo (relationship) usuario <-> paciente**, e nao por "RBAC + ABAC" como modelo principal.
+
+Detalhes: `docs/architecture/access-control.md`.
+
+---
+
 ## Stack Tecnologico
 
 - **Linguagem:** Go (Golang)
@@ -88,7 +96,8 @@ Registrado (token + usuario no banco):
 - `GET /api/v1/patients/medical-records/labs/summary`
 
 Documentacao complementar:
-- `docs/architecture.md`
+- `docs/architecture/README.md`
+- `docs/architecture/access-control.md`
 - `docs/dev/setup.md`
 - `docs/api/patient.md`
 

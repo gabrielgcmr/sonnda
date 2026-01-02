@@ -41,7 +41,7 @@ Arquivos-chave:
 Fluxo:
 1) Handler autentica e faz bind do JSON em `PatientChanges`.
 2) Use case busca paciente (por ID ou CPF).
-3) Autorizacao: `authorization.CanEditPatient`.
+3) Autorizacao (ReBAC): `authorization.PatientAuthorizer.Require` (membership usuario <-> paciente). Ver `docs/architecture/access-control.md`.
 4) Entidade aplica mudancas via `ApplyUpdate`.
 5) Persistencia grava com SQLC `UpdatePatient` (COALESCE para campos nulos).
 

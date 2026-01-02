@@ -17,7 +17,7 @@ const createPatient = `-- name: CreatePatient :one
 
 INSERT INTO patients (
     id,
-    user_id,
+    owner_user_id,
     cpf,
     cns,
     full_name,
@@ -32,29 +32,29 @@ INSERT INTO patients (
     $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
     now(), now()
 )
-RETURNING id, user_id, cpf, cns, full_name, birth_date, gender, race, phone, avatar_url, created_at, updated_at, deleted_at
+RETURNING id, owner_user_id, cpf, cns, full_name, birth_date, gender, race, phone, avatar_url, created_at, updated_at, deleted_at
 `
 
 type CreatePatientParams struct {
-	ID        uuid.UUID   `json:"id"`
-	UserID    pgtype.UUID `json:"user_id"`
-	Cpf       string      `json:"cpf"`
-	Cns       pgtype.Text `json:"cns"`
-	FullName  string      `json:"full_name"`
-	BirthDate pgtype.Date `json:"birth_date"`
-	Gender    string      `json:"gender"`
-	Race      string      `json:"race"`
-	Phone     pgtype.Text `json:"phone"`
-	AvatarUrl pgtype.Text `json:"avatar_url"`
+	ID          uuid.UUID   `json:"id"`
+	OwnerUserID pgtype.UUID `json:"owner_user_id"`
+	Cpf         string      `json:"cpf"`
+	Cns         pgtype.Text `json:"cns"`
+	FullName    string      `json:"full_name"`
+	BirthDate   pgtype.Date `json:"birth_date"`
+	Gender      string      `json:"gender"`
+	Race        string      `json:"race"`
+	Phone       pgtype.Text `json:"phone"`
+	AvatarUrl   pgtype.Text `json:"avatar_url"`
 }
 
 // internal/adapters/outbound/database/sqlc/patients/queries.sql
 // Common column set for patient fetches:
-// id, user_id, cpf, cns, full_name, birth_date, gender, race, phone, avatar_url, created_at, updated_at
+// id, owner_user_id, cpf, cns, full_name, birth_date, gender, race, phone, avatar_url, created_at, updated_at
 func (q *Queries) CreatePatient(ctx context.Context, arg CreatePatientParams) (Patient, error) {
 	row := q.db.QueryRow(ctx, createPatient,
 		arg.ID,
-		arg.UserID,
+		arg.OwnerUserID,
 		arg.Cpf,
 		arg.Cns,
 		arg.FullName,
@@ -67,7 +67,7 @@ func (q *Queries) CreatePatient(ctx context.Context, arg CreatePatientParams) (P
 	var i Patient
 	err := row.Scan(
 		&i.ID,
-		&i.UserID,
+		&i.OwnerUserID,
 		&i.Cpf,
 		&i.Cns,
 		&i.FullName,
@@ -84,7 +84,7 @@ func (q *Queries) CreatePatient(ctx context.Context, arg CreatePatientParams) (P
 }
 
 const getPatientByCNS = `-- name: GetPatientByCNS :one
-SELECT id, user_id, cpf, cns, full_name, birth_date, gender, race, phone, avatar_url, created_at, updated_at, deleted_at
+SELECT id, owner_user_id, cpf, cns, full_name, birth_date, gender, race, phone, avatar_url, created_at, updated_at, deleted_at
 FROM patients
 WHERE cns = $1
   AND deleted_at IS NULL
@@ -96,7 +96,7 @@ func (q *Queries) GetPatientByCNS(ctx context.Context, cns pgtype.Text) (Patient
 	var i Patient
 	err := row.Scan(
 		&i.ID,
-		&i.UserID,
+		&i.OwnerUserID,
 		&i.Cpf,
 		&i.Cns,
 		&i.FullName,
@@ -113,7 +113,7 @@ func (q *Queries) GetPatientByCNS(ctx context.Context, cns pgtype.Text) (Patient
 }
 
 const getPatientByCPF = `-- name: GetPatientByCPF :one
-SELECT id, user_id, cpf, cns, full_name, birth_date, gender, race, phone, avatar_url, created_at, updated_at, deleted_at
+SELECT id, owner_user_id, cpf, cns, full_name, birth_date, gender, race, phone, avatar_url, created_at, updated_at, deleted_at
 FROM patients
 WHERE cpf = $1
   AND deleted_at IS NULL
@@ -125,7 +125,7 @@ func (q *Queries) GetPatientByCPF(ctx context.Context, cpf string) (Patient, err
 	var i Patient
 	err := row.Scan(
 		&i.ID,
-		&i.UserID,
+		&i.OwnerUserID,
 		&i.Cpf,
 		&i.Cns,
 		&i.FullName,
@@ -142,7 +142,7 @@ func (q *Queries) GetPatientByCPF(ctx context.Context, cpf string) (Patient, err
 }
 
 const getPatientByID = `-- name: GetPatientByID :one
-SELECT id, user_id, cpf, cns, full_name, birth_date, gender, race, phone, avatar_url, created_at, updated_at, deleted_at
+SELECT id, owner_user_id, cpf, cns, full_name, birth_date, gender, race, phone, avatar_url, created_at, updated_at, deleted_at
 FROM patients
 WHERE id = $1
   AND deleted_at IS NULL
@@ -154,7 +154,7 @@ func (q *Queries) GetPatientByID(ctx context.Context, id uuid.UUID) (Patient, er
 	var i Patient
 	err := row.Scan(
 		&i.ID,
-		&i.UserID,
+		&i.OwnerUserID,
 		&i.Cpf,
 		&i.Cns,
 		&i.FullName,
@@ -170,20 +170,20 @@ func (q *Queries) GetPatientByID(ctx context.Context, id uuid.UUID) (Patient, er
 	return i, err
 }
 
-const getPatientByUserID = `-- name: GetPatientByUserID :one
-SELECT id, user_id, cpf, cns, full_name, birth_date, gender, race, phone, avatar_url, created_at, updated_at, deleted_at
+const getPatientByOwnerUserID = `-- name: GetPatientByOwnerUserID :one
+SELECT id, owner_user_id, cpf, cns, full_name, birth_date, gender, race, phone, avatar_url, created_at, updated_at, deleted_at
 FROM patients
-WHERE user_id = $1
+WHERE owner_user_id = $1
   AND deleted_at IS NULL
 LIMIT 1
 `
 
-func (q *Queries) GetPatientByUserID(ctx context.Context, userID pgtype.UUID) (Patient, error) {
-	row := q.db.QueryRow(ctx, getPatientByUserID, userID)
+func (q *Queries) GetPatientByOwnerUserID(ctx context.Context, ownerUserID pgtype.UUID) (Patient, error) {
+	row := q.db.QueryRow(ctx, getPatientByOwnerUserID, ownerUserID)
 	var i Patient
 	err := row.Scan(
 		&i.ID,
-		&i.UserID,
+		&i.OwnerUserID,
 		&i.Cpf,
 		&i.Cns,
 		&i.FullName,
@@ -200,7 +200,7 @@ func (q *Queries) GetPatientByUserID(ctx context.Context, userID pgtype.UUID) (P
 }
 
 const listPatients = `-- name: ListPatients :many
-SELECT id, user_id, cpf, cns, full_name, birth_date, gender, race, phone, avatar_url, created_at, updated_at, deleted_at
+SELECT id, owner_user_id, cpf, cns, full_name, birth_date, gender, race, phone, avatar_url, created_at, updated_at, deleted_at
 FROM patients
 WHERE deleted_at IS NULL
 ORDER BY full_name
@@ -223,7 +223,7 @@ func (q *Queries) ListPatients(ctx context.Context, arg ListPatientsParams) ([]P
 		var i Patient
 		if err := rows.Scan(
 			&i.ID,
-			&i.UserID,
+			&i.OwnerUserID,
 			&i.Cpf,
 			&i.Cns,
 			&i.FullName,
@@ -263,7 +263,7 @@ func (q *Queries) RestorePatient(ctx context.Context, id uuid.UUID) (int64, erro
 }
 
 const searchPatientsByName = `-- name: SearchPatientsByName :many
-SELECT id, user_id, cpf, cns, full_name, birth_date, gender, race, phone, avatar_url, created_at, updated_at, deleted_at
+SELECT id, owner_user_id, cpf, cns, full_name, birth_date, gender, race, phone, avatar_url, created_at, updated_at, deleted_at
 FROM patients
 WHERE deleted_at IS NULL
   AND full_name ILIKE '%' || $3 || '%'
@@ -288,7 +288,7 @@ func (q *Queries) SearchPatientsByName(ctx context.Context, arg SearchPatientsBy
 		var i Patient
 		if err := rows.Scan(
 			&i.ID,
-			&i.UserID,
+			&i.OwnerUserID,
 			&i.Cpf,
 			&i.Cns,
 			&i.FullName,
@@ -339,7 +339,7 @@ SET
     updated_at = now()
 WHERE id = $1
   AND deleted_at IS NULL
-RETURNING id, user_id, cpf, cns, full_name, birth_date, gender, race, phone, avatar_url, created_at, updated_at, deleted_at
+RETURNING id, owner_user_id, cpf, cns, full_name, birth_date, gender, race, phone, avatar_url, created_at, updated_at, deleted_at
 `
 
 type UpdatePatientParams struct {
@@ -365,7 +365,7 @@ func (q *Queries) UpdatePatient(ctx context.Context, arg UpdatePatientParams) (P
 	var i Patient
 	err := row.Scan(
 		&i.ID,
-		&i.UserID,
+		&i.OwnerUserID,
 		&i.Cpf,
 		&i.Cns,
 		&i.FullName,

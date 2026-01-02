@@ -31,16 +31,16 @@ func NewPatientRepository(client *db.Client) repositories.PatientRepository {
 // Create implements [repositories.PatientRepository].
 func (r *PatientRepository) Create(ctx context.Context, p *patient.Patient) error {
 	params := patientsqlc.CreatePatientParams{
-		ID:        p.ID,
-		UserID:    helpers.FromNullableUUIDToPgUUID(p.UserID),
-		Cpf:       p.CPF,
-		Cns:       helpers.FromNullableStringToPgText(p.CNS),
-		FullName:  p.FullName,
-		BirthDate: helpers.FromRequiredDateToPgDate(p.BirthDate),
-		Gender:    string(p.Gender),
-		Race:      string(p.Race),
-		Phone:     helpers.FromNullableStringToPgText(p.Phone),
-		AvatarUrl: helpers.FromNullableStringToPgText(&p.AvatarURL),
+		ID:          p.ID,
+		OwnerUserID: helpers.FromNullableUUIDToPgUUID(p.OwnerUserID),
+		Cpf:         p.CPF,
+		Cns:         helpers.FromNullableStringToPgText(p.CNS),
+		FullName:    p.FullName,
+		BirthDate:   helpers.FromRequiredDateToPgDate(p.BirthDate),
+		Gender:      string(p.Gender),
+		Race:        string(p.Race),
+		Phone:       helpers.FromNullableStringToPgText(p.Phone),
+		AvatarUrl:   helpers.FromNullableStringToPgText(&p.AvatarURL),
 	}
 
 	_, err := r.queries.CreatePatient(ctx, params)
@@ -62,24 +62,24 @@ func (p *PatientRepository) FindByCPF(ctx context.Context, cpf string) (*patient
 		return nil, err
 	}
 
-	userID, err := helpers.FromPgUUIDToNullableUUID(row.UserID)
+	userID, err := helpers.FromPgUUIDToNullableUUID(row.OwnerUserID)
 	if err != nil {
 		return nil, err
 	}
 
 	return &patient.Patient{
-		ID:        row.ID,
-		UserID:    userID,
-		CPF:       row.Cpf,
-		CNS:       helpers.FromPgTextToNullableString(row.Cns),
-		FullName:  row.FullName,
-		BirthDate: row.BirthDate.Time,
-		Gender:    shared.Gender(row.Gender),
-		Race:      shared.Race(row.Race),
-		AvatarURL: row.AvatarUrl.String,
-		Phone:     helpers.FromPgTextToNullableString(row.Phone),
-		CreatedAt: row.CreatedAt.Time,
-		UpdatedAt: row.UpdatedAt.Time,
+		ID:          row.ID,
+		OwnerUserID: userID,
+		CPF:         row.Cpf,
+		CNS:         helpers.FromPgTextToNullableString(row.Cns),
+		FullName:    row.FullName,
+		BirthDate:   row.BirthDate.Time,
+		Gender:      shared.Gender(row.Gender),
+		Race:        shared.Race(row.Race),
+		AvatarURL:   row.AvatarUrl.String,
+		Phone:       helpers.FromPgTextToNullableString(row.Phone),
+		CreatedAt:   row.CreatedAt.Time,
+		UpdatedAt:   row.UpdatedAt.Time,
 	}, nil
 }
 
@@ -93,24 +93,24 @@ func (p *PatientRepository) FindByID(ctx context.Context, id uuid.UUID) (*patien
 		return nil, err
 	}
 
-	userID, err := helpers.FromPgUUIDToNullableUUID(row.UserID)
+	userID, err := helpers.FromPgUUIDToNullableUUID(row.OwnerUserID)
 	if err != nil {
 		return nil, err
 	}
 
 	return &patient.Patient{
-		ID:        row.ID,
-		UserID:    userID,
-		CPF:       row.Cpf,
-		CNS:       helpers.FromPgTextToNullableString(row.Cns),
-		FullName:  row.FullName,
-		BirthDate: row.BirthDate.Time,
-		Gender:    shared.Gender(row.Gender),
-		Race:      shared.Race(row.Race),
-		AvatarURL: row.AvatarUrl.String,
-		Phone:     helpers.FromPgTextToNullableString(row.Phone),
-		CreatedAt: row.CreatedAt.Time,
-		UpdatedAt: row.UpdatedAt.Time,
+		ID:          row.ID,
+		OwnerUserID: userID,
+		CPF:         row.Cpf,
+		CNS:         helpers.FromPgTextToNullableString(row.Cns),
+		FullName:    row.FullName,
+		BirthDate:   row.BirthDate.Time,
+		Gender:      shared.Gender(row.Gender),
+		Race:        shared.Race(row.Race),
+		AvatarURL:   row.AvatarUrl.String,
+		Phone:       helpers.FromPgTextToNullableString(row.Phone),
+		CreatedAt:   row.CreatedAt.Time,
+		UpdatedAt:   row.UpdatedAt.Time,
 	}, nil
 }
 

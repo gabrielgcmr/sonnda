@@ -10,14 +10,14 @@ import (
 )
 
 type Patient struct {
-	ID        uuid.UUID
-	UserID    *uuid.UUID
-	CPF       string
-	CNS       *string
-	FullName  string
-	BirthDate time.Time
-	Gender    shared.Gender
-	Race      shared.Race
+	ID          uuid.UUID
+	OwnerUserID *uuid.UUID
+	CPF         string
+	CNS         *string
+	FullName    string
+	BirthDate   time.Time
+	Gender      shared.Gender
+	Race        shared.Race
 
 	AvatarURL string
 	Phone     *string
@@ -66,18 +66,18 @@ func NewPatient(params NewPatientParams) (*Patient, error) {
 
 	now := time.Now().UTC()
 	p := &Patient{
-		ID:        uuid.Must(uuid.NewV7()),
-		CPF:       params.CPF,
-		CNS:       params.CNS,
-		FullName:  params.FullName,
-		BirthDate: params.BirthDate.UTC(),
-		UserID:    params.UserID,
-		Gender:    params.Gender,
-		Race:      params.Race,
-		AvatarURL: params.AvatarURL,
-		Phone:     params.Phone,
-		CreatedAt: now,
-		UpdatedAt: now,
+		ID:          uuid.Must(uuid.NewV7()),
+		CPF:         params.CPF,
+		CNS:         params.CNS,
+		FullName:    params.FullName,
+		BirthDate:   params.BirthDate.UTC(),
+		OwnerUserID: params.UserID,
+		Gender:      params.Gender,
+		Race:        params.Race,
+		AvatarURL:   params.AvatarURL,
+		Phone:       params.Phone,
+		CreatedAt:   now,
+		UpdatedAt:   now,
 	}
 
 	if err := p.Validate(); err != nil {

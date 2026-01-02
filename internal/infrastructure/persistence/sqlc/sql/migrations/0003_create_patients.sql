@@ -1,7 +1,7 @@
 -- Patients table mirrors the domain model, allowing optional User link and phone/CNS.
 CREATE TABLE patients (
     id          UUID PRIMARY KEY,
-    user_id     UUID UNIQUE,
+    owner_user_id     UUID UNIQUE,
     cpf         TEXT NOT NULL UNIQUE,
     cns         TEXT,
     full_name   TEXT NOT NULL,
@@ -13,7 +13,7 @@ CREATE TABLE patients (
     created_at  TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
     updated_at  TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
     deleted_at  TIMESTAMP WITH TIME ZONE,
-    CONSTRAINT fk_patients_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+    CONSTRAINT fk_patients_user FOREIGN KEY (owner_user_id) REFERENCES users(id) ON DELETE SET NULL,
     CONSTRAINT chk_patients_gender CHECK (gender IN ('MALE','FEMALE','OTHER','UNKNOWN')),
     CONSTRAINT chk_patients_race CHECK (race IN ('WHITE','BLACK','ASIAN','MIXED','INDIGENOUS','UNKNOWN'))
 );
@@ -24,8 +24,8 @@ CREATE INDEX idx_patients_full_name_trgm ON patients USING gin (full_name gin_tr
 CREATE INDEX idx_patients_cpf ON patients(cpf);
 CREATE INDEX idx_patients_cns ON patients(cns);
 
-CREATE UNIQUE INDEX IF NOT EXISTS ux_patients_user_id_active
-ON patients(user_id)
+CREATE UNIQUE INDEX IF NOT EXISTS ux_patients_owner_user_id_active
+ON patients(owner_user_id)
 WHERE deleted_at IS NULL;
 
 CREATE UNIQUE INDEX IF NOT EXISTS ux_patients_cpf_active

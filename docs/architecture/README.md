@@ -104,3 +104,12 @@ Os ADRs documentam:
 - consequências
 
 Os ADRs vivem em:
+`docs/architecture/adr/`.
+
+---
+
+## Controle de acesso (ReBAC)
+
+O projeto segue a direcao de **ReBAC** (Relationship-Based Access Control): acesso e decidido pelo vinculo usuario <-> paciente (membership), e nao por "RBAC + ABAC".
+
+Detalhes: `docs/architecture/access-control.md`.

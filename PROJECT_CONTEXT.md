@@ -12,6 +12,7 @@
 ## Recent Decisions
 - Protected API routes require registered users with complete profiles.
 - Logging uses `log/slog` via `internal/app/config/observability` with `LOG_LEVEL` and `LOG_FORMAT` (`text|json|pretty`); HTTP middleware adds `request_id` correlation.
+- Access control direction is ReBAC (relationship user <-> patient via patientaccess membership), not "RBAC + ABAC".
 
 ## Domain Layout (current)
 - identity: identity provider/subject/email/claims

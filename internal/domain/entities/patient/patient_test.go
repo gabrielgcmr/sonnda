@@ -48,7 +48,7 @@ func TestNewPatient_Success_NormalizesAndSetsUTC(t *testing.T) {
 	if p.CPF == "" {
 		t.Fatalf("expected CPF to be set")
 	}
-	if p.UserID == nil || *p.UserID != userID {
+	if p.OwnerUserID == nil || *p.OwnerUserID != userID {
 		t.Fatalf("expected UserID to be present")
 	}
 	if p.CNS == nil || *p.CNS != "123456789012345" {

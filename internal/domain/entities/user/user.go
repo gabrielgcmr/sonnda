@@ -11,8 +11,11 @@ import (
 type Role string
 
 const (
-	RoleProfessional Role = "professional"
-	RoleCaregiver    Role = "caregiver"
+	Roledoctor    Role = "doctor"
+	RoleNurse     Role = "nurse"
+	RoleCaregiver Role = "caregiver"
+	RoleFamily    Role = "family"
+	RoleOwner     Role = "owner"
 )
 
 type User struct {

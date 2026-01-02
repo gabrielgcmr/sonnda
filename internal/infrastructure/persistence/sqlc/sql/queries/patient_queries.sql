@@ -1,12 +1,12 @@
 -- internal/adapters/outbound/database/sqlc/patients/queries.sql
 
 -- Common column set for patient fetches:
--- id, user_id, cpf, cns, full_name, birth_date, gender, race, phone, avatar_url, created_at, updated_at
+-- id, owner_user_id, cpf, cns, full_name, birth_date, gender, race, phone, avatar_url, created_at, updated_at
 
 -- name: CreatePatient :one
 INSERT INTO patients (
     id,
-    user_id,
+    owner_user_id,
     cpf,
     cns,
     full_name,
@@ -44,10 +44,10 @@ WHERE cns = $1
   AND deleted_at IS NULL
 LIMIT 1;
 
--- name: GetPatientByUserID :one
+-- name: GetPatientByOwnerUserID :one
 SELECT *
 FROM patients
-WHERE user_id = $1
+WHERE owner_user_id = $1
   AND deleted_at IS NULL
 LIMIT 1;
 
