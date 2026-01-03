@@ -1,4 +1,4 @@
-// internal/http/api/handlers/common/respond_erros.go
+// internal/http/errors/error_presenter.go
 package errors
 
 import (
@@ -10,6 +10,11 @@ import (
 )
 
 func WriteError(c *gin.Context, err error) {
+	if c.Writer.Written() {
+		c.Abort()
+		return
+	}
+
 	if err != nil {
 		_ = c.Error(err)
 	}
@@ -37,6 +42,8 @@ func WriteError(c *gin.Context, err error) {
 	if status >= 500 {
 		log.Log(c.Request.Context(), level, "handler_error", attrs...)
 	}
+
+	c.Abort()
 	c.JSON(status, gin.H{
 		"error": gin.H{
 			"code":    resp.Code,

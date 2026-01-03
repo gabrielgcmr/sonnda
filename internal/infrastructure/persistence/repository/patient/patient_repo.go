@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"sonnda-api/internal/app/ports/outbound/repositories"
+	"sonnda-api/internal/domain/model/demographics"
 	"sonnda-api/internal/domain/model/patient"
-	"sonnda-api/internal/domain/model/shared"
 	"sonnda-api/internal/infrastructure/persistence/repository/db"
 	"sonnda-api/internal/infrastructure/persistence/repository/helpers"
 	patientsqlc "sonnda-api/internal/infrastructure/persistence/sqlc/generated/patient"
@@ -74,8 +74,8 @@ func (p *PatientRepository) FindByCPF(ctx context.Context, cpf string) (*patient
 		CNS:         helpers.FromPgTextToNullableString(row.Cns),
 		FullName:    row.FullName,
 		BirthDate:   row.BirthDate.Time,
-		Gender:      shared.Gender(row.Gender),
-		Race:        shared.Race(row.Race),
+		Gender:      demographics.Gender(row.Gender),
+		Race:        demographics.Race(row.Race),
 		AvatarURL:   row.AvatarUrl.String,
 		Phone:       helpers.FromPgTextToNullableString(row.Phone),
 		CreatedAt:   row.CreatedAt.Time,
@@ -105,8 +105,8 @@ func (p *PatientRepository) FindByID(ctx context.Context, id uuid.UUID) (*patien
 		CNS:         helpers.FromPgTextToNullableString(row.Cns),
 		FullName:    row.FullName,
 		BirthDate:   row.BirthDate.Time,
-		Gender:      shared.Gender(row.Gender),
-		Race:        shared.Race(row.Race),
+		Gender:      demographics.Gender(row.Gender),
+		Race:        demographics.Race(row.Race),
 		AvatarURL:   row.AvatarUrl.String,
 		Phone:       helpers.FromPgTextToNullableString(row.Phone),
 		CreatedAt:   row.CreatedAt.Time,

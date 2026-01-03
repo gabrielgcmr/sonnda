@@ -1,12 +1,12 @@
 package middleware
 
 import (
-	"net/http"
-
+	"sonnda-api/internal/app/apperr"
 	applog "sonnda-api/internal/app/observability"
 	"sonnda-api/internal/app/ports/outbound/repositories"
 	"sonnda-api/internal/domain/model/identity"
 	"sonnda-api/internal/domain/model/user"
+	httperrors "sonnda-api/internal/http/errors"
 
 	"github.com/gin-gonic/gin"
 )
@@ -32,20 +32,20 @@ func (m *RegistrationMiddleware) RequireRegisteredUser() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		id, ok := GetIdentity(ctx)
 		if !ok {
-			ctx.Set("error_code", "missing_identity")
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"error":   "unauthorized",
-				"message": "autenticacao necessaria",
+			httperrors.WriteError(ctx, &apperr.AppError{
+				Code:    apperr.AUTH_REQUIRED,
+				Message: "autenticação necessária",
 			})
+			ctx.Abort()
 			return
 		}
 
-		user, ok := m.resolveUser(ctx, id)
+		currentUser, ok := m.resolveUser(ctx, id)
 		if !ok {
 			return
 		}
 
-		ctx.Set(CurrentUserKey, user)
+		ctx.Set(CurrentUserKey, currentUser)
 		ctx.Next()
 	}
 }
@@ -54,41 +54,35 @@ func (m *RegistrationMiddleware) RequireUnregisteredUser() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		id, ok := GetIdentity(ctx)
 		if !ok {
-			ctx.Set("error_code", "missing_identity")
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"error":   "unauthorized",
-				"message": "autenticação necessária",
+			httperrors.WriteError(ctx, &apperr.AppError{
+				Code:    apperr.AUTH_REQUIRED,
+				Message: "autenticação necessária",
 			})
+			ctx.Abort()
 			return
 		}
 
-		user, err := m.userRepo.FindByAuthIdentity(
+		existing, err := m.userRepo.FindByAuthIdentity(
 			ctx.Request.Context(),
 			id.Provider,
 			id.Subject,
 		)
-
 		if err != nil {
-			_ = ctx.Error(err)
-			ctx.Set("error_code", "internal_error")
-			applog.FromContext(ctx.Request.Context()).Error(
-				"find_user_by_auth_identity_failed",
-				"provider", id.Provider,
-				"subject", id.Subject,
-				"err", err,
-			)
-			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-				"error":   "internal_error",
-				"message": "erro ao verificar registro",
+			httperrors.WriteError(ctx, &apperr.AppError{
+				Code:    apperr.INFRA_DATABASE_ERROR,
+				Message: "falha ao verificar registro",
+				Cause:   err,
 			})
+			ctx.Abort()
 			return
 		}
 
-		if user != nil {
-			ctx.AbortWithStatusJSON(http.StatusConflict, gin.H{
-				"error":   "already_registered",
-				"message": "usuário já cadastrado",
+		if existing != nil {
+			httperrors.WriteError(ctx, &apperr.AppError{
+				Code:    apperr.RESOURCE_ALREADY_EXISTS,
+				Message: "usuário já cadastrado",
 			})
+			ctx.Abort()
 			return
 		}
 
@@ -105,29 +99,26 @@ func (m *RegistrationMiddleware) LoadCurrentUser() gin.HandlerFunc {
 			return
 		}
 
-		user, err := m.userRepo.FindByAuthIdentity(
+		currentUser, err := m.userRepo.FindByAuthIdentity(
 			ctx.Request.Context(),
 			id.Provider,
 			id.Subject,
 		)
 		if err != nil {
-			_ = ctx.Error(err)
-			ctx.Set("error_code", "internal_error")
-			applog.FromContext(ctx.Request.Context()).Error(
-				"find_user_by_auth_identity_failed",
+			// não aborta: melhor esforço
+			// aqui sim você pode logar (é infra e não haverá resposta de erro)
+			applog.FromContext(ctx.Request.Context()).Warn(
+				"load_current_user_failed",
 				"provider", id.Provider,
 				"subject", id.Subject,
 				"err", err,
 			)
-			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-				"error":   "internal_error",
-				"message": "erro ao buscar usuario",
-			})
+			ctx.Next()
 			return
 		}
 
-		if user != nil {
-			ctx.Set(CurrentUserKey, user)
+		if currentUser != nil {
+			ctx.Set(CurrentUserKey, currentUser)
 		}
 
 		ctx.Next()
@@ -135,59 +126,39 @@ func (m *RegistrationMiddleware) LoadCurrentUser() gin.HandlerFunc {
 }
 
 func (m *RegistrationMiddleware) resolveUser(ctx *gin.Context, identity *identity.Identity) (*user.User, bool) {
-	user, err := m.userRepo.FindByAuthIdentity(
+	currentUser, err := m.userRepo.FindByAuthIdentity(
 		ctx.Request.Context(),
 		identity.Provider,
 		identity.Subject,
 	)
 	if err != nil {
-		_ = ctx.Error(err)
-		ctx.Set("error_code", "internal_error")
-		applog.FromContext(ctx.Request.Context()).Error(
-			"find_user_by_auth_identity_failed",
-			"provider", identity.Provider,
-			"subject", identity.Subject,
-			"err", err,
-		)
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"error":   "internal_error",
-			"message": "erro ao buscar usuario",
+		httperrors.WriteError(ctx, &apperr.AppError{
+			Code:    apperr.INFRA_DATABASE_ERROR,
+			Message: "erro ao buscar usuário",
+			Cause:   err,
 		})
+		ctx.Abort()
 		return nil, false
 	}
 
-	if user == nil {
-		ctx.Set("error_code", "user_not_registered")
-		ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
-			"error":   "forbidden",
-			"message": "usuario nao registrado",
+	if currentUser == nil {
+		httperrors.WriteError(ctx, &apperr.AppError{
+			Code:    apperr.ACCESS_DENIED,
+			Message: "usuário não registrado",
 		})
+		ctx.Abort()
 		return nil, false
 	}
 
-	return user, true
+	return currentUser, true
 }
 
-// Helper para obter usuario do contexto
+// GetCurrentUser obtém o usuário do contexto (não escreve resposta).
 func GetCurrentUser(c *gin.Context) (*user.User, bool) {
 	val, ok := c.Get(CurrentUserKey)
 	if !ok {
 		return nil, false
 	}
-	user, ok := val.(*user.User)
-	return user, ok
-}
-
-// Helper que falha se nao houver usuario
-func RequireCurrentUser(c *gin.Context) (*user.User, bool) {
-	user, ok := GetCurrentUser(c)
-	if !ok {
-		c.Set("error_code", "missing_current_user")
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-			"error":   "unauthorized",
-			"message": "usuario nao encontrado",
-		})
-		return nil, false
-	}
-	return user, true
+	currentUser, ok := val.(*user.User)
+	return currentUser, ok
 }

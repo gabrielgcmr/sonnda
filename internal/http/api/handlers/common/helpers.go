@@ -2,7 +2,7 @@ package common
 
 import (
 	"fmt"
-	"sonnda-api/internal/domain/model/shared"
+	"sonnda-api/internal/domain/model/demographics"
 	"time"
 )
 
@@ -13,7 +13,7 @@ func ParseBirthDate(dateStr string) (time.Time, error) {
 		return time.Time{}, fmt.Errorf(
 			"birth date must be in YYYY-MM-DD format, got: %s: %w",
 			dateStr,
-			shared.ErrInvalidBirthDate,
+			demographics.ErrInvalidBirthDate,
 		)
 	}
 	return birthDate, nil

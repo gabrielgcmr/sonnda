@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"sonnda-api/internal/domain/model/shared"
+	"sonnda-api/internal/domain/model/demographics"
 
 	"github.com/google/uuid"
 )
@@ -22,8 +22,8 @@ func TestNewPatient_Success_NormalizesAndSetsUTC(t *testing.T) {
 		CNS:       &cns,
 		FullName:  "  Paciente Teste  ",
 		BirthDate: birthDate,
-		Gender:    shared.Gender("female"),
-		Race:      shared.Race("white"),
+		Gender:    demographics.Gender("female"),
+		Race:      demographics.Race("white"),
 		Phone:     &phone,
 		AvatarURL: "  https://example.com/a.png  ",
 	})
@@ -79,7 +79,7 @@ func TestNewPatient_InvalidInputs(t *testing.T) {
 		},
 		{
 			name: "invalid cpf",
-			err:  shared.ErrInvalidCPF,
+			err:  demographics.ErrInvalidCPF,
 			fn: func() NewPatientParams {
 				params := validParams(birthDate)
 				params.CPF = "123"
@@ -88,7 +88,7 @@ func TestNewPatient_InvalidInputs(t *testing.T) {
 		},
 		{
 			name: "birthDate zero",
-			err:  shared.ErrInvalidBirthDate,
+			err:  demographics.ErrInvalidBirthDate,
 			fn: func() NewPatientParams {
 				params := validParams(birthDate)
 				params.BirthDate = time.Time{}
@@ -97,7 +97,7 @@ func TestNewPatient_InvalidInputs(t *testing.T) {
 		},
 		{
 			name: "birthDate future",
-			err:  shared.ErrInvalidBirthDate,
+			err:  demographics.ErrInvalidBirthDate,
 			fn: func() NewPatientParams {
 				params := validParams(birthDate)
 				params.BirthDate = now.Add(24 * time.Hour)
@@ -154,7 +154,7 @@ func validParams(birthDate time.Time) NewPatientParams {
 		CPF:       "52998224725",
 		FullName:  "Paciente",
 		BirthDate: birthDate,
-		Gender:    shared.GenderFemale,
-		Race:      shared.RaceUnknown,
+		Gender:    demographics.GenderFemale,
+		Race:      demographics.RaceUnknown,
 	}
 }

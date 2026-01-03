@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"sonnda-api/internal/app/apperr"
+	"sonnda-api/internal/domain/model/demographics"
 	"sonnda-api/internal/domain/model/patient"
-	"sonnda-api/internal/domain/model/shared"
 	"sonnda-api/internal/domain/model/user"
 
 	"github.com/google/uuid"
@@ -121,7 +121,7 @@ func TestService_Create_InvalidBirthDate(t *testing.T) {
 	if ae.Code != apperr.VALIDATION_FAILED {
 		t.Fatalf("expected code %s, got %s", apperr.VALIDATION_FAILED, ae.Code)
 	}
-	if !errors.Is(err, shared.ErrInvalidBirthDate) {
+	if !errors.Is(err, demographics.ErrInvalidBirthDate) {
 		t.Fatalf("expected shared.ErrInvalidBirthDate in chain, got %v", err)
 	}
 }

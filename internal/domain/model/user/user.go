@@ -1,8 +1,8 @@
 package user
 
 import (
+	"sonnda-api/internal/domain/model/demographics"
 	"sonnda-api/internal/domain/model/rbac"
-	"sonnda-api/internal/domain/model/shared"
 	"strings"
 	"time"
 
@@ -45,7 +45,7 @@ func (p *NewUserParams) Normalize() {
 	p.Phone = strings.TrimSpace(p.Phone)
 
 	// Normalize específica
-	p.CPF = shared.CleanDigits(p.CPF)
+	p.CPF = demographics.CleanDigits(p.CPF)
 }
 
 func NewUser(params NewUserParams) (*User, error) {

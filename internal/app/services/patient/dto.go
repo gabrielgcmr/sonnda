@@ -2,7 +2,7 @@
 package patientsvc
 
 import (
-	"sonnda-api/internal/domain/model/shared"
+	"sonnda-api/internal/domain/model/demographics"
 	"time"
 
 	"github.com/google/uuid"
@@ -14,8 +14,8 @@ type CreateInput struct {
 	CNS       *string
 	FullName  string
 	BirthDate time.Time
-	Gender    shared.Gender
-	Race      shared.Race
+	Gender    demographics.Gender
+	Race      demographics.Race
 	Phone     *string
 	AvatarURL string
 }
@@ -24,7 +24,7 @@ type UpdateInput struct {
 	FullName  *string
 	Phone     *string
 	AvatarURL *string
-	Gender    *shared.Gender
-	Race      *shared.Race
+	Gender    *demographics.Gender
+	Race      *demographics.Race
 	CNS       *string
 }

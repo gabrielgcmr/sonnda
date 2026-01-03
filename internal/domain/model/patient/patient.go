@@ -4,7 +4,7 @@ import (
 	"strings"
 	"time"
 
-	"sonnda-api/internal/domain/model/shared"
+	"sonnda-api/internal/domain/model/demographics"
 
 	"github.com/google/uuid"
 )
@@ -16,8 +16,8 @@ type Patient struct {
 	CNS         *string
 	FullName    string
 	BirthDate   time.Time
-	Gender      shared.Gender
-	Race        shared.Race
+	Gender      demographics.Gender
+	Race        demographics.Race
 
 	AvatarURL string
 	Phone     *string
@@ -31,14 +31,14 @@ type NewPatientParams struct {
 	CNS       *string
 	FullName  string
 	BirthDate time.Time
-	Gender    shared.Gender
-	Race      shared.Race
+	Gender    demographics.Gender
+	Race      demographics.Race
 	Phone     *string
 	AvatarURL string
 }
 
 func (p *NewPatientParams) Normalize() {
-	p.CPF = shared.CleanDigits(p.CPF)
+	p.CPF = demographics.CleanDigits(p.CPF)
 	p.FullName = strings.TrimSpace(p.FullName)
 	p.AvatarURL = strings.TrimSpace(p.AvatarURL)
 
@@ -92,10 +92,10 @@ func (p *Patient) Validate() error {
 		return ErrInvalidFullName
 	}
 	if p.BirthDate.IsZero() || p.BirthDate.After(time.Now().UTC()) {
-		return shared.ErrInvalidBirthDate
+		return demographics.ErrInvalidBirthDate
 	}
 	if p.CPF == "" || len(p.CPF) != 11 {
-		return shared.ErrInvalidCPF
+		return demographics.ErrInvalidCPF
 	}
 	return nil
 }
@@ -104,8 +104,8 @@ func (p *Patient) ApplyUpdate(
 	fullName *string,
 	phone *string,
 	avatarURL *string,
-	gender *shared.Gender,
-	race *shared.Race,
+	gender *demographics.Gender,
+	race *demographics.Race,
 	cns *string,
 ) {
 	if fullName != nil {

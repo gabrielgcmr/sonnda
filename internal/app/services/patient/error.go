@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"sonnda-api/internal/app/apperr"
+	"sonnda-api/internal/domain/model/demographics"
 	"sonnda-api/internal/domain/model/patient"
-	"sonnda-api/internal/domain/model/shared"
 	"sonnda-api/internal/domain/model/user"
 )
 
@@ -22,10 +22,10 @@ func mapPatientDomainError(err error) error {
 
 	// validation
 	case errors.Is(err, patient.ErrInvalidFullName),
-		errors.Is(err, shared.ErrInvalidBirthDate),
-		errors.Is(err, shared.ErrInvalidCPF),
-		errors.Is(err, shared.ErrInvalidGender),
-		errors.Is(err, shared.ErrInvalidRace),
+		errors.Is(err, demographics.ErrInvalidBirthDate),
+		errors.Is(err, demographics.ErrInvalidCPF),
+		errors.Is(err, demographics.ErrInvalidGender),
+		errors.Is(err, demographics.ErrInvalidRace),
 		errors.Is(err, patient.ErrInvalidBirthDate),
 		errors.Is(err, patient.ErrInvalidGender),
 		errors.Is(err, patient.ErrInvalidRace):
