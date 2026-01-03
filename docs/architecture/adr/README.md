@@ -3,6 +3,13 @@ Este README referencia os ADRs quando necessário, mas **não substitui** esses 
 
 ---
 
+## ADRs
+
+- `docs/architecture/adr/ADR-005-repository-value-vs-service-pointer.md`
+- `docs/architecture/adr/ADR-006-error-handling-contract.md`
+
+---
+
 ## Padrões arquiteturais importantes
 
 ### Services retornam entidades completas

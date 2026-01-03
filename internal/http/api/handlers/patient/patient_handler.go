@@ -6,10 +6,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
+	"sonnda-api/internal/app/apperr"
 	applog "sonnda-api/internal/app/observability"
 	patientsvc "sonnda-api/internal/app/services/patient"
 
 	"sonnda-api/internal/http/api/handlers/common"
+	httperrors "sonnda-api/internal/http/errors"
 	"sonnda-api/internal/http/middleware"
 )
 
@@ -26,35 +28,62 @@ func (h *PatientHandler) Create(c *gin.Context) {
 	log := applog.FromContext(ctx)
 	log.Info("patient_create")
 
+	if h == nil || h.svc == nil {
+		httperrors.WriteError(c, &apperr.AppError{
+			Code:    apperr.INTERNAL_ERROR,
+			Message: "serviço indisponível",
+		})
+		return
+	}
+
 	user, ok := middleware.GetCurrentUser(c)
 	if !ok || user == nil {
-		common.RespondError(c, http.StatusUnauthorized, "unauthorized", nil)
+		httperrors.WriteError(c, &apperr.AppError{
+			Code:    apperr.AUTH_REQUIRED,
+			Message: "autenticação necessária",
+		})
 		return
 	}
 
 	var req CreatePatientRequest
 	// 1. Bind do request
 	if err := c.ShouldBindJSON(&req); err != nil {
-		common.RespondError(c, http.StatusBadRequest, "invalid_input", err)
+		httperrors.WriteError(c, &apperr.AppError{
+			Code:    apperr.VALIDATION_FAILED,
+			Message: "payload inválido",
+			Cause:   err,
+		})
 		return
 	}
 
 	// 3. Parsing / normalização de fronteira
-	birthDate, err := ParseBirthDate(req.BirthDate)
+	birthDate, err := common.ParseBirthDate(req.BirthDate)
 	if err != nil {
-		common.RespondAppError(c, err)
+		httperrors.WriteError(c, &apperr.AppError{
+			Code:    apperr.VALIDATION_FAILED,
+			Message: "data de nascimento inválida",
+			Cause:   err,
+		})
 		return
 	}
 
 	gender, err := ParseGender(req.Gender)
 	if err != nil {
-		common.RespondAppError(c, err)
+		httperrors.WriteError(c, &apperr.AppError{
+			Code:    apperr.INVALID_ENUM_VALUE,
+			Message: "gênero inválido",
+			Cause:   err,
+		})
 		return
 	}
 
 	race, err := ParseRace(req.Race)
 	if err != nil {
-		common.RespondAppError(c, err)
+		httperrors.WriteError(c, &apperr.AppError{
+			Code:    apperr.INVALID_ENUM_VALUE,
+			Message: "raça inválida",
+			Cause:   err,
+		})
 		return
 	}
 
@@ -72,7 +101,7 @@ func (h *PatientHandler) Create(c *gin.Context) {
 	// 5. Execução do use case
 	p, err := h.svc.Create(ctx, user, input)
 	if err != nil {
-		common.RespondAppError(c, err)
+		httperrors.WriteError(c, err)
 		return
 	}
 
@@ -83,27 +112,45 @@ func (h *PatientHandler) Create(c *gin.Context) {
 }
 
 func (h *PatientHandler) GetByID(c *gin.Context) {
+	if h == nil || h.svc == nil {
+		httperrors.WriteError(c, &apperr.AppError{
+			Code:    apperr.INTERNAL_ERROR,
+			Message: "serviço indisponível",
+		})
+		return
+	}
+
 	currentUser, ok := middleware.GetCurrentUser(c)
 	if !ok || currentUser == nil {
-		common.RespondError(c, http.StatusUnauthorized, "unauthorized", nil)
+		httperrors.WriteError(c, &apperr.AppError{
+			Code:    apperr.AUTH_REQUIRED,
+			Message: "autenticação necessária",
+		})
 		return
 	}
 
 	id := c.Param("id")
 	if id == "" {
-		common.RespondError(c, http.StatusBadRequest, "missing_patient_id", nil)
+		httperrors.WriteError(c, &apperr.AppError{
+			Code:    apperr.REQUIRED_FIELD_MISSING,
+			Message: "patient_id é obrigatório",
+		})
 		return
 	}
 
 	parsedID, err := uuid.Parse(id)
 	if err != nil {
-		common.RespondError(c, http.StatusBadRequest, "invalid_patient_id", err)
+		httperrors.WriteError(c, &apperr.AppError{
+			Code:    apperr.INVALID_FIELD_FORMAT,
+			Message: "patient_id inválido",
+			Cause:   err,
+		})
 		return
 	}
 
 	p, err := h.svc.GetByID(c.Request.Context(), currentUser, parsedID)
 	if err != nil {
-		common.RespondAppError(c, err)
+		httperrors.WriteError(c, err)
 		return
 	}
 
@@ -111,36 +158,58 @@ func (h *PatientHandler) GetByID(c *gin.Context) {
 }
 
 func (h *PatientHandler) UpdateByID(c *gin.Context) {
+	if h == nil || h.svc == nil {
+		httperrors.WriteError(c, &apperr.AppError{
+			Code:    apperr.INTERNAL_ERROR,
+			Message: "serviço indisponível",
+		})
+		return
+	}
+
 	log := applog.FromContext(c.Request.Context())
 	log.Info("patient_update_by_id")
 
 	currentUser, ok := middleware.GetCurrentUser(c)
 	if !ok || currentUser == nil {
-		common.RespondError(c, http.StatusUnauthorized, "unauthorized", nil)
+		httperrors.WriteError(c, &apperr.AppError{
+			Code:    apperr.AUTH_REQUIRED,
+			Message: "autenticação necessária",
+		})
 		return
 	}
 
 	id := c.Param("id")
 	if id == "" {
-		common.RespondError(c, http.StatusBadRequest, "missing_patient_id", nil)
+		httperrors.WriteError(c, &apperr.AppError{
+			Code:    apperr.REQUIRED_FIELD_MISSING,
+			Message: "patient_id é obrigatório",
+		})
 		return
 	}
 
 	parsedID, err := uuid.Parse(id)
 	if err != nil {
-		common.RespondError(c, http.StatusBadRequest, "invalid_patient_id", err)
+		httperrors.WriteError(c, &apperr.AppError{
+			Code:    apperr.INVALID_FIELD_FORMAT,
+			Message: "patient_id inválido",
+			Cause:   err,
+		})
 		return
 	}
 
 	var input patientsvc.UpdateInput
 	if err := c.ShouldBindJSON(&input); err != nil {
-		common.RespondError(c, http.StatusBadRequest, "invalid_input", err)
+		httperrors.WriteError(c, &apperr.AppError{
+			Code:    apperr.VALIDATION_FAILED,
+			Message: "payload inválido",
+			Cause:   err,
+		})
 		return
 	}
 
 	p, err := h.svc.UpdateByID(c.Request.Context(), currentUser, parsedID, input)
 	if err != nil {
-		common.RespondAppError(c, err)
+		httperrors.WriteError(c, err)
 		return
 	}
 
@@ -148,18 +217,29 @@ func (h *PatientHandler) UpdateByID(c *gin.Context) {
 }
 
 func (h *PatientHandler) List(c *gin.Context) {
+	if h == nil || h.svc == nil {
+		httperrors.WriteError(c, &apperr.AppError{
+			Code:    apperr.INTERNAL_ERROR,
+			Message: "serviço indisponível",
+		})
+		return
+	}
+
 	log := applog.FromContext(c.Request.Context())
 	log.Info("patient_list")
 
 	currentUser, ok := middleware.GetCurrentUser(c)
 	if !ok || currentUser == nil {
-		common.RespondError(c, http.StatusUnauthorized, "unauthorized", nil)
+		httperrors.WriteError(c, &apperr.AppError{
+			Code:    apperr.AUTH_REQUIRED,
+			Message: "autenticação necessária",
+		})
 		return
 	}
 
 	list, err := h.svc.List(c.Request.Context(), currentUser, 100, 0)
 	if err != nil {
-		common.RespondAppError(c, err)
+		httperrors.WriteError(c, err)
 		return
 	}
 

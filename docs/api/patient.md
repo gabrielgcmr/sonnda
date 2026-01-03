@@ -1,70 +1,70 @@
-# Patient (create, update, soft delete)
+# Patient (create, get, update, soft delete)
 
-Documentacao tecnica da implementacao de criacao, atualizacao e soft delete de pacientes.
+Documentacao tecnica da implementacao do modulo de pacientes.
 
 ## Visao geral (camadas)
-- HTTP: `internal/http/api/handlers/patient_handler.go` (entrada API e parsing).
-- Use cases: `internal/app/usecases/patientuc` (regras de negocio e orquestracao).
-- Dominio: `internal/domain/entities/patient` (validacoes e normalizacao).
-- Persistencia: `internal/infrastructure/persistence/supabase/patient_repo.go`.
-- SQL: `internal/infrastructure/persistence/sqlc/sql/queries/patient_queries.sql`.
 
-## Criar paciente
+- HTTP: `internal/http/api/handlers/patient/patient_handler.go` (entrada API, bind/parse e resposta).
+- Application (service): `internal/app/services/patient` (orquestracao e mapeamento de erros para `*apperr.AppError`).
+- Dominio: `internal/domain/model/patient` (entidade, invariantes e validacoes).
+- Persistencia: `internal/infrastructure/persistence/repository/patient/patient_repo.go`.
+- SQL (sqlc): `internal/infrastructure/persistence/sqlc/sql/queries/patient_queries.sql`.
+
+## Status atual
+
+- Criacao e busca por ID estao implementadas ponta-a-ponta.
+- List/update/soft delete existem no service/handler, mas podem depender de implementacao completa no repository e de rotas habilitadas no router.
+
+## Criar paciente (POST /api/v1/patients)
+
 Arquivos-chave:
-- Use case: `internal/app/usecases/patientuc/create_patient.go`.
-- Handler: `internal/http/api/handlers/patient_handler.go` (CreatePatient).
+- Handler: `internal/http/api/handlers/patient/patient_handler.go` (Create)
+- Service: `internal/app/services/patient/service_impl.go` (Create)
+- Dominio: `internal/domain/model/patient/patient.go` (NewPatient)
+- Repository: `internal/infrastructure/persistence/repository/patient/patient_repo.go` (Create, FindByCPF)
 
-Fluxo:
-1) Handler valida autenticacao e faz bind do JSON.
+Fluxo (alto nivel):
+1) Handler valida autenticacao/registro e faz bind do JSON.
 2) Handler faz parsing/normalizacao de fronteira:
-   - `birth_date` (layout `2006-01-02`).
-   - `gender` e `race` via `shared.ParseGender/ParseRace`.
-3) Use case monta entidade de dominio via `patient.NewPatient`.
-   - Normaliza CPF, CNS, phone e avatar_url.
-   - Valida campos obrigatorios (CPF, nome, data de nascimento).
-4) Use case verifica duplicidade por CPF (`repo.FindByCPF`).
-5) Persistencia grava com SQLC `CreatePatient`.
-6) Retorna paciente criado.
+   - `birth_date` (layout `2006-01-02`) via `common.ParseBirthDate`.
+   - `gender` e `race` via `ParseGender/ParseRace` do handler.
+3) Service monta entidade via `patient.NewPatient` (normaliza/valida invariantes).
+4) Service checa duplicidade por CPF (`repo.FindByCPF`).
+5) Repository persiste via sqlc (`CreatePatient`).
 
-Entradas relevantes:
-- `cpf`, `full_name`, `birth_date`, `gender`, `race` (obrigatorios).
-- `phone`, `avatar_url` (opcionais).
+Erros principais (contrato HTTP):
+- `VALIDATION_FAILED` (400): payload invalido / dados invalidos
+- `RESOURCE_ALREADY_EXISTS` (409): CPF ja cadastrado
+- `INFRA_DATABASE_ERROR` (5xx): falha tecnica (banco)
 
-Erros principais:
-- `ErrCPFAlreadyExists`, `ErrInvalidFullName`, `ErrInvalidBirthDate`.
+## Buscar paciente por ID (GET /api/v1/patients/:id)
 
-## Atualizar paciente
 Arquivos-chave:
-- Use case: `internal/app/usecases/patientuc/update_patient.go`.
-- Handler: `internal/http/api/handlers/patient_handler.go` (UpdateByID/UpdateByCPF).
+- Handler: `internal/http/api/handlers/patient/patient_handler.go` (GetByID)
+- Service: `internal/app/services/patient/service_impl.go` (GetByID)
+- Repository: `internal/infrastructure/persistence/repository/patient/patient_repo.go` (FindByID)
 
-Fluxo:
-1) Handler autentica e faz bind do JSON em `PatientChanges`.
-2) Use case busca paciente (por ID ou CPF).
-3) Autorizacao (ReBAC): `authorization.PatientAuthorizer.Require` (membership usuario <-> paciente). Ver `docs/architecture/access-control.md`.
-4) Entidade aplica mudancas via `ApplyUpdate`.
-5) Persistencia grava com SQLC `UpdatePatient` (COALESCE para campos nulos).
+Fluxo (alto nivel):
+1) Handler valida autenticacao/registro.
+2) Handler valida `:id` e faz `uuid.Parse`.
+3) Service aplica policy de acesso e busca no repo (`FindByID`).
+4) Se nao encontrar, retorna `NOT_FOUND` (404).
 
-Entradas permitidas:
-- `full_name`, `phone`, `avatar_url`, `gender`, `race`, `cns`.
+## Listar pacientes (GET /api/v1/patients)
 
-Erros principais:
-- `ErrPatientNotFound`, `ErrAuthorizationForbidden`.
+- Handler: `internal/http/api/handlers/patient/patient_handler.go` (List)
+- Service: `internal/app/services/patient/service_impl.go` (List)
+
+Notas:
+- Atualmente o handler usa `limit=100` e `offset=0` (sem paginacao via querystring).
+
+## Atualizar paciente (PUT /api/v1/patients/:id)
+
+- Handler existe em `internal/http/api/handlers/patient/patient_handler.go` (UpdateByID).
+- Service existe em `internal/app/services/patient/service_impl.go` (UpdateByID).
+- A rota pode estar comentada em `internal/http/api/router.go`.
 
 ## Soft delete de paciente
-Arquivos-chave:
-- Use case: `internal/app/usecases/patientuc/delete_patient.go`.
-- SQL: `SoftDeletePatient` em `internal/infrastructure/persistence/sqlc/sql/queries/patient_queries.sql`.
 
-Fluxo:
-1) Use case confirma existencia via `repo.FindByID`.
-2) Persistencia executa soft delete (marca `deleted_at` e atualiza `updated_at`).
-
-Comportamento esperado:
-- Consultas de leitura (`GetPatientByID`, `GetPatientByCNS`, `ListPatients`, `SearchPatientsByName`)
-  filtram `deleted_at IS NULL`.
-- O soft delete preserva dados para auditoria e possivel restauracao.
-
-Observacoes:
-- Existe query `RestorePatient`, mas ainda nao esta exposta em use case/handler.
-- Rotas de update/delete podem estar comentadas no router; caso habilite, verifique middleware de autenticacao/registro.
+- Service existe em `internal/app/services/patient/service_impl.go` (SoftDeleteByID).
+- A rota pode estar comentada em `internal/http/api/router.go`.

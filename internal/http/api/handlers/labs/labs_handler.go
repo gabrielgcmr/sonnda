@@ -14,8 +14,10 @@ import (
 
 	labsvc "sonnda-api/internal/app/services/labs"
 
+	"sonnda-api/internal/app/apperr"
+	"sonnda-api/internal/domain/model/medicalrecord/labs"
 	"sonnda-api/internal/domain/ports/integrations"
-	"sonnda-api/internal/http/api/handlers/common"
+	httperrors "sonnda-api/internal/http/errors"
 	"sonnda-api/internal/http/middleware"
 
 	applog "sonnda-api/internal/app/observability"
@@ -38,7 +40,11 @@ func NewLabsHandler(
 
 func (h *LabsHandler) ListLabs(c *gin.Context) {
 	if h == nil || h.svc == nil {
-		common.RespondError(c, http.StatusInternalServerError, "labs_not_configured", errors.New("labs service not configured"))
+		httperrors.WriteError(c, &apperr.AppError{
+			Code:    apperr.INTERNAL_ERROR,
+			Message: "serviço indisponível",
+			Cause:   errors.New("labs service not configured"),
+		})
 		return
 	}
 
@@ -47,13 +53,20 @@ func (h *LabsHandler) ListLabs(c *gin.Context) {
 		patientID = c.Param("patientID")
 	}
 	if patientID == "" {
-		common.RespondError(c, http.StatusBadRequest, "missing_patient_id", nil)
+		httperrors.WriteError(c, &apperr.AppError{
+			Code:    apperr.REQUIRED_FIELD_MISSING,
+			Message: "patient_id é obrigatório",
+		})
 		return
 	}
 
 	parsedID, err := uuid.Parse(patientID)
 	if err != nil {
-		common.RespondError(c, http.StatusBadRequest, "invalid_patient_id", err)
+		httperrors.WriteError(c, &apperr.AppError{
+			Code:    apperr.INVALID_FIELD_FORMAT,
+			Message: "patient_id inválido",
+			Cause:   err,
+		})
 		return
 	}
 
@@ -64,7 +77,7 @@ func (h *LabsHandler) ListLabs(c *gin.Context) {
 
 	list, err := h.svc.List(c.Request.Context(), parsedID, limit, offset)
 	if err != nil {
-		common.RespondAppError(c, err)
+		writeLabsServiceError(c, err)
 		return
 	}
 
@@ -73,7 +86,11 @@ func (h *LabsHandler) ListLabs(c *gin.Context) {
 
 func (h *LabsHandler) ListFullLabs(c *gin.Context) {
 	if h == nil || h.svc == nil {
-		common.RespondError(c, http.StatusInternalServerError, "labs_not_configured", errors.New("labs service not configured"))
+		httperrors.WriteError(c, &apperr.AppError{
+			Code:    apperr.INTERNAL_ERROR,
+			Message: "serviço indisponível",
+			Cause:   errors.New("labs service not configured"),
+		})
 		return
 	}
 
@@ -82,13 +99,20 @@ func (h *LabsHandler) ListFullLabs(c *gin.Context) {
 		patientID = c.Param("patientID")
 	}
 	if patientID == "" {
-		common.RespondError(c, http.StatusBadRequest, "missing_patient_id", nil)
+		httperrors.WriteError(c, &apperr.AppError{
+			Code:    apperr.REQUIRED_FIELD_MISSING,
+			Message: "patient_id é obrigatório",
+		})
 		return
 	}
 
 	parsedID, err := uuid.Parse(patientID)
 	if err != nil {
-		common.RespondError(c, http.StatusBadRequest, "invalid_patient_id", err)
+		httperrors.WriteError(c, &apperr.AppError{
+			Code:    apperr.INVALID_FIELD_FORMAT,
+			Message: "patient_id inválido",
+			Cause:   err,
+		})
 		return
 	}
 
@@ -99,7 +123,7 @@ func (h *LabsHandler) ListFullLabs(c *gin.Context) {
 
 	list, err := h.svc.ListFull(c.Request.Context(), parsedID, limit, offset)
 	if err != nil {
-		common.RespondAppError(c, err)
+		writeLabsServiceError(c, err)
 		return
 	}
 
@@ -111,7 +135,11 @@ func (h *LabsHandler) ListFullLabs(c *gin.Context) {
 // field: file (PDF/JPEG/PNG)
 func (h *LabsHandler) UploadAndProcessLabs(c *gin.Context) {
 	if h == nil || h.svc == nil || h.storage == nil {
-		common.RespondError(c, http.StatusInternalServerError, "labs_not_configured", errors.New("labs dependencies not configured"))
+		httperrors.WriteError(c, &apperr.AppError{
+			Code:    apperr.INTERNAL_ERROR,
+			Message: "serviço indisponível",
+			Cause:   errors.New("labs dependencies not configured"),
+		})
 		return
 	}
 
@@ -119,6 +147,10 @@ func (h *LabsHandler) UploadAndProcessLabs(c *gin.Context) {
 
 	user, ok := middleware.GetCurrentUser(c)
 	if !ok {
+		httperrors.WriteError(c, &apperr.AppError{
+			Code:    apperr.AUTH_REQUIRED,
+			Message: "autenticação necessária",
+		})
 		return
 	}
 
@@ -127,19 +159,26 @@ func (h *LabsHandler) UploadAndProcessLabs(c *gin.Context) {
 		patientID = c.Param("patientID")
 	}
 	if patientID == "" {
-		common.RespondError(c, http.StatusBadRequest, "missing_patient_id", nil)
+		httperrors.WriteError(c, &apperr.AppError{
+			Code:    apperr.REQUIRED_FIELD_MISSING,
+			Message: "patient_id é obrigatório",
+		})
 		return
 	}
 
 	parsedID, err := uuid.Parse(patientID)
 	if err != nil {
-		common.RespondError(c, http.StatusBadRequest, "invalid_patient_id", err)
+		httperrors.WriteError(c, &apperr.AppError{
+			Code:    apperr.INVALID_FIELD_FORMAT,
+			Message: "patient_id inválido",
+			Cause:   err,
+		})
 		return
 	}
 
 	documentURI, mimeType, err := h.handleFileUpload(c)
 	if err != nil {
-		common.RespondError(c, http.StatusBadRequest, "upload_failed", err)
+		writeUploadError(c, err)
 		return
 	}
 
@@ -150,7 +189,7 @@ func (h *LabsHandler) UploadAndProcessLabs(c *gin.Context) {
 		UploadedByUserID: user.ID,
 	})
 	if err != nil {
-		common.RespondAppError(c, err)
+		writeLabsServiceError(c, err)
 		return
 	}
 
@@ -232,7 +271,11 @@ func parsePagination(c *gin.Context, defaultLimit, defaultOffset int) (limit, of
 	if limitStr := c.Query("limit"); limitStr != "" {
 		l, err := strconv.Atoi(limitStr)
 		if err != nil || l <= 0 {
-			common.RespondError(c, http.StatusBadRequest, "invalid_limit", errors.New("limit must be > 0"))
+			httperrors.WriteError(c, &apperr.AppError{
+				Code:    apperr.VALIDATION_FAILED,
+				Message: "limit deve ser > 0",
+				Cause:   err,
+			})
 			return 0, 0, false
 		}
 		limit = l
@@ -241,7 +284,11 @@ func parsePagination(c *gin.Context, defaultLimit, defaultOffset int) (limit, of
 	if offsetStr := c.Query("offset"); offsetStr != "" {
 		o, err := strconv.Atoi(offsetStr)
 		if err != nil || o < 0 {
-			common.RespondError(c, http.StatusBadRequest, "invalid_offset", errors.New("offset must be >= 0"))
+			httperrors.WriteError(c, &apperr.AppError{
+				Code:    apperr.VALIDATION_FAILED,
+				Message: "offset deve ser >= 0",
+				Cause:   err,
+			})
 			return 0, 0, false
 		}
 		offset = o
@@ -275,5 +322,61 @@ func mimeToExt(ct string) string {
 		return ".png"
 	default:
 		return ""
+	}
+}
+
+func writeLabsServiceError(c *gin.Context, err error) {
+	if err == nil {
+		return
+	}
+
+	var appErr *apperr.AppError
+	if errors.As(err, &appErr) && appErr != nil {
+		httperrors.WriteError(c, err)
+		return
+	}
+
+	switch {
+	case errors.Is(err, labs.ErrLabReportNotFound):
+		httperrors.WriteError(c, &apperr.AppError{Code: apperr.NOT_FOUND, Message: "laudo não encontrado", Cause: err})
+	case errors.Is(err, labs.ErrLabReportAlreadyExists):
+		httperrors.WriteError(c, &apperr.AppError{Code: apperr.RESOURCE_ALREADY_EXISTS, Message: "laudo já existe", Cause: err})
+	case errors.Is(err, labs.ErrInvalidInput),
+		errors.Is(err, labs.ErrMissingId),
+		errors.Is(err, labs.ErrInvalidDateFormat),
+		errors.Is(err, labs.ErrInvalidDocument),
+		errors.Is(err, labs.ErrInvalidPatientID),
+		errors.Is(err, labs.ErrInvalidUploadedByUser),
+		errors.Is(err, labs.ErrInvalidTestName),
+		errors.Is(err, labs.ErrInvalidParameterName):
+		httperrors.WriteError(c, &apperr.AppError{Code: apperr.VALIDATION_FAILED, Message: "entrada inválida", Cause: err})
+	case errors.Is(err, labs.ErrDocumentProcessing):
+		httperrors.WriteError(c, &apperr.AppError{Code: apperr.INFRA_EXTERNAL_SERVICE_ERROR, Message: "falha ao processar documento", Cause: err})
+	default:
+		httperrors.WriteError(c, &apperr.AppError{Code: apperr.INTERNAL_ERROR, Message: "erro inesperado", Cause: err})
+	}
+}
+
+func writeUploadError(c *gin.Context, err error) {
+	if err == nil {
+		return
+	}
+
+	msg := err.Error()
+	switch {
+	case strings.HasPrefix(msg, "file_required"):
+		httperrors.WriteError(c, &apperr.AppError{Code: apperr.REQUIRED_FIELD_MISSING, Message: "arquivo é obrigatório", Cause: err})
+	case msg == "empty_file":
+		httperrors.WriteError(c, &apperr.AppError{Code: apperr.VALIDATION_FAILED, Message: "arquivo vazio", Cause: err})
+	case msg == "file_too_large":
+		httperrors.WriteError(c, &apperr.AppError{Code: apperr.UPLOAD_SIZE_EXCEEDED, Message: "arquivo muito grande", Cause: err})
+	case strings.HasPrefix(msg, "unsupported_mime_type:"):
+		httperrors.WriteError(c, &apperr.AppError{Code: apperr.INVALID_FIELD_FORMAT, Message: "tipo de arquivo não suportado", Cause: err})
+	case strings.HasPrefix(msg, "open_file_failed"):
+		httperrors.WriteError(c, &apperr.AppError{Code: apperr.INTERNAL_ERROR, Message: "falha ao abrir arquivo", Cause: err})
+	case strings.HasPrefix(msg, "upload_failed"):
+		httperrors.WriteError(c, &apperr.AppError{Code: apperr.INFRA_STORAGE_ERROR, Message: "falha no upload", Cause: err})
+	default:
+		httperrors.WriteError(c, &apperr.AppError{Code: apperr.VALIDATION_FAILED, Message: "falha no upload", Cause: err})
 	}
 }

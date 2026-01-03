@@ -79,6 +79,19 @@ func AccessLog(l *slog.Logger) gin.HandlerFunc {
 			attrs = append(attrs, slog.String("user_id", u.ID.String()))
 		}
 
+		// NOVO: respeita o nível decidido pelo erro (se existir)
+		if lvlAny, ok := c.Get("error_log_level"); ok {
+			if lvl, ok := lvlAny.(slog.Level); ok {
+				switch {
+				case status >= 400:
+					reqLog.Log(c.Request.Context(), lvl, "request_invalid", attrs...)
+				default:
+					reqLog.Info("request_completed", attrs...)
+				}
+				return
+			}
+		}
+
 		// nível baseado no status
 		switch {
 		case status >= 500:

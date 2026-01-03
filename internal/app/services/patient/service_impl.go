@@ -27,7 +27,7 @@ func New(repo repositories.PatientRepository, policy AccessPolicy) Service {
 
 func (s *service) Create(ctx context.Context, currentUser *user.User, input CreateInput) (*patient.Patient, error) {
 	if err := s.policy.CanCreate(ctx, currentUser, input); err != nil {
-		return nil, err
+		return nil, mapPatientDomainError(err)
 	}
 
 	p, err := patient.NewPatient(patient.NewPatientParams{
@@ -42,50 +42,50 @@ func (s *service) Create(ctx context.Context, currentUser *user.User, input Crea
 		AvatarURL: input.AvatarURL,
 	})
 	if err != nil {
-		return nil, err
+		return nil, mapPatientDomainError(err)
 	}
 
 	// MVP: checagem explícita (honesta) — alternativa é confiar no UNIQUE e mapear erro.
 	existing, err := s.repo.FindByCPF(ctx, p.CPF)
 	if err != nil {
-		return nil, err
+		return nil, mapInfraError("patientRepo.FindByCPF", err)
 	}
 	if existing != nil {
-		return nil, patient.ErrCPFAlreadyExists
+		return nil, mapPatientDomainError(patient.ErrCPFAlreadyExists)
 	}
 
 	if err := s.repo.Create(ctx, p); err != nil {
-		return nil, err
+		return nil, mapInfraError("patientRepo.Create", err)
 	}
 	return p, nil
 }
 
 func (s *service) GetByID(ctx context.Context, currentUser *user.User, id uuid.UUID) (*patient.Patient, error) {
 	if err := s.policy.CanRead(ctx, currentUser, id); err != nil {
-		return nil, err
+		return nil, mapPatientDomainError(err)
 	}
 
 	p, err := s.repo.FindByID(ctx, id)
 	if err != nil {
-		return nil, err
+		return nil, mapInfraError("patientRepo.FindByID", err)
 	}
 	if p == nil {
-		return nil, patient.ErrPatientNotFound
+		return nil, mapPatientDomainError(patient.ErrPatientNotFound)
 	}
 	return p, nil
 }
 
 func (s *service) UpdateByID(ctx context.Context, currentUser *user.User, id uuid.UUID, input UpdateInput) (*patient.Patient, error) {
 	if err := s.policy.CanUpdate(ctx, currentUser, id); err != nil {
-		return nil, err
+		return nil, mapPatientDomainError(err)
 	}
 
 	p, err := s.repo.FindByID(ctx, id)
 	if err != nil {
-		return nil, err
+		return nil, mapInfraError("patientRepo.FindByID", err)
 	}
 	if p == nil {
-		return nil, patient.ErrPatientNotFound
+		return nil, mapPatientDomainError(patient.ErrPatientNotFound)
 	}
 
 	p.ApplyUpdate(
@@ -98,40 +98,43 @@ func (s *service) UpdateByID(ctx context.Context, currentUser *user.User, id uui
 	)
 
 	if err := p.Validate(); err != nil {
-		return nil, err
+		return nil, mapPatientDomainError(err)
 	}
 
 	if err := s.repo.Update(ctx, p); err != nil {
-		return nil, err
+		return nil, mapInfraError("patientRepo.Update", err)
 	}
 	return p, nil
 }
 
 func (s *service) SoftDeleteByID(ctx context.Context, currentUser *user.User, id uuid.UUID) error {
 	if err := s.policy.CanDelete(ctx, currentUser, id); err != nil {
-		return err
+		return mapPatientDomainError(err)
 	}
 
 	// opcional: checar existência para erro melhor
 	p, err := s.repo.FindByID(ctx, id)
 	if err != nil {
-		return err
+		return mapInfraError("patientRepo.FindByID", err)
 	}
 	if p == nil {
-		return patient.ErrPatientNotFound
+		return mapPatientDomainError(patient.ErrPatientNotFound)
 	}
 
-	return s.repo.SoftDelete(ctx, id)
+	if err := s.repo.SoftDelete(ctx, id); err != nil {
+		return mapInfraError("patientRepo.SoftDelete", err)
+	}
+	return nil
 }
 
 func (s *service) List(ctx context.Context, currentUser *user.User, limit, offset int) ([]*patient.Patient, error) {
 	if err := s.policy.CanList(ctx, currentUser); err != nil {
-		return nil, err
+		return nil, mapPatientDomainError(err)
 	}
 
 	rows, err := s.repo.List(ctx, limit, offset)
 	if err != nil {
-		return nil, err
+		return nil, mapInfraError("patientRepo.List", err)
 	}
 
 	patients := make([]*patient.Patient, 0, len(rows))

@@ -3,10 +3,10 @@ package usersvc
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strings"
 	"time"
 
+	"sonnda-api/internal/app/apperr"
 	"sonnda-api/internal/domain/model/rbac"
 	"sonnda-api/internal/domain/model/user"
 	"sonnda-api/internal/domain/model/user/professional"
@@ -22,13 +22,13 @@ type service struct {
 	authSvc  integrations.IdentityService
 }
 
-var _ Service = (*service)(nil)
+var _ UserService = (*service)(nil)
 
 func New(
 	userRepo repositories.UserRepository,
 	profRepo repositories.ProfessionalRepository,
 	authSvc integrations.IdentityService,
-) Service {
+) UserService {
 	return &service{
 		userRepo: userRepo,
 		profRepo: profRepo,
@@ -56,35 +56,35 @@ func (s *service) createUser(ctx context.Context, input RegisterInput) (*user.Us
 		Phone:        input.Phone,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("falha na validação de domínio: %w", err)
+		return nil, mapUserDomainError(err)
 	}
 
 	existingByEmail, err := s.userRepo.FindByEmail(ctx, newUser.Email)
 	if err != nil {
-		return nil, fmt.Errorf("db_error: %w", err)
+		return nil, mapInfraError("userRepo.FindByEmail", err)
 	}
 	if existingByEmail != nil {
-		return nil, fmt.Errorf("conflito para o email %s: %w", newUser.Email, user.ErrEmailAlreadyExists)
+		return nil, mapUserDomainError(user.ErrEmailAlreadyExists)
 	}
 
 	existingByCPF, err := s.userRepo.FindByCPF(ctx, newUser.CPF)
 	if err != nil {
-		return nil, fmt.Errorf("falha técnica ao consultar CPF: %w", err)
+		return nil, mapInfraError("userRepo.FindByCPF", err)
 	}
 	if existingByCPF != nil {
-		return nil, fmt.Errorf("conflito no cadastro (CPF %s): %w", newUser.CPF, user.ErrCPFAlreadyExists)
+		return nil, mapUserDomainError(user.ErrCPFAlreadyExists)
 	}
 
 	existingByAuth, err := s.userRepo.FindByAuthIdentity(ctx, newUser.AuthProvider, newUser.AuthSubject)
 	if err != nil {
-		return nil, fmt.Errorf("falha técnica ao consultar identidade externa: %w", err)
+		return nil, mapInfraError("userRepo.FindByAuthIdentity", err)
 	}
 	if existingByAuth != nil {
-		return nil, fmt.Errorf("provedor %s já vinculado: %w", newUser.AuthProvider, user.ErrAuthIdentityAlreadyExists)
+		return nil, mapUserDomainError(user.ErrAuthIdentityAlreadyExists)
 	}
 
 	if err := s.userRepo.Save(ctx, newUser); err != nil {
-		return nil, fmt.Errorf("save_user_failed: %w", err)
+		return nil, mapInfraError("userRepo.Save", err)
 	}
 
 	return newUser, nil
@@ -127,7 +127,11 @@ func (s *service) createProfessionalUser(ctx context.Context, input RegisterInpu
 
 	if err := s.profRepo.Create(ctx, prof); err != nil {
 		if rollbackErr := s.rollbackCreatedUser(ctx, createdUser); rollbackErr != nil {
-			return nil, errors.Join(err, rollbackErr)
+			return nil, &apperr.AppError{
+				Code:    apperr.INFRA_DATABASE_ERROR,
+				Message: "falha tecnica",
+				Cause:   err,
+			}
 		}
 		return nil, err
 	}
@@ -155,16 +159,16 @@ func (s *service) rollbackCreatedUser(ctx context.Context, createdUser *user.Use
 func (s *service) Update(ctx context.Context, input UpdateInput) (*user.User, error) {
 	existingUser, err := s.userRepo.FindByID(ctx, input.UserID)
 	if err != nil {
-		return nil, err
+		return nil, mapInfraError("userRepo.FindByID", err)
 	}
 	if existingUser == nil {
-		return nil, user.ErrUserNotFound
+		return nil, mapUserDomainError(user.ErrUserNotFound)
 	}
 
 	if input.FullName != nil {
 		name := strings.TrimSpace(*input.FullName)
 		if name == "" {
-			return nil, user.ErrInvalidFullName
+			return nil, mapUserDomainError(user.ErrInvalidFullName)
 		}
 		existingUser.FullName = name
 	}
@@ -172,7 +176,7 @@ func (s *service) Update(ctx context.Context, input UpdateInput) (*user.User, er
 	if input.BirthDate != nil {
 		birthDate := input.BirthDate.UTC()
 		if birthDate.IsZero() || birthDate.After(time.Now().UTC()) {
-			return nil, user.ErrInvalidBirthDate
+			return nil, mapUserDomainError(user.ErrInvalidBirthDate)
 		}
 		existingUser.BirthDate = birthDate
 	}
@@ -180,7 +184,7 @@ func (s *service) Update(ctx context.Context, input UpdateInput) (*user.User, er
 	if input.CPF != nil {
 		normalizedCPF := cleanDigits(*input.CPF)
 		if normalizedCPF == "" || len(normalizedCPF) != 11 {
-			return nil, user.ErrInvalidCPF
+			return nil, mapUserDomainError(user.ErrInvalidCPF)
 		}
 		existingUser.CPF = normalizedCPF
 	}
@@ -188,13 +192,13 @@ func (s *service) Update(ctx context.Context, input UpdateInput) (*user.User, er
 	if input.Phone != nil {
 		phone := strings.TrimSpace(*input.Phone)
 		if phone == "" {
-			return nil, user.ErrInvalidPhone
+			return nil, mapUserDomainError(user.ErrInvalidPhone)
 		}
 		existingUser.Phone = phone
 	}
 
 	if err := s.userRepo.Update(ctx, existingUser); err != nil {
-		return nil, err
+		return nil, mapInfraError("userRepo.Update", err)
 	}
 
 	return existingUser, nil
@@ -203,10 +207,10 @@ func (s *service) Update(ctx context.Context, input UpdateInput) (*user.User, er
 func (s *service) Delete(ctx context.Context, userID uuid.UUID) error {
 	existing, err := s.userRepo.FindByID(ctx, userID)
 	if err != nil {
-		return err
+		return mapInfraError("userRepo.FindByID", err)
 	}
 	if existing == nil {
-		return user.ErrUserNotFound
+		return mapUserDomainError(user.ErrUserNotFound)
 	}
 
 	if err := s.userRepo.SoftDelete(ctx, userID); err != nil {

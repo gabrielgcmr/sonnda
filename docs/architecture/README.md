@@ -49,7 +49,8 @@ Essas camadas representam **limites conceituais**, não apenas organização de 
    - persiste ou consulta dados  
 
 5) **Resposta HTTP**  
-   - erros e dados são mapeados explicitamente no handler  
+   - erros são normalizdos para um contrato estável via `internal/app/apperr`
+      - Veja `docs/architecture/error-handling.md`
 
 ---
 

@@ -32,8 +32,8 @@ A Sonnda resolve um problema recorrente na pratica clinica: pacientes precisam c
 
 A arquitetura foi simplificada em camadas diretas, com baixo acoplamento:
 
-- **Domain (`internal/domain`)**: entidades e regras de negocio; ports (repositorios e servicos).
-- **App (`internal/app`)**: casos de uso e orquestracao; modules conectam dependencias; config e observability.
+- **Domain (`internal/domain`)**: modelos de dominio e regras de negocio; ports (repositorios e integracoes).
+- **App (`internal/app`)**: services de aplicacao (orquestracao) e normalizacao de erros via `internal/app/apperr`.
 - **HTTP (`internal/http`)**: API e HTMX com rotas, handlers e middlewares.
 - **Infrastructure (`internal/infrastructure`)**: implementacoes concretas para auth, persistence, documentai e storage.
 
@@ -91,13 +91,16 @@ Registrado (token + usuario no banco):
 - `GET /api/v1/me`
 - `PUT /api/v1/me`
 - `POST /api/v1/patients`
-- `GET /api/v1/patients/medical-records/labs`
-- `POST /api/v1/patients/medical-records/labs/upload`
-- `GET /api/v1/patients/medical-records/labs/summary`
+- `GET /api/v1/patients`
+- `GET /api/v1/patients/:id`
+- `GET /api/v1/patients/:id/medical-records/labs`
+- `POST /api/v1/patients/:id/medical-records/labs/upload`
+- `GET /api/v1/patients/:id/medical-records/labs/summary`
 
 Documentacao complementar:
 - `docs/architecture/README.md`
 - `docs/architecture/access-control.md`
+- `docs/architecture/error-handling.md`
 - `docs/dev/setup.md`
 - `docs/api/patient.md`
 
@@ -115,14 +118,17 @@ Resumo da estrutura:
 |-- assets/                         # Assets embedados (ex.: favicon)
 |-- internal/
 |   |-- app/
+|   |   |-- apperr/                 # Contrato de erros da aplicacao
+|   |   |-- bootstrap/              # Montagem de dependencias por modulo
 |   |   |-- config/                 # Env, observability e config da aplicacao
-|   |   |-- modules/                # Montagem de dependencias por modulo
-|   |   `-- usecases/               # Casos de uso (orquestracao)
+|   |   |-- services/               # Services de aplicacao (orquestracao)
+|   |   `-- usecases/               # Use cases (quando aplicavel)
 |   |-- domain/
-|   |   |-- entities/               # Entidades e regras de negocio
-|   |   `-- ports/                  # Interfaces (repositorios/servicos)
+|   |   |-- model/                  # Modelos e regras de negocio
+|   |   `-- ports/                  # Interfaces (repositorios/integracoes)
 |   |-- http/
 |   |   |-- api/                    # API HTTP (handlers e rotas)
+|   |   |-- errors/                 # Presenter HTTP de erros
 |   |   |-- htmx/                   # Painel administrativo (HTMX)
 |   |   `-- middleware/             # Middlewares HTTP
 |   `-- infrastructure/

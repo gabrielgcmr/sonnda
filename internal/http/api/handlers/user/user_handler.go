@@ -1,17 +1,17 @@
 package user
 
 import (
-	"errors"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/gin-gonic/gin"
 
+	"sonnda-api/internal/app/apperr"
 	usersvc "sonnda-api/internal/app/services/user"
 	"sonnda-api/internal/domain/model/rbac"
 	"sonnda-api/internal/domain/ports/repositories"
 	"sonnda-api/internal/http/api/handlers/common"
+	httperrors "sonnda-api/internal/http/errors"
 	"sonnda-api/internal/http/middleware"
 
 	applog "sonnda-api/internal/app/observability"
@@ -24,12 +24,12 @@ type UpdateUserRequest struct {
 	Phone     *string `json:"phone,omitempty"`
 }
 type UserHandler struct {
-	svc               usersvc.Service
+	svc               usersvc.UserService
 	patientAccessRepo repositories.PatientAccessRepository
 }
 
 func NewUserHandler(
-	svc usersvc.Service,
+	svc usersvc.UserService,
 	patientAccessRepo repositories.PatientAccessRepository,
 ) *UserHandler {
 	return &UserHandler{
@@ -54,21 +54,32 @@ type ProfessionalRequestData struct {
 }
 
 func (h *UserHandler) Register(c *gin.Context) {
+	// 0) Wiring safety
+	if h.svc == nil {
+		httperrors.WriteError(c, &apperr.AppError{
+			Code:    apperr.INTERNAL_ERROR,
+			Message: "serviço indisponível",
+		})
+		return
+	}
+
 	// 1. Auth (Infra)
 	identity, ok := middleware.GetIdentity(c)
 	if !ok {
-		common.RespondError(c, http.StatusUnauthorized, "missing_identity", nil)
+		httperrors.WriteError(c, &apperr.AppError{
+			Code:    apperr.AUTH_REQUIRED,
+			Message: "autenticação necessária",
+		})
 		return
 	}
 	// 2. Bind & Validate Formato (Infra)
 	var req RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		common.RespondError(
-			c,
-			http.StatusBadRequest,
-			"invalid_input",
-			err,
-		)
+		httperrors.WriteError(c, &apperr.AppError{
+			Code:    apperr.VALIDATION_FAILED,
+			Message: "payload inválido",
+			Cause:   err,
+		})
 		return
 	}
 	// 3. Normalização de Email (Regra de Interface)
@@ -76,13 +87,28 @@ func (h *UserHandler) Register(c *gin.Context) {
 	if identity.Email != "" {
 		email = identity.Email // Token tem prioridade
 	}
+	email = strings.TrimSpace(strings.ToLower(email))
 
-	// 4. Dispatcher (Decisão de Roteamento)
-	role := rbac.Role(strings.ToLower(req.Role))
+	// 4) Dispatcher / role (Interface)
+	role := rbac.Role(strings.ToLower(strings.TrimSpace(req.Role)))
+	if role == "" {
+		httperrors.WriteError(c, &apperr.AppError{
+			Code:    apperr.INVALID_ENUM_VALUE,
+			Message: "role inválida",
+		})
+		return
+	}
 
-	birthDate, err := time.Parse("2006-01-02", req.BirthDate)
+	// 5) Parse de campos que são “domínio” (você pode mover isso pro service depois)
+	birthDate, err := common.ParseBirthDate(req.BirthDate)
 	if err != nil {
-		common.RespondError(c, http.StatusBadRequest, "invalid_birth_date", err)
+		// O ParseBirthDate já retorna erro com %w (shared.ErrInvalidBirthDate),
+		// então aqui basta traduzir para contrato.
+		httperrors.WriteError(c, &apperr.AppError{
+			Code:    apperr.VALIDATION_FAILED,
+			Message: "data de nascimento inválida",
+			Cause:   err,
+		})
 		return
 	}
 
@@ -98,9 +124,12 @@ func (h *UserHandler) Register(c *gin.Context) {
 	}
 
 	if role == rbac.RoleDoctor || role == rbac.RoleNurse {
-		// Gin já garantiu required_if, mas mantemos safe-check.
+		// Safe-check (mesmo que binder valide)
 		if req.Professional == nil {
-			common.RespondError(c, http.StatusBadRequest, "professional_registration_required", errors.New("missing professional"))
+			httperrors.WriteError(c, &apperr.AppError{
+				Code:    apperr.REQUIRED_FIELD_MISSING,
+				Message: "dados profissionais são obrigatórios",
+			})
 			return
 		}
 
@@ -111,19 +140,10 @@ func (h *UserHandler) Register(c *gin.Context) {
 		}
 	}
 
-	if h.svc == nil {
-		common.RespondError(
-			c,
-			http.StatusInternalServerError,
-			"register_user_not_configured",
-			errors.New("user service not configured"),
-		)
-		return
-	}
-
+	// 7) Chama serviço (Application)
 	created, err := h.svc.Register(c.Request.Context(), input)
 	if err != nil {
-		common.RespondAppError(c, err)
+		httperrors.WriteError(c, err)
 		return
 	}
 
@@ -133,7 +153,10 @@ func (h *UserHandler) Register(c *gin.Context) {
 func (h *UserHandler) GetUser(c *gin.Context) {
 	currentUser, ok := middleware.GetCurrentUser(c)
 	if !ok || currentUser == nil {
-		common.RespondError(c, http.StatusUnauthorized, "unauthorized", nil)
+		httperrors.WriteError(c, &apperr.AppError{
+			Code:    apperr.AUTH_REQUIRED,
+			Message: "autenticaÇõÇœo necessÇ­ria",
+		})
 		return
 	}
 
@@ -144,15 +167,31 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 	log := applog.FromContext(c.Request.Context())
 	log.Info("user_update")
 
+	// 0) Wiring safety
+	if h.svc == nil {
+		httperrors.WriteError(c, &apperr.AppError{
+			Code:    apperr.INTERNAL_ERROR,
+			Message: "serviço indisponível",
+		})
+		return
+	}
+
 	currentUser, ok := middleware.GetCurrentUser(c)
 	if !ok || currentUser == nil {
-		common.RespondError(c, http.StatusUnauthorized, "unauthorized", nil)
+		httperrors.WriteError(c, &apperr.AppError{
+			Code:    apperr.AUTH_REQUIRED,
+			Message: "autenticação necessária",
+		})
 		return
 	}
 
 	var req UpdateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		common.RespondError(c, http.StatusBadRequest, "invalid_input", err)
+		httperrors.WriteError(c, &apperr.AppError{
+			Code:    apperr.VALIDATION_FAILED,
+			Message: "payload inválido",
+			Cause:   err,
+		})
 		return
 	}
 
@@ -166,9 +205,13 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 	}
 
 	if req.BirthDate != nil {
-		parsed, err := parseBirthDate(*req.BirthDate)
+		parsed, err := common.ParseBirthDate(*req.BirthDate)
 		if err != nil {
-			common.RespondError(c, http.StatusBadRequest, "invalid_birth_date", err)
+			httperrors.WriteError(c, &apperr.AppError{
+				Code:    apperr.VALIDATION_FAILED,
+				Message: "data de nascimento inválida",
+				Cause:   err,
+			})
 			return
 		}
 		input.BirthDate = &parsed
@@ -184,43 +227,12 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 		input.Phone = &phone
 	}
 
-	if h.svc == nil {
-		common.RespondError(
-			c,
-			http.StatusInternalServerError,
-			"update_user_not_configured",
-			errors.New("user service not configured"),
-		)
-		return
-	}
-
 	updated, err := h.svc.Update(c.Request.Context(), input)
 	if err != nil {
-		common.RespondAppError(c, err)
+		httperrors.WriteError(c, err)
 		return
 	}
 
 	log.Info("user_updated")
 	c.JSON(http.StatusOK, updated)
-}
-
-func parseBirthDate(raw string) (time.Time, error) {
-	s := strings.TrimSpace(raw)
-	if s == "" {
-		return time.Time{}, errors.New("birth_date is required")
-	}
-
-	layouts := []string{
-		"2006-01-02",
-		time.RFC3339,
-		"02/01/2006",
-	}
-
-	for _, layout := range layouts {
-		if t, err := time.Parse(layout, s); err == nil {
-			return t, nil
-		}
-	}
-
-	return time.Time{}, errors.New("invalid birth_date format")
 }

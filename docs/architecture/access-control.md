@@ -1,6 +1,6 @@
 # Controle de acesso (ReBAC)
 
-Este projeto **nao** modela autorizacao como "RBAC + ABAC".
+Este projeto nao modela autorizacao como "RBAC" puro.
 
 A direcao atual e **ReBAC** (Relationship-Based Access Control): o acesso e concedido a partir do **vinculo (relationship)** entre um app user e um recurso protegido (por enquanto, principalmente `patient`), e nao apenas por roles globais e nem por um grande conjunto de atributos da request.
 
@@ -18,7 +18,7 @@ Em codigo, esse vinculo e representado pela entidade `patientaccess.PatientAcces
 
 O modelo de autorizacao hoje gira em torno de:
 
-- **Entidade de relacionamento:** `internal/domain/entities/patientaccess`
+- **Entidade de relacionamento:** `internal/domain/model/patientaccess`
   - `PatientID`, `UserID` (quem acessa o que)
   - `Role` (papel no contexto do paciente)
   - `Permissions` (permissoes efetivas para este vinculo)
