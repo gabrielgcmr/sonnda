@@ -4,8 +4,8 @@ package apperr
 import "errors"
 
 // New cria um erro da aplicação sem causa interna.
-func New(kind Kind, code, message string) *Error {
-	return &Error{
+func New(kind Kind, code, message string) *AppError {
+	return &AppError{
 		Kind:    kind,
 		Code:    code,
 		Message: message,
@@ -13,8 +13,8 @@ func New(kind Kind, code, message string) *Error {
 }
 
 // Wrap cria um erro da aplicação encapsulando outro erro.
-func Wrap(kind Kind, code string, err error) *Error {
-	return &Error{
+func Wrap(kind Kind, code string, err error) *AppError {
+	return &AppError{
 		Kind: kind,
 		Code: code,
 		Err:  err,
@@ -23,7 +23,7 @@ func Wrap(kind Kind, code string, err error) *Error {
 
 // IsKind verifica se o erro (ou algum erro na cadeia) tem o Kind informado.
 func IsKind(err error, kind Kind) bool {
-	var ae *Error
+	var ae *AppError
 	if errors.As(err, &ae) {
 		return ae.Kind == kind
 	}
@@ -31,8 +31,8 @@ func IsKind(err error, kind Kind) bool {
 }
 
 // As retorna o *apperr.Error, se existir na cadeia.
-func As(err error) (*Error, bool) {
-	var ae *Error
+func As(err error) (*AppError, bool) {
+	var ae *AppError
 	if errors.As(err, &ae) {
 		return ae, true
 	}

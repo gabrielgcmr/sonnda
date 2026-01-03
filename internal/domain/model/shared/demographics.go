@@ -27,7 +27,7 @@ func ParseGender(input string) (Gender, error) {
 	case string(GenderUnknown):
 		return GenderUnknown, nil
 	default:
-		return "", fmt.Errorf("invalid gender: %s", input)
+		return "", fmt.Errorf("invalid gender: %s: %w", input, ErrInvalidGender)
 	}
 }
 
@@ -59,7 +59,7 @@ func ParseRace(input string) (Race, error) {
 	case string(RaceUnknown):
 		return RaceUnknown, nil
 	default:
-		return "", fmt.Errorf("invalid race: %s", input)
+		return "", fmt.Errorf("invalid race: %s: %w", input, ErrInvalidRace)
 	}
 }
 

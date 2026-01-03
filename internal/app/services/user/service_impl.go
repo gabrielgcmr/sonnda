@@ -3,6 +3,7 @@ package usersvc
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -55,35 +56,35 @@ func (s *service) createUser(ctx context.Context, input RegisterInput) (*user.Us
 		Phone:        input.Phone,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("falha na validação de domínio: %w", err)
 	}
 
 	existingByEmail, err := s.userRepo.FindByEmail(ctx, newUser.Email)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("db_error: %w", err)
 	}
 	if existingByEmail != nil {
-		return nil, user.ErrEmailAlreadyExists
+		return nil, fmt.Errorf("conflito para o email %s: %w", newUser.Email, user.ErrEmailAlreadyExists)
 	}
 
 	existingByCPF, err := s.userRepo.FindByCPF(ctx, newUser.CPF)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("falha técnica ao consultar CPF: %w", err)
 	}
 	if existingByCPF != nil {
-		return nil, user.ErrCPFAlreadyExists
+		return nil, fmt.Errorf("conflito no cadastro (CPF %s): %w", newUser.CPF, user.ErrCPFAlreadyExists)
 	}
 
 	existingByAuth, err := s.userRepo.FindByAuthIdentity(ctx, newUser.AuthProvider, newUser.AuthSubject)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("falha técnica ao consultar identidade externa: %w", err)
 	}
 	if existingByAuth != nil {
-		return nil, user.ErrAuthIdentityAlreadyExists
+		return nil, fmt.Errorf("provedor %s já vinculado: %w", newUser.AuthProvider, user.ErrAuthIdentityAlreadyExists)
 	}
 
 	if err := s.userRepo.Save(ctx, newUser); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("save_user_failed: %w", err)
 	}
 
 	return newUser, nil

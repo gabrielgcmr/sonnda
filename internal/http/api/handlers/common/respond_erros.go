@@ -2,6 +2,7 @@
 package common
 
 import (
+	"errors"
 	"net/http"
 
 	applog "sonnda-api/internal/app/observability"
@@ -81,57 +82,63 @@ func RespondError(c *gin.Context, status int, code string, err error) {
 
 func RespondDomainError(c *gin.Context, err error) {
 
-	switch err {
+	switch {
 	// auth
-	case user.ErrInvalidAuthProvider,
-		user.ErrInvalidAuthSubject,
-		user.ErrInvalidEmail,
-		user.ErrInvalidRole,
-		user.ErrInvalidFullName,
-		user.ErrInvalidBirthDate,
-		user.ErrInvalidCPF,
-		user.ErrInvalidPhone:
+	case errors.Is(err, user.ErrInvalidAuthProvider),
+		errors.Is(err, user.ErrInvalidAuthSubject),
+		errors.Is(err, user.ErrInvalidEmail),
+		errors.Is(err, user.ErrInvalidRole),
+		errors.Is(err, user.ErrInvalidFullName),
+		errors.Is(err, user.ErrInvalidBirthDate),
+		errors.Is(err, user.ErrInvalidCPF),
+		errors.Is(err, user.ErrInvalidPhone):
 		RespondError(c, http.StatusBadRequest, "invalid_auth", err)
-	case user.ErrEmailAlreadyExists:
+	case errors.Is(err, user.ErrEmailAlreadyExists):
 		RespondError(c, http.StatusConflict, "email_already_exists", err)
-	case user.ErrAuthIdentityAlreadyExists:
+	case errors.Is(err, user.ErrCPFAlreadyExists):
+		RespondError(c, http.StatusConflict, "cpf_already_exists", err)
+	case errors.Is(err, user.ErrAuthIdentityAlreadyExists):
 		RespondError(c, http.StatusConflict, "auth_identity_already_exists", err)
-	case user.ErrIdentityAlreadyLinkedError:
+	case errors.Is(err, user.ErrIdentityAlreadyLinkedError):
 		RespondError(c, http.StatusConflict, "identity_already_linked", err)
 
 	// professional profile
-	case professional.ErrRegistrationRequired,
-		professional.ErrInvalidUserID,
-		professional.ErrInvalidRegistrationNumber,
-		professional.ErrInvalidRegistrationIssuer:
+	case errors.Is(err, professional.ErrRegistrationRequired),
+		errors.Is(err, professional.ErrInvalidUserID),
+		errors.Is(err, professional.ErrInvalidRegistrationNumber),
+		errors.Is(err, professional.ErrInvalidRegistrationIssuer):
 		RespondError(c, http.StatusBadRequest, "invalid_professional_registration", err)
-	case professional.ErrProfileNotFound:
+	case errors.Is(err, professional.ErrProfileNotFound):
 		RespondError(c, http.StatusNotFound, "professional_profile_not_found", err)
 
 	// authorization
-	case user.ErrAuthorizationForbidden:
+	case errors.Is(err, user.ErrAuthorizationForbidden):
 		RespondError(c, http.StatusForbidden, "forbidden", nil)
 	// patient
-	case patient.ErrPatientNotFound:
+	case errors.Is(err, patient.ErrPatientNotFound):
 		RespondError(c, http.StatusNotFound, "patient_not_found", nil)
-	case patient.ErrCPFAlreadyExists:
+	case errors.Is(err, patient.ErrCPFAlreadyExists):
 		RespondError(c, http.StatusConflict, "cpf_already_exists", nil)
-	case shared.ErrInvalidBirthDate:
+	case errors.Is(err, shared.ErrInvalidBirthDate):
 		RespondError(c, http.StatusBadRequest, "invalid_birth_date", err)
+	case errors.Is(err, shared.ErrInvalidGender):
+		RespondError(c, http.StatusBadRequest, "invalid_gender", err)
+	case errors.Is(err, shared.ErrInvalidRace):
+		RespondError(c, http.StatusBadRequest, "invalid_race", err)
 
 	// labs
-	case labs.ErrLabReportNotFound:
+	case errors.Is(err, labs.ErrLabReportNotFound):
 		RespondError(c, http.StatusNotFound, "lab_report_not_found", nil)
-	case labs.ErrLabReportAlreadyExists:
+	case errors.Is(err, labs.ErrLabReportAlreadyExists):
 		RespondError(c, http.StatusConflict, "lab_report_already_exists", nil)
-	case labs.ErrInvalidDocument:
+	case errors.Is(err, labs.ErrInvalidDocument):
 		RespondError(c, http.StatusBadRequest, "invalid_document", err)
-	case labs.ErrInvalidInput, labs.ErrMissingId:
+	case errors.Is(err, labs.ErrInvalidInput), errors.Is(err, labs.ErrMissingId):
 		RespondError(c, http.StatusBadRequest, "invalid_input", err)
-	case labs.ErrDocumentProcessing:
+	case errors.Is(err, labs.ErrDocumentProcessing):
 		// serviço externo falhou -> 502
 		RespondError(c, http.StatusBadGateway, "document_processing_failed", err)
-	case labs.ErrInvalidDateFormat:
+	case errors.Is(err, labs.ErrInvalidDateFormat):
 		RespondError(c, http.StatusBadRequest, "invalid_date_format", err)
 
 	default:

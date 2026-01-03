@@ -113,10 +113,11 @@ func validRegisterInput() RegisterInput {
 		Provider:  "firebase",
 		Subject:   "sub-123",
 		Email:     "person@example.com",
-		Role:      rbac.RoleDoctor,
+		Role:      rbac.RoleCaregiver,
 		FullName:  "Pessoa Teste",
 		BirthDate: time.Date(1990, 1, 2, 0, 0, 0, 0, time.UTC),
 		CPF:       "52998224725",
+		Phone:     "11999998888",
 	}
 }
 
