@@ -3,7 +3,7 @@ package documentai
 import (
 	"context"
 	"fmt"
-	"sonnda-api/internal/domain/ports/integrations"
+	"sonnda-api/internal/app/ports/outbound/integrations"
 )
 
 // LabReportExtractor já está definido em labs/ai.go

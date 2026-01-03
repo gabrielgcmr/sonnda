@@ -1,8 +1,8 @@
 package bootstrap
 
 import (
+	"sonnda-api/internal/app/ports/outbound/integrations"
 	labsvc "sonnda-api/internal/app/services/labs"
-	"sonnda-api/internal/domain/ports/integrations"
 	labshandler "sonnda-api/internal/http/api/handlers/labs"
 	"sonnda-api/internal/infrastructure/persistence/repository/db"
 	labsrepo "sonnda-api/internal/infrastructure/persistence/repository/labs"

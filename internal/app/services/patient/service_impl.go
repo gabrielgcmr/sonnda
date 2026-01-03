@@ -4,9 +4,9 @@ package patientsvc
 import (
 	"context"
 
+	"sonnda-api/internal/app/ports/outbound/repositories"
 	"sonnda-api/internal/domain/model/patient"
 	"sonnda-api/internal/domain/model/user"
-	"sonnda-api/internal/domain/ports/repositories"
 
 	"github.com/google/uuid"
 )

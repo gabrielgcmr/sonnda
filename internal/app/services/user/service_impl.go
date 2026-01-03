@@ -7,11 +7,12 @@ import (
 	"time"
 
 	"sonnda-api/internal/app/apperr"
+	userport "sonnda-api/internal/app/ports/inbound/user"
+	"sonnda-api/internal/app/ports/outbound/integrations"
+	"sonnda-api/internal/app/ports/outbound/repositories"
 	"sonnda-api/internal/domain/model/rbac"
 	"sonnda-api/internal/domain/model/user"
 	"sonnda-api/internal/domain/model/user/professional"
-	"sonnda-api/internal/domain/ports/integrations"
-	"sonnda-api/internal/domain/ports/repositories"
 
 	"github.com/google/uuid"
 )
@@ -22,13 +23,13 @@ type service struct {
 	authSvc  integrations.IdentityService
 }
 
-var _ UserService = (*service)(nil)
+var _ userport.UserService = (*service)(nil)
 
 func New(
 	userRepo repositories.UserRepository,
 	profRepo repositories.ProfessionalRepository,
 	authSvc integrations.IdentityService,
-) UserService {
+) userport.UserService {
 	return &service{
 		userRepo: userRepo,
 		profRepo: profRepo,
@@ -36,7 +37,7 @@ func New(
 	}
 }
 
-func (s *service) Register(ctx context.Context, input RegisterInput) (*user.User, error) {
+func (s *service) Register(ctx context.Context, input userport.RegisterInput) (*user.User, error) {
 	if input.Role == rbac.RoleDoctor || input.Role == rbac.RoleNurse {
 		return s.createProfessionalUser(ctx, input)
 	}
@@ -44,7 +45,7 @@ func (s *service) Register(ctx context.Context, input RegisterInput) (*user.User
 
 }
 
-func (s *service) createUser(ctx context.Context, input RegisterInput) (*user.User, error) {
+func (s *service) createUser(ctx context.Context, input userport.RegisterInput) (*user.User, error) {
 	newUser, err := user.NewUser(user.NewUserParams{
 		AuthProvider: input.Provider,
 		AuthSubject:  input.Subject,
@@ -90,7 +91,7 @@ func (s *service) createUser(ctx context.Context, input RegisterInput) (*user.Us
 	return newUser, nil
 }
 
-func (s *service) createProfessionalUser(ctx context.Context, input RegisterInput) (*user.User, error) {
+func (s *service) createProfessionalUser(ctx context.Context, input userport.RegisterInput) (*user.User, error) {
 	if input.Professional == nil {
 		return nil, professional.ErrRegistrationRequired
 	}
@@ -156,7 +157,7 @@ func (s *service) rollbackCreatedUser(ctx context.Context, createdUser *user.Use
 	return nil
 }
 
-func (s *service) Update(ctx context.Context, input UpdateInput) (*user.User, error) {
+func (s *service) Update(ctx context.Context, input userport.UpdateInput) (*user.User, error) {
 	existingUser, err := s.userRepo.FindByID(ctx, input.UserID)
 	if err != nil {
 		return nil, mapInfraError("userRepo.FindByID", err)

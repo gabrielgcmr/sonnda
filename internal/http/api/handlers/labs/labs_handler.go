@@ -15,8 +15,8 @@ import (
 	labsvc "sonnda-api/internal/app/services/labs"
 
 	"sonnda-api/internal/app/apperr"
+	"sonnda-api/internal/app/ports/outbound/integrations"
 	"sonnda-api/internal/domain/model/medicalrecord/labs"
-	"sonnda-api/internal/domain/ports/integrations"
 	httperrors "sonnda-api/internal/http/errors"
 	"sonnda-api/internal/http/middleware"
 

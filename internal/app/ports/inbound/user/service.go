@@ -1,4 +1,4 @@
-package usersvc
+package userport
 
 import (
 	"context"

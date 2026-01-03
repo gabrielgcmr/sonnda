@@ -12,8 +12,8 @@ import (
 	firebaseauth "firebase.google.com/go/v4/auth"
 	"google.golang.org/api/option"
 
+	"sonnda-api/internal/app/ports/outbound/integrations"
 	"sonnda-api/internal/domain/model/identity"
-	"sonnda-api/internal/domain/ports/integrations"
 )
 
 type FirebaseAuthService struct {

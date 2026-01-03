@@ -1,8 +1,8 @@
 package bootstrap
 
 import (
+	"sonnda-api/internal/app/ports/outbound/integrations"
 	usersvc "sonnda-api/internal/app/services/user"
-	"sonnda-api/internal/domain/ports/integrations"
 	"sonnda-api/internal/http/api/handlers/user"
 	"sonnda-api/internal/http/middleware"
 

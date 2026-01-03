@@ -10,10 +10,10 @@ import (
 	"time"
 
 	applog "sonnda-api/internal/app/observability"
+	"sonnda-api/internal/app/ports/outbound/integrations"
+	"sonnda-api/internal/app/ports/outbound/repositories"
 	"sonnda-api/internal/domain/model/medicalrecord/labs"
 	"sonnda-api/internal/domain/model/patient"
-	"sonnda-api/internal/domain/ports/integrations"
-	"sonnda-api/internal/domain/ports/repositories"
 
 	"github.com/google/uuid"
 )

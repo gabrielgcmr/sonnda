@@ -12,10 +12,11 @@ As decisões não óbvias (o *porquê*) são registradas separadamente em ADRs.
 O backend segue um modelo em camadas simples, com baixo acoplamento e separação clara de responsabilidades, inspirado em Clean Architecture, mas aplicado de forma pragmática e idiomática em Go.
 
 - **Domain (`internal/domain`)**  
-  Entidades, regras de negócio, invariantes e portas (interfaces).
+  Modelos do domínio, regras de negócio e invariantes.
 
 - **App (`internal/app`)**  
   Services de aplicação, políticas de acesso e orquestração de fluxos.  
+  As portas (interfaces) vivem em `internal/app/ports` (separadas em `inbound` e `outbound`).
   Não há use cases individuais; os **Services representam o boundary da aplicação**.
 
 - **HTTP (`internal/http`)**  
@@ -58,7 +59,7 @@ Essas camadas representam **limites conceituais**, não apenas organização de 
 
 - SQL definido em `internal/infrastructure/persistence/sqlc/sql`.
 - O `sqlc` gera código em `internal/infrastructure/persistence/sqlc/generated`.
-- Repositórios em `internal/infrastructure/persistence/supabase` encapsulam o acesso ao banco.
+- Repositórios em `internal/infrastructure/persistence/repository` encapsulam o acesso ao banco.
 - O banco principal é PostgreSQL (Supabase).
 - Soft delete utiliza o campo `deleted_at`; consultas filtram `deleted_at IS NULL`.
 

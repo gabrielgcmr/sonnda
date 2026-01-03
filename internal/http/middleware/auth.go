@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"strings"
 
+	"sonnda-api/internal/app/ports/outbound/integrations"
 	"sonnda-api/internal/domain/model/identity"
 	"sonnda-api/internal/domain/model/rbac"
-	"sonnda-api/internal/domain/ports/integrations"
 
 	"github.com/gin-gonic/gin"
 )

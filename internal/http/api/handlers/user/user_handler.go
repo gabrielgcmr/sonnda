@@ -7,9 +7,9 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"sonnda-api/internal/app/apperr"
-	usersvc "sonnda-api/internal/app/services/user"
+	userport "sonnda-api/internal/app/ports/inbound/user"
+	"sonnda-api/internal/app/ports/outbound/repositories"
 	"sonnda-api/internal/domain/model/rbac"
-	"sonnda-api/internal/domain/ports/repositories"
 	"sonnda-api/internal/http/api/handlers/common"
 	httperrors "sonnda-api/internal/http/errors"
 	"sonnda-api/internal/http/middleware"
@@ -24,12 +24,12 @@ type UpdateUserRequest struct {
 	Phone     *string `json:"phone,omitempty"`
 }
 type UserHandler struct {
-	svc               usersvc.UserService
+	svc               userport.UserService
 	patientAccessRepo repositories.PatientAccessRepository
 }
 
 func NewUserHandler(
-	svc usersvc.UserService,
+	svc userport.UserService,
 	patientAccessRepo repositories.PatientAccessRepository,
 ) *UserHandler {
 	return &UserHandler{
@@ -112,7 +112,7 @@ func (h *UserHandler) Register(c *gin.Context) {
 		return
 	}
 
-	input := usersvc.RegisterInput{
+	input := userport.RegisterInput{
 		Provider:  identity.Provider,
 		Subject:   identity.Subject,
 		Email:     email,
@@ -133,7 +133,7 @@ func (h *UserHandler) Register(c *gin.Context) {
 			return
 		}
 
-		input.Professional = &usersvc.ProfessionalRegistrationInput{
+		input.Professional = &userport.ProfessionalRegistrationInput{
 			RegistrationNumber: req.Professional.RegistrationNumber,
 			RegistrationIssuer: req.Professional.RegistrationIssuer,
 			RegistrationState:  req.Professional.RegistrationState,
@@ -195,7 +195,7 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	input := usersvc.UpdateInput{
+	input := userport.UpdateInput{
 		UserID: currentUser.ID,
 	}
 

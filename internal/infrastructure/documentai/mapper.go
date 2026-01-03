@@ -1,7 +1,7 @@
 package documentai
 
 import (
-	"sonnda-api/internal/domain/ports/integrations"
+	"sonnda-api/internal/app/ports/outbound/integrations"
 	"strings"
 
 	"cloud.google.com/go/documentai/apiv1/documentaipb"

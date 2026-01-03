@@ -3,8 +3,8 @@ package professionaluc
 import (
 	"context"
 
+	"sonnda-api/internal/app/ports/outbound/repositories"
 	"sonnda-api/internal/domain/model/user/professional"
-	"sonnda-api/internal/domain/ports/repositories"
 )
 
 // Garante que implementa a interface
