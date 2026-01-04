@@ -15,15 +15,16 @@ import (
 const createProfessional = `-- name: CreateProfessional :one
 
 INSERT INTO professionals (
-  user_id, registration_number, registration_issuer, registration_state, status
+  user_id, kind, registration_number, registration_issuer, registration_state, status
 ) VALUES (
-  $1, $2, $3, $4, $5
+  $1, $2, $3, $4, $5, $6
 )
-RETURNING user_id, registration_number, registration_issuer, registration_state, status, verified_at, deleted_at, created_at, updated_at
+RETURNING user_id, kind, registration_number, registration_issuer, registration_state, status, verified_at, deleted_at, created_at, updated_at
 `
 
 type CreateProfessionalParams struct {
 	UserID             uuid.UUID   `json:"user_id"`
+	Kind               string      `json:"kind"`
 	RegistrationNumber string      `json:"registration_number"`
 	RegistrationIssuer string      `json:"registration_issuer"`
 	RegistrationState  pgtype.Text `json:"registration_state"`
@@ -35,6 +36,7 @@ type CreateProfessionalParams struct {
 func (q *Queries) CreateProfessional(ctx context.Context, arg CreateProfessionalParams) (Professional, error) {
 	row := q.db.QueryRow(ctx, createProfessional,
 		arg.UserID,
+		arg.Kind,
 		arg.RegistrationNumber,
 		arg.RegistrationIssuer,
 		arg.RegistrationState,
@@ -43,6 +45,7 @@ func (q *Queries) CreateProfessional(ctx context.Context, arg CreateProfessional
 	var i Professional
 	err := row.Scan(
 		&i.UserID,
+		&i.Kind,
 		&i.RegistrationNumber,
 		&i.RegistrationIssuer,
 		&i.RegistrationState,
@@ -57,11 +60,11 @@ func (q *Queries) CreateProfessional(ctx context.Context, arg CreateProfessional
 
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (
-  id, auth_provider, auth_subject, email, full_name, birth_date, cpf, phone, role
+  id, auth_provider, auth_subject, email, full_name, birth_date, cpf, phone, account_type
 ) VALUES (
   $1, $2, $3, $4, $5, $6, $7, $8, $9
 )
-RETURNING id, auth_provider, auth_subject, email, full_name, birth_date, cpf, phone, role, created_at, updated_at, deleted_at
+RETURNING id, auth_provider, auth_subject, email, full_name, birth_date, cpf, phone, account_type, created_at, updated_at, deleted_at
 `
 
 type CreateUserParams struct {
@@ -73,7 +76,7 @@ type CreateUserParams struct {
 	BirthDate    pgtype.Date `json:"birth_date"`
 	Cpf          string      `json:"cpf"`
 	Phone        string      `json:"phone"`
-	Role         string      `json:"role"`
+	AccountType  string      `json:"account_type"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
@@ -86,7 +89,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		arg.BirthDate,
 		arg.Cpf,
 		arg.Phone,
-		arg.Role,
+		arg.AccountType,
 	)
 	var i User
 	err := row.Scan(
@@ -98,7 +101,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.BirthDate,
 		&i.Cpf,
 		&i.Phone,
-		&i.Role,
+		&i.AccountType,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -107,7 +110,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 }
 
 const findUserByAuthIdentity = `-- name: FindUserByAuthIdentity :one
-SELECT id, auth_provider, auth_subject, email, full_name, birth_date, cpf, phone, role, created_at, updated_at, deleted_at
+SELECT id, auth_provider, auth_subject, email, full_name, birth_date, cpf, phone, account_type, created_at, updated_at, deleted_at
 FROM users
 WHERE auth_provider = $1
   AND auth_subject = $2
@@ -131,7 +134,7 @@ func (q *Queries) FindUserByAuthIdentity(ctx context.Context, arg FindUserByAuth
 		&i.BirthDate,
 		&i.Cpf,
 		&i.Phone,
-		&i.Role,
+		&i.AccountType,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -140,7 +143,7 @@ func (q *Queries) FindUserByAuthIdentity(ctx context.Context, arg FindUserByAuth
 }
 
 const findUserByCPF = `-- name: FindUserByCPF :one
-SELECT id, auth_provider, auth_subject, email, full_name, birth_date, cpf, phone, role, created_at, updated_at, deleted_at
+SELECT id, auth_provider, auth_subject, email, full_name, birth_date, cpf, phone, account_type, created_at, updated_at, deleted_at
 FROM users
 WHERE cpf = $1
   AND deleted_at IS NULL
@@ -159,7 +162,7 @@ func (q *Queries) FindUserByCPF(ctx context.Context, cpf string) (User, error) {
 		&i.BirthDate,
 		&i.Cpf,
 		&i.Phone,
-		&i.Role,
+		&i.AccountType,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -168,7 +171,7 @@ func (q *Queries) FindUserByCPF(ctx context.Context, cpf string) (User, error) {
 }
 
 const findUserByEmail = `-- name: FindUserByEmail :one
-SELECT id, auth_provider, auth_subject, email, full_name, birth_date, cpf, phone, role, created_at, updated_at, deleted_at
+SELECT id, auth_provider, auth_subject, email, full_name, birth_date, cpf, phone, account_type, created_at, updated_at, deleted_at
 FROM users
 WHERE email = $1
   AND deleted_at IS NULL
@@ -187,7 +190,7 @@ func (q *Queries) FindUserByEmail(ctx context.Context, email string) (User, erro
 		&i.BirthDate,
 		&i.Cpf,
 		&i.Phone,
-		&i.Role,
+		&i.AccountType,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -196,7 +199,7 @@ func (q *Queries) FindUserByEmail(ctx context.Context, email string) (User, erro
 }
 
 const findUserByID = `-- name: FindUserByID :one
-SELECT id, auth_provider, auth_subject, email, full_name, birth_date, cpf, phone, role, created_at, updated_at, deleted_at
+SELECT id, auth_provider, auth_subject, email, full_name, birth_date, cpf, phone, account_type, created_at, updated_at, deleted_at
 FROM users
 WHERE id = $1
   AND deleted_at IS NULL
@@ -215,7 +218,7 @@ func (q *Queries) FindUserByID(ctx context.Context, id uuid.UUID) (User, error) 
 		&i.BirthDate,
 		&i.Cpf,
 		&i.Phone,
-		&i.Role,
+		&i.AccountType,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -225,7 +228,7 @@ func (q *Queries) FindUserByID(ctx context.Context, id uuid.UUID) (User, error) 
 
 const getFullProfessionalDetails = `-- name: GetFullProfessionalDetails :one
 SELECT 
-    p.user_id, p.registration_number, p.registration_issuer, p.registration_state, p.status, p.verified_at, p.deleted_at, p.created_at, p.updated_at,
+    p.user_id, p.kind, p.registration_number, p.registration_issuer, p.registration_state, p.status, p.verified_at, p.deleted_at, p.created_at, p.updated_at,
     u.full_name,
     u.email,
     u.phone
@@ -237,6 +240,7 @@ LIMIT 1
 
 type GetFullProfessionalDetailsRow struct {
 	UserID             uuid.UUID          `json:"user_id"`
+	Kind               string             `json:"kind"`
 	RegistrationNumber string             `json:"registration_number"`
 	RegistrationIssuer string             `json:"registration_issuer"`
 	RegistrationState  pgtype.Text        `json:"registration_state"`
@@ -256,6 +260,7 @@ func (q *Queries) GetFullProfessionalDetails(ctx context.Context, userID uuid.UU
 	var i GetFullProfessionalDetailsRow
 	err := row.Scan(
 		&i.UserID,
+		&i.Kind,
 		&i.RegistrationNumber,
 		&i.RegistrationIssuer,
 		&i.RegistrationState,
@@ -272,7 +277,7 @@ func (q *Queries) GetFullProfessionalDetails(ctx context.Context, userID uuid.UU
 }
 
 const getProfessionalByUserID = `-- name: GetProfessionalByUserID :one
-SELECT user_id, registration_number, registration_issuer, registration_state, status, verified_at, deleted_at, created_at, updated_at 
+SELECT user_id, kind, registration_number, registration_issuer, registration_state, status, verified_at, deleted_at, created_at, updated_at 
 FROM professionals
 WHERE user_id = $1 AND deleted_at IS NULL
 LIMIT 1
@@ -283,6 +288,7 @@ func (q *Queries) GetProfessionalByUserID(ctx context.Context, userID uuid.UUID)
 	var i Professional
 	err := row.Scan(
 		&i.UserID,
+		&i.Kind,
 		&i.RegistrationNumber,
 		&i.RegistrationIssuer,
 		&i.RegistrationState,
@@ -296,7 +302,7 @@ func (q *Queries) GetProfessionalByUserID(ctx context.Context, userID uuid.UUID)
 }
 
 const listProfessionalsByName = `-- name: ListProfessionalsByName :many
-SELECT p.user_id, p.registration_number, p.registration_issuer, p.registration_state, p.status, p.verified_at, p.deleted_at, p.created_at, p.updated_at
+SELECT p.user_id, p.kind, p.registration_number, p.registration_issuer, p.registration_state, p.status, p.verified_at, p.deleted_at, p.created_at, p.updated_at
 FROM professionals p
 JOIN users u ON u.id = p.user_id
 WHERE u.full_name ILIKE '%' || $3 || '%'
@@ -322,6 +328,7 @@ func (q *Queries) ListProfessionalsByName(ctx context.Context, arg ListProfessio
 		var i Professional
 		if err := rows.Scan(
 			&i.UserID,
+			&i.Kind,
 			&i.RegistrationNumber,
 			&i.RegistrationIssuer,
 			&i.RegistrationState,

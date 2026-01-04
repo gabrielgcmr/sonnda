@@ -8,8 +8,8 @@ import (
 
 	userport "sonnda-api/internal/app/ports/inbound/user"
 	"sonnda-api/internal/domain/model/identity"
-	"sonnda-api/internal/domain/model/rbac"
 	"sonnda-api/internal/domain/model/user"
+	"sonnda-api/internal/domain/model/user/professional"
 
 	"github.com/google/uuid"
 )
@@ -111,15 +111,26 @@ func (s *fakeIdentitySvc) DisableUser(ctx context.Context, subject string) error
 
 func validRegisterInput() userport.RegisterInput {
 	return userport.RegisterInput{
-		Provider:  "firebase",
-		Subject:   "sub-123",
-		Email:     "person@example.com",
-		Role:      rbac.RoleCaregiver,
-		FullName:  "Pessoa Teste",
-		BirthDate: time.Date(1990, 1, 2, 0, 0, 0, 0, time.UTC),
-		CPF:       "52998224725",
-		Phone:     "11999998888",
+		Provider:    "firebase",
+		Subject:     "sub-123",
+		Email:       "person@example.com",
+		AccountType: user.AccountTypeBasicCare,
+		FullName:    "Pessoa Teste",
+		BirthDate:   time.Date(1990, 1, 2, 0, 0, 0, 0, time.UTC),
+		CPF:         "52998224725",
+		Phone:       "11999998888",
 	}
+}
+
+func validProfessionalRegisterInput() userport.RegisterInput {
+	input := validRegisterInput()
+	input.AccountType = user.AccountTypeProfessional
+	input.Professional = &userport.ProfessionalRegistrationInput{
+		Kind:               professional.KindDoctor,
+		RegistrationNumber: "CRM-123",
+		RegistrationIssuer: "CRM",
+	}
+	return input
 }
 
 func TestService_Register_EmailAlreadyExists(t *testing.T) {
@@ -233,7 +244,7 @@ func baseUserForUpdate() *user.User {
 		AuthProvider: "firebase",
 		AuthSubject:  "sub-123",
 		Email:        "person@example.com",
-		Role:         "caregiver",
+		AccountType:  user.AccountTypeProfessional,
 		FullName:     "Nome Antigo",
 		BirthDate:    time.Date(1990, 1, 2, 0, 0, 0, 0, time.UTC),
 		CPF:          "52998224725",

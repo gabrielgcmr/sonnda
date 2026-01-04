@@ -112,6 +112,10 @@ Os ADRs vivem em:
 
 ## Controle de acesso (ReBAC)
 
-O projeto segue a direcao de **ReBAC** (Relationship-Based Access Control): acesso e decidido pelo vinculo usuario <-> paciente (membership), e nao por "RBAC + ABAC".
+O projeto segue a direcao de **ReBAC** (Relationship-Based Access Control) para decidir acesso a recursos de paciente.
+
+Em paralelo, existe **RBAC por acao** para limitar o que um tipo de conta pode fazer (AccountType + Professional.Kind).
 
 Detalhes: `docs/architecture/access-control.md`.
+
+Modelo de conta: `docs/architecture/account-model.md`.

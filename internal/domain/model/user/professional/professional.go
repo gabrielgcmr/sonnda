@@ -7,26 +7,10 @@ import (
 	"github.com/google/uuid"
 )
 
-type VerificationStatus string
-
-const (
-	StatusPending  VerificationStatus = "pending"
-	StatusVerified VerificationStatus = "verified"
-	StatusRejected VerificationStatus = "rejected"
-)
-
-func (s VerificationStatus) IsValid() bool {
-	switch s {
-	case StatusPending, StatusVerified, StatusRejected:
-		return true
-	default:
-		return false
-	}
-}
-
 // 1. Parameter Object (Renomeado)
 type NewProfessionalParams struct {
 	UserID             uuid.UUID
+	Kind               Kind
 	RegistrationNumber string
 	RegistrationIssuer string
 	RegistrationState  *string
@@ -34,6 +18,7 @@ type NewProfessionalParams struct {
 
 // 2. Normalize (Limpeza)
 func (p *NewProfessionalParams) Normalize() {
+	p.Kind = p.Kind.Normalize()
 	p.RegistrationNumber = strings.TrimSpace(p.RegistrationNumber)
 	p.RegistrationIssuer = strings.TrimSpace(p.RegistrationIssuer)
 
@@ -47,6 +32,7 @@ func (p *NewProfessionalParams) Normalize() {
 // Representa o ATOR no sistema, não apenas um "perfil".
 type Professional struct {
 	UserID             uuid.UUID
+	Kind               Kind
 	RegistrationNumber string
 	RegistrationIssuer string
 	RegistrationState  *string
@@ -74,6 +60,7 @@ func NewProfessional(params NewProfessionalParams) (*Professional, error) {
 	// Mantive Pending por segurança.
 	prof := &Professional{
 		UserID:             params.UserID,
+		Kind:               params.Kind,
 		RegistrationNumber: params.RegistrationNumber,
 		RegistrationIssuer: params.RegistrationIssuer,
 		RegistrationState:  params.RegistrationState,
@@ -93,11 +80,17 @@ func (p *Professional) Validate() error {
 	if p.UserID == uuid.Nil {
 		return ErrInvalidUserID
 	}
+	if !p.Kind.IsValid() {
+		return ErrInvalidKind
+	}
 	if p.RegistrationNumber == "" {
 		return ErrInvalidRegistrationNumber
 	}
 	if p.RegistrationIssuer == "" {
 		return ErrInvalidRegistrationIssuer
+	}
+	if !p.Status.IsValid() {
+		return ErrInvalidStatus
 	}
 	return nil
 }

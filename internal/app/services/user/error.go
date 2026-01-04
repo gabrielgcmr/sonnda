@@ -16,6 +16,7 @@ func mapUserDomainError(err error) error {
 		errors.Is(err, user.ErrInvalidAuthSubject),
 		errors.Is(err, user.ErrInvalidEmail),
 		errors.Is(err, user.ErrInvalidFullName),
+		errors.Is(err, user.ErrInvalidAccountType),
 		errors.Is(err, user.ErrInvalidBirthDate),
 		errors.Is(err, user.ErrInvalidCPF),
 		errors.Is(err, user.ErrInvalidPhone):
@@ -53,6 +54,7 @@ func mapUserDomainError(err error) error {
 func mapProfessionalDomainError(err error) error {
 	switch {
 	case errors.Is(err, professional.ErrRegistrationRequired),
+		errors.Is(err, professional.ErrInvalidKind),
 		errors.Is(err, professional.ErrInvalidRegistrationNumber),
 		errors.Is(err, professional.ErrInvalidRegistrationIssuer):
 		return &apperr.AppError{

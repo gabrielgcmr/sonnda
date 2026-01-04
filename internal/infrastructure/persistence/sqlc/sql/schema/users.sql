@@ -8,7 +8,7 @@ CREATE TABLE users (
     birth_date    DATE NOT NULL,
     cpf           TEXT NOT NULL UNIQUE,
     phone         TEXT NOT NULL,
-    role          TEXT NOT NULL CHECK (role IN ('professional', 'caregiver')),
+    account_type  TEXT NOT NULL CHECK (account_type IN ('professional', 'basic_care')),
     created_at    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
     updated_at    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
     deleted_at    TIMESTAMP WITH TIME ZONE
@@ -25,6 +25,7 @@ CREATE INDEX idx_users_deleted_at ON users (deleted_at);
 -- Relacionamento 1:1 com users.
 CREATE TABLE professionals (
     user_id             UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    kind                TEXT NOT NULL CHECK (kind IN ('doctor','nurse','nursing_tech','physiotherapist','psychologist','nutritionist','pharmacist','dentist')),
     registration_number TEXT NOT NULL,
     registration_issuer TEXT NOT NULL, -- Ex: CRM, COREN
     registration_state  TEXT,          -- Opcional (UF)

@@ -11,6 +11,7 @@ import (
 
 type Professional struct {
 	UserID             uuid.UUID          `json:"user_id"`
+	Kind               string             `json:"kind"`
 	RegistrationNumber string             `json:"registration_number"`
 	RegistrationIssuer string             `json:"registration_issuer"`
 	RegistrationState  pgtype.Text        `json:"registration_state"`
@@ -30,7 +31,7 @@ type User struct {
 	BirthDate    pgtype.Date        `json:"birth_date"`
 	Cpf          string             `json:"cpf"`
 	Phone        string             `json:"phone"`
-	Role         string             `json:"role"`
+	AccountType  string             `json:"account_type"`
 	CreatedAt    pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
 	DeletedAt    pgtype.Timestamptz `json:"deleted_at"`

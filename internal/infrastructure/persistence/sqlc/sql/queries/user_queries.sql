@@ -1,6 +1,6 @@
 -- name: CreateUser :one
 INSERT INTO users (
-  id, auth_provider, auth_subject, email, full_name, birth_date, cpf, phone, role
+  id, auth_provider, auth_subject, email, full_name, birth_date, cpf, phone, account_type
 ) VALUES (
   $1, $2, $3, $4, $5, $6, $7, $8, $9
 )
@@ -45,9 +45,9 @@ WHERE id = $1
 -- name: CreateProfessional :one
 -- Cria apenas a parte "profissional" (O ID vem do User já criado)
 INSERT INTO professionals (
-  user_id, registration_number, registration_issuer, registration_state, status
+  user_id, kind, registration_number, registration_issuer, registration_state, status
 ) VALUES (
-  $1, $2, $3, $4, $5
+  $1, $2, $3, $4, $5, $6
 )
 RETURNING *;
 

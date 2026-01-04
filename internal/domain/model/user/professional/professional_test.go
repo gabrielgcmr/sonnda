@@ -14,6 +14,7 @@ func TestNewProfessionalProfile_Success_DefaultsAndTrims(t *testing.T) {
 
 	p, err := NewProfessional(NewProfessionalParams{
 		UserID:             userID,
+		Kind:               KindDoctor,
 		RegistrationNumber: "  CRM-123  ",
 		RegistrationIssuer: "  CRM  ",
 		RegistrationState:  &state,
@@ -62,6 +63,20 @@ func TestNewProfessionalProfile_InvalidInputs(t *testing.T) {
 			err:  ErrInvalidUserID,
 			fn: func() error {
 				_, err := NewProfessional(NewProfessionalParams{
+					Kind:               KindDoctor,
+					RegistrationNumber: "CRM-123",
+					RegistrationIssuer: "CRM",
+				})
+				return err
+			},
+		},
+		{
+			name: "invalid kind",
+			err:  ErrInvalidKind,
+			fn: func() error {
+				_, err := NewProfessional(NewProfessionalParams{
+					UserID:             userID,
+					Kind:               Kind(""),
 					RegistrationNumber: "CRM-123",
 					RegistrationIssuer: "CRM",
 				})
@@ -74,6 +89,7 @@ func TestNewProfessionalProfile_InvalidInputs(t *testing.T) {
 			fn: func() error {
 				_, err := NewProfessional(NewProfessionalParams{
 					UserID:             userID,
+					Kind:               KindDoctor,
 					RegistrationNumber: "   ",
 					RegistrationIssuer: "CRM",
 				})
@@ -86,6 +102,7 @@ func TestNewProfessionalProfile_InvalidInputs(t *testing.T) {
 			fn: func() error {
 				_, err := NewProfessional(NewProfessionalParams{
 					UserID:             userID,
+					Kind:               KindDoctor,
 					RegistrationNumber: "CRM-123",
 					RegistrationIssuer: "   ",
 				})
@@ -111,6 +128,7 @@ func TestProfile_SetStatus_VerifiedSetsVerifiedAt(t *testing.T) {
 	userID := uuid.MustParse("11111111-1111-1111-1111-111111111111")
 	p, err := NewProfessional(NewProfessionalParams{
 		UserID:             userID,
+		Kind:               KindDoctor,
 		RegistrationNumber: "CRM-123",
 		RegistrationIssuer: "CRM",
 	})
@@ -140,6 +158,7 @@ func TestProfile_SetStatus_NonVerifiedKeepsVerifiedAtNil(t *testing.T) {
 	userID := uuid.MustParse("11111111-1111-1111-1111-111111111111")
 	p, err := NewProfessional(NewProfessionalParams{
 		UserID:             userID,
+		Kind:               KindDoctor,
 		RegistrationNumber: "CRM-123",
 		RegistrationIssuer: "CRM",
 	})
@@ -166,6 +185,7 @@ func TestProfile_SetStatus_LeavingVerifiedPreservesVerifiedAt(t *testing.T) {
 	userID := uuid.MustParse("11111111-1111-1111-1111-111111111111")
 	p, err := NewProfessional(NewProfessionalParams{
 		UserID:             userID,
+		Kind:               KindDoctor,
 		RegistrationNumber: "CRM-123",
 		RegistrationIssuer: "CRM",
 	})

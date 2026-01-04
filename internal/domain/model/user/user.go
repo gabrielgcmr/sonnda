@@ -2,7 +2,6 @@ package user
 
 import (
 	"sonnda-api/internal/domain/model/demographics"
-	"sonnda-api/internal/domain/model/rbac"
 	"strings"
 	"time"
 
@@ -15,7 +14,7 @@ type User struct {
 	AuthSubject  string
 	Email        string
 	FullName     string
-	Role         rbac.Role
+	AccountType  AccountType
 	BirthDate    time.Time
 	CPF          string
 	Phone        string
@@ -29,7 +28,7 @@ type NewUserParams struct {
 	AuthSubject  string
 	Email        string
 	FullName     string
-	Role         rbac.Role
+	AccountType  AccountType
 	BirthDate    time.Time
 	CPF          string
 	Phone        string
@@ -45,6 +44,7 @@ func (p *NewUserParams) Normalize() {
 	p.Phone = strings.TrimSpace(p.Phone)
 
 	// Normalize específica
+	p.AccountType = p.AccountType.Normalize()
 	p.CPF = demographics.CleanDigits(p.CPF)
 }
 
@@ -61,7 +61,7 @@ func NewUser(params NewUserParams) (*User, error) {
 		AuthSubject:  params.AuthSubject,
 		Email:        params.Email,
 		FullName:     params.FullName,
-		Role:         params.Role,
+		AccountType:  params.AccountType,
 		BirthDate:    params.BirthDate.UTC(),
 		CPF:          params.CPF,
 		Phone:        params.Phone,
@@ -92,11 +92,17 @@ func (u *User) Validate() error {
 	if u.FullName == "" {
 		return ErrInvalidFullName
 	}
+	if !u.AccountType.IsValid() {
+		return ErrInvalidAccountType
+	}
 	if u.BirthDate.IsZero() {
 		return ErrInvalidBirthDate
 	}
 	if u.CPF == "" || len(u.CPF) != 11 {
 		return ErrInvalidCPF
+	}
+	if u.Phone == "" {
+		return ErrInvalidPhone
 	}
 	// Futuramente: if len(u.CPF) != 11 { ... }
 

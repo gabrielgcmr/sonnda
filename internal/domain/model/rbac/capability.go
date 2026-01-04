@@ -1,5 +1,7 @@
 package rbac
 
+import "sonnda-api/internal/domain/model/user"
+
 type CapabilityLevel string
 
 const (
@@ -17,13 +19,13 @@ func (cl CapabilityLevel) IsValid() bool {
 	}
 }
 
-func CapabilityForRole(role Role) CapabilityLevel {
-	switch role {
-	case RoleAdmin:
+func CapabilityForAccountType(at user.AccountType) CapabilityLevel {
+	switch at {
+	case user.AccountTypeAdmin:
 		return CapabilityAdmin
-	case RoleDoctor, RoleNurse:
+	case user.AccountTypeProfessional:
 		return CapabilityClinical
-	case RolePatient, RoleCaregiver:
+	case user.AccountTypeBasicCare:
 		return CapabilityBasicCare
 	default:
 		return ""

@@ -9,7 +9,6 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	"sonnda-api/internal/app/ports/outbound/repositories"
-	"sonnda-api/internal/domain/model/rbac"
 	"sonnda-api/internal/domain/model/user"
 	"sonnda-api/internal/infrastructure/persistence/repository/db"
 	"sonnda-api/internal/infrastructure/persistence/repository/helpers"
@@ -58,7 +57,7 @@ func (r *UserRepository) FindByAuthIdentity(ctx context.Context, provider string
 		BirthDate:    row.BirthDate.Time,
 		CPF:          row.Cpf,
 		Phone:        row.Phone,
-		Role:         rbac.Role(row.Role),
+		AccountType:  user.AccountType(row.AccountType),
 		CreatedAt:    row.CreatedAt.Time,
 		UpdatedAt:    row.UpdatedAt.Time,
 	}, nil
@@ -83,7 +82,7 @@ func (r *UserRepository) FindByCPF(ctx context.Context, cpf string) (*user.User,
 		BirthDate:    row.BirthDate.Time,
 		CPF:          row.Cpf,
 		Phone:        row.Phone,
-		Role:         rbac.Role(row.Role),
+		AccountType:  user.AccountType(row.AccountType),
 		CreatedAt:    row.CreatedAt.Time,
 		UpdatedAt:    row.UpdatedAt.Time,
 	}, nil
@@ -114,7 +113,7 @@ func (r *UserRepository) Save(ctx context.Context, u *user.User) error {
 		BirthDate:    helpers.FromNullableDateToPgDate(&birthDate),
 		Cpf:          u.CPF,
 		Phone:        u.Phone,
-		Role:         string(u.Role),
+		AccountType:  string(u.AccountType),
 	})
 	if err != nil {
 		return err
@@ -128,7 +127,7 @@ func (r *UserRepository) Save(ctx context.Context, u *user.User) error {
 	u.BirthDate = row.BirthDate.Time
 	u.CPF = row.Cpf
 	u.Phone = row.Phone
-	u.Role = rbac.Role(row.Role)
+	u.AccountType = user.AccountType(row.AccountType)
 	u.CreatedAt = row.CreatedAt.Time
 	u.UpdatedAt = row.UpdatedAt.Time
 
@@ -158,7 +157,7 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*user.U
 		BirthDate:    row.BirthDate.Time,
 		CPF:          row.Cpf,
 		Phone:        row.Phone,
-		Role:         rbac.Role(row.Role),
+		AccountType:  user.AccountType(row.AccountType),
 		CreatedAt:    row.CreatedAt.Time,
 		UpdatedAt:    row.UpdatedAt.Time,
 	}, nil

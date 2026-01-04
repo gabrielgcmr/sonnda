@@ -63,6 +63,15 @@ make sqlc-check
 make sqlc-generate
 ```
 
+## Migracoes
+
+As migracoes SQL vivem em `internal/infrastructure/persistence/sqlc/sql/migrations/`.
+
+Se voce ja tinha um banco criado antes da mudanca de `users.role` -> `users.account_type`
+e da adicao de `professionals.kind`, aplique a migracao:
+
+- `internal/infrastructure/persistence/sqlc/sql/migrations/0004_account_type_and_professional_kind.sql`
+
 ## 5) Testes
 
 ```bash

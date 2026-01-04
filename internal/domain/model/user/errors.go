@@ -8,7 +8,8 @@ var (
 	ErrInvalidAuthProvider        = errors.New("auth provider is required")
 	ErrInvalidAuthSubject         = errors.New("auth subject is required")
 	ErrInvalidEmail               = errors.New("email is required or invalid")
-	ErrInvalidRole                = errors.New("invalid user role")
+	ErrInvalidAccountType         = errors.New("invalid account type")
+	ErrInvalidRole                = ErrInvalidAccountType
 	ErrInvalidBirthDate           = errors.New("invalid birth date")
 	ErrInvalidFullName            = errors.New("full name is required")
 	ErrInvalidPhone               = errors.New("phone is required")

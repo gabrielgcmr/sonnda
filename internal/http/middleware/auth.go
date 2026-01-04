@@ -1,79 +1,81 @@
-// internal/adapters/inbound/http/middleware/auth.go
+// internal/http/middleware/auth.go
 package middleware
 
 import (
 	"errors"
-	"net/http"
 	"strings"
 
+	"sonnda-api/internal/app/apperr"
 	"sonnda-api/internal/app/ports/outbound/integrations"
 	"sonnda-api/internal/domain/model/identity"
-	"sonnda-api/internal/domain/model/rbac"
+	"sonnda-api/internal/domain/model/user"
+	httperrors "sonnda-api/internal/http/errors"
 
 	"github.com/gin-gonic/gin"
 )
 
 const (
 	identityKey = "identity"
-	// IdentityKey é a chave pública usada no gin.Context para armazenar identity.Identity.
 	IdentityKey = identityKey
+)
+
+var (
+	errAuthorizationHeaderMissing = errors.New("authorization header missing")
+	errAuthorizationHeaderInvalid = errors.New("invalid authorization header format")
 )
 
 type AuthMiddleware struct {
 	identityService integrations.IdentityService
 }
 
-func NewAuthMiddleware(
-	identityService integrations.IdentityService,
-) *AuthMiddleware {
-	return &AuthMiddleware{
-		identityService: identityService,
-	}
+func NewAuthMiddleware(identityService integrations.IdentityService) *AuthMiddleware {
+	return &AuthMiddleware{identityService: identityService}
 }
 
-// Authenticate validates token and loads the user from the app database.
 func (m *AuthMiddleware) Authenticate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		token, err := m.extractToken(ctx)
+		token, err := extractBearerToken(ctx)
 		if err != nil {
-			m.abortUnauthorized(ctx, err.Error())
+			switch {
+			case errors.Is(err, errAuthorizationHeaderMissing):
+				m.abortUnauthorized(ctx, apperr.AUTH_REQUIRED, "autenticação necessária", err)
+			default:
+				m.abortUnauthorized(ctx, apperr.AUTH_TOKEN_INVALID, "token inválido", err)
+			}
 			return
 		}
 
 		id, err := m.identityService.VerifyToken(ctx.Request.Context(), token)
 		if err != nil {
-			m.abortUnauthorized(ctx, "token invalido ou expirado")
+			m.abortUnauthorized(ctx, apperr.AUTH_TOKEN_INVALID, "token inválido ou expirado", err)
 			return
 		}
 
-		//Seta identidade no contexto
 		ctx.Set(identityKey, id)
 		ctx.Next()
 	}
 }
 
-func (m *AuthMiddleware) extractToken(ctx *gin.Context) (string, error) {
+func extractBearerToken(ctx *gin.Context) (string, error) {
 	authHeader := ctx.GetHeader("Authorization")
 	if authHeader == "" {
-		return "", errors.New("authorization header ausente. use 'Bearer <idToken>' do firebase")
+		return "", errAuthorizationHeaderMissing
 	}
-
 	if !strings.HasPrefix(authHeader, "Bearer ") {
-		return "", errors.New("formato do Authorization deve ser 'Bearer <idToken>'")
+		return "", errAuthorizationHeaderInvalid
 	}
-
 	return strings.TrimPrefix(authHeader, "Bearer "), nil
 }
 
-func (m *AuthMiddleware) abortUnauthorized(ctx *gin.Context, msg string) {
-	ctx.Set("error_code", "unauthorized")
-	ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-		"error":   "unauthorized",
-		"message": msg,
+func (m *AuthMiddleware) abortUnauthorized(ctx *gin.Context, code apperr.ErrorCode, msg string, cause error) {
+	httperrors.WriteError(ctx, &apperr.AppError{
+		Code:    code,
+		Message: msg,
+		Cause:   cause,
 	})
+	ctx.Abort()
 }
 
-// Helper para obter a identidade do contexto
 func GetIdentity(c *gin.Context) (*identity.Identity, bool) {
 	val, ok := c.Get(identityKey)
 	if !ok {
@@ -83,25 +85,23 @@ func GetIdentity(c *gin.Context) (*identity.Identity, bool) {
 	return id, ok
 }
 
-// Helper que falha se não houver identidade
 func RequireIdentity(c *gin.Context) (*identity.Identity, bool) {
 	id, ok := GetIdentity(c)
 	if !ok {
-		c.Set("error_code", "missing_identity")
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-			"error":   "unauthorized",
-			"message": "autenticação necessária",
+		httperrors.WriteError(c, &apperr.AppError{
+			Code:    apperr.AUTH_REQUIRED,
+			Message: "autenticação necessária",
 		})
+		c.Abort()
 		return nil, false
 	}
 	return id, true
 }
 
-func ActorFromCurrentUser(c *gin.Context) (userID string, role rbac.Role, ok bool) {
+func ActorFromCurrentUser(c *gin.Context) (userID string, at user.AccountType, ok bool) {
 	u, ok := GetCurrentUser(c)
 	if !ok || u == nil {
-		return "", rbac.Role(""), false
+		return "", "", false
 	}
-
-	return u.ID.String(), rbac.Role(u.Role[0]), true
+	return u.ID.String(), u.AccountType, true
 }

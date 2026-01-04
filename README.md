@@ -41,9 +41,12 @@ A arquitetura foi simplificada em camadas diretas, com baixo acoplamento:
 
 ---
 
-## Autorizacao (ReBAC)
+## Autorizacao (RBAC + ReBAC)
 
-Este projeto segue a direcao de **ReBAC** (Relationship-Based Access Control): o acesso a dados do paciente e decidido pelo **vinculo (relationship) usuario <-> paciente**, e nao por "RBAC + ABAC" como modelo principal.
+Este projeto combina:
+
+- **RBAC (acoes)**: limita o que um tipo de conta pode fazer.
+- **ReBAC (relacionamento)**: limita em qual paciente o usuario pode operar.
 
 Detalhes: `docs/architecture/access-control.md`.
 

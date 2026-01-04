@@ -10,7 +10,6 @@ import (
 	userport "sonnda-api/internal/app/ports/inbound/user"
 	"sonnda-api/internal/app/ports/outbound/integrations"
 	"sonnda-api/internal/app/ports/outbound/repositories"
-	"sonnda-api/internal/domain/model/rbac"
 	"sonnda-api/internal/domain/model/user"
 	"sonnda-api/internal/domain/model/user/professional"
 
@@ -38,7 +37,7 @@ func New(
 }
 
 func (s *service) Register(ctx context.Context, input userport.RegisterInput) (*user.User, error) {
-	if input.Role == rbac.RoleDoctor || input.Role == rbac.RoleNurse {
+	if input.AccountType == user.AccountTypeProfessional {
 		return s.createProfessionalUser(ctx, input)
 	}
 	return s.createUser(ctx, input)
@@ -50,7 +49,7 @@ func (s *service) createUser(ctx context.Context, input userport.RegisterInput) 
 		AuthProvider: input.Provider,
 		AuthSubject:  input.Subject,
 		Email:        input.Email,
-		Role:         input.Role,
+		AccountType:  input.AccountType,
 		FullName:     input.FullName,
 		BirthDate:    input.BirthDate,
 		CPF:          input.CPF,
@@ -93,22 +92,30 @@ func (s *service) createUser(ctx context.Context, input userport.RegisterInput) 
 
 func (s *service) createProfessionalUser(ctx context.Context, input userport.RegisterInput) (*user.User, error) {
 	if input.Professional == nil {
-		return nil, professional.ErrRegistrationRequired
+		return nil, mapProfessionalDomainError(professional.ErrRegistrationRequired)
 	}
 	if s.profRepo == nil {
-		return nil, errors.New("professional repository not configured")
+		return nil, &apperr.AppError{
+			Code:    apperr.INTERNAL_ERROR,
+			Message: "serviço indisponível",
+		}
+	}
+
+	professionalKind := input.Professional.Kind.Normalize()
+	if !professionalKind.IsValid() {
+		return nil, mapProfessionalDomainError(professional.ErrInvalidKind)
 	}
 
 	registrationNumber := strings.TrimSpace(input.Professional.RegistrationNumber)
 	registrationIssuer := strings.TrimSpace(input.Professional.RegistrationIssuer)
 	if registrationNumber == "" && registrationIssuer == "" {
-		return nil, professional.ErrRegistrationRequired
+		return nil, mapProfessionalDomainError(professional.ErrRegistrationRequired)
 	}
 	if registrationNumber == "" {
-		return nil, professional.ErrInvalidRegistrationNumber
+		return nil, mapProfessionalDomainError(professional.ErrInvalidRegistrationNumber)
 	}
 	if registrationIssuer == "" {
-		return nil, professional.ErrInvalidRegistrationIssuer
+		return nil, mapProfessionalDomainError(professional.ErrInvalidRegistrationIssuer)
 	}
 
 	createdUser, err := s.createUser(ctx, input)
@@ -118,12 +125,13 @@ func (s *service) createProfessionalUser(ctx context.Context, input userport.Reg
 
 	prof, err := professional.NewProfessional(professional.NewProfessionalParams{
 		UserID:             createdUser.ID,
+		Kind:               professionalKind,
 		RegistrationNumber: registrationNumber,
 		RegistrationIssuer: registrationIssuer,
 		RegistrationState:  input.Professional.RegistrationState,
 	})
 	if err != nil {
-		return nil, err
+		return nil, mapProfessionalDomainError(err)
 	}
 
 	if err := s.profRepo.Create(ctx, prof); err != nil {
@@ -131,10 +139,10 @@ func (s *service) createProfessionalUser(ctx context.Context, input userport.Reg
 			return nil, &apperr.AppError{
 				Code:    apperr.INFRA_DATABASE_ERROR,
 				Message: "falha tecnica",
-				Cause:   err,
+				Cause:   errors.Join(err, rollbackErr),
 			}
 		}
-		return nil, err
+		return nil, mapInfraError("profRepo.Create", err)
 	}
 
 	return createdUser, nil

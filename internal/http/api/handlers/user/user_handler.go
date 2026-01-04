@@ -9,7 +9,8 @@ import (
 	"sonnda-api/internal/app/apperr"
 	userport "sonnda-api/internal/app/ports/inbound/user"
 	"sonnda-api/internal/app/ports/outbound/repositories"
-	"sonnda-api/internal/domain/model/rbac"
+	"sonnda-api/internal/domain/model/user"
+	"sonnda-api/internal/domain/model/user/professional"
 	"sonnda-api/internal/http/api/handlers/common"
 	httperrors "sonnda-api/internal/http/errors"
 	"sonnda-api/internal/http/middleware"
@@ -44,12 +45,13 @@ type RegisterRequest struct {
 	BirthDate    string                   `json:"birth_date" binding:"required,datetime=2006-01-02"` // Gin já valida data!
 	CPF          string                   `json:"cpf" binding:"required"`
 	Phone        string                   `json:"phone" binding:"required"`
-	Role         string                   `json:"role" binding:"required,oneof=caregiver professional"`
-	Professional *ProfessionalRequestData `json:"professional" binding:"required_if=Role professional"` // Magia do Gin
+	AccountType  string                   `json:"account_type" binding:"required,oneof=basic_care professional"`
+	Professional *ProfessionalRequestData `json:"professional" binding:"required_if=AccountType professional"` // Magia do Gin
 }
 type ProfessionalRequestData struct {
-	RegistrationNumber string  `json:"registration_number"`
-	RegistrationIssuer string  `json:"registration_issuer"`
+	Kind               string  `json:"kind" binding:"required"`
+	RegistrationNumber string  `json:"registration_number" binding:"required"`
+	RegistrationIssuer string  `json:"registration_issuer" binding:"required"`
 	RegistrationState  *string `json:"registration_state,omitempty"`
 }
 
@@ -90,11 +92,11 @@ func (h *UserHandler) Register(c *gin.Context) {
 	email = strings.TrimSpace(strings.ToLower(email))
 
 	// 4) Dispatcher / role (Interface)
-	role := rbac.Role(strings.ToLower(strings.TrimSpace(req.Role)))
-	if role == "" {
+	accountType := user.AccountType(strings.ToLower(strings.TrimSpace(req.AccountType))).Normalize()
+	if accountType == "" || !accountType.IsValid() || accountType == user.AccountTypeAdmin {
 		httperrors.WriteError(c, &apperr.AppError{
 			Code:    apperr.INVALID_ENUM_VALUE,
-			Message: "role inválida",
+			Message: "account_type inválido",
 		})
 		return
 	}
@@ -113,17 +115,17 @@ func (h *UserHandler) Register(c *gin.Context) {
 	}
 
 	input := userport.RegisterInput{
-		Provider:  identity.Provider,
-		Subject:   identity.Subject,
-		Email:     email,
-		FullName:  req.FullName,
-		Role:      role,
-		BirthDate: birthDate,
-		CPF:       req.CPF,
-		Phone:     req.Phone,
+		Provider:    identity.Provider,
+		Subject:     identity.Subject,
+		Email:       email,
+		FullName:    req.FullName,
+		AccountType: accountType,
+		BirthDate:   birthDate,
+		CPF:         req.CPF,
+		Phone:       req.Phone,
 	}
 
-	if role == rbac.RoleDoctor || role == rbac.RoleNurse {
+	if accountType == user.AccountTypeProfessional {
 		// Safe-check (mesmo que binder valide)
 		if req.Professional == nil {
 			httperrors.WriteError(c, &apperr.AppError{
@@ -133,7 +135,17 @@ func (h *UserHandler) Register(c *gin.Context) {
 			return
 		}
 
+		kind := professional.Kind(strings.ToLower(strings.TrimSpace(req.Professional.Kind))).Normalize()
+		if !kind.IsValid() {
+			httperrors.WriteError(c, &apperr.AppError{
+				Code:    apperr.INVALID_ENUM_VALUE,
+				Message: "professional.kind invÇ­lido",
+			})
+			return
+		}
+
 		input.Professional = &userport.ProfessionalRegistrationInput{
+			Kind:               kind,
 			RegistrationNumber: req.Professional.RegistrationNumber,
 			RegistrationIssuer: req.Professional.RegistrationIssuer,
 			RegistrationState:  req.Professional.RegistrationState,

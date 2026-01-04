@@ -6,14 +6,14 @@ import (
 	"sonnda-api/internal/app/ports/outbound/repositories"
 	"sonnda-api/internal/domain/model/user/professional"
 	"sonnda-api/internal/infrastructure/persistence/repository/db"
-	professionalsqlc "sonnda-api/internal/infrastructure/persistence/sqlc/generated/professional"
+	usersqlc "sonnda-api/internal/infrastructure/persistence/sqlc/generated/user"
 
 	"github.com/google/uuid"
 )
 
 type Professional struct {
 	client  *db.Client
-	queries *professionalsqlc.Queries
+	queries *usersqlc.Queries
 }
 
 var _ repositories.ProfessionalRepository = (*Professional)(nil)
@@ -21,7 +21,7 @@ var _ repositories.ProfessionalRepository = (*Professional)(nil)
 func NewProfessionalRepository(client *db.Client) repositories.ProfessionalRepository {
 	return &Professional{
 		client:  client,
-		queries: professionalsqlc.New(client.Pool()),
+		queries: usersqlc.New(client.Pool()),
 	}
 }
 

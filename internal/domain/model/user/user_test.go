@@ -2,7 +2,6 @@ package user
 
 import (
 	"errors"
-	"sonnda-api/internal/domain/model/rbac"
 	"testing"
 	"time"
 )
@@ -14,7 +13,7 @@ func TestNewUser_Success_NormalizesAndSetsUTC(t *testing.T) {
 		AuthProvider: " firebase ",
 		AuthSubject:  " sub-123 ",
 		Email:        " Person@Example.COM ",
-		Role:         rbac.RolePatient,
+		AccountType:  AccountTypeProfessional,
 		FullName:     "  Pessoa Teste  ",
 		BirthDate:    birthDate,
 		CPF:          "529.982.247-25",
@@ -40,8 +39,8 @@ func TestNewUser_Success_NormalizesAndSetsUTC(t *testing.T) {
 	if u.FullName != "Pessoa Teste" {
 		t.Errorf("expected full name trimmed, got '%s'", u.FullName)
 	}
-	if u.Role != rbac.RolePatient {
-		t.Errorf("expected patient role")
+	if u.AccountType != AccountTypeProfessional {
+		t.Errorf("expected professional account type")
 	}
 	if u.Phone != "11999999999" {
 		t.Errorf("expected phone trimmed, got '%s'", u.Phone)
@@ -107,6 +106,15 @@ func TestNewUser_ValidationErrors(t *testing.T) {
 			},
 		},
 		{
+			name: "invalid accountType",
+			err:  ErrInvalidAccountType,
+			fn: func() NewUserParams {
+				params := validParams(validDate)
+				params.AccountType = AccountType("nope")
+				return params
+			},
+		},
+		{
 			name: "birthDate zero",
 			err:  ErrInvalidBirthDate,
 			fn: func() NewUserParams {
@@ -121,6 +129,15 @@ func TestNewUser_ValidationErrors(t *testing.T) {
 			fn: func() NewUserParams {
 				params := validParams(validDate)
 				params.CPF = "   "
+				return params
+			},
+		},
+		{
+			name: "missing phone",
+			err:  ErrInvalidPhone,
+			fn: func() NewUserParams {
+				params := validParams(validDate)
+				params.Phone = "   "
 				return params
 			},
 		},
@@ -145,7 +162,7 @@ func validParams(birthDate time.Time) NewUserParams {
 		AuthSubject:  "sub",
 		Email:        "a@b.com",
 		FullName:     "User",
-		Role:         rbac.RolePatient,
+		AccountType:  AccountTypeProfessional,
 		BirthDate:    birthDate,
 		CPF:          "12345678901",
 		Phone:        "11",
