@@ -2,9 +2,10 @@
 package apperr
 
 type AppError struct {
-	Code    ErrorCode
-	Message string
-	Cause   error
+	Code       ErrorCode
+	Message    string
+	Cause      error
+	Violations []Violation
 }
 
 func (e *AppError) Error() string {

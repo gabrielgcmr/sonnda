@@ -10,6 +10,7 @@ import (
 	userport "sonnda-api/internal/app/ports/inbound/user"
 	"sonnda-api/internal/app/ports/outbound/integrations"
 	"sonnda-api/internal/app/ports/outbound/repositories"
+	professionalsvc "sonnda-api/internal/app/services/professional"
 	"sonnda-api/internal/domain/model/user"
 	"sonnda-api/internal/domain/model/user/professional"
 
@@ -101,40 +102,23 @@ func (s *service) createProfessionalUser(ctx context.Context, input userport.Reg
 		}
 	}
 
-	professionalKind := input.Professional.Kind.Normalize()
-	if !professionalKind.IsValid() {
-		return nil, mapProfessionalDomainError(professional.ErrInvalidKind)
-	}
-
 	registrationNumber := strings.TrimSpace(input.Professional.RegistrationNumber)
 	registrationIssuer := strings.TrimSpace(input.Professional.RegistrationIssuer)
-	if registrationNumber == "" && registrationIssuer == "" {
-		return nil, mapProfessionalDomainError(professional.ErrRegistrationRequired)
-	}
-	if registrationNumber == "" {
-		return nil, mapProfessionalDomainError(professional.ErrInvalidRegistrationNumber)
-	}
-	if registrationIssuer == "" {
-		return nil, mapProfessionalDomainError(professional.ErrInvalidRegistrationIssuer)
-	}
 
 	createdUser, err := s.createUser(ctx, input)
 	if err != nil {
 		return nil, err
 	}
 
-	prof, err := professional.NewProfessional(professional.NewProfessionalParams{
+	profSvc := professionalsvc.New(s.profRepo)
+	_, err = profSvc.Create(ctx, professionalsvc.CreateInput{
 		UserID:             createdUser.ID,
-		Kind:               professionalKind,
+		Kind:               input.Professional.Kind,
 		RegistrationNumber: registrationNumber,
 		RegistrationIssuer: registrationIssuer,
 		RegistrationState:  input.Professional.RegistrationState,
 	})
 	if err != nil {
-		return nil, mapProfessionalDomainError(err)
-	}
-
-	if err := s.profRepo.Create(ctx, prof); err != nil {
 		if rollbackErr := s.rollbackCreatedUser(ctx, createdUser); rollbackErr != nil {
 			return nil, &apperr.AppError{
 				Code:    apperr.INFRA_DATABASE_ERROR,
@@ -142,7 +126,7 @@ func (s *service) createProfessionalUser(ctx context.Context, input userport.Reg
 				Cause:   errors.Join(err, rollbackErr),
 			}
 		}
-		return nil, mapInfraError("profRepo.Create", err)
+		return nil, err
 	}
 
 	return createdUser, nil
