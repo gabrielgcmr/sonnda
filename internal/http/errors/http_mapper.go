@@ -6,7 +6,7 @@ import (
 	"sonnda-api/internal/app/apperr"
 )
 
-func HTTPStatus(code apperr.ErrorCode) int {
+func StatusFromCode(code apperr.ErrorCode) int {
 	switch code {
 
 	// AUTH

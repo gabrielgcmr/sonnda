@@ -102,8 +102,19 @@ func (s *service) createProfessionalUser(ctx context.Context, input userport.Reg
 		}
 	}
 
+	kind := input.Professional.Kind.Normalize()
+	if !kind.IsValid() {
+		return nil, mapProfessionalDomainError(professional.ErrInvalidKind)
+	}
+
 	registrationNumber := strings.TrimSpace(input.Professional.RegistrationNumber)
 	registrationIssuer := strings.TrimSpace(input.Professional.RegistrationIssuer)
+	if registrationNumber == "" {
+		return nil, mapProfessionalDomainError(professional.ErrInvalidRegistrationNumber)
+	}
+	if registrationIssuer == "" {
+		return nil, mapProfessionalDomainError(professional.ErrInvalidRegistrationIssuer)
+	}
 
 	createdUser, err := s.createUser(ctx, input)
 	if err != nil {
@@ -113,7 +124,7 @@ func (s *service) createProfessionalUser(ctx context.Context, input userport.Reg
 	profSvc := professionalsvc.New(s.profRepo)
 	_, err = profSvc.Create(ctx, professionalsvc.CreateInput{
 		UserID:             createdUser.ID,
-		Kind:               input.Professional.Kind,
+		Kind:               kind,
 		RegistrationNumber: registrationNumber,
 		RegistrationIssuer: registrationIssuer,
 		RegistrationState:  input.Professional.RegistrationState,

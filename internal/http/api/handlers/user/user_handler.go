@@ -76,12 +76,8 @@ func (h *UserHandler) Register(c *gin.Context) {
 	}
 	// 2. Bind & Validate Formato (Infra)
 	var req RegisterRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		httperrors.WriteError(c, &apperr.AppError{
-			Code:    apperr.VALIDATION_FAILED,
-			Message: "payload inválido",
-			Cause:   err,
-		})
+	if err := httperrors.BindJSON(c, &req); err != nil {
+		httperrors.WriteError(c, err)
 		return
 	}
 	// 3. Normalização de Email (Regra de Interface)
@@ -198,12 +194,8 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 	}
 
 	var req UpdateUserRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		httperrors.WriteError(c, &apperr.AppError{
-			Code:    apperr.VALIDATION_FAILED,
-			Message: "payload inválido",
-			Cause:   err,
-		})
+	if err := httperrors.BindJSON(c, &req); err != nil {
+		httperrors.WriteError(c, err)
 		return
 	}
 

@@ -47,12 +47,8 @@ func (h *PatientHandler) Create(c *gin.Context) {
 
 	var req CreatePatientRequest
 	// 1. Bind do request
-	if err := c.ShouldBindJSON(&req); err != nil {
-		httperrors.WriteError(c, &apperr.AppError{
-			Code:    apperr.VALIDATION_FAILED,
-			Message: "payload inválido",
-			Cause:   err,
-		})
+	if err := httperrors.BindJSON(c, &req); err != nil {
+		httperrors.WriteError(c, err)
 		return
 	}
 

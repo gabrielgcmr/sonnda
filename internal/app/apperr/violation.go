@@ -1,6 +1,6 @@
 package apperr
 
 type Violation struct {
-	Field  string //ex: "professional.email"
-	Reason string //ex: "required", "invalid email format"
+	Field  string `json:"field"`  // ex: "professional.email"
+	Reason string `json:"reason"` // ex: "required", "invalid_email"
 }

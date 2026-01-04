@@ -213,6 +213,25 @@ func TestService_Register_CreateError(t *testing.T) {
 	}
 }
 
+func TestService_Register_ProfessionalMissingRegistrationNumber_DoesNotCreateUser(t *testing.T) {
+	repo := &fakeUserRepo{}
+	svc := New(repo, nil, nil)
+
+	in := validProfessionalRegisterInput()
+	in.Professional.RegistrationNumber = ""
+
+	u, err := svc.Register(context.Background(), in)
+	if err == nil {
+		t.Fatalf("expected error, got nil")
+	}
+	if u != nil {
+		t.Fatalf("expected nil user, got %v", u)
+	}
+	if repo.calledSave {
+		t.Fatalf("expected Save not to be called")
+	}
+}
+
 func TestService_Register_Success(t *testing.T) {
 	repo := &fakeUserRepo{}
 	svc := New(repo, nil, nil)
