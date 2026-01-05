@@ -56,7 +56,7 @@ func NewUser(params NewUserParams) (*User, error) {
 
 	//2. Cria um idêntificador único
 	//É possível falhar ao gerar um UUID?
-	id, err := uuid.NewUUID()
+	id, err := uuid.NewV7()
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate id: %w", err)
 	}

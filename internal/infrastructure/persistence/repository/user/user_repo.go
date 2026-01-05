@@ -29,6 +29,47 @@ func New(client *db.Client) *UserRepository {
 	}
 }
 
+// Save implements [repositories.UserRepository].
+func (r *UserRepository) Save(ctx context.Context, u *user.User) error {
+	if u == nil {
+		return errors.New("user is nil")
+	}
+
+	if u.ID == uuid.Nil {
+		u.ID = uuid.Must(uuid.NewV7())
+	}
+
+	birthDate := u.BirthDate
+	row, err := r.queries.CreateUser(ctx, usersqlc.CreateUserParams{
+		ID:           u.ID,
+		AuthProvider: u.AuthProvider,
+		AuthSubject:  u.AuthSubject,
+		Email:        u.Email,
+		FullName:     u.FullName,
+		BirthDate:    helpers.FromNullableDateToPgDate(&birthDate),
+		Cpf:          u.CPF,
+		Phone:        u.Phone,
+		AccountType:  string(u.AccountType),
+	})
+	if err != nil {
+		return err
+	}
+
+	u.ID = row.ID
+	u.AuthProvider = row.AuthProvider
+	u.AuthSubject = row.AuthSubject
+	u.Email = row.Email
+	u.FullName = row.FullName
+	u.BirthDate = row.BirthDate.Time
+	u.CPF = row.Cpf
+	u.Phone = row.Phone
+	u.AccountType = user.AccountType(row.AccountType)
+	u.CreatedAt = row.CreatedAt.Time
+	u.UpdatedAt = row.UpdatedAt.Time
+
+	return nil
+}
+
 // Delete implements [repositories.UserRepository].
 func (r *UserRepository) SoftDelete(ctx context.Context, id uuid.UUID) error {
 	_, err := r.queries.SoftDeleteUser(ctx, id)
@@ -91,47 +132,6 @@ func (r *UserRepository) FindByCPF(ctx context.Context, cpf string) (*user.User,
 // FindByID implements [repositories.UserRepository].
 func (r *UserRepository) FindByID(ctx context.Context, id uuid.UUID) (*user.User, error) {
 	panic("unimplemented")
-}
-
-// Save implements [repositories.UserRepository].
-func (r *UserRepository) Save(ctx context.Context, u *user.User) error {
-	if u == nil {
-		return errors.New("user is nil")
-	}
-
-	if u.ID == uuid.Nil {
-		u.ID = uuid.Must(uuid.NewV7())
-	}
-
-	birthDate := u.BirthDate
-	row, err := r.queries.CreateUser(ctx, usersqlc.CreateUserParams{
-		ID:           u.ID,
-		AuthProvider: u.AuthProvider,
-		AuthSubject:  u.AuthSubject,
-		Email:        u.Email,
-		FullName:     u.FullName,
-		BirthDate:    helpers.FromNullableDateToPgDate(&birthDate),
-		Cpf:          u.CPF,
-		Phone:        u.Phone,
-		AccountType:  string(u.AccountType),
-	})
-	if err != nil {
-		return err
-	}
-
-	u.ID = row.ID
-	u.AuthProvider = row.AuthProvider
-	u.AuthSubject = row.AuthSubject
-	u.Email = row.Email
-	u.FullName = row.FullName
-	u.BirthDate = row.BirthDate.Time
-	u.CPF = row.Cpf
-	u.Phone = row.Phone
-	u.AccountType = user.AccountType(row.AccountType)
-	u.CreatedAt = row.CreatedAt.Time
-	u.UpdatedAt = row.UpdatedAt.Time
-
-	return nil
 }
 
 // Update implements [repositories.UserRepository].

@@ -5,20 +5,20 @@ import (
 )
 
 var (
-	ErrInvalidAuthProvider        = errors.New("auth provider is required")
-	ErrInvalidAuthSubject         = errors.New("auth subject is required")
-	ErrInvalidEmail               = errors.New("email is required or invalid")
-	ErrInvalidAccountType         = errors.New("invalid account type")
-	ErrInvalidRole                = ErrInvalidAccountType
-	ErrInvalidBirthDate           = errors.New("invalid birth date")
-	ErrInvalidFullName            = errors.New("full name is required")
-	ErrInvalidPhone               = errors.New("phone is required")
-	ErrInvalidCPF                 = errors.New("cpf is required")
-	ErrUnsupportedBirthDateType   = errors.New("BirthDate.Scan: unsupported type")
-	ErrEmailAlreadyExists         = errors.New("email already exists")
+	//invalid data errors
+	ErrInvalidAuthProvider = errors.New("invalid auth provider")
+	ErrInvalidAuthSubject  = errors.New("invalid auth subject")
+	ErrInvalidEmail        = errors.New("invalid email")
+	ErrInvalidAccountType  = errors.New("invalid account type")
+	ErrInvalidBirthDate    = errors.New("invalid birth date")
+	ErrInvalidFullName     = errors.New("invalid full name")
+	ErrInvalidPhone        = errors.New("invalid phone")
+	ErrInvalidCPF          = errors.New("invalid cpf")
+	//Erros não pertencem ao pacote /domain/user?
+
 	ErrCPFAlreadyExists           = errors.New("cpf already exists")
-	ErrAuthorizationForbidden     = errors.New("authorization forbidden")
 	ErrAuthIdentityAlreadyExists  = errors.New("auth identity already exists")
+	ErrAuthorizationForbidden     = errors.New("authorization forbidden")
 	ErrIdentityAlreadyLinkedError = errors.New("identity already linked to another user")
 	ErrUserNotFound               = errors.New("user not found")
 )

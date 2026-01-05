@@ -142,7 +142,7 @@ func TestService_Register_EmailAlreadyExists(t *testing.T) {
 	if err == nil {
 		t.Fatalf("expected error, got nil")
 	}
-	if !errors.Is(err, user.ErrEmailAlreadyExists) {
+	if !errors.Is(err, ErrEmailAlreadyExists) {
 		t.Fatalf("expected ErrEmailAlreadyExists, got %v", err)
 	}
 	if u != nil {

@@ -10,6 +10,10 @@ import (
 	"sonnda-api/internal/domain/model/user/professional"
 )
 
+var (
+	ErrEmailAlreadyExists = errors.New("email already exists") // ESSE ERRO AQUI
+)
+
 func mapUserDomainError(err error) error {
 	switch {
 	case errors.Is(err, user.ErrInvalidAuthProvider),
@@ -22,7 +26,7 @@ func mapUserDomainError(err error) error {
 		errors.Is(err, user.ErrInvalidPhone):
 		return apperr.Validation("dados inválidos", apperr.Violation{Reason: err.Error()})
 
-	case errors.Is(err, user.ErrEmailAlreadyExists),
+	case errors.Is(err, ErrEmailAlreadyExists),
 		errors.Is(err, user.ErrCPFAlreadyExists),
 		errors.Is(err, user.ErrAuthIdentityAlreadyExists):
 		return apperr.Conflict("usuário já cadastrado")
@@ -45,11 +49,7 @@ func mapProfessionalDomainError(err error) error {
 		errors.Is(err, professional.ErrInvalidKind),
 		errors.Is(err, professional.ErrInvalidRegistrationNumber),
 		errors.Is(err, professional.ErrInvalidRegistrationIssuer):
-		return &apperr.AppError{
-			Code:    apperr.VALIDATION_FAILED,
-			Message: "dados profissionais inválidos",
-			Cause:   err,
-		}
+		return apperr.Validation("dados profissionais inválidos", apperr.Violation{Reason: err.Error()})
 	default:
 		return &apperr.AppError{
 			Code:    apperr.INTERNAL_ERROR,
