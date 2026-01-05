@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"sonnda-api/internal/app/apperr"
-	"sonnda-api/internal/app/ports/outbound/repositories"
+	"sonnda-api/internal/app/interfaces/repositories"
 	"sonnda-api/internal/domain/model/patient"
 	"sonnda-api/internal/domain/model/patient/patientaccess"
 	"sonnda-api/internal/domain/model/rbac"

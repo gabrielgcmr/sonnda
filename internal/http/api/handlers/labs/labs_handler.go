@@ -15,7 +15,7 @@ import (
 	labsvc "sonnda-api/internal/app/services/labs"
 
 	"sonnda-api/internal/app/apperr"
-	"sonnda-api/internal/app/ports/outbound/integrations"
+	external "sonnda-api/internal/app/interfaces/external"
 	"sonnda-api/internal/domain/model/medicalrecord/labs"
 	httperrors "sonnda-api/internal/http/errors"
 	"sonnda-api/internal/http/middleware"
@@ -25,12 +25,12 @@ import (
 
 type LabsHandler struct {
 	svc     labsvc.Service
-	storage integrations.StorageService
+	storage external.StorageService
 }
 
 func NewLabsHandler(
 	svc labsvc.Service,
-	storageClient integrations.StorageService,
+	storageClient external.StorageService,
 ) *LabsHandler {
 	return &LabsHandler{
 		svc:     svc,

@@ -12,7 +12,7 @@ import (
 	firebaseauth "firebase.google.com/go/v4/auth"
 	"google.golang.org/api/option"
 
-	"sonnda-api/internal/app/ports/outbound/integrations"
+	"sonnda-api/internal/app/interfaces/external"
 	"sonnda-api/internal/domain/model/identity"
 )
 
@@ -56,7 +56,7 @@ func NewFirebaseAuthService(ctx context.Context) (*FirebaseAuthService, error) {
 	return &FirebaseAuthService{client: client}, nil
 }
 
-var _ integrations.IdentityService = (*FirebaseAuthService)(nil)
+var _ external.IdentityService = (*FirebaseAuthService)(nil)
 
 func (s *FirebaseAuthService) ProviderName() string {
 	return "firebase"

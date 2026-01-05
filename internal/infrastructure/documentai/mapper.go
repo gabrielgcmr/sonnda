@@ -1,7 +1,7 @@
 package documentai
 
 import (
-	"sonnda-api/internal/app/ports/outbound/integrations"
+	"sonnda-api/internal/app/interfaces/external"
 	"strings"
 
 	"cloud.google.com/go/documentai/apiv1/documentaipb"
@@ -48,8 +48,8 @@ func extractEntityValue(doc *documentaipb.Document, ent *documentaipb.Document_E
 	return strings.TrimSpace(extractEntityText(doc, ent))
 }
 
-func mapDocumentToExtractedLabs(doc *documentaipb.Document) *integrations.ExtractedLabReport {
-	out := &integrations.ExtractedLabReport{}
+func mapDocumentToExtractedLabs(doc *documentaipb.Document) *external.ExtractedLabReport {
+	out := &external.ExtractedLabReport{}
 
 	// Se quiser guardar o texto inteiro do laudo
 	if txt := doc.GetText(); txt != "" {
@@ -102,8 +102,8 @@ func mapDocumentToExtractedLabs(doc *documentaipb.Document) *integrations.Extrac
 
 }
 
-func mapTestResult(doc *documentaipb.Document, ent *documentaipb.Document_Entity) integrations.ExtractedTestResult {
-	var tr integrations.ExtractedTestResult
+func mapTestResult(doc *documentaipb.Document, ent *documentaipb.Document_Entity) external.ExtractedTestResult {
+	var tr external.ExtractedTestResult
 
 	for _, prop := range ent.GetProperties() {
 		switch prop.GetType() {
@@ -134,8 +134,8 @@ func mapTestResult(doc *documentaipb.Document, ent *documentaipb.Document_Entity
 	return tr
 }
 
-func mapTestItem(doc *documentaipb.Document, ent *documentaipb.Document_Entity) integrations.ExtractedTestItem {
-	var item integrations.ExtractedTestItem
+func mapTestItem(doc *documentaipb.Document, ent *documentaipb.Document_Entity) external.ExtractedTestItem {
+	var item external.ExtractedTestItem
 
 	for _, prop := range ent.GetProperties() {
 		switch prop.GetType() {

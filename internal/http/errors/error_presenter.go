@@ -44,11 +44,5 @@ func WriteError(c *gin.Context, err error) {
 	}
 
 	c.Abort()
-	c.JSON(status, gin.H{
-		"error": gin.H{
-			"code":    resp.Code,
-			"message": resp.Message,
-		},
-	})
-
+	c.JSON(status, gin.H{"error": resp})
 }

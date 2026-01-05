@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"sonnda-api/internal/app/ports/outbound/repositories"
+	"sonnda-api/internal/app/interfaces/repositories"
 	"sonnda-api/internal/domain/model/user/professional"
 
 	"github.com/google/uuid"

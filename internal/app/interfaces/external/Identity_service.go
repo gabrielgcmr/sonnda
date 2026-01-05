@@ -1,5 +1,5 @@
 // internal/app/ports/outbound/integrations/Identity_service.go
-package integrations
+package external
 
 import (
 	"context"

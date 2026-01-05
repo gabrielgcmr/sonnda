@@ -2,10 +2,12 @@ package user
 
 import (
 	"context"
+	"errors"
 
-	"sonnda-api/internal/app/ports/outbound/repositories"
+	"sonnda-api/internal/app/interfaces/repositories"
 	"sonnda-api/internal/domain/model/user/professional"
 	"sonnda-api/internal/infrastructure/persistence/repository/db"
+	"sonnda-api/internal/infrastructure/persistence/repository/helpers"
 	usersqlc "sonnda-api/internal/infrastructure/persistence/sqlc/generated/user"
 
 	"github.com/google/uuid"
@@ -26,8 +28,34 @@ func NewProfessionalRepository(client *db.Client) repositories.ProfessionalRepos
 }
 
 // Create implements [repositories.ProfessionalRepository].
-func (p *Professional) Create(ctx context.Context, profile *professional.Professional) error {
-	panic("unimplemented")
+func (p *Professional) Create(ctx context.Context, prof *professional.Professional) error {
+	if prof == nil {
+		return errors.New("profile is nil")
+	}
+
+	row, err := p.queries.CreateProfessional(ctx, usersqlc.CreateProfessionalParams{
+		UserID:             prof.UserID,
+		Kind:               string(prof.Kind),
+		RegistrationNumber: prof.RegistrationNumber,
+		RegistrationIssuer: prof.RegistrationIssuer,
+		RegistrationState:  helpers.FromNullableStringToPgText(prof.RegistrationState),
+		Status:             string(prof.Status),
+	})
+	if err != nil {
+		return err
+	}
+
+	prof.UserID = row.UserID
+	prof.Kind = professional.Kind(row.Kind)
+	prof.RegistrationNumber = row.RegistrationNumber
+	prof.RegistrationIssuer = row.RegistrationIssuer
+	prof.RegistrationState = helpers.FromPgTextToNullableString(row.RegistrationState)
+	prof.Status = professional.VerificationStatus(row.Status)
+	prof.VerifiedAt = helpers.FromPgTimestamptzToNullableTimestamptz(row.VerifiedAt)
+	prof.CreatedAt = row.CreatedAt.Time
+	prof.UpdatedAt = row.UpdatedAt.Time
+
+	return nil
 }
 
 // Delete implements [repositories.ProfessionalRepository].

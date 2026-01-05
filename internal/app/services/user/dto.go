@@ -1,4 +1,4 @@
-package userport
+package usersvc
 
 import (
 	"time"
@@ -9,14 +9,14 @@ import (
 	"github.com/google/uuid"
 )
 
-type ProfessionalRegistrationInput struct {
+type ProfessionalRegisterInput struct {
 	Kind               professional.Kind
 	RegistrationNumber string
 	RegistrationIssuer string
 	RegistrationState  *string
 }
 
-type RegisterInput struct {
+type UserRegisterInput struct {
 	Provider    string
 	Subject     string
 	Email       string
@@ -26,10 +26,10 @@ type RegisterInput struct {
 	CPF         string
 	Phone       string
 
-	Professional *ProfessionalRegistrationInput
+	Professional *ProfessionalRegisterInput
 }
 
-type UpdateInput struct {
+type UserUpdateInput struct {
 	UserID    uuid.UUID
 	FullName  *string
 	BirthDate *time.Time

@@ -7,8 +7,9 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"sonnda-api/internal/app/apperr"
-	userport "sonnda-api/internal/app/ports/inbound/user"
-	"sonnda-api/internal/app/ports/outbound/repositories"
+
+	"sonnda-api/internal/app/interfaces/repositories"
+	usersvc "sonnda-api/internal/app/services/user"
 	"sonnda-api/internal/domain/model/user"
 	"sonnda-api/internal/domain/model/user/professional"
 	"sonnda-api/internal/http/api/handlers/common"
@@ -18,24 +19,16 @@ import (
 	applog "sonnda-api/internal/app/observability"
 )
 
-type UpdateUserRequest struct {
-	FullName  *string `json:"full_name,omitempty"`
-	BirthDate *string `json:"birth_date,omitempty"`
-	CPF       *string `json:"cpf,omitempty"`
-	Phone     *string `json:"phone,omitempty"`
-}
 type UserHandler struct {
-	svc               userport.UserService
-	patientAccessRepo repositories.PatientAccessRepository
+	svc usersvc.UserService
 }
 
 func NewUserHandler(
-	svc userport.UserService,
+	svc usersvc.UserService,
 	patientAccessRepo repositories.PatientAccessRepository,
 ) *UserHandler {
 	return &UserHandler{
-		svc:               svc,
-		patientAccessRepo: patientAccessRepo,
+		svc: svc,
 	}
 }
 
@@ -53,6 +46,12 @@ type ProfessionalRequestData struct {
 	RegistrationNumber string  `json:"registration_number" binding:"required"`
 	RegistrationIssuer string  `json:"registration_issuer" binding:"required"`
 	RegistrationState  *string `json:"registration_state,omitempty"`
+}
+type UpdateUserRequest struct {
+	FullName  *string `json:"full_name,omitempty"`
+	BirthDate *string `json:"birth_date,omitempty"`
+	CPF       *string `json:"cpf,omitempty"`
+	Phone     *string `json:"phone,omitempty"`
 }
 
 func (h *UserHandler) Register(c *gin.Context) {
@@ -110,7 +109,7 @@ func (h *UserHandler) Register(c *gin.Context) {
 		return
 	}
 
-	input := userport.RegisterInput{
+	input := usersvc.UserRegisterInput{
 		Provider:    identity.Provider,
 		Subject:     identity.Subject,
 		Email:       email,
@@ -140,7 +139,7 @@ func (h *UserHandler) Register(c *gin.Context) {
 			return
 		}
 
-		input.Professional = &userport.ProfessionalRegistrationInput{
+		input.Professional = &usersvc.ProfessionalRegisterInput{
 			Kind:               kind,
 			RegistrationNumber: req.Professional.RegistrationNumber,
 			RegistrationIssuer: req.Professional.RegistrationIssuer,
@@ -199,7 +198,7 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	input := userport.UpdateInput{
+	input := usersvc.UserUpdateInput{
 		UserID: currentUser.ID,
 	}
 

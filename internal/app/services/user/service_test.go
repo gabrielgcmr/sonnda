@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	userport "sonnda-api/internal/app/ports/inbound/user"
 	"sonnda-api/internal/domain/model/identity"
 	"sonnda-api/internal/domain/model/user"
 	"sonnda-api/internal/domain/model/user/professional"
@@ -109,8 +108,8 @@ func (s *fakeIdentitySvc) DisableUser(ctx context.Context, subject string) error
 	return s.disableErr
 }
 
-func validRegisterInput() userport.RegisterInput {
-	return userport.RegisterInput{
+func validRegisterInput() UserRegisterInput {
+	return UserRegisterInput{
 		Provider:    "firebase",
 		Subject:     "sub-123",
 		Email:       "person@example.com",
@@ -122,10 +121,10 @@ func validRegisterInput() userport.RegisterInput {
 	}
 }
 
-func validProfessionalRegisterInput() userport.RegisterInput {
+func validProfessionalRegisterInput() UserRegisterInput {
 	input := validRegisterInput()
 	input.AccountType = user.AccountTypeProfessional
-	input.Professional = &userport.ProfessionalRegistrationInput{
+	input.Professional = &ProfessionalRegisterInput{
 		Kind:               professional.KindDoctor,
 		RegistrationNumber: "CRM-123",
 		RegistrationIssuer: "CRM",
@@ -277,7 +276,7 @@ func TestService_Update_UserNotFound(t *testing.T) {
 	repo := &fakeUserRepo{findByIDRes: nil}
 	svc := New(repo, nil, nil)
 
-	out, err := svc.Update(context.Background(), userport.UpdateInput{UserID: uuid.Nil})
+	out, err := svc.Update(context.Background(), UserUpdateInput{UserID: uuid.Nil})
 	if !errors.Is(err, user.ErrUserNotFound) {
 		t.Fatalf("expected ErrUserNotFound, got %v", err)
 	}
@@ -295,7 +294,7 @@ func TestService_Update_FindByIDError(t *testing.T) {
 	svc := New(repo, nil, nil)
 
 	userID := uuid.Must(uuid.NewV7())
-	out, err := svc.Update(context.Background(), userport.UpdateInput{UserID: userID})
+	out, err := svc.Update(context.Background(), UserUpdateInput{UserID: userID})
 	if !errors.Is(err, sentinel) {
 		t.Fatalf("expected sentinel error, got %v", err)
 	}
@@ -314,7 +313,7 @@ func TestService_Update_InvalidFullName(t *testing.T) {
 
 	bad := "   "
 	userID := uuid.Must(uuid.NewV7())
-	out, err := svc.Update(context.Background(), userport.UpdateInput{UserID: userID, FullName: &bad})
+	out, err := svc.Update(context.Background(), UserUpdateInput{UserID: userID, FullName: &bad})
 	if !errors.Is(err, user.ErrInvalidFullName) {
 		t.Fatalf("expected ErrInvalidFullName, got %v", err)
 	}
@@ -333,7 +332,7 @@ func TestService_Update_InvalidBirthDate(t *testing.T) {
 
 	future := time.Now().Add(24 * time.Hour)
 	userID := uuid.Must(uuid.NewV7())
-	out, err := svc.Update(context.Background(), userport.UpdateInput{UserID: userID, BirthDate: &future})
+	out, err := svc.Update(context.Background(), UserUpdateInput{UserID: userID, BirthDate: &future})
 	if !errors.Is(err, user.ErrInvalidBirthDate) {
 		t.Fatalf("expected ErrInvalidBirthDate, got %v", err)
 	}
@@ -352,7 +351,7 @@ func TestService_Update_InvalidCPF(t *testing.T) {
 
 	badCPF := "123"
 	userID := uuid.Must(uuid.NewV7())
-	out, err := svc.Update(context.Background(), userport.UpdateInput{UserID: userID, CPF: &badCPF})
+	out, err := svc.Update(context.Background(), UserUpdateInput{UserID: userID, CPF: &badCPF})
 	if !errors.Is(err, user.ErrInvalidCPF) {
 		t.Fatalf("expected ErrInvalidCPF, got %v", err)
 	}
@@ -371,7 +370,7 @@ func TestService_Update_InvalidPhone(t *testing.T) {
 
 	bad := "\t\n"
 	userID := uuid.Must(uuid.NewV7())
-	out, err := svc.Update(context.Background(), userport.UpdateInput{UserID: userID, Phone: &bad})
+	out, err := svc.Update(context.Background(), UserUpdateInput{UserID: userID, Phone: &bad})
 	if !errors.Is(err, user.ErrInvalidPhone) {
 		t.Fatalf("expected ErrInvalidPhone, got %v", err)
 	}
@@ -391,7 +390,7 @@ func TestService_Update_UpdateError(t *testing.T) {
 
 	newName := "Nome Novo"
 	userID := uuid.Must(uuid.NewV7())
-	out, err := svc.Update(context.Background(), userport.UpdateInput{UserID: userID, FullName: &newName})
+	out, err := svc.Update(context.Background(), UserUpdateInput{UserID: userID, FullName: &newName})
 	if !errors.Is(err, sentinel) {
 		t.Fatalf("expected sentinel error, got %v", err)
 	}
@@ -420,7 +419,7 @@ func TestService_Update_Success(t *testing.T) {
 	newPhone := "  11888887777  "
 	userID := uuid.Must(uuid.NewV7())
 
-	out, err := svc.Update(context.Background(), userport.UpdateInput{
+	out, err := svc.Update(context.Background(), UserUpdateInput{
 		UserID:    userID,
 		FullName:  &newName,
 		BirthDate: &newBirth,

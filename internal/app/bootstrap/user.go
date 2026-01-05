@@ -1,7 +1,7 @@
 package bootstrap
 
 import (
-	"sonnda-api/internal/app/ports/outbound/integrations"
+	"sonnda-api/internal/app/interfaces/external"
 	usersvc "sonnda-api/internal/app/services/user"
 	"sonnda-api/internal/http/api/handlers/user"
 	"sonnda-api/internal/http/middleware"
@@ -16,7 +16,7 @@ type UserModule struct {
 	RegistrationMiddleware *middleware.RegistrationMiddleware
 }
 
-func NewUserModule(db *db.Client, identityService integrations.IdentityService) *UserModule {
+func NewUserModule(db *db.Client, identityService external.IdentityService) *UserModule {
 	userRepo := userrepo.New(db)
 	profRepo := userrepo.NewProfessionalRepository(db)
 	patientRepo := patientrepo.NewPatientRepository(db)

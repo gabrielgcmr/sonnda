@@ -5,7 +5,6 @@ go 1.24.1
 require (
 	firebase.google.com/go/v4 v4.18.0
 	github.com/gin-gonic/gin v1.11.0
-
 	github.com/joho/godotenv v1.5.1
 	golang.org/x/crypto v0.46.0 // indirect
 )
@@ -77,7 +76,7 @@ require (
 	github.com/gin-contrib/sse v1.1.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/go-playground/validator/v10 v10.30.1 // indirect; direct
+	github.com/go-playground/validator/v10 v10.30.1 // direct
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect

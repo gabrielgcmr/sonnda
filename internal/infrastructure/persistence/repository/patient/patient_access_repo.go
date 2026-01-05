@@ -3,7 +3,7 @@ package patient
 import (
 	"context"
 
-	"sonnda-api/internal/app/ports/outbound/repositories"
+	"sonnda-api/internal/app/interfaces/repositories"
 	"sonnda-api/internal/domain/model/patient/patientaccess"
 	"sonnda-api/internal/infrastructure/persistence/repository/db"
 	patientaccesssqlc "sonnda-api/internal/infrastructure/persistence/sqlc/generated/patientaccess"

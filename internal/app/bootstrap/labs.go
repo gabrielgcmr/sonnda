@@ -1,7 +1,7 @@
 package bootstrap
 
 import (
-	"sonnda-api/internal/app/ports/outbound/integrations"
+	"sonnda-api/internal/app/interfaces/external"
 	labsvc "sonnda-api/internal/app/services/labs"
 	labshandler "sonnda-api/internal/http/api/handlers/labs"
 	"sonnda-api/internal/infrastructure/persistence/repository/db"
@@ -11,8 +11,8 @@ import (
 
 func NewLabsModule(
 	dbClient *db.Client,
-	docExtractor integrations.DocumentExtractor,
-	storage integrations.StorageService,
+	docExtractor external.DocumentExtractor,
+	storage external.StorageService,
 ) *labshandler.LabsHandler {
 	patientRepo := patientrepo.NewPatientRepository(dbClient)
 	labsRepo := labsrepo.NewLabsRepository(dbClient)

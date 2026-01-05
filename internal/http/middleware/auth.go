@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"sonnda-api/internal/app/apperr"
-	"sonnda-api/internal/app/ports/outbound/integrations"
+	"sonnda-api/internal/app/interfaces/external"
 	"sonnda-api/internal/domain/model/identity"
 	"sonnda-api/internal/domain/model/user"
 	httperrors "sonnda-api/internal/http/errors"
@@ -25,10 +25,10 @@ var (
 )
 
 type AuthMiddleware struct {
-	identityService integrations.IdentityService
+	identityService external.IdentityService
 }
 
-func NewAuthMiddleware(identityService integrations.IdentityService) *AuthMiddleware {
+func NewAuthMiddleware(identityService external.IdentityService) *AuthMiddleware {
 	return &AuthMiddleware{identityService: identityService}
 }
 
