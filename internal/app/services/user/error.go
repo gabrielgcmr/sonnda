@@ -11,7 +11,9 @@ import (
 )
 
 var (
-	ErrEmailAlreadyExists = errors.New("email already exists") // ESSE ERRO AQUI
+	ErrEmailAlreadyExists = errors.New("email already exists")
+	ErrCPFAlreadyExists   = errors.New("cpf already exists")
+	ErrUserNotFound       = errors.New("user not found")
 )
 
 func mapUserDomainError(err error) error {
@@ -27,11 +29,11 @@ func mapUserDomainError(err error) error {
 		return apperr.Validation("dados inválidos", apperr.Violation{Reason: err.Error()})
 
 	case errors.Is(err, ErrEmailAlreadyExists),
-		errors.Is(err, user.ErrCPFAlreadyExists),
+		errors.Is(err, ErrCPFAlreadyExists),
 		errors.Is(err, user.ErrAuthIdentityAlreadyExists):
 		return apperr.Conflict("usuário já cadastrado")
 
-	case errors.Is(err, user.ErrUserNotFound):
+	case errors.Is(err, ErrUserNotFound):
 		return &apperr.AppError{
 			Code:    apperr.NOT_FOUND,
 			Message: "usuário não encontrado",

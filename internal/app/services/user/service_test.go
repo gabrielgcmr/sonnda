@@ -277,7 +277,7 @@ func TestService_Update_UserNotFound(t *testing.T) {
 	svc := New(repo, nil, nil)
 
 	out, err := svc.Update(context.Background(), UserUpdateInput{UserID: uuid.Nil})
-	if !errors.Is(err, user.ErrUserNotFound) {
+	if !errors.Is(err, ErrUserNotFound) {
 		t.Fatalf("expected ErrUserNotFound, got %v", err)
 	}
 	if out != nil {
@@ -464,7 +464,7 @@ func TestService_Delete_UserNotFound(t *testing.T) {
 	svc := New(repo, nil, auth)
 
 	err := svc.Delete(context.Background(), uuid.Nil)
-	if !errors.Is(err, user.ErrUserNotFound) {
+	if !errors.Is(err, ErrUserNotFound) {
 		t.Fatalf("expected ErrUserNotFound, got %v", err)
 	}
 	if repo.calledSoftDelete {

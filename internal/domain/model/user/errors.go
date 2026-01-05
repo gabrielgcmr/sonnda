@@ -16,9 +16,7 @@ var (
 	ErrInvalidCPF          = errors.New("invalid cpf")
 	//Erros não pertencem ao pacote /domain/user?
 
-	ErrCPFAlreadyExists           = errors.New("cpf already exists")
 	ErrAuthIdentityAlreadyExists  = errors.New("auth identity already exists")
 	ErrAuthorizationForbidden     = errors.New("authorization forbidden")
 	ErrIdentityAlreadyLinkedError = errors.New("identity already linked to another user")
-	ErrUserNotFound               = errors.New("user not found")
 )

@@ -65,7 +65,7 @@ func (s *service) createUser(ctx context.Context, input UserRegisterInput) (*use
 		return nil, mapInfraError("userRepo.FindByEmail", err)
 	}
 	if existingByEmail != nil {
-		return nil, mapUserDomainError(user.ErrEmailAlreadyExists)
+		return nil, ErrEmailAlreadyExists
 	}
 
 	existingByCPF, err := s.userRepo.FindByCPF(ctx, newUser.CPF)
@@ -73,7 +73,7 @@ func (s *service) createUser(ctx context.Context, input UserRegisterInput) (*use
 		return nil, mapInfraError("userRepo.FindByCPF", err)
 	}
 	if existingByCPF != nil {
-		return nil, mapUserDomainError(user.ErrCPFAlreadyExists)
+		return nil, ErrCPFAlreadyExists
 	}
 
 	existingByAuth, err := s.userRepo.FindByAuthIdentity(ctx, newUser.AuthProvider, newUser.AuthSubject)
@@ -166,7 +166,7 @@ func (s *service) Update(ctx context.Context, input UserUpdateInput) (*user.User
 		return nil, mapInfraError("userRepo.FindByID", err)
 	}
 	if existingUser == nil {
-		return nil, mapUserDomainError(user.ErrUserNotFound)
+		return nil, ErrUserNotFound
 	}
 
 	if input.FullName != nil {
@@ -214,7 +214,7 @@ func (s *service) Delete(ctx context.Context, userID uuid.UUID) error {
 		return mapInfraError("userRepo.FindByID", err)
 	}
 	if existing == nil {
-		return mapUserDomainError(user.ErrUserNotFound)
+		return ErrUserNotFound
 	}
 
 	if err := s.userRepo.SoftDelete(ctx, userID); err != nil {

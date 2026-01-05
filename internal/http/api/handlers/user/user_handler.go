@@ -33,7 +33,6 @@ func NewUserHandler(
 }
 
 type RegisterRequest struct {
-	Email        string                   `json:"email"`
 	FullName     string                   `json:"full_name" binding:"required"`
 	BirthDate    string                   `json:"birth_date" binding:"required,datetime=2006-01-02"` // Gin já valida data!
 	CPF          string                   `json:"cpf" binding:"required"`
@@ -73,13 +72,6 @@ func (h *UserHandler) Register(c *gin.Context) {
 		httperrors.WriteError(c, err)
 		return
 	}
-	// 3. Normalização de Email (Regra de Interface)
-	email := req.Email
-	if identity.Email != "" {
-		email = identity.Email // Token tem prioridade
-	}
-	email = strings.TrimSpace(strings.ToLower(email))
-
 	// 4) Dispatcher / role (Interface)
 	accountType, err := user.ParseAccountType(req.AccountType)
 	if err != nil {
@@ -106,7 +98,7 @@ func (h *UserHandler) Register(c *gin.Context) {
 	input := usersvc.UserRegisterInput{
 		Provider:    identity.Provider,
 		Subject:     identity.Subject,
-		Email:       email,
+		Email:       identity.Email,
 		FullName:    req.FullName,
 		AccountType: accountType,
 		BirthDate:   birthDate,
