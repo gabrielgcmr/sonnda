@@ -57,20 +57,14 @@ type UpdateUserRequest struct {
 func (h *UserHandler) Register(c *gin.Context) {
 	// 0) Wiring safety
 	if h.svc == nil {
-		httperrors.WriteError(c, &apperr.AppError{
-			Code:    apperr.INTERNAL_ERROR,
-			Message: "serviço indisponível",
-		})
+		httperrors.WriteError(c, apperr.Internal("serviço indisponível", nil))
 		return
 	}
 
 	// 1. Auth (Infra)
 	identity, ok := middleware.GetIdentity(c)
 	if !ok {
-		httperrors.WriteError(c, &apperr.AppError{
-			Code:    apperr.AUTH_REQUIRED,
-			Message: "autenticação necessária",
-		})
+		httperrors.WriteError(c, apperr.Unauthorized("autenticação necessária"))
 		return
 	}
 	// 2. Bind & Validate Formato (Infra)
@@ -87,12 +81,13 @@ func (h *UserHandler) Register(c *gin.Context) {
 	email = strings.TrimSpace(strings.ToLower(email))
 
 	// 4) Dispatcher / role (Interface)
-	accountType := user.AccountType(strings.ToLower(strings.TrimSpace(req.AccountType))).Normalize()
-	if accountType == "" || !accountType.IsValid() || accountType == user.AccountTypeAdmin {
-		httperrors.WriteError(c, &apperr.AppError{
-			Code:    apperr.INVALID_ENUM_VALUE,
-			Message: "account_type inválido",
-		})
+	accountType, err := user.ParseAccountType(req.AccountType)
+	if err != nil {
+		httperrors.WriteError(c, apperr.Validation("tipo de conta inválido",
+			apperr.Violation{
+				Field:  "account_type",
+				Reason: "invalid_value",
+			}))
 		return
 	}
 
@@ -101,11 +96,10 @@ func (h *UserHandler) Register(c *gin.Context) {
 	if err != nil {
 		// O ParseBirthDate já retorna erro com %w (shared.ErrInvalidBirthDate),
 		// então aqui basta traduzir para contrato.
-		httperrors.WriteError(c, &apperr.AppError{
-			Code:    apperr.VALIDATION_FAILED,
-			Message: "data de nascimento inválida",
-			Cause:   err,
-		})
+		httperrors.WriteError(c, apperr.Validation("data de nascimento inválida",
+			apperr.Violation{
+				Field:  "birth_date",
+				Reason: "invalid_format"}))
 		return
 	}
 
@@ -123,19 +117,13 @@ func (h *UserHandler) Register(c *gin.Context) {
 	if accountType == user.AccountTypeProfessional {
 		// Safe-check (mesmo que binder valide)
 		if req.Professional == nil {
-			httperrors.WriteError(c, &apperr.AppError{
-				Code:    apperr.REQUIRED_FIELD_MISSING,
-				Message: "dados profissionais são obrigatórios",
-			})
+			httperrors.WriteError(c, apperr.Validation("dados profissionais são obrigatórios"))
 			return
 		}
 
 		kind := professional.Kind(strings.ToLower(strings.TrimSpace(req.Professional.Kind))).Normalize()
 		if !kind.IsValid() {
-			httperrors.WriteError(c, &apperr.AppError{
-				Code:    apperr.INVALID_ENUM_VALUE,
-				Message: "professional.kind invÇ­lido",
-			})
+			httperrors.WriteError(c, apperr.Validation("tipo de profissional inválido"))
 			return
 		}
 
@@ -160,10 +148,7 @@ func (h *UserHandler) Register(c *gin.Context) {
 func (h *UserHandler) GetUser(c *gin.Context) {
 	currentUser, ok := middleware.GetCurrentUser(c)
 	if !ok || currentUser == nil {
-		httperrors.WriteError(c, &apperr.AppError{
-			Code:    apperr.AUTH_REQUIRED,
-			Message: "autenticaÇõÇœo necessÇ­ria",
-		})
+		httperrors.WriteError(c, apperr.Unauthorized("autenticação necessária"))
 		return
 	}
 

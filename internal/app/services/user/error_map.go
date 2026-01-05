@@ -20,20 +20,12 @@ func mapUserDomainError(err error) error {
 		errors.Is(err, user.ErrInvalidBirthDate),
 		errors.Is(err, user.ErrInvalidCPF),
 		errors.Is(err, user.ErrInvalidPhone):
-		return &apperr.AppError{
-			Code:    apperr.VALIDATION_FAILED,
-			Message: "dados inválidos",
-			Cause:   err,
-		}
+		return apperr.Validation("dados inválidos", apperr.Violation{Reason: err.Error()})
 
 	case errors.Is(err, user.ErrEmailAlreadyExists),
 		errors.Is(err, user.ErrCPFAlreadyExists),
 		errors.Is(err, user.ErrAuthIdentityAlreadyExists):
-		return &apperr.AppError{
-			Code:    apperr.RESOURCE_ALREADY_EXISTS,
-			Message: "usuário já cadastrado",
-			Cause:   err,
-		}
+		return apperr.Conflict("usuário já cadastrado")
 
 	case errors.Is(err, user.ErrUserNotFound):
 		return &apperr.AppError{
@@ -43,11 +35,7 @@ func mapUserDomainError(err error) error {
 		}
 
 	default:
-		return &apperr.AppError{
-			Code:    apperr.INTERNAL_ERROR,
-			Message: "erro inesperado",
-			Cause:   err,
-		}
+		return apperr.Internal("erro inesperado", err)
 	}
 }
 

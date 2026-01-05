@@ -18,10 +18,6 @@ func (ps *RbacPolicy) CanPerform(subject Subject, action Action) bool {
 		return false
 	}
 
-	if level == CapabilityAdmin {
-		return true
-	}
-
 	isProfessional := level == CapabilityClinical
 	isBasicCare := level == CapabilityBasicCare
 

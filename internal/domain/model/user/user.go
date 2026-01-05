@@ -1,6 +1,7 @@
 package user
 
 import (
+	"fmt"
 	"sonnda-api/internal/domain/model/demographics"
 	"strings"
 	"time"
@@ -53,10 +54,17 @@ func NewUser(params NewUserParams) (*User, error) {
 	// Chamamos funções auxiliares para não poluir o construtor
 	params.Normalize()
 
+	//2. Cria um idêntificador único
+	//É possível falhar ao gerar um UUID?
+	id, err := uuid.NewUUID()
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate id: %w", err)
+	}
+
 	// 2. Criação da entidade
 	now := time.Now().UTC()
 	u := &User{
-		ID:           uuid.Must(uuid.NewV7()),
+		ID:           id,
 		AuthProvider: params.AuthProvider,
 		AuthSubject:  params.AuthSubject,
 		Email:        params.Email,
