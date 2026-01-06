@@ -15,8 +15,6 @@ import (
 	"sonnda-api/internal/http/api/handlers/common"
 	httperrors "sonnda-api/internal/http/errors"
 	"sonnda-api/internal/http/middleware"
-
-	applog "sonnda-api/internal/app/observability"
 )
 
 type UserHandler struct {
@@ -131,24 +129,15 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 }
 
 func (h *UserHandler) UpdateUser(c *gin.Context) {
-	log := applog.FromContext(c.Request.Context())
-	log.Info("user_update")
-
 	// 0) Wiring safety
 	if h.svc == nil {
-		httperrors.WriteError(c, &apperr.AppError{
-			Code:    apperr.INTERNAL_ERROR,
-			Message: "serviço indisponível",
-		})
+		httperrors.WriteError(c, apperr.Internal("serviço indisponível", nil))
 		return
 	}
 
 	currentUser, ok := middleware.GetCurrentUser(c)
-	if !ok || currentUser == nil {
-		httperrors.WriteError(c, &apperr.AppError{
-			Code:    apperr.AUTH_REQUIRED,
-			Message: "autenticação necessária",
-		})
+	if !ok {
+		httperrors.WriteError(c, apperr.Unauthorized("autenticação necessária"))
 		return
 	}
 
@@ -190,6 +179,27 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	log.Info("user_updated")
 	c.JSON(http.StatusOK, updated)
+}
+
+func (h *UserHandler) HardDeleteUser(c *gin.Context) {
+	// 0) Wiring safety
+	if h.svc == nil {
+		httperrors.WriteError(c, apperr.Internal("serviço indisponível", nil))
+		return
+	}
+
+	currentUser, ok := middleware.GetCurrentUser(c)
+	if !ok || currentUser == nil {
+		httperrors.WriteError(c, apperr.Unauthorized("autenticação necessária"))
+		return
+	}
+
+	err := h.svc.Delete(c.Request.Context(), currentUser.ID)
+	if err != nil {
+		httperrors.WriteError(c, err)
+		return
+	}
+
+	c.Status(http.StatusNoContent)
 }

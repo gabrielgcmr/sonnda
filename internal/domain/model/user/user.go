@@ -2,9 +2,10 @@ package user
 
 import (
 	"fmt"
-	"sonnda-api/internal/domain/model/demographics"
 	"strings"
 	"time"
+
+	"sonnda-api/internal/domain/model/demographics"
 
 	"github.com/google/uuid"
 )
@@ -23,7 +24,14 @@ type User struct {
 	UpdatedAt    time.Time
 }
 
-// 1. Crie uma struct para agrupar os parâmetros
+type UpdateUserParams struct {
+	FullName  *string
+	BirthDate *time.Time
+	CPF       *string
+	Phone     *string
+}
+
+// 1. Crie uma struct para agrupar os parâmetros.
 type NewUserParams struct {
 	AuthProvider string
 	AuthSubject  string
@@ -35,8 +43,8 @@ type NewUserParams struct {
 	Phone        string
 }
 
-// 2. Crie um método que sabe se limpar
-// Como é um ponteiro receiver (*NewUserParams), ele altera os dados originais
+// 2. Crie um método que sabe se limpar.
+// Como é um ponteiro receiver (*NewUserParams), ele altera os dados originais.
 func (p *NewUserParams) Normalize() {
 	p.AuthProvider = strings.TrimSpace(p.AuthProvider)
 	p.AuthSubject = strings.TrimSpace(p.AuthSubject)
@@ -44,24 +52,18 @@ func (p *NewUserParams) Normalize() {
 	p.FullName = strings.TrimSpace(p.FullName)
 	p.Phone = strings.TrimSpace(p.Phone)
 
-	// Normalize específica
 	p.AccountType = p.AccountType.Normalize()
 	p.CPF = demographics.CleanDigits(p.CPF)
 }
 
 func NewUser(params NewUserParams) (*User, error) {
-	// 1. Normalize (Limpeza)
-	// Chamamos funções auxiliares para não poluir o construtor
 	params.Normalize()
 
-	//2. Cria um idêntificador único
-	//É possível falhar ao gerar um UUID?
 	id, err := uuid.NewV7()
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate id: %w", err)
 	}
 
-	// 2. Criação da entidade
 	now := time.Now().UTC()
 	u := &User{
 		ID:           id,
@@ -77,14 +79,11 @@ func NewUser(params NewUserParams) (*User, error) {
 		UpdatedAt:    now,
 	}
 
-	// 2. Validação
-	// O construtor delega a validação para o método da própria struct
 	if err := u.Validate(); err != nil {
 		return nil, err
 	}
 
 	return u, nil
-
 }
 
 func (u *User) Validate() error {
@@ -112,7 +111,69 @@ func (u *User) Validate() error {
 	if u.Phone == "" {
 		return ErrInvalidPhone
 	}
-	// Futuramente: if len(u.CPF) != 11 { ... }
 
 	return nil
+}
+
+// ApplyUpdate aplica atualizações com idempotência:
+// - Se nenhum campo mudar, UpdatedAt não é alterado.
+// - Se algum campo mudar, UpdatedAt é atualizado para UTC.
+func (u *User) ApplyUpdate(params UpdateUserParams) (changed bool, err error) {
+	if u == nil {
+		return false, fmt.Errorf("user is nil")
+	}
+
+	nextFullName := u.FullName
+	nextBirthDate := u.BirthDate
+	nextCPF := u.CPF
+	nextPhone := u.Phone
+
+	if params.FullName != nil {
+		name := strings.TrimSpace(*params.FullName)
+		if name == "" {
+			return false, ErrInvalidFullName
+		}
+		nextFullName = name
+	}
+
+	if params.BirthDate != nil {
+		birthDate := params.BirthDate.UTC()
+		if birthDate.IsZero() || birthDate.After(time.Now().UTC()) {
+			return false, ErrInvalidBirthDate
+		}
+		nextBirthDate = birthDate
+	}
+
+	if params.CPF != nil {
+		cpf := demographics.CleanDigits(*params.CPF)
+		if cpf == "" || len(cpf) != 11 {
+			return false, ErrInvalidCPF
+		}
+		nextCPF = cpf
+	}
+
+	if params.Phone != nil {
+		phone := strings.TrimSpace(*params.Phone)
+		if phone == "" {
+			return false, ErrInvalidPhone
+		}
+		nextPhone = phone
+	}
+
+	changed = nextFullName != u.FullName ||
+		!nextBirthDate.Equal(u.BirthDate) ||
+		nextCPF != u.CPF ||
+		nextPhone != u.Phone
+
+	if !changed {
+		return false, nil
+	}
+
+	u.FullName = nextFullName
+	u.BirthDate = nextBirthDate
+	u.CPF = nextCPF
+	u.Phone = nextPhone
+	u.UpdatedAt = time.Now().UTC()
+
+	return true, nil
 }

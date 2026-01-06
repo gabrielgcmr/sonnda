@@ -168,3 +168,120 @@ func validParams(birthDate time.Time) NewUserParams {
 		Phone:        "11",
 	}
 }
+
+func TestUser_ApplyUpdate_Idempotent(t *testing.T) {
+	birthDate := time.Now().Add(-24 * time.Hour)
+
+	u, err := NewUser(NewUserParams{
+		AuthProvider: "firebase",
+		AuthSubject:  "sub-123",
+		Email:        "person@example.com",
+		AccountType:  AccountTypeProfessional,
+		FullName:     "Pessoa Teste",
+		BirthDate:    birthDate,
+		CPF:          "529.982.247-25",
+		Phone:        "  11999999999  ",
+	})
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
+	}
+
+	before := u.UpdatedAt
+
+	changed, err := u.ApplyUpdate(UpdateUserParams{})
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
+	}
+	if changed {
+		t.Fatalf("expected changed=false")
+	}
+	if !u.UpdatedAt.Equal(before) {
+		t.Fatalf("expected UpdatedAt unchanged")
+	}
+
+	sameName := "  Pessoa Teste  "
+	changed, err = u.ApplyUpdate(UpdateUserParams{FullName: &sameName})
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
+	}
+	if changed {
+		t.Fatalf("expected changed=false for no-op update")
+	}
+	if !u.UpdatedAt.Equal(before) {
+		t.Fatalf("expected UpdatedAt unchanged on no-op update")
+	}
+
+	sameCPF := "529.982.247-25"
+	changed, err = u.ApplyUpdate(UpdateUserParams{CPF: &sameCPF})
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
+	}
+	if changed {
+		t.Fatalf("expected changed=false for equivalent CPF update")
+	}
+
+	samePhone := "11999999999"
+	changed, err = u.ApplyUpdate(UpdateUserParams{Phone: &samePhone})
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
+	}
+	if changed {
+		t.Fatalf("expected changed=false for equivalent phone update")
+	}
+
+	brt := time.FixedZone("BRT", -3*3600)
+	sameBirth := u.BirthDate.In(brt)
+	changed, err = u.ApplyUpdate(UpdateUserParams{BirthDate: &sameBirth})
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
+	}
+	if changed {
+		t.Fatalf("expected changed=false for equivalent birthDate update")
+	}
+
+	time.Sleep(2 * time.Millisecond)
+	newName := "Novo Nome"
+	changed, err = u.ApplyUpdate(UpdateUserParams{FullName: &newName})
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
+	}
+	if !changed {
+		t.Fatalf("expected changed=true")
+	}
+	if u.FullName != "Novo Nome" {
+		t.Fatalf("expected FullName to be updated")
+	}
+	if !u.UpdatedAt.After(before) {
+		t.Fatalf("expected UpdatedAt to move forward")
+	}
+}
+
+func TestUser_ApplyUpdate_RejectsInvalidAndDoesNotMutate(t *testing.T) {
+	birthDate := time.Now().Add(-24 * time.Hour)
+
+	u, err := NewUser(validParams(birthDate))
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
+	}
+
+	before := *u
+	invalidPhone := "   "
+	newName := "Nome Novo"
+
+	_, err = u.ApplyUpdate(UpdateUserParams{
+		FullName: &newName,
+		Phone:    &invalidPhone,
+	})
+	if err == nil {
+		t.Fatalf("expected error, got nil")
+	}
+	if !errors.Is(err, ErrInvalidPhone) {
+		t.Fatalf("expected %v, got %v", ErrInvalidPhone, err)
+	}
+	if u.FullName != before.FullName {
+		t.Fatalf("expected FullName unchanged on error")
+	}
+	if !u.UpdatedAt.Equal(before.UpdatedAt) {
+		t.Fatalf("expected UpdatedAt unchanged on error")
+	}
+}

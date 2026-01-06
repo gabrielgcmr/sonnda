@@ -77,6 +77,7 @@ func SetupRoutes(
 		{
 			me.GET("", userHandler.GetUser)
 			me.PUT("", userHandler.UpdateUser)
+			me.DELETE("", userHandler.HardDeleteUser)
 		}
 
 		//Pacientes

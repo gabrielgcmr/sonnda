@@ -85,19 +85,6 @@ func GetIdentity(c *gin.Context) (*identity.Identity, bool) {
 	return id, ok
 }
 
-func RequireIdentity(c *gin.Context) (*identity.Identity, bool) {
-	id, ok := GetIdentity(c)
-	if !ok {
-		httperrors.WriteError(c, &apperr.AppError{
-			Code:    apperr.AUTH_REQUIRED,
-			Message: "autenticação necessária",
-		})
-		c.Abort()
-		return nil, false
-	}
-	return id, true
-}
-
 func ActorFromCurrentUser(c *gin.Context) (userID string, at user.AccountType, ok bool) {
 	u, ok := GetCurrentUser(c)
 	if !ok || u == nil {

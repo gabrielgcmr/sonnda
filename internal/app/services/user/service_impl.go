@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"strings"
-	"time"
 
 	"sonnda-api/internal/app/apperr"
 
@@ -151,36 +150,17 @@ func (s *service) Update(ctx context.Context, input UserUpdateInput) (*user.User
 		return nil, ErrUserNotFound
 	}
 
-	if input.FullName != nil {
-		name := strings.TrimSpace(*input.FullName)
-		if name == "" {
-			return nil, mapUserDomainError(user.ErrInvalidFullName)
-		}
-		existingUser.FullName = name
+	changed, err := existingUser.ApplyUpdate(user.UpdateUserParams{
+		FullName:  input.FullName,
+		BirthDate: input.BirthDate,
+		CPF:       input.CPF,
+		Phone:     input.Phone,
+	})
+	if err != nil {
+		return nil, mapUserDomainError(err)
 	}
-
-	if input.BirthDate != nil {
-		birthDate := input.BirthDate.UTC()
-		if birthDate.IsZero() || birthDate.After(time.Now().UTC()) {
-			return nil, mapUserDomainError(user.ErrInvalidBirthDate)
-		}
-		existingUser.BirthDate = birthDate
-	}
-
-	if input.CPF != nil {
-		normalizedCPF := cleanDigits(*input.CPF)
-		if normalizedCPF == "" || len(normalizedCPF) != 11 {
-			return nil, mapUserDomainError(user.ErrInvalidCPF)
-		}
-		existingUser.CPF = normalizedCPF
-	}
-
-	if input.Phone != nil {
-		phone := strings.TrimSpace(*input.Phone)
-		if phone == "" {
-			return nil, mapUserDomainError(user.ErrInvalidPhone)
-		}
-		existingUser.Phone = phone
+	if !changed {
+		return existingUser, nil
 	}
 
 	if err := s.userRepo.Update(ctx, existingUser); err != nil {
@@ -235,18 +215,4 @@ func (s *service) SoftDelete(ctx context.Context, userID uuid.UUID) error {
 	}
 
 	return nil
-}
-
-func cleanDigits(s string) string {
-	if s == "" {
-		return ""
-	}
-	var b strings.Builder
-	b.Grow(len(s))
-	for _, r := range s {
-		if r >= '0' && r <= '9' {
-			b.WriteRune(r)
-		}
-	}
-	return b.String()
 }
