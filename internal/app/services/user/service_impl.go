@@ -13,6 +13,7 @@ import (
 	professionalsvc "sonnda-api/internal/app/services/professional"
 	"sonnda-api/internal/domain/model/user"
 	"sonnda-api/internal/domain/model/user/professional"
+	userrepo "sonnda-api/internal/infrastructure/persistence/repository/user"
 
 	"github.com/google/uuid"
 )
@@ -60,32 +61,13 @@ func (s *service) createUser(ctx context.Context, input UserRegisterInput) (*use
 		return nil, mapUserDomainError(err)
 	}
 
-	existingByEmail, err := s.userRepo.FindByEmail(ctx, newUser.Email)
-	if err != nil {
-		return nil, mapInfraError("userRepo.FindByEmail", err)
-	}
-	if existingByEmail != nil {
-		return nil, ErrEmailAlreadyExists
-	}
-
-	existingByCPF, err := s.userRepo.FindByCPF(ctx, newUser.CPF)
-	if err != nil {
-		return nil, mapInfraError("userRepo.FindByCPF", err)
-	}
-	if existingByCPF != nil {
-		return nil, ErrCPFAlreadyExists
-	}
-
-	existingByAuth, err := s.userRepo.FindByAuthIdentity(ctx, newUser.AuthProvider, newUser.AuthSubject)
-	if err != nil {
-		return nil, mapInfraError("userRepo.FindByAuthIdentity", err)
-	}
-	if existingByAuth != nil {
-		return nil, mapUserDomainError(user.ErrAuthIdentityAlreadyExists)
-	}
-
 	if err := s.userRepo.Save(ctx, newUser); err != nil {
-		return nil, mapInfraError("userRepo.Save", err)
+		switch {
+		case errors.Is(err, userrepo.ErrUserAlreadyExists):
+			return nil, apperr.Conflict("usuário já cadastrado")
+		default:
+			return nil, err
+		}
 	}
 
 	return newUser, nil
@@ -208,23 +190,48 @@ func (s *service) Update(ctx context.Context, input UserUpdateInput) (*user.User
 	return existingUser, nil
 }
 
+func mapInfraError(s string, err error) error {
+	panic("unimplemented")
+}
+
 func (s *service) Delete(ctx context.Context, userID uuid.UUID) error {
 	existing, err := s.userRepo.FindByID(ctx, userID)
 	if err != nil {
-		return mapInfraError("userRepo.FindByID", err)
+		return err
 	}
 	if existing == nil {
 		return ErrUserNotFound
 	}
 
-	if err := s.userRepo.SoftDelete(ctx, userID); err != nil {
+	if err := s.userRepo.Delete(ctx, userID); err != nil {
 		return err
 	}
 
-	if existing.AuthProvider == "firebase" && s.authSvc != nil {
-		if err := s.authSvc.DisableUser(ctx, existing.AuthSubject); err != nil {
-			return err
+	return nil
+}
+
+func (s *service) SoftDelete(ctx context.Context, userID uuid.UUID) error {
+	// 1) Carrega para validar existência (sem infra mapping)
+	existing, err := s.userRepo.FindByID(ctx, userID)
+	if err != nil {
+		return err
+	}
+	if existing == nil {
+		return ErrUserNotFound
+	}
+
+	// 2) Soft delete (idempotência: escolha A ou B)
+	if err := s.userRepo.SoftDelete(ctx, userID); err != nil {
+		// A) Estrito: se já estava deletado (ou não existe), retorna not found
+		// if errors.Is(err, userrepo.ErrNotFound) {
+		// 	return ErrUserNotFound
+		// }
+
+		// B) Idempotente (recomendado): se já estava deletado, considere sucesso
+		if errors.Is(err, userrepo.ErrNotFound) {
+			return nil
 		}
+		return err
 	}
 
 	return nil

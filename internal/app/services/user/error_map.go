@@ -3,7 +3,6 @@ package usersvc
 
 import (
 	"errors"
-	"fmt"
 
 	"sonnda-api/internal/app/apperr"
 	"sonnda-api/internal/domain/model/user"
@@ -11,9 +10,7 @@ import (
 )
 
 var (
-	ErrEmailAlreadyExists = errors.New("email already exists")
-	ErrCPFAlreadyExists   = errors.New("cpf already exists")
-	ErrUserNotFound       = errors.New("user not found")
+	ErrUserNotFound = errors.New("user not found")
 )
 
 func mapUserDomainError(err error) error {
@@ -27,18 +24,6 @@ func mapUserDomainError(err error) error {
 		errors.Is(err, user.ErrInvalidCPF),
 		errors.Is(err, user.ErrInvalidPhone):
 		return apperr.Validation("dados inválidos", apperr.Violation{Reason: err.Error()})
-
-	case errors.Is(err, ErrEmailAlreadyExists),
-		errors.Is(err, ErrCPFAlreadyExists),
-		errors.Is(err, user.ErrAuthIdentityAlreadyExists):
-		return apperr.Conflict("usuário já cadastrado")
-
-	case errors.Is(err, ErrUserNotFound):
-		return &apperr.AppError{
-			Code:    apperr.NOT_FOUND,
-			Message: "usuário não encontrado",
-			Cause:   err,
-		}
 
 	default:
 		return apperr.Internal("erro inesperado", err)
@@ -58,14 +43,5 @@ func mapProfessionalDomainError(err error) error {
 			Message: "erro inesperado",
 			Cause:   err,
 		}
-	}
-}
-
-func mapInfraError(msg string, err error) error {
-	// msg aqui é para contexto de log interno, não precisa vazar no HTTP.
-	return &apperr.AppError{
-		Code:    apperr.INFRA_DATABASE_ERROR,
-		Message: "falha técnica",
-		Cause:   fmt.Errorf("%s: %w", msg, err),
 	}
 }

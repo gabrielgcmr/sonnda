@@ -15,6 +15,7 @@ type Querier interface {
 	// Cria apenas a parte "profissional" (O ID vem do User já criado)
 	CreateProfessional(ctx context.Context, arg CreateProfessionalParams) (Professional, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	DeleteUser(ctx context.Context, id uuid.UUID) (int64, error)
 	FindUserByAuthIdentity(ctx context.Context, arg FindUserByAuthIdentityParams) (User, error)
 	FindUserByCPF(ctx context.Context, cpf string) (User, error)
 	FindUserByEmail(ctx context.Context, email string) (User, error)
@@ -25,6 +26,7 @@ type Querier interface {
 	// AQUI ESTÁ O TRUQUE: Fazemos JOIN para filtrar, mas retornamos dados do profissional
 	ListProfessionalsByName(ctx context.Context, arg ListProfessionalsByNameParams) ([]Professional, error)
 	SoftDeleteUser(ctx context.Context, id uuid.UUID) (int64, error)
+	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
 }
 
 var _ Querier = (*Queries)(nil)

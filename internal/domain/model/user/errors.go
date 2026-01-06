@@ -14,9 +14,4 @@ var (
 	ErrInvalidFullName     = errors.New("invalid full name")
 	ErrInvalidPhone        = errors.New("invalid phone")
 	ErrInvalidCPF          = errors.New("invalid cpf")
-	//Erros não pertencem ao pacote /domain/user?
-
-	ErrAuthIdentityAlreadyExists  = errors.New("auth identity already exists")
-	ErrAuthorizationForbidden     = errors.New("authorization forbidden")
-	ErrIdentityAlreadyLinkedError = errors.New("identity already linked to another user")
 )

@@ -52,7 +52,7 @@ func (r *UserRepository) Save(ctx context.Context, u *user.User) error {
 		AccountType:  string(u.AccountType),
 	})
 	if err != nil {
-		return err
+		return mapRepositoryError(err)
 	}
 
 	u.ID = row.ID
@@ -73,7 +73,24 @@ func (r *UserRepository) Save(ctx context.Context, u *user.User) error {
 // Delete implements [repositories.UserRepository].
 func (r *UserRepository) SoftDelete(ctx context.Context, id uuid.UUID) error {
 	_, err := r.queries.SoftDeleteUser(ctx, id)
-	return err
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrNotFound
+		}
+		return mapRepositoryError(err)
+	}
+	return nil
+}
+
+func (r *UserRepository) Delete(ctx context.Context, id uuid.UUID) error {
+	_, err := r.queries.DeleteUser(ctx, id)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrNotFound
+		}
+		return mapRepositoryError(err)
+	}
+	return nil
 }
 
 // FindByAuthIdentity implements [repositories.UserRepository].
@@ -86,7 +103,7 @@ func (r *UserRepository) FindByAuthIdentity(ctx context.Context, provider string
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
-		return nil, err
+		return nil, mapRepositoryError(err)
 	}
 
 	return &user.User{
@@ -111,7 +128,7 @@ func (r *UserRepository) FindByCPF(ctx context.Context, cpf string) (*user.User,
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
-		return nil, err
+		return nil, mapRepositoryError(err)
 	}
 
 	return &user.User{
@@ -131,12 +148,61 @@ func (r *UserRepository) FindByCPF(ctx context.Context, cpf string) (*user.User,
 
 // FindByID implements [repositories.UserRepository].
 func (r *UserRepository) FindByID(ctx context.Context, id uuid.UUID) (*user.User, error) {
-	panic("unimplemented")
+	row, err := r.queries.FindUserByID(ctx, id)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, mapRepositoryError(err)
+	}
+
+	return &user.User{
+		ID:           row.ID,
+		AuthProvider: row.AuthProvider,
+		AuthSubject:  row.AuthSubject,
+		Email:        row.Email,
+		FullName:     row.FullName,
+		BirthDate:    row.BirthDate.Time,
+		CPF:          row.Cpf,
+		Phone:        row.Phone,
+		AccountType:  user.AccountType(row.AccountType),
+		CreatedAt:    row.CreatedAt.Time,
+		UpdatedAt:    row.UpdatedAt.Time,
+	}, nil
 }
 
 // Update implements [repositories.UserRepository].
 func (r *UserRepository) Update(ctx context.Context, u *user.User) error {
-	panic("unimplemented")
+	if u == nil {
+		return errors.New("user is nil")
+	}
+
+	birthDate := u.BirthDate
+	row, err := r.queries.UpdateUser(ctx, usersqlc.UpdateUserParams{
+		ID:        u.ID,
+		Email:     u.Email,
+		FullName:  u.FullName,
+		BirthDate: helpers.FromNullableDateToPgDate(&birthDate),
+		Cpf:       u.CPF,
+		Phone:     u.Phone,
+	})
+	if err != nil {
+		return mapRepositoryError(err)
+	}
+
+	u.ID = row.ID
+	u.AuthProvider = row.AuthProvider
+	u.AuthSubject = row.AuthSubject
+	u.Email = row.Email
+	u.FullName = row.FullName
+	u.BirthDate = row.BirthDate.Time
+	u.CPF = row.Cpf
+	u.Phone = row.Phone
+	u.AccountType = user.AccountType(row.AccountType)
+	u.CreatedAt = row.CreatedAt.Time
+	u.UpdatedAt = row.UpdatedAt.Time
+
+	return nil
 }
 
 func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*user.User, error) {
@@ -145,7 +211,7 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*user.U
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
-		return nil, err
+		return nil, mapRepositoryError(err)
 	}
 
 	return &user.User{

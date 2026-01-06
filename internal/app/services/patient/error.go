@@ -7,13 +7,16 @@ import (
 	"sonnda-api/internal/app/apperr"
 	"sonnda-api/internal/domain/model/demographics"
 	"sonnda-api/internal/domain/model/patient"
-	"sonnda-api/internal/domain/model/user"
+)
+
+var (
+	ErrAuthorizationForbidden = errors.New("authorization forbidden")
 )
 
 func mapPatientDomainError(err error) error {
 	switch {
 	// authorization
-	case errors.Is(err, user.ErrAuthorizationForbidden):
+	case errors.Is(err, ErrAuthorizationForbidden):
 		return &apperr.AppError{
 			Code:    apperr.ACCESS_DENIED,
 			Message: "acesso negado",

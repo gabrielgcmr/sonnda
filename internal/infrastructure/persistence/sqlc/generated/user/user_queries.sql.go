@@ -109,6 +109,19 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 	return i, err
 }
 
+const deleteUser = `-- name: DeleteUser :execrows
+DELETE FROM users
+WHERE id = $1
+`
+
+func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteUser, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const findUserByAuthIdentity = `-- name: FindUserByAuthIdentity :one
 SELECT id, auth_provider, auth_subject, email, full_name, birth_date, cpf, phone, account_type, created_at, updated_at, deleted_at
 FROM users
@@ -361,4 +374,54 @@ func (q *Queries) SoftDeleteUser(ctx context.Context, id uuid.UUID) (int64, erro
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const updateUser = `-- name: UpdateUser :one
+UPDATE users
+SET 
+  email = $2,
+  full_name = $3,
+  birth_date = $4,
+  cpf = $5,
+  phone = $6,
+  updated_at = now()
+WHERE id = $1
+  AND deleted_at IS NULL
+RETURNING id, auth_provider, auth_subject, email, full_name, birth_date, cpf, phone, account_type, created_at, updated_at, deleted_at
+`
+
+type UpdateUserParams struct {
+	ID        uuid.UUID   `json:"id"`
+	Email     string      `json:"email"`
+	FullName  string      `json:"full_name"`
+	BirthDate pgtype.Date `json:"birth_date"`
+	Cpf       string      `json:"cpf"`
+	Phone     string      `json:"phone"`
+}
+
+func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
+	row := q.db.QueryRow(ctx, updateUser,
+		arg.ID,
+		arg.Email,
+		arg.FullName,
+		arg.BirthDate,
+		arg.Cpf,
+		arg.Phone,
+	)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.AuthProvider,
+		&i.AuthSubject,
+		&i.Email,
+		&i.FullName,
+		&i.BirthDate,
+		&i.Cpf,
+		&i.Phone,
+		&i.AccountType,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
 }

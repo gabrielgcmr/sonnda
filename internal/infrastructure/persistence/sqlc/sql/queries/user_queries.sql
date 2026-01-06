@@ -34,11 +34,30 @@ WHERE cpf = $1
   AND deleted_at IS NULL
 LIMIT 1;
 
--- name: SoftDeleteUser :execrows
+-- name: SoftDeleteUser :one
 UPDATE users
 SET deleted_at = now()
 WHERE id = $1
-  AND deleted_at IS NULL;
+  AND deleted_at IS NULL
+RETURNING id;
+
+-- name: DeleteUser :one
+DELETE FROM users
+WHERE id = $1
+RETURNING id;
+
+-- name: UpdateUser :one
+UPDATE users
+SET 
+  email = $2,
+  full_name = $3,
+  birth_date = $4,
+  cpf = $5,
+  phone = $6,
+  updated_at = now()
+WHERE id = $1
+  AND deleted_at IS NULL
+RETURNING *;
 
 --Profissionais
 
