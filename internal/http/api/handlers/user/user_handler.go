@@ -48,7 +48,7 @@ type ProfessionalRequestData struct {
 }
 type UpdateUserRequest struct {
 	FullName  *string `json:"full_name,omitempty"`
-	BirthDate *string `json:"birth_date,omitempty"`
+	BirthDate *string `json:"birth_date,omitempty" binding:"required,datetime=2006-01-02"`
 	CPF       *string `json:"cpf,omitempty"`
 	Phone     *string `json:"phone,omitempty"`
 }
@@ -72,26 +72,19 @@ func (h *UserHandler) Register(c *gin.Context) {
 		httperrors.WriteError(c, err)
 		return
 	}
-	// 4) Dispatcher / role (Interface)
-	accountType, err := user.ParseAccountType(req.AccountType)
-	if err != nil {
-		httperrors.WriteError(c, apperr.Validation("tipo de conta inválido",
-			apperr.Violation{
-				Field:  "account_type",
-				Reason: "invalid_value",
-			}))
-		return
-	}
+	// 3. Parse de campos que são "domínio"
+	// 3.1 AccountType já está validado pelo binding oneof
+	accountType := user.AccountType(req.AccountType).Normalize()
 
-	// 5) Parse de campos que são “domínio” (você pode mover isso pro service depois)
+	// BirthDate format já foi validado pelo binding datetime
 	birthDate, err := common.ParseBirthDate(req.BirthDate)
 	if err != nil {
-		// O ParseBirthDate já retorna erro com %w (shared.ErrInvalidBirthDate),
-		// então aqui basta traduzir para contrato.
+		// Falha de conversão (muito rara, pois formato foi validado)
 		httperrors.WriteError(c, apperr.Validation("data de nascimento inválida",
 			apperr.Violation{
 				Field:  "birth_date",
-				Reason: "invalid_format"}))
+				Reason: "invalid_format",
+			}))
 		return
 	}
 
@@ -107,17 +100,7 @@ func (h *UserHandler) Register(c *gin.Context) {
 	}
 
 	if accountType == user.AccountTypeProfessional {
-		// Safe-check (mesmo que binder valide)
-		if req.Professional == nil {
-			httperrors.WriteError(c, apperr.Validation("dados profissionais são obrigatórios"))
-			return
-		}
-
-		kind := professional.Kind(strings.ToLower(strings.TrimSpace(req.Professional.Kind))).Normalize()
-		if !kind.IsValid() {
-			httperrors.WriteError(c, apperr.Validation("tipo de profissional inválido"))
-			return
-		}
+		kind := professional.Kind(req.Professional.Kind).Normalize()
 
 		input.Professional = &usersvc.ProfessionalRegisterInput{
 			Kind:               kind,
@@ -185,15 +168,9 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 	}
 
 	if req.BirthDate != nil {
-		parsed, err := common.ParseBirthDate(*req.BirthDate)
-		if err != nil {
-			httperrors.WriteError(c, &apperr.AppError{
-				Code:    apperr.VALIDATION_FAILED,
-				Message: "data de nascimento inválida",
-				Cause:   err,
-			})
-			return
-		}
+		// BirthDate format já foi validado pelo binding datetime
+		// Apenas converter string → time.Time
+		parsed, _ := common.ParseBirthDate(*req.BirthDate)
 		input.BirthDate = &parsed
 	}
 

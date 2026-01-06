@@ -58,7 +58,6 @@ This project uses a **centralized error contract** based on `AppError`.
   - Handled by Recovery middleware with stacktrace.
 
 ## Go
-- Run `gofmt` on Go files you change.
 - Keep error handling explicit and consistent with nearby code.
 - Add or update tests when behavior changes.
 - 

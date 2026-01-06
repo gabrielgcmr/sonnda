@@ -20,10 +20,11 @@ func WriteError(c *gin.Context, err error) {
 	}
 
 	status, resp := ToHTTP(err)
+	level := apperr.LogLevelOf(err)
 
 	c.Set("error_code", string(resp.Code))
 	c.Set("http_status", status)
-	c.Set("error_log_level", apperr.LogLevelOf(err)) // slog.Level
+	c.Set("error_log_level", level) // slog.Level
 
 	log := applog.FromContext(c.Request.Context())
 
@@ -38,8 +39,8 @@ func WriteError(c *gin.Context, err error) {
 		attrs = append(attrs, slog.Any("err", err))
 	}
 
-	level := apperr.LogLevelOf(err)
-	if status >= 500 {
+	// Log quando level >= Warn (429, 413, etc.) OU status >= 500
+	if level >= slog.LevelWarn || status >= 500 {
 		log.Log(c.Request.Context(), level, "handler_error", attrs...)
 	}
 
