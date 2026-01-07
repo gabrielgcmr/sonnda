@@ -13,7 +13,6 @@ import (
 	"sonnda-api/internal/app/interfaces/repositories"
 	applog "sonnda-api/internal/app/observability"
 	"sonnda-api/internal/domain/model/medicalrecord/labs"
-	"sonnda-api/internal/domain/model/patient"
 
 	"github.com/google/uuid"
 )
@@ -82,7 +81,7 @@ func (s *service) List(ctx context.Context, patientID uuid.UUID, limit, offset i
 		return nil, err
 	}
 	if p == nil {
-		return nil, patient.ErrPatientNotFound
+		return nil, ErrPatientNotFound
 	}
 
 	reports, err := s.labsRepo.ListLabs(ctx, p.ID, limit, offset)
@@ -140,7 +139,7 @@ func (s *service) ListFull(ctx context.Context, patientID uuid.UUID, limit, offs
 		return nil, err
 	}
 	if p == nil {
-		return nil, patient.ErrPatientNotFound
+		return nil, ErrPatientNotFound
 	}
 
 	headers, err := s.labsRepo.ListLabs(ctx, p.ID, limit, offset)

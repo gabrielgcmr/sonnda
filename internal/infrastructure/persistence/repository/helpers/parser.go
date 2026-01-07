@@ -125,15 +125,12 @@ func FromNullableUUIDToPgUUID(id *uuid.UUID) pgtype.UUID {
 	}
 }
 
-func FromPgUUIDToNullableUUID(u pgtype.UUID) (*uuid.UUID, error) {
+func FromPgUUIDToNullableUUID(u pgtype.UUID) *uuid.UUID {
 	if !u.Valid {
-		return nil, nil
+		return nil
 	}
-	parsed, err := uuid.FromBytes(u.Bytes[:])
-	if err != nil {
-		return nil, err
-	}
-	return &parsed, nil
+	parsed := uuid.UUID(u.Bytes)
+	return &parsed
 }
 
 func FromNullableUUIDToPgText(id *uuid.UUID) pgtype.Text {

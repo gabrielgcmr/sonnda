@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"sonnda-api/internal/app/apperr"
-	"sonnda-api/internal/domain/model/user/professional"
+	"sonnda-api/internal/domain/model/professional"
 )
 
 func mapDomainError(err error) error {

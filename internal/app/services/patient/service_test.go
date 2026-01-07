@@ -96,7 +96,7 @@ func TestService_Create_CPFAlreadyExists(t *testing.T) {
 	if ae.Code != apperr.RESOURCE_ALREADY_EXISTS {
 		t.Fatalf("expected code %s, got %s", apperr.RESOURCE_ALREADY_EXISTS, ae.Code)
 	}
-	if !errors.Is(err, patient.ErrCPFAlreadyExists) {
+	if !errors.Is(err, ErrCPFAlreadyExists) {
 		t.Fatalf("expected ErrCPFAlreadyExists in chain, got %v", err)
 	}
 }
@@ -142,7 +142,7 @@ func TestService_GetByID_NotFound(t *testing.T) {
 	if ae.Code != apperr.NOT_FOUND {
 		t.Fatalf("expected code %s, got %s", apperr.NOT_FOUND, ae.Code)
 	}
-	if !errors.Is(err, patient.ErrPatientNotFound) {
+	if !errors.Is(err, ErrPatientNotFound) {
 		t.Fatalf("expected ErrPatientNotFound in chain, got %v", err)
 	}
 }

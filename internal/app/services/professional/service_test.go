@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"sonnda-api/internal/app/apperr"
-	"sonnda-api/internal/domain/model/user/professional"
+	"sonnda-api/internal/domain/model/professional"
 
 	"github.com/google/uuid"
 )
@@ -25,6 +25,11 @@ func (r *fakeRepo) Update(ctx context.Context, profile *professional.Professiona
 	panic("unused")
 }
 func (r *fakeRepo) Delete(ctx context.Context, id uuid.UUID) error { return r.deleteErr }
+
+func (r *fakeRepo) SoftDelete(ctx context.Context, id uuid.UUID) error {
+	panic("unused")
+}
+
 func (r *fakeRepo) FindByID(ctx context.Context, id uuid.UUID) (*professional.Professional, error) {
 	return r.findRes, r.findErr
 }

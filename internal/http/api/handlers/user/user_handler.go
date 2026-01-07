@@ -2,7 +2,6 @@ package user
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 
@@ -10,8 +9,8 @@ import (
 
 	"sonnda-api/internal/app/interfaces/repositories"
 	usersvc "sonnda-api/internal/app/services/user"
+	"sonnda-api/internal/domain/model/professional"
 	"sonnda-api/internal/domain/model/user"
-	"sonnda-api/internal/domain/model/user/professional"
 	"sonnda-api/internal/http/api/handlers/common"
 	httperrors "sonnda-api/internal/http/errors"
 	"sonnda-api/internal/http/middleware"
@@ -52,11 +51,6 @@ type UpdateUserRequest struct {
 }
 
 func (h *UserHandler) Register(c *gin.Context) {
-	// 0) Wiring safety
-	if h.svc == nil {
-		httperrors.WriteError(c, apperr.Internal("serviço indisponível", nil))
-		return
-	}
 
 	// 1. Auth (Infra)
 	identity, ok := middleware.GetIdentity(c)
@@ -129,12 +123,6 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 }
 
 func (h *UserHandler) UpdateUser(c *gin.Context) {
-	// 0) Wiring safety
-	if h.svc == nil {
-		httperrors.WriteError(c, apperr.Internal("serviço indisponível", nil))
-		return
-	}
-
 	currentUser, ok := middleware.GetCurrentUser(c)
 	if !ok {
 		httperrors.WriteError(c, apperr.Unauthorized("autenticação necessária"))
@@ -151,26 +139,11 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 		UserID: currentUser.ID,
 	}
 
-	if req.FullName != nil {
-		name := strings.TrimSpace(*req.FullName)
-		input.FullName = &name
-	}
-
 	if req.BirthDate != nil {
 		// BirthDate format já foi validado pelo binding datetime
 		// Apenas converter string → time.Time
 		parsed, _ := common.ParseBirthDate(*req.BirthDate)
 		input.BirthDate = &parsed
-	}
-
-	if req.CPF != nil {
-		cpf := strings.TrimSpace(*req.CPF)
-		input.CPF = &cpf
-	}
-
-	if req.Phone != nil {
-		phone := strings.TrimSpace(*req.Phone)
-		input.Phone = &phone
 	}
 
 	updated, err := h.svc.Update(c.Request.Context(), input)

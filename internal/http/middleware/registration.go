@@ -32,10 +32,7 @@ func (m *RegistrationMiddleware) RequireRegisteredUser() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		id, ok := GetIdentity(ctx)
 		if !ok {
-			httperrors.WriteError(ctx, &apperr.AppError{
-				Code:    apperr.AUTH_REQUIRED,
-				Message: "autenticação necessária",
-			})
+			httperrors.WriteError(ctx, apperr.Unauthorized("autenticação necessária"))
 			ctx.Abort()
 			return
 		}

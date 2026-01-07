@@ -8,128 +8,165 @@ package professionalsqlc
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const deleteProfessionalProfile = `-- name: DeleteProfessionalProfile :execrows
-DELETE FROM professional_profiles
-WHERE user_id = $1
+const createProfessional = `-- name: CreateProfessional :one
+
+INSERT INTO professionals (
+  user_id, kind, registration_number, registration_issuer, registration_state, status
+) VALUES (
+  $1, $2, $3, $4, $5, $6
+)
+RETURNING user_id, kind, registration_number, registration_issuer, registration_state, status, verified_at, deleted_at, created_at, updated_at
 `
 
-func (q *Queries) DeleteProfessionalProfile(ctx context.Context, userID string) (int64, error) {
-	result, err := q.db.Exec(ctx, deleteProfessionalProfile, userID)
-	if err != nil {
-		return 0, err
-	}
-	return result.RowsAffected(), nil
+type CreateProfessionalParams struct {
+	UserID             uuid.UUID   `json:"user_id"`
+	Kind               string      `json:"kind"`
+	RegistrationNumber string      `json:"registration_number"`
+	RegistrationIssuer string      `json:"registration_issuer"`
+	RegistrationState  pgtype.Text `json:"registration_state"`
+	Status             string      `json:"status"`
 }
 
-const findProfessionalProfileByID = `-- name: FindProfessionalProfileByID :one
-SELECT user_id, registration_number, registration_issuer, registration_state, status, verified_at, created_at, updated_at
-FROM professional_profiles
-WHERE user_id = $1
+// Profissionais
+// Cria apenas a parte "profissional" (O ID vem do User já criado)
+func (q *Queries) CreateProfessional(ctx context.Context, arg CreateProfessionalParams) (Professional, error) {
+	row := q.db.QueryRow(ctx, createProfessional,
+		arg.UserID,
+		arg.Kind,
+		arg.RegistrationNumber,
+		arg.RegistrationIssuer,
+		arg.RegistrationState,
+		arg.Status,
+	)
+	var i Professional
+	err := row.Scan(
+		&i.UserID,
+		&i.Kind,
+		&i.RegistrationNumber,
+		&i.RegistrationIssuer,
+		&i.RegistrationState,
+		&i.Status,
+		&i.VerifiedAt,
+		&i.DeletedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getFullProfessionalDetails = `-- name: GetFullProfessionalDetails :one
+SELECT 
+    p.user_id, p.kind, p.registration_number, p.registration_issuer, p.registration_state, p.status, p.verified_at, p.deleted_at, p.created_at, p.updated_at,
+    u.full_name,
+    u.email,
+    u.phone
+FROM professionals p
+JOIN users u ON u.id = p.user_id
+WHERE p.user_id = $1 AND p.deleted_at IS NULL
 LIMIT 1
 `
 
-func (q *Queries) FindProfessionalProfileByID(ctx context.Context, userID string) (ProfessionalProfile, error) {
-	row := q.db.QueryRow(ctx, findProfessionalProfileByID, userID)
-	var i ProfessionalProfile
+type GetFullProfessionalDetailsRow struct {
+	UserID             uuid.UUID          `json:"user_id"`
+	Kind               string             `json:"kind"`
+	RegistrationNumber string             `json:"registration_number"`
+	RegistrationIssuer string             `json:"registration_issuer"`
+	RegistrationState  pgtype.Text        `json:"registration_state"`
+	Status             string             `json:"status"`
+	VerifiedAt         pgtype.Timestamptz `json:"verified_at"`
+	DeletedAt          pgtype.Timestamptz `json:"deleted_at"`
+	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+	FullName           string             `json:"full_name"`
+	Email              string             `json:"email"`
+	Phone              string             `json:"phone"`
+}
+
+// Query especial para telas de perfil: Retorna TUDO junto
+func (q *Queries) GetFullProfessionalDetails(ctx context.Context, userID uuid.UUID) (GetFullProfessionalDetailsRow, error) {
+	row := q.db.QueryRow(ctx, getFullProfessionalDetails, userID)
+	var i GetFullProfessionalDetailsRow
 	err := row.Scan(
 		&i.UserID,
+		&i.Kind,
 		&i.RegistrationNumber,
 		&i.RegistrationIssuer,
 		&i.RegistrationState,
 		&i.Status,
 		&i.VerifiedAt,
+		&i.DeletedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.FullName,
+		&i.Email,
+		&i.Phone,
 	)
 	return i, err
 }
 
-const findProfessionalProfileByRegistration = `-- name: FindProfessionalProfileByRegistration :one
-SELECT user_id, registration_number, registration_issuer, registration_state, status, verified_at, created_at, updated_at
-FROM professional_profiles
-WHERE registration_number = $1
-  AND registration_issuer = $2
+const getProfessionalByUserID = `-- name: GetProfessionalByUserID :one
+SELECT user_id, kind, registration_number, registration_issuer, registration_state, status, verified_at, deleted_at, created_at, updated_at 
+FROM professionals
+WHERE user_id = $1 AND deleted_at IS NULL
 LIMIT 1
 `
 
-type FindProfessionalProfileByRegistrationParams struct {
-	RegistrationNumber string `json:"registration_number"`
-	RegistrationIssuer string `json:"registration_issuer"`
-}
-
-func (q *Queries) FindProfessionalProfileByRegistration(ctx context.Context, arg FindProfessionalProfileByRegistrationParams) (ProfessionalProfile, error) {
-	row := q.db.QueryRow(ctx, findProfessionalProfileByRegistration, arg.RegistrationNumber, arg.RegistrationIssuer)
-	var i ProfessionalProfile
+func (q *Queries) GetProfessionalByUserID(ctx context.Context, userID uuid.UUID) (Professional, error) {
+	row := q.db.QueryRow(ctx, getProfessionalByUserID, userID)
+	var i Professional
 	err := row.Scan(
 		&i.UserID,
+		&i.Kind,
 		&i.RegistrationNumber,
 		&i.RegistrationIssuer,
 		&i.RegistrationState,
 		&i.Status,
 		&i.VerifiedAt,
+		&i.DeletedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
 	return i, err
 }
 
-const findProfessionalProfileByUserID = `-- name: FindProfessionalProfileByUserID :one
-SELECT user_id, registration_number, registration_issuer, registration_state, status, verified_at, created_at, updated_at
-FROM professional_profiles
-WHERE user_id = $1
-`
-
-func (q *Queries) FindProfessionalProfileByUserID(ctx context.Context, userID string) (ProfessionalProfile, error) {
-	row := q.db.QueryRow(ctx, findProfessionalProfileByUserID, userID)
-	var i ProfessionalProfile
-	err := row.Scan(
-		&i.UserID,
-		&i.RegistrationNumber,
-		&i.RegistrationIssuer,
-		&i.RegistrationState,
-		&i.Status,
-		&i.VerifiedAt,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const listProfessionalProfilesByName = `-- name: ListProfessionalProfilesByName :many
-SELECT p.user_id, p.registration_number, p.registration_issuer, p.registration_state, p.status, p.verified_at, p.created_at, p.updated_at
-FROM professional_profiles p
+const listProfessionalsByName = `-- name: ListProfessionalsByName :many
+SELECT p.user_id, p.kind, p.registration_number, p.registration_issuer, p.registration_state, p.status, p.verified_at, p.deleted_at, p.created_at, p.updated_at
+FROM professionals p
 JOIN users u ON u.id = p.user_id
 WHERE u.full_name ILIKE '%' || $3 || '%'
-ORDER BY u.full_name ASC
-LIMIT $1
-OFFSET $2
+  AND p.deleted_at IS NULL
+LIMIT $1 OFFSET $2
 `
 
-type ListProfessionalProfilesByNameParams struct {
+type ListProfessionalsByNameParams struct {
 	Limit  int32       `json:"limit"`
 	Offset int32       `json:"offset"`
 	Name   pgtype.Text `json:"name"`
 }
 
-func (q *Queries) ListProfessionalProfilesByName(ctx context.Context, arg ListProfessionalProfilesByNameParams) ([]ProfessionalProfile, error) {
-	rows, err := q.db.Query(ctx, listProfessionalProfilesByName, arg.Limit, arg.Offset, arg.Name)
+// AQUI ESTÁ O TRUQUE: Fazemos JOIN para filtrar, mas retornamos dados do profissional
+func (q *Queries) ListProfessionalsByName(ctx context.Context, arg ListProfessionalsByNameParams) ([]Professional, error) {
+	rows, err := q.db.Query(ctx, listProfessionalsByName, arg.Limit, arg.Offset, arg.Name)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []ProfessionalProfile
+	var items []Professional
 	for rows.Next() {
-		var i ProfessionalProfile
+		var i Professional
 		if err := rows.Scan(
 			&i.UserID,
+			&i.Kind,
 			&i.RegistrationNumber,
 			&i.RegistrationIssuer,
 			&i.RegistrationState,
 			&i.Status,
 			&i.VerifiedAt,
+			&i.DeletedAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -141,103 +178,4 @@ func (q *Queries) ListProfessionalProfilesByName(ctx context.Context, arg ListPr
 		return nil, err
 	}
 	return items, nil
-}
-
-const updateProfessionalProfile = `-- name: UpdateProfessionalProfile :one
-UPDATE professional_profiles
-SET
-    registration_number = $2,
-    registration_issuer = $3,
-    registration_state = $4,
-    status = $5,
-    verified_at = $6,
-    updated_at = now()
-WHERE user_id = $1
-RETURNING user_id, registration_number, registration_issuer, registration_state, status, verified_at, created_at, updated_at
-`
-
-type UpdateProfessionalProfileParams struct {
-	UserID             string             `json:"user_id"`
-	RegistrationNumber string             `json:"registration_number"`
-	RegistrationIssuer string             `json:"registration_issuer"`
-	RegistrationState  pgtype.Text        `json:"registration_state"`
-	Status             string             `json:"status"`
-	VerifiedAt         pgtype.Timestamptz `json:"verified_at"`
-}
-
-func (q *Queries) UpdateProfessionalProfile(ctx context.Context, arg UpdateProfessionalProfileParams) (ProfessionalProfile, error) {
-	row := q.db.QueryRow(ctx, updateProfessionalProfile,
-		arg.UserID,
-		arg.RegistrationNumber,
-		arg.RegistrationIssuer,
-		arg.RegistrationState,
-		arg.Status,
-		arg.VerifiedAt,
-	)
-	var i ProfessionalProfile
-	err := row.Scan(
-		&i.UserID,
-		&i.RegistrationNumber,
-		&i.RegistrationIssuer,
-		&i.RegistrationState,
-		&i.Status,
-		&i.VerifiedAt,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const upsertProfessionalProfile = `-- name: UpsertProfessionalProfile :one
-
-INSERT INTO professional_profiles (
-    user_id,
-    registration_number,
-    registration_issuer,
-    registration_state,
-    status,
-    verified_at
-) VALUES ($1, $2, $3, $4, $5, $6)
-ON CONFLICT (user_id)
-DO UPDATE SET
-    registration_number = EXCLUDED.registration_number,
-    registration_issuer = EXCLUDED.registration_issuer,
-    registration_state = EXCLUDED.registration_state,
-    status = EXCLUDED.status,
-    verified_at = EXCLUDED.verified_at,
-    updated_at = now()
-RETURNING user_id, registration_number, registration_issuer, registration_state, status, verified_at, created_at, updated_at
-`
-
-type UpsertProfessionalProfileParams struct {
-	UserID             string             `json:"user_id"`
-	RegistrationNumber string             `json:"registration_number"`
-	RegistrationIssuer string             `json:"registration_issuer"`
-	RegistrationState  pgtype.Text        `json:"registration_state"`
-	Status             string             `json:"status"`
-	VerifiedAt         pgtype.Timestamptz `json:"verified_at"`
-}
-
-// internal/adapters/outbound/database/sqlc/professional/queries.sql
-func (q *Queries) UpsertProfessionalProfile(ctx context.Context, arg UpsertProfessionalProfileParams) (ProfessionalProfile, error) {
-	row := q.db.QueryRow(ctx, upsertProfessionalProfile,
-		arg.UserID,
-		arg.RegistrationNumber,
-		arg.RegistrationIssuer,
-		arg.RegistrationState,
-		arg.Status,
-		arg.VerifiedAt,
-	)
-	var i ProfessionalProfile
-	err := row.Scan(
-		&i.UserID,
-		&i.RegistrationNumber,
-		&i.RegistrationIssuer,
-		&i.RegistrationState,
-		&i.Status,
-		&i.VerifiedAt,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
 }

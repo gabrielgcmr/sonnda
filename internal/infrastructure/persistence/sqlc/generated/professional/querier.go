@@ -6,17 +6,19 @@ package professionalsqlc
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
 
 type Querier interface {
-	DeleteProfessionalProfile(ctx context.Context, userID string) (int64, error)
-	FindProfessionalProfileByID(ctx context.Context, userID string) (ProfessionalProfile, error)
-	FindProfessionalProfileByRegistration(ctx context.Context, arg FindProfessionalProfileByRegistrationParams) (ProfessionalProfile, error)
-	FindProfessionalProfileByUserID(ctx context.Context, userID string) (ProfessionalProfile, error)
-	ListProfessionalProfilesByName(ctx context.Context, arg ListProfessionalProfilesByNameParams) ([]ProfessionalProfile, error)
-	UpdateProfessionalProfile(ctx context.Context, arg UpdateProfessionalProfileParams) (ProfessionalProfile, error)
-	// internal/adapters/outbound/database/sqlc/professional/queries.sql
-	UpsertProfessionalProfile(ctx context.Context, arg UpsertProfessionalProfileParams) (ProfessionalProfile, error)
+	// Profissionais
+	// Cria apenas a parte "profissional" (O ID vem do User já criado)
+	CreateProfessional(ctx context.Context, arg CreateProfessionalParams) (Professional, error)
+	// Query especial para telas de perfil: Retorna TUDO junto
+	GetFullProfessionalDetails(ctx context.Context, userID uuid.UUID) (GetFullProfessionalDetailsRow, error)
+	GetProfessionalByUserID(ctx context.Context, userID uuid.UUID) (Professional, error)
+	// AQUI ESTÁ O TRUQUE: Fazemos JOIN para filtrar, mas retornamos dados do profissional
+	ListProfessionalsByName(ctx context.Context, arg ListProfessionalsByNameParams) ([]Professional, error)
 }
 
 var _ Querier = (*Queries)(nil)

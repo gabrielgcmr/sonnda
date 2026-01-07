@@ -1,7 +1,7 @@
 package rbac
 
 import (
-	"sonnda-api/internal/domain/model/user/professional"
+	"sonnda-api/internal/domain/model/professional"
 )
 
 type RbacPolicy struct{}

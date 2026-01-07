@@ -12,75 +12,30 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const createProfessional = `-- name: CreateProfessional :one
-
-INSERT INTO professionals (
-  user_id, kind, registration_number, registration_issuer, registration_state, status
-) VALUES (
-  $1, $2, $3, $4, $5, $6
-)
-RETURNING user_id, kind, registration_number, registration_issuer, registration_state, status, verified_at, deleted_at, created_at, updated_at
-`
-
-type CreateProfessionalParams struct {
-	UserID             uuid.UUID   `json:"user_id"`
-	Kind               string      `json:"kind"`
-	RegistrationNumber string      `json:"registration_number"`
-	RegistrationIssuer string      `json:"registration_issuer"`
-	RegistrationState  pgtype.Text `json:"registration_state"`
-	Status             string      `json:"status"`
-}
-
-// Profissionais
-// Cria apenas a parte "profissional" (O ID vem do User já criado)
-func (q *Queries) CreateProfessional(ctx context.Context, arg CreateProfessionalParams) (Professional, error) {
-	row := q.db.QueryRow(ctx, createProfessional,
-		arg.UserID,
-		arg.Kind,
-		arg.RegistrationNumber,
-		arg.RegistrationIssuer,
-		arg.RegistrationState,
-		arg.Status,
-	)
-	var i Professional
-	err := row.Scan(
-		&i.UserID,
-		&i.Kind,
-		&i.RegistrationNumber,
-		&i.RegistrationIssuer,
-		&i.RegistrationState,
-		&i.Status,
-		&i.VerifiedAt,
-		&i.DeletedAt,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const createUser = `-- name: CreateUser :one
+const createUser = `-- name: CreateUser :exec
 INSERT INTO users (
-  id, auth_provider, auth_subject, email, full_name, birth_date, cpf, phone, account_type
+  id, auth_provider, auth_subject, email, full_name, birth_date, cpf, phone, account_type, created_at, updated_at
 ) VALUES (
-  $1, $2, $3, $4, $5, $6, $7, $8, $9
+  $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
 )
-RETURNING id, auth_provider, auth_subject, email, full_name, birth_date, cpf, phone, account_type, created_at, updated_at, deleted_at
 `
 
 type CreateUserParams struct {
-	ID           uuid.UUID   `json:"id"`
-	AuthProvider string      `json:"auth_provider"`
-	AuthSubject  string      `json:"auth_subject"`
-	Email        string      `json:"email"`
-	FullName     string      `json:"full_name"`
-	BirthDate    pgtype.Date `json:"birth_date"`
-	Cpf          string      `json:"cpf"`
-	Phone        string      `json:"phone"`
-	AccountType  string      `json:"account_type"`
+	ID           uuid.UUID          `json:"id"`
+	AuthProvider string             `json:"auth_provider"`
+	AuthSubject  string             `json:"auth_subject"`
+	Email        string             `json:"email"`
+	FullName     string             `json:"full_name"`
+	BirthDate    pgtype.Date        `json:"birth_date"`
+	Cpf          string             `json:"cpf"`
+	Phone        string             `json:"phone"`
+	AccountType  string             `json:"account_type"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
 }
 
-func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRow(ctx, createUser,
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
+	_, err := q.db.Exec(ctx, createUser,
 		arg.ID,
 		arg.AuthProvider,
 		arg.AuthSubject,
@@ -90,23 +45,10 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		arg.Cpf,
 		arg.Phone,
 		arg.AccountType,
+		arg.CreatedAt,
+		arg.UpdatedAt,
 	)
-	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.AuthProvider,
-		&i.AuthSubject,
-		&i.Email,
-		&i.FullName,
-		&i.BirthDate,
-		&i.Cpf,
-		&i.Phone,
-		&i.AccountType,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.DeletedAt,
-	)
-	return i, err
+	return err
 }
 
 const deleteUser = `-- name: DeleteUser :execrows
@@ -239,131 +181,10 @@ func (q *Queries) FindUserByID(ctx context.Context, id uuid.UUID) (User, error) 
 	return i, err
 }
 
-const getFullProfessionalDetails = `-- name: GetFullProfessionalDetails :one
-SELECT 
-    p.user_id, p.kind, p.registration_number, p.registration_issuer, p.registration_state, p.status, p.verified_at, p.deleted_at, p.created_at, p.updated_at,
-    u.full_name,
-    u.email,
-    u.phone
-FROM professionals p
-JOIN users u ON u.id = p.user_id
-WHERE p.user_id = $1 AND p.deleted_at IS NULL
-LIMIT 1
-`
-
-type GetFullProfessionalDetailsRow struct {
-	UserID             uuid.UUID          `json:"user_id"`
-	Kind               string             `json:"kind"`
-	RegistrationNumber string             `json:"registration_number"`
-	RegistrationIssuer string             `json:"registration_issuer"`
-	RegistrationState  pgtype.Text        `json:"registration_state"`
-	Status             string             `json:"status"`
-	VerifiedAt         pgtype.Timestamptz `json:"verified_at"`
-	DeletedAt          pgtype.Timestamptz `json:"deleted_at"`
-	CreatedAt          pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
-	FullName           string             `json:"full_name"`
-	Email              string             `json:"email"`
-	Phone              string             `json:"phone"`
-}
-
-// Query especial para telas de perfil: Retorna TUDO junto
-func (q *Queries) GetFullProfessionalDetails(ctx context.Context, userID uuid.UUID) (GetFullProfessionalDetailsRow, error) {
-	row := q.db.QueryRow(ctx, getFullProfessionalDetails, userID)
-	var i GetFullProfessionalDetailsRow
-	err := row.Scan(
-		&i.UserID,
-		&i.Kind,
-		&i.RegistrationNumber,
-		&i.RegistrationIssuer,
-		&i.RegistrationState,
-		&i.Status,
-		&i.VerifiedAt,
-		&i.DeletedAt,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.FullName,
-		&i.Email,
-		&i.Phone,
-	)
-	return i, err
-}
-
-const getProfessionalByUserID = `-- name: GetProfessionalByUserID :one
-SELECT user_id, kind, registration_number, registration_issuer, registration_state, status, verified_at, deleted_at, created_at, updated_at 
-FROM professionals
-WHERE user_id = $1 AND deleted_at IS NULL
-LIMIT 1
-`
-
-func (q *Queries) GetProfessionalByUserID(ctx context.Context, userID uuid.UUID) (Professional, error) {
-	row := q.db.QueryRow(ctx, getProfessionalByUserID, userID)
-	var i Professional
-	err := row.Scan(
-		&i.UserID,
-		&i.Kind,
-		&i.RegistrationNumber,
-		&i.RegistrationIssuer,
-		&i.RegistrationState,
-		&i.Status,
-		&i.VerifiedAt,
-		&i.DeletedAt,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const listProfessionalsByName = `-- name: ListProfessionalsByName :many
-SELECT p.user_id, p.kind, p.registration_number, p.registration_issuer, p.registration_state, p.status, p.verified_at, p.deleted_at, p.created_at, p.updated_at
-FROM professionals p
-JOIN users u ON u.id = p.user_id
-WHERE u.full_name ILIKE '%' || $3 || '%'
-  AND p.deleted_at IS NULL
-LIMIT $1 OFFSET $2
-`
-
-type ListProfessionalsByNameParams struct {
-	Limit  int32       `json:"limit"`
-	Offset int32       `json:"offset"`
-	Name   pgtype.Text `json:"name"`
-}
-
-// AQUI ESTÁ O TRUQUE: Fazemos JOIN para filtrar, mas retornamos dados do profissional
-func (q *Queries) ListProfessionalsByName(ctx context.Context, arg ListProfessionalsByNameParams) ([]Professional, error) {
-	rows, err := q.db.Query(ctx, listProfessionalsByName, arg.Limit, arg.Offset, arg.Name)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Professional
-	for rows.Next() {
-		var i Professional
-		if err := rows.Scan(
-			&i.UserID,
-			&i.Kind,
-			&i.RegistrationNumber,
-			&i.RegistrationIssuer,
-			&i.RegistrationState,
-			&i.Status,
-			&i.VerifiedAt,
-			&i.DeletedAt,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const softDeleteUser = `-- name: SoftDeleteUser :execrows
 UPDATE users
-SET deleted_at = now()
+SET deleted_at = now(),
+    updated_at = now()
 WHERE id = $1
   AND deleted_at IS NULL
 `
@@ -384,19 +205,20 @@ SET
   birth_date = $4,
   cpf = $5,
   phone = $6,
-  updated_at = now()
+  updated_at = $7
 WHERE id = $1
   AND deleted_at IS NULL
 RETURNING id, auth_provider, auth_subject, email, full_name, birth_date, cpf, phone, account_type, created_at, updated_at, deleted_at
 `
 
 type UpdateUserParams struct {
-	ID        uuid.UUID   `json:"id"`
-	Email     string      `json:"email"`
-	FullName  string      `json:"full_name"`
-	BirthDate pgtype.Date `json:"birth_date"`
-	Cpf       string      `json:"cpf"`
-	Phone     string      `json:"phone"`
+	ID        uuid.UUID          `json:"id"`
+	Email     string             `json:"email"`
+	FullName  string             `json:"full_name"`
+	BirthDate pgtype.Date        `json:"birth_date"`
+	Cpf       string             `json:"cpf"`
+	Phone     string             `json:"phone"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
@@ -407,6 +229,7 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 		arg.BirthDate,
 		arg.Cpf,
 		arg.Phone,
+		arg.UpdatedAt,
 	)
 	var i User
 	err := row.Scan(

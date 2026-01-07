@@ -29,66 +29,49 @@ func New(client *db.Client) *UserRepository {
 	}
 }
 
-// Save implements [repositories.UserRepository].
-func (r *UserRepository) Save(ctx context.Context, u *user.User) error {
-	if u == nil {
-		return errors.New("user is nil")
-	}
-
-	if u.ID == uuid.Nil {
-		u.ID = uuid.Must(uuid.NewV7())
-	}
-
-	birthDate := u.BirthDate
-	row, err := r.queries.CreateUser(ctx, usersqlc.CreateUserParams{
+// Create implements [repositories.UserRepository].
+func (r *UserRepository) Create(ctx context.Context, u *user.User) error {
+	params := usersqlc.CreateUserParams{
 		ID:           u.ID,
 		AuthProvider: u.AuthProvider,
 		AuthSubject:  u.AuthSubject,
 		Email:        u.Email,
 		FullName:     u.FullName,
-		BirthDate:    helpers.FromNullableDateToPgDate(&birthDate),
+		BirthDate:    helpers.FromNullableDateToPgDate(&u.BirthDate),
 		Cpf:          u.CPF,
 		Phone:        u.Phone,
 		AccountType:  string(u.AccountType),
-	})
-	if err != nil {
+		CreatedAt:    helpers.FromRequiredTimestamptzToPgTimestamptz(u.CreatedAt),
+		UpdatedAt:    helpers.FromRequiredTimestamptzToPgTimestamptz(u.UpdatedAt),
+	}
+
+	if err := r.queries.CreateUser(ctx, params); err != nil {
 		return mapRepositoryError(err)
 	}
 
-	u.ID = row.ID
-	u.AuthProvider = row.AuthProvider
-	u.AuthSubject = row.AuthSubject
-	u.Email = row.Email
-	u.FullName = row.FullName
-	u.BirthDate = row.BirthDate.Time
-	u.CPF = row.Cpf
-	u.Phone = row.Phone
-	u.AccountType = user.AccountType(row.AccountType)
-	u.CreatedAt = row.CreatedAt.Time
-	u.UpdatedAt = row.UpdatedAt.Time
-
+	// Não sobrescreve a entidade; app-source-of-truth mantém valores do domínio.
 	return nil
 }
 
 // Delete implements [repositories.UserRepository].
 func (r *UserRepository) SoftDelete(ctx context.Context, id uuid.UUID) error {
-	_, err := r.queries.SoftDeleteUser(ctx, id)
+	rows, err := r.queries.SoftDeleteUser(ctx, id)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return ErrNotFound
-		}
 		return mapRepositoryError(err)
+	}
+	if rows == 0 {
+		return ErrNotFound
 	}
 	return nil
 }
 
 func (r *UserRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	_, err := r.queries.DeleteUser(ctx, id)
+	rows, err := r.queries.DeleteUser(ctx, id)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return ErrNotFound
-		}
 		return mapRepositoryError(err)
+	}
+	if rows == 0 {
+		return ErrNotFound
 	}
 	return nil
 }
@@ -185,6 +168,7 @@ func (r *UserRepository) Update(ctx context.Context, u *user.User) error {
 		BirthDate: helpers.FromNullableDateToPgDate(&birthDate),
 		Cpf:       u.CPF,
 		Phone:     u.Phone,
+		UpdatedAt: helpers.FromRequiredTimestamptzToPgTimestamptz(u.UpdatedAt),
 	})
 	if err != nil {
 		return mapRepositoryError(err)

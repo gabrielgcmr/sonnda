@@ -15,6 +15,7 @@ type Service interface {
 	GetByID(ctx context.Context, currentUser *user.User, id uuid.UUID) (*patient.Patient, error)
 	UpdateByID(ctx context.Context, currentUser *user.User, id uuid.UUID, input UpdateInput) (*patient.Patient, error)
 	SoftDeleteByID(ctx context.Context, currentUser *user.User, id uuid.UUID) error
+	HardDeleteByID(ctx context.Context, currentUser *user.User, id uuid.UUID) error
 	List(ctx context.Context, currentUser *user.User, limit, offset int) ([]*patient.Patient, error)
 	ListByName(ctx context.Context, currentUser *user.User, name string, limit, offset int) ([]*patient.Patient, error)
 }

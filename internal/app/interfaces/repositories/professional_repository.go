@@ -3,7 +3,7 @@ package repositories
 import (
 	"context"
 
-	"sonnda-api/internal/domain/model/user/professional"
+	"sonnda-api/internal/domain/model/professional"
 
 	"github.com/google/uuid"
 )
@@ -13,6 +13,7 @@ type ProfessionalRepository interface {
 	Create(ctx context.Context, profile *professional.Professional) error
 	Update(ctx context.Context, profile *professional.Professional) error
 	Delete(ctx context.Context, id uuid.UUID) error
+	SoftDelete(ctx context.Context, id uuid.UUID) error
 
 	// Buscas por atributos do profissional
 	FindByID(ctx context.Context, id uuid.UUID) (*professional.Professional, error)

@@ -11,20 +11,12 @@ import (
 )
 
 type Querier interface {
-	//Profissionais
-	// Cria apenas a parte "profissional" (O ID vem do User já criado)
-	CreateProfessional(ctx context.Context, arg CreateProfessionalParams) (Professional, error)
-	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	CreateUser(ctx context.Context, arg CreateUserParams) error
 	DeleteUser(ctx context.Context, id uuid.UUID) (int64, error)
 	FindUserByAuthIdentity(ctx context.Context, arg FindUserByAuthIdentityParams) (User, error)
 	FindUserByCPF(ctx context.Context, cpf string) (User, error)
 	FindUserByEmail(ctx context.Context, email string) (User, error)
 	FindUserByID(ctx context.Context, id uuid.UUID) (User, error)
-	// Query especial para telas de perfil: Retorna TUDO junto
-	GetFullProfessionalDetails(ctx context.Context, userID uuid.UUID) (GetFullProfessionalDetailsRow, error)
-	GetProfessionalByUserID(ctx context.Context, userID uuid.UUID) (Professional, error)
-	// AQUI ESTÁ O TRUQUE: Fazemos JOIN para filtrar, mas retornamos dados do profissional
-	ListProfessionalsByName(ctx context.Context, arg ListProfessionalsByNameParams) ([]Professional, error)
 	SoftDeleteUser(ctx context.Context, id uuid.UUID) (int64, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
 }

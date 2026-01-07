@@ -5,22 +5,25 @@
 package professionalsqlc
 
 import (
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-type ProfessionalProfile struct {
-	UserID             string             `json:"user_id"`
+type Professional struct {
+	UserID             uuid.UUID          `json:"user_id"`
+	Kind               string             `json:"kind"`
 	RegistrationNumber string             `json:"registration_number"`
 	RegistrationIssuer string             `json:"registration_issuer"`
 	RegistrationState  pgtype.Text        `json:"registration_state"`
 	Status             string             `json:"status"`
 	VerifiedAt         pgtype.Timestamptz `json:"verified_at"`
+	DeletedAt          pgtype.Timestamptz `json:"deleted_at"`
 	CreatedAt          pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
 }
 
 type User struct {
-	ID           string             `json:"id"`
+	ID           uuid.UUID          `json:"id"`
 	AuthProvider string             `json:"auth_provider"`
 	AuthSubject  string             `json:"auth_subject"`
 	Email        string             `json:"email"`
@@ -28,25 +31,8 @@ type User struct {
 	BirthDate    pgtype.Date        `json:"birth_date"`
 	Cpf          string             `json:"cpf"`
 	Phone        string             `json:"phone"`
+	AccountType  string             `json:"account_type"`
 	CreatedAt    pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
-}
-
-type UserRole struct {
-	UserID string `json:"user_id"`
-	Role   string `json:"role"`
-}
-
-type ViewUsersFull struct {
-	ID           string             `json:"id"`
-	AuthProvider string             `json:"auth_provider"`
-	AuthSubject  string             `json:"auth_subject"`
-	Email        string             `json:"email"`
-	FullName     string             `json:"full_name"`
-	BirthDate    pgtype.Date        `json:"birth_date"`
-	Cpf          string             `json:"cpf"`
-	Phone        string             `json:"phone"`
-	Roles        interface{}        `json:"roles"`
-	CreatedAt    pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+	DeletedAt    pgtype.Timestamptz `json:"deleted_at"`
 }

@@ -3,7 +3,7 @@ package professionalsvc
 import (
 	"context"
 
-	"sonnda-api/internal/domain/model/user/professional"
+	"sonnda-api/internal/domain/model/professional"
 
 	"github.com/google/uuid"
 )

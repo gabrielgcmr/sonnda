@@ -3,8 +3,8 @@ package usersvc
 import (
 	"time"
 
+	"sonnda-api/internal/domain/model/professional"
 	"sonnda-api/internal/domain/model/user"
-	"sonnda-api/internal/domain/model/user/professional"
 
 	"github.com/google/uuid"
 )

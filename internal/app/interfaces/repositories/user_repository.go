@@ -11,7 +11,7 @@ import (
 
 type UserRepository interface {
 	// CRUD basico
-	Save(ctx context.Context, u *user.User) error
+	Create(ctx context.Context, u *user.User) error
 	Update(ctx context.Context, u *user.User) error
 	Delete(ctx context.Context, id uuid.UUID) error
 	SoftDelete(ctx context.Context, id uuid.UUID) error

@@ -11,6 +11,8 @@ import (
 
 var (
 	ErrAuthorizationForbidden = errors.New("authorization forbidden")
+	ErrPatientNotFound        = errors.New("patient not found")
+	ErrCPFAlreadyExists       = errors.New("cpf already exists")
 )
 
 func mapPatientDomainError(err error) error {
@@ -39,7 +41,7 @@ func mapPatientDomainError(err error) error {
 		}
 
 	// conflict
-	case errors.Is(err, patient.ErrCPFAlreadyExists):
+	case errors.Is(err, ErrCPFAlreadyExists):
 		return &apperr.AppError{
 			Code:    apperr.RESOURCE_ALREADY_EXISTS,
 			Message: "paciente j\u00e1 cadastrado",
@@ -47,7 +49,7 @@ func mapPatientDomainError(err error) error {
 		}
 
 	// not found
-	case errors.Is(err, patient.ErrPatientNotFound):
+	case errors.Is(err, ErrPatientNotFound):
 		return &apperr.AppError{
 			Code:    apperr.NOT_FOUND,
 			Message: "paciente n\u00e3o encontrado",

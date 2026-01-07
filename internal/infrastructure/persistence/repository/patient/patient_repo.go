@@ -43,8 +43,25 @@ func (r *PatientRepository) Create(ctx context.Context, p *patient.Patient) erro
 		AvatarUrl:   helpers.FromNullableStringToPgText(&p.AvatarURL),
 	}
 
-	_, err := r.queries.CreatePatient(ctx, params)
-	return err
+	row, err := r.queries.CreatePatient(ctx, params)
+	if err != nil {
+		return mapRepositoryError(err)
+	}
+
+	p.ID = row.ID
+	p.OwnerUserID = helpers.FromPgUUIDToNullableUUID(row.OwnerUserID)
+	p.CPF = row.Cpf
+	p.CNS = helpers.FromPgTextToNullableString(row.Cns)
+	p.FullName = row.FullName
+	p.BirthDate = row.BirthDate.Time
+	p.Gender = demographics.Gender(row.Gender)
+	p.Race = demographics.Race(row.Race)
+	p.AvatarURL = row.AvatarUrl.String
+	p.Phone = helpers.FromPgTextToNullableString(row.Phone)
+	p.CreatedAt = row.CreatedAt.Time
+	p.UpdatedAt = row.UpdatedAt.Time
+
+	return nil
 }
 
 // SoftDelete implements [repositories.PatientRepository].
@@ -59,17 +76,12 @@ func (p *PatientRepository) FindByCPF(ctx context.Context, cpf string) (*patient
 		if helpers.IsPgNotFound(err) {
 			return nil, nil
 		}
-		return nil, err
-	}
-
-	userID, err := helpers.FromPgUUIDToNullableUUID(row.OwnerUserID)
-	if err != nil {
-		return nil, err
+		return nil, mapRepositoryError(err)
 	}
 
 	return &patient.Patient{
 		ID:          row.ID,
-		OwnerUserID: userID,
+		OwnerUserID: helpers.FromPgUUIDToNullableUUID(row.OwnerUserID),
 		CPF:         row.Cpf,
 		CNS:         helpers.FromPgTextToNullableString(row.Cns),
 		FullName:    row.FullName,
@@ -90,17 +102,12 @@ func (p *PatientRepository) FindByID(ctx context.Context, id uuid.UUID) (*patien
 		if helpers.IsPgNotFound(err) {
 			return nil, nil
 		}
-		return nil, err
-	}
-
-	userID, err := helpers.FromPgUUIDToNullableUUID(row.OwnerUserID)
-	if err != nil {
-		return nil, err
+		return nil, mapRepositoryError(err)
 	}
 
 	return &patient.Patient{
 		ID:          row.ID,
-		OwnerUserID: userID,
+		OwnerUserID: helpers.FromPgUUIDToNullableUUID(row.OwnerUserID),
 		CPF:         row.Cpf,
 		CNS:         helpers.FromPgTextToNullableString(row.Cns),
 		FullName:    row.FullName,

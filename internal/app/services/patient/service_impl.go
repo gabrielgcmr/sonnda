@@ -3,10 +3,13 @@ package patientsvc
 
 import (
 	"context"
+	"errors"
 
+	"sonnda-api/internal/app/apperr"
 	"sonnda-api/internal/app/interfaces/repositories"
 	"sonnda-api/internal/domain/model/patient"
 	"sonnda-api/internal/domain/model/user"
+	patientrepo "sonnda-api/internal/infrastructure/persistence/repository/patient"
 
 	"github.com/google/uuid"
 )
@@ -30,7 +33,7 @@ func (s *service) Create(ctx context.Context, currentUser *user.User, input Crea
 		return nil, mapPatientDomainError(err)
 	}
 
-	p, err := patient.NewPatient(patient.NewPatientParams{
+	newPatient, err := patient.NewPatient(patient.NewPatientParams{
 		UserID:    input.UserID,
 		CPF:       input.CPF,
 		CNS:       input.CNS,
@@ -45,19 +48,16 @@ func (s *service) Create(ctx context.Context, currentUser *user.User, input Crea
 		return nil, mapPatientDomainError(err)
 	}
 
-	// MVP: checagem explícita (honesta) — alternativa é confiar no UNIQUE e mapear erro.
-	existing, err := s.repo.FindByCPF(ctx, p.CPF)
-	if err != nil {
-		return nil, mapInfraError("patientRepo.FindByCPF", err)
+	if err := s.repo.Create(ctx, newPatient); err != nil {
+		// Confiar no UNIQUE do banco e mapear erro do repo
+		switch {
+		case errors.Is(err, patientrepo.ErrPatientAlreadyExists):
+			return nil, apperr.Conflict("paciente já cadastrado")
+		default:
+			return nil, err
+		}
 	}
-	if existing != nil {
-		return nil, mapPatientDomainError(patient.ErrCPFAlreadyExists)
-	}
-
-	if err := s.repo.Create(ctx, p); err != nil {
-		return nil, mapInfraError("patientRepo.Create", err)
-	}
-	return p, nil
+	return newPatient, nil
 }
 
 func (s *service) GetByID(ctx context.Context, currentUser *user.User, id uuid.UUID) (*patient.Patient, error) {
@@ -70,7 +70,7 @@ func (s *service) GetByID(ctx context.Context, currentUser *user.User, id uuid.U
 		return nil, mapInfraError("patientRepo.FindByID", err)
 	}
 	if p == nil {
-		return nil, mapPatientDomainError(patient.ErrPatientNotFound)
+		return nil, mapPatientDomainError(ErrPatientNotFound)
 	}
 	return p, nil
 }
@@ -85,7 +85,7 @@ func (s *service) UpdateByID(ctx context.Context, currentUser *user.User, id uui
 		return nil, mapInfraError("patientRepo.FindByID", err)
 	}
 	if p == nil {
-		return nil, mapPatientDomainError(patient.ErrPatientNotFound)
+		return nil, mapPatientDomainError(ErrPatientNotFound)
 	}
 
 	p.ApplyUpdate(
@@ -118,7 +118,7 @@ func (s *service) SoftDeleteByID(ctx context.Context, currentUser *user.User, id
 		return mapInfraError("patientRepo.FindByID", err)
 	}
 	if p == nil {
-		return mapPatientDomainError(patient.ErrPatientNotFound)
+		return mapPatientDomainError(ErrPatientNotFound)
 	}
 
 	if err := s.repo.SoftDelete(ctx, id); err != nil {
@@ -148,5 +148,10 @@ func (s *service) List(ctx context.Context, currentUser *user.User, limit, offse
 
 // ListByName implements [Service].
 func (s *service) ListByName(ctx context.Context, currentUser *user.User, name string, limit int, offset int) ([]*patient.Patient, error) {
+	panic("unimplemented")
+}
+
+// HardDeleteByID implements [Service].
+func (s *service) HardDeleteByID(ctx context.Context, currentUser *user.User, id uuid.UUID) error {
 	panic("unimplemented")
 }

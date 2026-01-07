@@ -5,8 +5,8 @@ import (
 	"errors"
 
 	"sonnda-api/internal/app/apperr"
+	"sonnda-api/internal/domain/model/professional"
 	"sonnda-api/internal/domain/model/user"
-	"sonnda-api/internal/domain/model/user/professional"
 )
 
 var (

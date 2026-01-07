@@ -5,17 +5,22 @@ import (
 	"errors"
 
 	"sonnda-api/internal/app/interfaces/repositories"
-	"sonnda-api/internal/domain/model/user/professional"
+	"sonnda-api/internal/domain/model/professional"
 	"sonnda-api/internal/infrastructure/persistence/repository/db"
 	"sonnda-api/internal/infrastructure/persistence/repository/helpers"
-	usersqlc "sonnda-api/internal/infrastructure/persistence/sqlc/generated/user"
+	professionalsqlc "sonnda-api/internal/infrastructure/persistence/sqlc/generated/professional"
 
 	"github.com/google/uuid"
 )
 
 type Professional struct {
 	client  *db.Client
-	queries *usersqlc.Queries
+	queries *professionalsqlc.Queries
+}
+
+// SoftDelete implements [repositories.ProfessionalRepository].
+func (p *Professional) SoftDelete(ctx context.Context, id uuid.UUID) error {
+	panic("unimplemented")
 }
 
 var _ repositories.ProfessionalRepository = (*Professional)(nil)
@@ -23,7 +28,7 @@ var _ repositories.ProfessionalRepository = (*Professional)(nil)
 func NewProfessionalRepository(client *db.Client) repositories.ProfessionalRepository {
 	return &Professional{
 		client:  client,
-		queries: usersqlc.New(client.Pool()),
+		queries: professionalsqlc.New(client.Pool()),
 	}
 }
 
@@ -33,7 +38,7 @@ func (p *Professional) Create(ctx context.Context, prof *professional.Profession
 		return errors.New("profile is nil")
 	}
 
-	row, err := p.queries.CreateProfessional(ctx, usersqlc.CreateProfessionalParams{
+	row, err := p.queries.CreateProfessional(ctx, professionalsqlc.CreateProfessionalParams{
 		UserID:             prof.UserID,
 		Kind:               string(prof.Kind),
 		RegistrationNumber: prof.RegistrationNumber,
@@ -42,7 +47,7 @@ func (p *Professional) Create(ctx context.Context, prof *professional.Profession
 		Status:             string(prof.Status),
 	})
 	if err != nil {
-		return err
+		return mapRepositoryError(err)
 	}
 
 	prof.UserID = row.UserID
