@@ -17,8 +17,9 @@ type UserRepository interface {
 	SoftDelete(ctx context.Context, id uuid.UUID) error
 
 	// Buscas por atributos do usuario
-	FindByAuthIdentity(ctx context.Context, provider, subject string) (*user.User, error)
+
 	FindByID(ctx context.Context, id uuid.UUID) (*user.User, error)
 	FindByEmail(ctx context.Context, email string) (*user.User, error)
 	FindByCPF(ctx context.Context, cpf string) (*user.User, error)
+	FindByAuthIdentity(ctx context.Context, provider, subject string) (*user.User, error)
 }
