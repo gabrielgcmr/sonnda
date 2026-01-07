@@ -1,14 +1,15 @@
 package bootstrap
 
 import (
-	"sonnda-api/internal/app/interfaces/external"
 	usersvc "sonnda-api/internal/app/services/user"
-	"sonnda-api/internal/http/api/handlers/user"
-	"sonnda-api/internal/http/middleware"
+	"sonnda-api/internal/adapters/inbound/http/api/handlers/user"
+	"sonnda-api/internal/adapters/inbound/http/middleware"
 
-	"sonnda-api/internal/infrastructure/persistence/repository/db"
-	patientrepo "sonnda-api/internal/infrastructure/persistence/repository/patient"
-	userrepo "sonnda-api/internal/infrastructure/persistence/repository/user"
+	"sonnda-api/internal/adapters/outbound/persistence/repository/db"
+	patientrepo "sonnda-api/internal/adapters/outbound/persistence/repository/patient"
+	professionalrepo "sonnda-api/internal/adapters/outbound/persistence/repository/professional"
+	userrepo "sonnda-api/internal/adapters/outbound/persistence/repository/user"
+	"sonnda-api/internal/domain/ports/integrations"
 )
 
 type UserModule struct {
@@ -16,9 +17,9 @@ type UserModule struct {
 	RegistrationMiddleware *middleware.RegistrationMiddleware
 }
 
-func NewUserModule(db *db.Client, identityService external.IdentityService) *UserModule {
+func NewUserModule(db *db.Client, identityService integrations.IdentityService) *UserModule {
 	userRepo := userrepo.New(db)
-	profRepo := userrepo.NewProfessionalRepository(db)
+	profRepo := professionalrepo.NewProfessionalRepository(db)
 	patientRepo := patientrepo.NewPatientRepository(db)
 	accessRepo := patientrepo.NewPatientAccessRepository(db)
 

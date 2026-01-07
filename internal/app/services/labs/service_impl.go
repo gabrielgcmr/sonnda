@@ -9,10 +9,10 @@ import (
 	"strings"
 	"time"
 
-	"sonnda-api/internal/app/interfaces/external"
-	"sonnda-api/internal/app/interfaces/repositories"
 	applog "sonnda-api/internal/app/observability"
 	"sonnda-api/internal/domain/model/medicalrecord/labs"
+	"sonnda-api/internal/domain/ports/integrations"
+	"sonnda-api/internal/domain/ports/repositories"
 
 	"github.com/google/uuid"
 )
@@ -20,7 +20,7 @@ import (
 type service struct {
 	patientRepo repositories.PatientRepository
 	labsRepo    repositories.LabRepository
-	extractor   external.DocumentExtractor
+	extractor   integrations.DocumentExtractor
 }
 
 var _ Service = (*service)(nil)
@@ -28,7 +28,7 @@ var _ Service = (*service)(nil)
 func New(
 	patientRepo repositories.PatientRepository,
 	labsRepo repositories.LabRepository,
-	extractor external.DocumentExtractor,
+	extractor integrations.DocumentExtractor,
 ) Service {
 	return &service{
 		patientRepo: patientRepo,
@@ -189,7 +189,7 @@ func (s *service) validateCreate(input CreateFromDocumentInput) error {
 func (s *service) mapExtractedToDomain(
 	patientID uuid.UUID,
 	uploadedByUserID uuid.UUID,
-	extracted *external.ExtractedLabReport,
+	extracted *integrations.ExtractedLabReport,
 ) (*labs.LabReport, error) {
 	if extracted == nil {
 		return nil, labs.ErrInvalidInput

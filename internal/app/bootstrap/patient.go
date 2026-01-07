@@ -3,9 +3,9 @@ package bootstrap
 
 import (
 	patientsvc "sonnda-api/internal/app/services/patient"
-	patienthandler "sonnda-api/internal/http/api/handlers/patient"
-	"sonnda-api/internal/infrastructure/persistence/repository/db"
-	patientrepo "sonnda-api/internal/infrastructure/persistence/repository/patient"
+	patienthandler "sonnda-api/internal/adapters/inbound/http/api/handlers/patient"
+	"sonnda-api/internal/adapters/outbound/persistence/repository/db"
+	patientrepo "sonnda-api/internal/adapters/outbound/persistence/repository/patient"
 )
 
 func NewPatientModule(db *db.Client) *patienthandler.PatientHandler {

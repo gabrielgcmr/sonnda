@@ -1,0 +1,94 @@
+package professional
+
+import (
+	"context"
+	"errors"
+
+	"sonnda-api/internal/domain/model/professional"
+	"sonnda-api/internal/domain/ports/repositories"
+	"sonnda-api/internal/adapters/outbound/persistence/repository/db"
+	"sonnda-api/internal/adapters/outbound/persistence/repository/helpers"
+	professionalsqlc "sonnda-api/internal/adapters/outbound/persistence/sqlc/generated/professional"
+
+	"github.com/google/uuid"
+)
+
+type Professional struct {
+	client  *db.Client
+	queries *professionalsqlc.Queries
+}
+
+// SoftDelete implements [repositories.ProfessionalRepository].
+func (p *Professional) SoftDelete(ctx context.Context, id uuid.UUID) error {
+	panic("unimplemented")
+}
+
+var _ repositories.ProfessionalRepository = (*Professional)(nil)
+
+func NewProfessionalRepository(client *db.Client) repositories.ProfessionalRepository {
+	return &Professional{
+		client:  client,
+		queries: professionalsqlc.New(client.Pool()),
+	}
+}
+
+// Create implements [repositories.ProfessionalRepository].
+func (p *Professional) Create(ctx context.Context, prof *professional.Professional) error {
+	if prof == nil {
+		return errors.New("profile is nil")
+	}
+
+	row, err := p.queries.CreateProfessional(ctx, professionalsqlc.CreateProfessionalParams{
+		UserID:             prof.UserID,
+		Kind:               string(prof.Kind),
+		RegistrationNumber: prof.RegistrationNumber,
+		RegistrationIssuer: prof.RegistrationIssuer,
+		RegistrationState:  helpers.FromNullableStringToPgText(prof.RegistrationState),
+		Status:             string(prof.Status),
+	})
+	if err != nil {
+		return mapRepositoryError(err)
+	}
+
+	prof.UserID = row.UserID
+	prof.Kind = professional.Kind(row.Kind)
+	prof.RegistrationNumber = row.RegistrationNumber
+	prof.RegistrationIssuer = row.RegistrationIssuer
+	prof.RegistrationState = helpers.FromPgTextToNullableString(row.RegistrationState)
+	prof.Status = professional.VerificationStatus(row.Status)
+	prof.VerifiedAt = helpers.FromPgTimestamptzToNullableTimestamptz(row.VerifiedAt)
+	prof.CreatedAt = row.CreatedAt.Time
+	prof.UpdatedAt = row.UpdatedAt.Time
+
+	return nil
+}
+
+// Delete implements [repositories.ProfessionalRepository].
+func (p *Professional) Delete(ctx context.Context, id uuid.UUID) error {
+	panic("unimplemented")
+}
+
+// FindByID implements [repositories.ProfessionalRepository].
+func (p *Professional) FindByID(ctx context.Context, id uuid.UUID) (*professional.Professional, error) {
+	panic("unimplemented")
+}
+
+// FindByName implements [repositories.ProfessionalRepository].
+func (p *Professional) FindByName(ctx context.Context, name string, limit int, offset int) ([]*professional.Professional, error) {
+	panic("unimplemented")
+}
+
+// FindByRegistration implements [repositories.ProfessionalRepository].
+func (p *Professional) FindByRegistration(ctx context.Context, registrationNumber string, registrationIssuer string) (*professional.Professional, error) {
+	panic("unimplemented")
+}
+
+// FindByUserID implements [repositories.ProfessionalRepository].
+func (p *Professional) FindByUserID(ctx context.Context, userID uuid.UUID) (*professional.Professional, error) {
+	panic("unimplemented")
+}
+
+// Update implements [repositories.ProfessionalRepository].
+func (p *Professional) Update(ctx context.Context, profile *professional.Professional) error {
+	panic("unimplemented")
+}

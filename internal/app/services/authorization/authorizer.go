@@ -6,9 +6,9 @@ import (
 	"fmt"
 
 	"sonnda-api/internal/app/apperr"
-	"sonnda-api/internal/app/interfaces/repositories"
 	"sonnda-api/internal/domain/model/rbac"
 	"sonnda-api/internal/domain/model/user"
+	"sonnda-api/internal/domain/ports/repositories"
 
 	"github.com/google/uuid"
 )

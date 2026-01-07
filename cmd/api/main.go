@@ -13,13 +13,13 @@ import (
 	"sonnda-api/internal/app/config"
 	"sonnda-api/internal/app/observability"
 
-	"sonnda-api/internal/http/api"
+	"sonnda-api/internal/adapters/inbound/http/api"
 
-	"sonnda-api/internal/http/middleware"
-	authinfra "sonnda-api/internal/infrastructure/auth"
-	"sonnda-api/internal/infrastructure/documentai"
-	"sonnda-api/internal/infrastructure/persistence/repository/db"
-	"sonnda-api/internal/infrastructure/storage"
+	"sonnda-api/internal/adapters/inbound/http/middleware"
+	authinfra "sonnda-api/internal/adapters/outbound/integrations/auth"
+	"sonnda-api/internal/adapters/outbound/integrations/documentai"
+	"sonnda-api/internal/adapters/outbound/persistence/repository/db"
+	"sonnda-api/internal/adapters/outbound/integrations/storage"
 )
 
 func main() {

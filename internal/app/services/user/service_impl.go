@@ -7,12 +7,12 @@ import (
 
 	"sonnda-api/internal/app/apperr"
 
-	external "sonnda-api/internal/app/interfaces/external"
-	"sonnda-api/internal/app/interfaces/repositories"
 	professionalsvc "sonnda-api/internal/app/services/professional"
 	"sonnda-api/internal/domain/model/professional"
 	"sonnda-api/internal/domain/model/user"
-	userrepo "sonnda-api/internal/infrastructure/persistence/repository/user"
+	external "sonnda-api/internal/domain/ports/integrations"
+	"sonnda-api/internal/domain/ports/repositories"
+	userrepo "sonnda-api/internal/adapters/outbound/persistence/repository/user"
 
 	"github.com/google/uuid"
 )
@@ -60,7 +60,7 @@ func (s *service) createUser(ctx context.Context, input UserRegisterInput) (*use
 		return nil, mapUserDomainError(err)
 	}
 
-	if err := s.userRepo.Create(ctx, newUser); err != nil {
+	if err := s.userRepo.Create(ctx, *newUser); err != nil {
 		switch {
 		case errors.Is(err, userrepo.ErrUserAlreadyExists):
 			return nil, apperr.Conflict("usuário já cadastrado")
@@ -163,7 +163,7 @@ func (s *service) Update(ctx context.Context, input UserUpdateInput) (*user.User
 		return existingUser, nil
 	}
 
-	if err := s.userRepo.Update(ctx, existingUser); err != nil {
+	if err := s.userRepo.Update(ctx, *existingUser); err != nil {
 		return nil, mapInfraError("userRepo.Update", err)
 	}
 

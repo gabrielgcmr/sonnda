@@ -6,10 +6,10 @@ import (
 	"errors"
 
 	"sonnda-api/internal/app/apperr"
-	"sonnda-api/internal/app/interfaces/repositories"
+	"sonnda-api/internal/domain/ports/repositories"
 	"sonnda-api/internal/domain/model/patient"
 	"sonnda-api/internal/domain/model/user"
-	patientrepo "sonnda-api/internal/infrastructure/persistence/repository/patient"
+	patientrepo "sonnda-api/internal/adapters/outbound/persistence/repository/patient"
 
 	"github.com/google/uuid"
 )
@@ -31,6 +31,16 @@ func New(repo repositories.PatientRepository, policy AccessPolicy) Service {
 func (s *service) Create(ctx context.Context, currentUser *user.User, input CreateInput) (*patient.Patient, error) {
 	if err := s.policy.CanCreate(ctx, currentUser, input); err != nil {
 		return nil, mapPatientDomainError(err)
+	}
+
+	if input.CPF != "" {
+		existing, err := s.repo.FindByCPF(ctx, input.CPF)
+		if err != nil {
+			return nil, mapInfraError("patientRepo.FindByCPF", err)
+		}
+		if existing != nil {
+			return nil, mapPatientDomainError(ErrCPFAlreadyExists)
+		}
 	}
 
 	newPatient, err := patient.NewPatient(patient.NewPatientParams{
