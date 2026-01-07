@@ -6,7 +6,6 @@ import (
 	"errors"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 
 	"sonnda-api/internal/app/interfaces/repositories"
 	"sonnda-api/internal/domain/model/user"
@@ -37,7 +36,7 @@ func (r *UserRepository) Create(ctx context.Context, u *user.User) error {
 		AuthSubject:  u.AuthSubject,
 		Email:        u.Email,
 		FullName:     u.FullName,
-		BirthDate:    helpers.FromNullableDateToPgDate(&u.BirthDate),
+		BirthDate:    helpers.FromRequiredDateToPgDate(u.BirthDate),
 		Cpf:          u.CPF,
 		Phone:        u.Phone,
 		AccountType:  string(u.AccountType),
@@ -83,9 +82,6 @@ func (r *UserRepository) FindByAuthIdentity(ctx context.Context, provider string
 		AuthSubject:  subject,
 	})
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, nil
-		}
 		return nil, mapRepositoryError(err)
 	}
 
@@ -108,9 +104,6 @@ func (r *UserRepository) FindByAuthIdentity(ctx context.Context, provider string
 func (r *UserRepository) FindByCPF(ctx context.Context, cpf string) (*user.User, error) {
 	row, err := r.queries.FindUserByCPF(ctx, cpf)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, nil
-		}
 		return nil, mapRepositoryError(err)
 	}
 
@@ -133,9 +126,6 @@ func (r *UserRepository) FindByCPF(ctx context.Context, cpf string) (*user.User,
 func (r *UserRepository) FindByID(ctx context.Context, id uuid.UUID) (*user.User, error) {
 	row, err := r.queries.FindUserByID(ctx, id)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, nil
-		}
 		return nil, mapRepositoryError(err)
 	}
 
@@ -192,9 +182,6 @@ func (r *UserRepository) Update(ctx context.Context, u *user.User) error {
 func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*user.User, error) {
 	row, err := r.queries.FindUserByEmail(ctx, email)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, nil
-		}
 		return nil, mapRepositoryError(err)
 	}
 

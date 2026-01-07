@@ -3,6 +3,8 @@ package user
 import (
 	"errors"
 	"fmt"
+
+	"github.com/jackc/pgx/v5"
 	"sonnda-api/internal/infrastructure/persistence/repository/helpers"
 )
 
@@ -17,7 +19,12 @@ func mapRepositoryError(err error) error {
 		return nil
 	}
 
-	//Violação de unicidade
+	// Não encontrado
+	if errors.Is(err, pgx.ErrNoRows) {
+		return ErrNotFound
+	}
+
+	// Violação de unicidade
 	if helpers.IsUniqueViolationError(err) {
 		return ErrUserAlreadyExists
 	}
