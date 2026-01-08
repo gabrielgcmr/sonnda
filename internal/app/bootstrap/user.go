@@ -21,13 +21,12 @@ func NewUserModule(db *db.Client, identityService integration.IdentityService) *
 	userRepo := repo.New(db)
 	profRepo := repo.NewProfessionalRepository(db)
 	patientRepo := repo.NewPatientRepository(db)
-	accessRepo := repo.NewPatientAccessRepository(db)
 
 	userSvc := usersvc.New(userRepo)
 	profSvc := professionalsvc.New(profRepo)
 	regSvc := registrationsvc.New(userSvc, profSvc, identityService)
 
-	handler := user.NewHandler(regSvc, userSvc, accessRepo)
+	handler := user.NewHandler(regSvc, userSvc)
 	regMiddleware := middleware.NewRegistrationMiddleware(userRepo, patientRepo)
 
 	return &UserModule{

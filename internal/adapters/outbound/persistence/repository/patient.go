@@ -20,16 +20,16 @@ type PatientRepository struct {
 	queries *patientsqlc.Queries
 }
 
-var _ repository.PatientRepository = (*PatientRepository)(nil)
+var _ repository.Patient = (*PatientRepository)(nil)
 
-func NewPatientRepository(client *db.Client) repository.PatientRepository {
+func NewPatientRepository(client *db.Client) repository.Patient {
 	return &PatientRepository{
 		client:  client,
 		queries: patientsqlc.New(client.Pool()),
 	}
 }
 
-// Create implements [repository.PatientRepository].
+// Create implements [repository.Patient].
 func (r *PatientRepository) Create(ctx context.Context, p *patient.Patient) error {
 	params := patientsqlc.CreatePatientParams{
 		ID:          p.ID,
@@ -68,12 +68,12 @@ func (r *PatientRepository) Create(ctx context.Context, p *patient.Patient) erro
 	return nil
 }
 
-// SoftDelete implements [repository.PatientRepository].
+// SoftDelete implements [repository.Patient].
 func (p *PatientRepository) SoftDelete(ctx context.Context, id uuid.UUID) error {
 	panic("unimplemented")
 }
 
-// FindByCPF implements [repository.PatientRepository].
+// FindByCPF implements [repository.Patient].
 func (p *PatientRepository) FindByCPF(ctx context.Context, cpf string) (*patient.Patient, error) {
 	row, err := p.queries.GetPatientByCPF(ctx, cpf)
 	if err != nil {
@@ -99,7 +99,7 @@ func (p *PatientRepository) FindByCPF(ctx context.Context, cpf string) (*patient
 	}, nil
 }
 
-// FindByID implements [repository.PatientRepository].
+// FindByID implements [repository.Patient].
 func (p *PatientRepository) FindByID(ctx context.Context, id uuid.UUID) (*patient.Patient, error) {
 	row, err := p.queries.GetPatientByID(ctx, id)
 	if err != nil {
@@ -125,27 +125,27 @@ func (p *PatientRepository) FindByID(ctx context.Context, id uuid.UUID) (*patien
 	}, nil
 }
 
-// List implements [repository.PatientRepository].
+// List implements [repository.Patient].
 func (p *PatientRepository) List(ctx context.Context, limit int, offset int) ([]patient.Patient, error) {
 	panic("unimplemented")
 }
 
-// ListByBirthDate implements [repository.PatientRepository].
+// ListByBirthDate implements [repository.Patient].
 func (p *PatientRepository) ListByBirthDate(ctx context.Context, birthDate time.Time, limit int, offset int) ([]patient.Patient, error) {
 	panic("unimplemented")
 }
 
-// ListByIDs implements [repository.PatientRepository].
+// ListByIDs implements [repository.Patient].
 func (p *PatientRepository) ListByIDs(ctx context.Context, ids []uuid.UUID) ([]patient.Patient, error) {
 	panic("unimplemented")
 }
 
-// ListByName implements [repository.PatientRepository].
+// ListByName implements [repository.Patient].
 func (p *PatientRepository) ListByName(ctx context.Context, name string, limit int, offset int) ([]patient.Patient, error) {
 	panic("unimplemented")
 }
 
-// Update implements [repository.PatientRepository].
+// Update implements [repository.Patient].
 func (p *PatientRepository) Update(ctx context.Context, patient *patient.Patient) error {
 	panic("unimplemented")
 }

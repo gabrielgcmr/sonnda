@@ -18,7 +18,7 @@ import (
 )
 
 type service struct {
-	patientRepo repository.PatientRepository
+	patientRepo repository.Patient
 	labsRepo    repository.LabRepository
 	extractor   integration.DocumentExtractor
 }
@@ -26,7 +26,7 @@ type service struct {
 var _ Service = (*service)(nil)
 
 func New(
-	patientRepo repository.PatientRepository,
+	patientRepo repository.Patient,
 	labsRepo repository.LabRepository,
 	extractor integration.DocumentExtractor,
 ) Service {

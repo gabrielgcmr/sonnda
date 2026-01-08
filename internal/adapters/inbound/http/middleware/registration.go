@@ -15,12 +15,12 @@ const CurrentUserKey = "current_user"
 
 type RegistrationMiddleware struct {
 	userRepo    repository.User
-	patientRepo repository.PatientRepository
+	patientRepo repository.Patient
 }
 
 func NewRegistrationMiddleware(
 	userRepo repository.User,
-	patientRepo repository.PatientRepository,
+	patientRepo repository.Patient,
 ) *RegistrationMiddleware {
 	return &RegistrationMiddleware{
 		userRepo:    userRepo,

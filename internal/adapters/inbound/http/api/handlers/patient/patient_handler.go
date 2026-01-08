@@ -28,14 +28,6 @@ func (h *PatientHandler) Create(c *gin.Context) {
 	log := applog.FromContext(ctx)
 	log.Info("patient_create")
 
-	if h == nil || h.svc == nil {
-		httperrors.WriteError(c, &apperr.AppError{
-			Code:    apperr.INTERNAL_ERROR,
-			Message: "serviço indisponível",
-		})
-		return
-	}
-
 	user, ok := middleware.GetCurrentUser(c)
 	if !ok || user == nil {
 		httperrors.WriteError(c, &apperr.AppError{
@@ -241,7 +233,3 @@ func (h *PatientHandler) List(c *gin.Context) {
 
 	c.JSON(http.StatusOK, list)
 }
-
-/* ============================================================
-   Error helpers (centraliza log + resposta)
-   ============================================================ */

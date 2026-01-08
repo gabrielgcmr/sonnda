@@ -16,46 +16,51 @@ type PatientAccessRepository struct {
 	queries *patientaccesssqlc.Queries
 }
 
-// Find implements [repository.PatientAccessRepository].
+// ListPatientAcessByUser implements [repository.PatientAccess].
+func (p *PatientAccessRepository) ListPatientAcessByUser(ctx context.Context, userID uuid.UUID, limit int, offset int) ([]*patientaccess.PatientAccess, error) {
+	panic("unimplemented")
+}
+
+// Find implements [repository.PatientAccess].
 func (p *PatientAccessRepository) Find(ctx context.Context, patientID uuid.UUID, userID uuid.UUID) (*patientaccess.PatientAccess, error) {
 	panic("unimplemented")
 }
 
-// FindActive implements [repository.PatientAccessRepository].
+// FindActive implements [repository.PatientAccess].
 func (p *PatientAccessRepository) FindActive(ctx context.Context, patientID uuid.UUID, userID uuid.UUID) ([]*patientaccess.PatientAccess, error) {
 	panic("unimplemented")
 }
 
-var _ repository.PatientAccessRepository = (*PatientAccessRepository)(nil)
+var _ repository.PatientAccess = (*PatientAccessRepository)(nil)
 
-func NewPatientAccessRepository(client *db.Client) repository.PatientAccessRepository {
+func NewPatientAccessRepository(client *db.Client) repository.PatientAccess {
 	return &PatientAccessRepository{
 		client:  client,
 		queries: patientaccesssqlc.New(client.Pool()),
 	}
 }
 
-// ListByPatient implements [repository.PatientAccessRepository].
+// ListByPatient implements [repository.PatientAccess].
 func (p *PatientAccessRepository) ListByPatient(ctx context.Context, patientID uuid.UUID) ([]*patientaccess.PatientAccess, error) {
 	panic("unimplemented")
 }
 
-// ListByUser implements [repository.PatientAccessRepository].
+// ListByUser implements [repository.PatientAccess].
 func (p *PatientAccessRepository) ListByUser(ctx context.Context, userID uuid.UUID) ([]*patientaccess.PatientAccess, error) {
 	panic("unimplemented")
 }
 
-// GetByUserAndPatient implements [repository.PatientAccessRepository].
+// GetByUserAndPatient implements [repository.PatientAccess].
 func (p *PatientAccessRepository) GetByUserAndPatient(ctx context.Context, userID uuid.UUID, patientID uuid.UUID) (*patientaccess.PatientAccess, error) {
 	panic("unimplemented")
 }
 
-// Upsert implements [repository.PatientAccessRepository].
+// Upsert implements [repository.PatientAccess].
 func (p *PatientAccessRepository) Upsert(ctx context.Context, access *patientaccess.PatientAccess) error {
 	panic("unimplemented")
 }
 
-// Revoke implements [repository.PatientAccessRepository].
+// Revoke implements [repository.PatientAccess].
 func (p *PatientAccessRepository) Revoke(ctx context.Context, patientID uuid.UUID, userID uuid.UUID) error {
 	panic("unimplemented")
 }

@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type PatientRepository interface {
+type Patient interface {
 	// Operações CRUD básicas
 	Create(ctx context.Context, patient *patient.Patient) error
 	Update(ctx context.Context, patient *patient.Patient) error
