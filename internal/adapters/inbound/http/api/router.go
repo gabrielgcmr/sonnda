@@ -17,7 +17,7 @@ func SetupRoutes(
 	r *gin.Engine,
 	authMiddleware *middleware.AuthMiddleware,
 	registrationMiddleware *middleware.RegistrationMiddleware,
-	userHandler *user.UserHandler,
+	userHandler *user.Handler,
 	patientHandler *patient.PatientHandler,
 	labsHandler *labs.LabsHandler,
 
@@ -78,6 +78,7 @@ func SetupRoutes(
 			me.GET("", userHandler.GetUser)
 			me.PUT("", userHandler.UpdateUser)
 			me.DELETE("", userHandler.HardDeleteUser)
+			me.GET("/mypatients", userHandler.ListMyPatients)
 		}
 
 		//Pacientes

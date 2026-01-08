@@ -3,20 +3,12 @@ package usersvc
 import (
 	"time"
 
-	"sonnda-api/internal/domain/model/professional"
 	"sonnda-api/internal/domain/model/user"
 
 	"github.com/google/uuid"
 )
 
-type ProfessionalRegisterInput struct {
-	Kind               professional.Kind
-	RegistrationNumber string
-	RegistrationIssuer string
-	RegistrationState  *string
-}
-
-type UserRegisterInput struct {
+type UserCreateInput struct {
 	Provider    string
 	Subject     string
 	Email       string
@@ -25,8 +17,6 @@ type UserRegisterInput struct {
 	BirthDate   time.Time
 	CPF         string
 	Phone       string
-
-	Professional *ProfessionalRegisterInput
 }
 
 type UserUpdateInput struct {

@@ -4,28 +4,14 @@ import (
 	"errors"
 	"fmt"
 
+	repoerr "sonnda-api/internal/adapters/outbound/persistence/repository"
 	"sonnda-api/internal/app/apperr"
 	"sonnda-api/internal/domain/model/demographics"
 	"sonnda-api/internal/domain/model/patient"
 )
 
-var (
-	ErrAuthorizationForbidden = errors.New("authorization forbidden")
-	ErrPatientNotFound        = errors.New("patient not found")
-	ErrCPFAlreadyExists       = errors.New("cpf already exists")
-)
-
-func mapPatientDomainError(err error) error {
+func mapDomainError(err error) error {
 	switch {
-	// authorization
-	case errors.Is(err, ErrAuthorizationForbidden):
-		return &apperr.AppError{
-			Code:    apperr.ACCESS_DENIED,
-			Message: "acesso negado",
-			Cause:   err,
-		}
-
-	// validation
 	case errors.Is(err, patient.ErrInvalidFullName),
 		errors.Is(err, demographics.ErrInvalidBirthDate),
 		errors.Is(err, demographics.ErrInvalidCPF),
@@ -36,27 +22,15 @@ func mapPatientDomainError(err error) error {
 		errors.Is(err, patient.ErrInvalidRace):
 		return &apperr.AppError{
 			Code:    apperr.VALIDATION_FAILED,
-			Message: "dados inv\u00e1lidos",
-			Cause:   err,
-		}
-
-	// conflict
-	case errors.Is(err, ErrCPFAlreadyExists):
-		return &apperr.AppError{
-			Code:    apperr.RESOURCE_ALREADY_EXISTS,
-			Message: "paciente j\u00e1 cadastrado",
-			Cause:   err,
-		}
-
-	// not found
-	case errors.Is(err, ErrPatientNotFound):
-		return &apperr.AppError{
-			Code:    apperr.NOT_FOUND,
-			Message: "paciente n\u00e3o encontrado",
+			Message: "dados inválidos",
 			Cause:   err,
 		}
 
 	default:
+		var appErr *apperr.AppError
+		if errors.As(err, &appErr) && appErr != nil {
+			return appErr
+		}
 		return &apperr.AppError{
 			Code:    apperr.INTERNAL_ERROR,
 			Message: "erro inesperado",
@@ -65,10 +39,47 @@ func mapPatientDomainError(err error) error {
 	}
 }
 
-func mapInfraError(op string, err error) error {
+func mapRepoError(op string, err error) error {
+	if err == nil {
+		return nil
+	}
+
+	var appErr *apperr.AppError
+	if errors.As(err, &appErr) && appErr != nil {
+		return appErr
+	}
+
+	switch {
+	case errors.Is(err, repoerr.ErrPatientAlreadyExists):
+		return &apperr.AppError{
+			Code:    apperr.RESOURCE_ALREADY_EXISTS,
+			Message: "paciente já cadastrado",
+			Cause:   err,
+		}
+
+	case errors.Is(err, repoerr.ErrPatientNotFound):
+		return patientNotFound(err)
+
+	case errors.Is(err, repoerr.ErrRepositoryFailure):
+		return &apperr.AppError{
+			Code:    apperr.INFRA_DATABASE_ERROR,
+			Message: "falha técnica",
+			Cause:   fmt.Errorf("%s: %w", op, err),
+		}
+
+	default:
+		return &apperr.AppError{
+			Code:    apperr.INTERNAL_ERROR,
+			Message: "erro inesperado",
+			Cause:   fmt.Errorf("%s: %w", op, err),
+		}
+	}
+}
+
+func patientNotFound(cause error) error {
 	return &apperr.AppError{
-		Code:    apperr.INFRA_DATABASE_ERROR,
-		Message: "falha t\u00e9cnica",
-		Cause:   fmt.Errorf("%s: %w", op, err),
+		Code:    apperr.NOT_FOUND,
+		Message: "paciente não encontrado",
+		Cause:   cause,
 	}
 }

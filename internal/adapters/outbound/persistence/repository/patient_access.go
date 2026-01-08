@@ -5,7 +5,7 @@ import (
 
 	"sonnda-api/internal/adapters/outbound/persistence/repository/db"
 	patientaccesssqlc "sonnda-api/internal/adapters/outbound/persistence/sqlc/generated/patientaccess"
-	"sonnda-api/internal/domain/model/patient/patientaccess"
+	"sonnda-api/internal/domain/model/patientaccess"
 	"sonnda-api/internal/domain/ports/repository"
 
 	"github.com/google/uuid"

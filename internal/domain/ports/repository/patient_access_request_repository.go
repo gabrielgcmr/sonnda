@@ -2,7 +2,7 @@ package repository
 
 import (
 	"context"
-	"sonnda-api/internal/domain/model/patient/patientaccess"
+	"sonnda-api/internal/domain/model/patientaccess"
 
 	"github.com/google/uuid"
 )

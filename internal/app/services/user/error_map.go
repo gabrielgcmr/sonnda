@@ -1,19 +1,15 @@
-// internal/app/services/usersvc/error_map.go
 package usersvc
 
 import (
 	"errors"
+	"fmt"
 
+	userrepo "sonnda-api/internal/adapters/outbound/persistence/repository"
 	"sonnda-api/internal/app/apperr"
-	"sonnda-api/internal/domain/model/professional"
 	"sonnda-api/internal/domain/model/user"
 )
 
-var (
-	ErrUserNotFound = errors.New("user not found")
-)
-
-func mapUserDomainError(err error) error {
+func mapDomainError(err error) error {
 	switch {
 	case errors.Is(err, user.ErrInvalidAuthProvider),
 		errors.Is(err, user.ErrInvalidAuthSubject),
@@ -38,23 +34,50 @@ func mapUserDomainError(err error) error {
 	}
 }
 
-func mapProfessionalDomainError(err error) error {
+func mapRepoError(op string, err error) error {
+	if err == nil {
+		return nil
+	}
+
+	var appErr *apperr.AppError
+	if errors.As(err, &appErr) && appErr != nil {
+		return appErr
+	}
+
 	switch {
-	case errors.Is(err, professional.ErrRegistrationRequired),
-		errors.Is(err, professional.ErrInvalidKind),
-		errors.Is(err, professional.ErrInvalidRegistrationNumber),
-		errors.Is(err, professional.ErrInvalidRegistrationIssuer):
+	case errors.Is(err, userrepo.ErrUserAlreadyExists):
 		return &apperr.AppError{
-			Code:    apperr.VALIDATION_FAILED,
-			Message: "dados do profissional inválidos",
+			Code:    apperr.RESOURCE_ALREADY_EXISTS,
+			Message: "usuário já cadastrado",
 			Cause:   err,
+		}
+
+	case errors.Is(err, userrepo.ErrUserNotFound):
+		return &apperr.AppError{
+			Code:    apperr.NOT_FOUND,
+			Message: "usuário não encontrado",
+			Cause:   err,
+		}
+
+	case errors.Is(err, userrepo.ErrRepositoryFailure):
+		return &apperr.AppError{
+			Code:    apperr.INFRA_DATABASE_ERROR,
+			Message: "falha técnica",
+			Cause:   fmt.Errorf("%s: %w", op, err),
 		}
 
 	default:
 		return &apperr.AppError{
 			Code:    apperr.INTERNAL_ERROR,
 			Message: "erro inesperado",
-			Cause:   err,
+			Cause:   fmt.Errorf("%s: %w", op, err),
 		}
+	}
+}
+
+func userNotFound() error {
+	return &apperr.AppError{
+		Code:    apperr.NOT_FOUND,
+		Message: "usuário não encontrado",
 	}
 }

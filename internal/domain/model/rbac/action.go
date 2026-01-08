@@ -5,6 +5,7 @@ type Action string
 const (
 	//Recurso paciente
 	ActionCreatePatient     Action = "patient:create"
+	ActionListPatients      Action = "patient:list"
 	ActionSoftDeletePatient Action = "patient:soft_delete"
 	ActionReadPatient       Action = "patient:read"
 	ActionUpdatePatient     Action = "patient:update"

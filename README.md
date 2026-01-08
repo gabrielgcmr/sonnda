@@ -10,7 +10,7 @@ A Sonnda resolve um problema recorrente na pratica clinica: pacientes precisam c
 - upload e processamento de exames laboratoriais;
 - extracao automatica de dados estruturados via Google Cloud Document AI;
 - armazenamento seguro em PostgreSQL (Supabase);
-- arquitetura simples por camadas (domain/app/http/infrastructure).
+- arquitetura simples por camadas (domain/app/adapters).
 
 > Atencao: este repositorio nao deve conter dados reais de pacientes nem arquivos de configuracao sensiveis (`.env`).
 
@@ -35,9 +35,11 @@ A Sonnda resolve um problema recorrente na pratica clinica: pacientes precisam c
 A arquitetura foi simplificada em camadas diretas, com baixo acoplamento:
 
 - **Domain (`internal/domain`)**: modelos de dominio e regras de negocio (agnostico de infraestrutura e HTTP).
-- **App (`internal/app`)**: services de aplicacao (orquestracao), portas (interfaces) em `internal/app/ports` (`inbound`/`outbound`) e normalizacao de erros via `internal/app/apperr`.
-- **HTTP (`internal/http`)**: API e HTMX com rotas, handlers e middlewares.
-- **Infrastructure (`internal/infrastructure`)**: implementacoes concretas para auth, persistence, documentai e storage.
+- **App (`internal/app`)**: services de aplicacao (orquestracao) e contrato de erros via `internal/app/apperr`.
+- **Ports (`internal/domain/ports`)**: interfaces do dominio (integrations e repositories).
+- **Adapters (`internal/adapters`)**:
+  - **Inbound HTTP (`internal/adapters/inbound/http`)**: rotas, handlers e middlewares.
+  - **Outbound (`internal/adapters/outbound`)**: implementacoes concretas (integrations e persistence).
 
 ---
 
@@ -60,13 +62,13 @@ Detalhes: `docs/architecture/access-control.md`.
 - **Processamento de documentos:** Google Cloud Document AI
 - **Autenticacao:** Firebase Auth (idToken)
 - **Containerizacao:** Docker / docker-compose
-- **Arquitetura:** camadas simples (domain/app/http/infrastructure)
+- **Arquitetura:** camadas simples (domain/app/adapters)
 
 ---
 
 ## Logging
 
-- Logger baseado em `log/slog` (ver `internal/app/config/observability`).
+- Logger baseado em `log/slog` (ver `internal/app/observability`).
 - Config por env: `LOG_LEVEL` (`debug|info|warn|error`) e `LOG_FORMAT` (`text|json|pretty`).
 - Por request, o middleware injeta um logger no `context.Context` (inclui `request_id`, método, path e rota quando disponível).
 
@@ -82,7 +84,7 @@ make dev-web
 
 ## Endpoints
 
-Indice de rotas expostas em `internal/http/api/router.go`.
+Indice de rotas expostas em `internal/adapters/inbound/http/api/router.go`.
 
 Publico:
 - `GET /api/v1/health`
@@ -125,22 +127,17 @@ Resumo da estrutura:
 |   |-- app/
 |   |   |-- apperr/                 # Contrato de erros da aplicacao
 |   |   |-- bootstrap/              # Montagem de dependencias por modulo
-|   |   |-- config/                 # Env, observability e config da aplicacao
-|   |   |-- observability/          # Log personalizado
-|   |   |-- ports/                  # Interfaces (inbound/outbound)
-|   |   |-- services/               # Services de aplicacao (orquestracao)
-|   |   `-- usecases/               # Use cases (quando aplicavel)
+|   |   |-- config/                 # Config da aplicacao
+|   |   |-- observability/          # Log (slog) e helpers de observability
+|   |   `-- services/               # Services de aplicacao (ex.: user, professional, registration)
 |   |-- domain/
 |   |   |-- model/                  # Modelos e regras de negocio
-|   |-- http/
-|   |   |-- api/                    # API HTTP (handlers e rotas)
-|   |   |-- errors/                 # Presenter HTTP de erros
-|   |   `-- middleware/             # Middlewares HTTP
-|   `-- infrastructure/
-|       |-- auth/                   # Implementacoes de autenticacao
-|       |-- documentai/             # Cliente Google Document AI
-|       |-- persistence/            # Supabase + sqlc (repositorios)
-|       `-- storage/                # Storage
+|   |   `-- ports/                  # Interfaces do dominio (integration, repository)
+|   `-- adapters/
+|       |-- inbound/http/           # API HTTP (handlers, rotas, middlewares, presenter de erro)
+|       `-- outbound/               # Integrations e persistence
+|           |-- integrations/       # auth, documentai, storage
+|           `-- persistence/        # db, repository, sqlc
 |-- docker-compose.yml
 |-- Dockerfile
 |-- Makefile

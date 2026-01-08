@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"sonnda-api/internal/app/apperr"
 	"sonnda-api/internal/domain/model/professional"
 	"sonnda-api/internal/domain/ports/repository"
 
@@ -22,7 +23,7 @@ func New(repo repository.Professional) Service {
 
 func (s *service) Create(ctx context.Context, input CreateInput) (*professional.Professional, error) {
 	if s == nil || s.repo == nil {
-		return nil, mapDomainError(errors.New("professional repository not configured"))
+		return nil, apperr.Internal("serviço indisponível", errors.New("professional repository not configured"))
 	}
 
 	prof, err := professional.NewProfessional(professional.NewProfessionalParams{
@@ -37,7 +38,7 @@ func (s *service) Create(ctx context.Context, input CreateInput) (*professional.
 	}
 
 	if err := s.repo.Create(ctx, prof); err != nil {
-		return nil, mapInfraError("profRepo.Create", err)
+		return nil, mapRepoError("profRepo.Create", err)
 	}
 
 	return prof, nil
@@ -45,49 +46,49 @@ func (s *service) Create(ctx context.Context, input CreateInput) (*professional.
 
 func (s *service) GetByID(ctx context.Context, profileID uuid.UUID) (*professional.Professional, error) {
 	if s == nil || s.repo == nil {
-		return nil, mapDomainError(errors.New("professional repository not configured"))
+		return nil, apperr.Internal("serviço indisponível", errors.New("professional repository not configured"))
 	}
 
 	p, err := s.repo.FindByID(ctx, profileID)
 	if err != nil {
-		return nil, mapInfraError("profRepo.FindByID", err)
+		return nil, mapRepoError("profRepo.FindByID", err)
 	}
 	if p == nil {
-		return nil, mapDomainError(professional.ErrProfileNotFound)
+		return nil, professionalNotFound(nil)
 	}
 	return p, nil
 }
 
 func (s *service) GetByUserID(ctx context.Context, userID uuid.UUID) (*professional.Professional, error) {
 	if s == nil || s.repo == nil {
-		return nil, mapDomainError(errors.New("professional repository not configured"))
+		return nil, apperr.Internal("serviço indisponível", errors.New("professional repository not configured"))
 	}
 
 	p, err := s.repo.FindByUserID(ctx, userID)
 	if err != nil {
-		return nil, mapInfraError("profRepo.FindByUserID", err)
+		return nil, mapRepoError("profRepo.FindByUserID", err)
 	}
 	if p == nil {
-		return nil, mapDomainError(professional.ErrProfileNotFound)
+		return nil, professionalNotFound(nil)
 	}
 	return p, nil
 }
 
-func (s *service) DeleteByID(ctx context.Context, profileID uuid.UUID) error {
+func (s *service) Delete(ctx context.Context, profileID uuid.UUID) error {
 	if s == nil || s.repo == nil {
-		return mapDomainError(errors.New("professional repository not configured"))
+		return apperr.Internal("serviço indisponível", errors.New("professional repository not configured"))
 	}
 
 	existing, err := s.repo.FindByID(ctx, profileID)
 	if err != nil {
-		return mapInfraError("profRepo.FindByID", err)
+		return mapRepoError("profRepo.FindByID", err)
 	}
 	if existing == nil {
-		return mapDomainError(professional.ErrProfileNotFound)
+		return professionalNotFound(nil)
 	}
 
 	if err := s.repo.Delete(ctx, profileID); err != nil {
-		return mapInfraError("profRepo.Delete", err)
+		return mapRepoError("profRepo.Delete", err)
 	}
 	return nil
 }

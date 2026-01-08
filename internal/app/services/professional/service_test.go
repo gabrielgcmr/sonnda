@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	repoerr "sonnda-api/internal/adapters/outbound/persistence/repository"
 	"sonnda-api/internal/app/apperr"
 	"sonnda-api/internal/domain/model/professional"
 
@@ -64,7 +65,7 @@ func TestCreate_InvalidKind_ReturnsValidationFailed(t *testing.T) {
 
 func TestCreate_RepoError_ReturnsInfraDatabaseError(t *testing.T) {
 	sentinel := errors.New("db down")
-	svc := New(&fakeRepo{createErr: sentinel})
+	svc := New(&fakeRepo{createErr: errors.Join(repoerr.ErrRepositoryFailure, sentinel)})
 
 	_, err := svc.Create(context.Background(), CreateInput{
 		UserID:             uuid.Must(uuid.NewV7()),
@@ -99,7 +100,7 @@ func TestGetByID_NotFound_ReturnsNotFound(t *testing.T) {
 func TestDeleteByID_NotFound_ReturnsNotFound(t *testing.T) {
 	svc := New(&fakeRepo{findRes: nil})
 
-	err := svc.DeleteByID(context.Background(), uuid.Must(uuid.NewV7()))
+	err := svc.Delete(context.Background(), uuid.Must(uuid.NewV7()))
 
 	var appErr *apperr.AppError
 	if !errors.As(err, &appErr) {

@@ -6,18 +6,26 @@ import (
 	"testing"
 	"time"
 
+	repoerr "sonnda-api/internal/adapters/outbound/persistence/repository"
 	"sonnda-api/internal/app/apperr"
+	authorization "sonnda-api/internal/app/services/authorization"
 	"sonnda-api/internal/domain/model/demographics"
 	"sonnda-api/internal/domain/model/patient"
+	"sonnda-api/internal/domain/model/rbac"
 	"sonnda-api/internal/domain/model/user"
 
 	"github.com/google/uuid"
 )
 
-type fakePatientRepo struct {
-	findByCPFRes *patient.Patient
-	findByCPFErr error
+type allowAllAuthorizer struct{}
 
+func (a allowAllAuthorizer) Require(ctx context.Context, actor *user.User, action rbac.Action, patientID *uuid.UUID) error {
+	return nil
+}
+
+var _ authorization.Authorizer = (*allowAllAuthorizer)(nil)
+
+type fakePatientRepo struct {
 	findByIDRes *patient.Patient
 	findByIDErr error
 
@@ -25,60 +33,34 @@ type fakePatientRepo struct {
 	updateErr     error
 	softDeleteErr error
 	listErr       error
-
-	calledFindByCPF bool
-	calledFindByID  bool
-	calledCreate    bool
-	calledUpdate    bool
-	calledSoftDel   bool
-	calledList      bool
 }
 
 func (r *fakePatientRepo) FindByCPF(ctx context.Context, cpf string) (*patient.Patient, error) {
-	r.calledFindByCPF = true
-	return r.findByCPFRes, r.findByCPFErr
+	panic("unused")
 }
 
-func (r *fakePatientRepo) Create(ctx context.Context, p *patient.Patient) error {
-	r.calledCreate = true
-	return r.createErr
-}
-
+func (r *fakePatientRepo) Create(ctx context.Context, p *patient.Patient) error { return r.createErr }
 func (r *fakePatientRepo) FindByID(ctx context.Context, id uuid.UUID) (*patient.Patient, error) {
-	r.calledFindByID = true
 	return r.findByIDRes, r.findByIDErr
 }
-
-func (r *fakePatientRepo) Update(ctx context.Context, p *patient.Patient) error {
-	r.calledUpdate = true
-	return r.updateErr
-}
-
-func (r *fakePatientRepo) SoftDelete(ctx context.Context, id uuid.UUID) error {
-	r.calledSoftDel = true
-	return r.softDeleteErr
-}
-
+func (r *fakePatientRepo) Update(ctx context.Context, p *patient.Patient) error { return r.updateErr }
+func (r *fakePatientRepo) SoftDelete(ctx context.Context, id uuid.UUID) error   { return r.softDeleteErr }
 func (r *fakePatientRepo) List(ctx context.Context, limit, offset int) ([]patient.Patient, error) {
-	r.calledList = true
 	return nil, r.listErr
 }
-
 func (r *fakePatientRepo) ListByName(ctx context.Context, name string, limit, offset int) ([]patient.Patient, error) {
 	return nil, nil
 }
-
 func (r *fakePatientRepo) ListByBirthDate(ctx context.Context, birthDate time.Time, limit, offset int) ([]patient.Patient, error) {
 	return nil, nil
 }
-
 func (r *fakePatientRepo) ListByIDs(ctx context.Context, ids []uuid.UUID) ([]patient.Patient, error) {
 	return nil, nil
 }
 
-func TestService_Create_CPFAlreadyExists(t *testing.T) {
-	repo := &fakePatientRepo{findByCPFRes: &patient.Patient{ID: uuid.Must(uuid.NewV7())}}
-	svc := New(repo, AllowAllPolicy{})
+func TestService_Create_AlreadyExists_ReturnsAlreadyExists(t *testing.T) {
+	repo := &fakePatientRepo{createErr: repoerr.ErrPatientAlreadyExists}
+	svc := New(repo, allowAllAuthorizer{})
 
 	_, err := svc.Create(context.Background(), &user.User{ID: uuid.Must(uuid.NewV7())}, CreateInput{
 		CPF:       "52998224725",
@@ -96,14 +78,14 @@ func TestService_Create_CPFAlreadyExists(t *testing.T) {
 	if ae.Code != apperr.RESOURCE_ALREADY_EXISTS {
 		t.Fatalf("expected code %s, got %s", apperr.RESOURCE_ALREADY_EXISTS, ae.Code)
 	}
-	if !errors.Is(err, ErrCPFAlreadyExists) {
-		t.Fatalf("expected ErrCPFAlreadyExists in chain, got %v", err)
+	if !errors.Is(err, repoerr.ErrPatientAlreadyExists) {
+		t.Fatalf("expected ErrPatientAlreadyExists in chain, got %v", err)
 	}
 }
 
-func TestService_Create_InvalidBirthDate(t *testing.T) {
+func TestService_Create_InvalidBirthDate_ReturnsValidationFailed(t *testing.T) {
 	repo := &fakePatientRepo{}
-	svc := New(repo, AllowAllPolicy{})
+	svc := New(repo, allowAllAuthorizer{})
 
 	_, err := svc.Create(context.Background(), &user.User{ID: uuid.Must(uuid.NewV7())}, CreateInput{
 		CPF:       "52998224725",
@@ -122,13 +104,13 @@ func TestService_Create_InvalidBirthDate(t *testing.T) {
 		t.Fatalf("expected code %s, got %s", apperr.VALIDATION_FAILED, ae.Code)
 	}
 	if !errors.Is(err, demographics.ErrInvalidBirthDate) {
-		t.Fatalf("expected shared.ErrInvalidBirthDate in chain, got %v", err)
+		t.Fatalf("expected ErrInvalidBirthDate in chain, got %v", err)
 	}
 }
 
-func TestService_GetByID_NotFound(t *testing.T) {
+func TestService_GetByID_NotFound_ReturnsAccessDenied(t *testing.T) {
 	repo := &fakePatientRepo{findByIDRes: nil}
-	svc := New(repo, AllowAllPolicy{})
+	svc := New(repo, allowAllAuthorizer{})
 
 	_, err := svc.GetByID(context.Background(), &user.User{ID: uuid.Must(uuid.NewV7())}, uuid.Must(uuid.NewV7()))
 	if err == nil {
@@ -139,10 +121,27 @@ func TestService_GetByID_NotFound(t *testing.T) {
 	if !errors.As(err, &ae) {
 		t.Fatalf("expected *apperr.AppError, got %T", err)
 	}
-	if ae.Code != apperr.NOT_FOUND {
-		t.Fatalf("expected code %s, got %s", apperr.NOT_FOUND, ae.Code)
+	if ae.Code != apperr.ACCESS_DENIED {
+		t.Fatalf("expected code %s, got %s", apperr.ACCESS_DENIED, ae.Code)
 	}
-	if !errors.Is(err, ErrPatientNotFound) {
-		t.Fatalf("expected ErrPatientNotFound in chain, got %v", err)
+}
+
+func TestService_Create_RepoFailure_ReturnsInfraDatabaseError(t *testing.T) {
+	sentinel := errors.New("db down")
+	repo := &fakePatientRepo{createErr: errors.Join(repoerr.ErrRepositoryFailure, sentinel)}
+	svc := New(repo, allowAllAuthorizer{})
+
+	_, err := svc.Create(context.Background(), &user.User{ID: uuid.Must(uuid.NewV7())}, CreateInput{
+		CPF:       "52998224725",
+		FullName:  "Pessoa Teste",
+		BirthDate: time.Date(1990, 1, 2, 0, 0, 0, 0, time.UTC),
+	})
+
+	var ae *apperr.AppError
+	if !errors.As(err, &ae) {
+		t.Fatalf("expected *apperr.AppError, got %T", err)
+	}
+	if ae.Code != apperr.INFRA_DATABASE_ERROR {
+		t.Fatalf("expected code %s, got %s", apperr.INFRA_DATABASE_ERROR, ae.Code)
 	}
 }

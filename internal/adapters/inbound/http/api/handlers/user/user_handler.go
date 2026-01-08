@@ -5,27 +5,30 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"sonnda-api/internal/app/apperr"
-
 	"sonnda-api/internal/adapters/inbound/http/api/handlers/common"
 	httperrors "sonnda-api/internal/adapters/inbound/http/errors"
 	"sonnda-api/internal/adapters/inbound/http/middleware"
+	"sonnda-api/internal/app/apperr"
+	registrationsvc "sonnda-api/internal/app/services/registration"
 	usersvc "sonnda-api/internal/app/services/user"
 	"sonnda-api/internal/domain/model/professional"
 	"sonnda-api/internal/domain/model/user"
 	"sonnda-api/internal/domain/ports/repository"
 )
 
-type UserHandler struct {
-	svc usersvc.Service
+type Handler struct {
+	regSvc  registrationsvc.Service
+	userSvc usersvc.Service
 }
 
-func NewUserHandler(
-	svc usersvc.Service,
+func NewHandler(
+	regSvc registrationsvc.Service,
+	userSvc usersvc.Service,
 	patientAccessRepo repository.PatientAccessRepository,
-) *UserHandler {
-	return &UserHandler{
-		svc: svc,
+) *Handler {
+	return &Handler{
+		regSvc:  regSvc,
+		userSvc: userSvc,
 	}
 }
 
@@ -50,28 +53,28 @@ type UpdateUserRequest struct {
 	Phone     *string `json:"phone,omitempty"`
 }
 
-func (h *UserHandler) Register(c *gin.Context) {
+func (h *Handler) Register(c *gin.Context) {
+	if h == nil || h.regSvc == nil {
+		httperrors.WriteError(c, apperr.Internal("serviço indisponível", nil))
+		return
+	}
 
-	// 1. Auth (Infra)
 	identity, ok := middleware.GetIdentity(c)
 	if !ok {
 		httperrors.WriteError(c, apperr.Unauthorized("autenticação necessária"))
 		return
 	}
-	// 2. Bind & Validate Formato (Infra)
+
 	var req RegisterRequest
 	if err := httperrors.BindJSON(c, &req); err != nil {
 		httperrors.WriteError(c, err)
 		return
 	}
-	// 3. Parse de campos que são "domínio"
-	// 3.1 AccountType já está validado pelo binding oneof
+
 	accountType := user.AccountType(req.AccountType).Normalize()
 
-	// BirthDate format já foi validado pelo binding datetime
 	birthDate, err := common.ParseBirthDate(req.BirthDate)
 	if err != nil {
-		// Falha de conversão (muito rara, pois formato foi validado)
 		httperrors.WriteError(c, apperr.Validation("data de nascimento inválida",
 			apperr.Violation{
 				Field:  "birth_date",
@@ -80,7 +83,7 @@ func (h *UserHandler) Register(c *gin.Context) {
 		return
 	}
 
-	input := usersvc.UserRegisterInput{
+	input := registrationsvc.RegisterInput{
 		Provider:    identity.Provider,
 		Subject:     identity.Subject,
 		Email:       identity.Email,
@@ -93,8 +96,7 @@ func (h *UserHandler) Register(c *gin.Context) {
 
 	if accountType == user.AccountTypeProfessional {
 		kind := professional.Kind(req.Professional.Kind).Normalize()
-
-		input.Professional = &usersvc.ProfessionalRegisterInput{
+		input.Professional = &registrationsvc.ProfessionalInput{
 			Kind:               kind,
 			RegistrationNumber: req.Professional.RegistrationNumber,
 			RegistrationIssuer: req.Professional.RegistrationIssuer,
@@ -102,8 +104,7 @@ func (h *UserHandler) Register(c *gin.Context) {
 		}
 	}
 
-	// 7) Chama serviço (Application)
-	created, err := h.svc.Register(c.Request.Context(), input)
+	created, err := h.regSvc.Register(c.Request.Context(), input)
 	if err != nil {
 		httperrors.WriteError(c, err)
 		return
@@ -112,7 +113,7 @@ func (h *UserHandler) Register(c *gin.Context) {
 	c.JSON(http.StatusCreated, created)
 }
 
-func (h *UserHandler) GetUser(c *gin.Context) {
+func (h *Handler) GetUser(c *gin.Context) {
 	currentUser, ok := middleware.GetCurrentUser(c)
 	if !ok || currentUser == nil {
 		httperrors.WriteError(c, apperr.Unauthorized("autenticação necessária"))
@@ -122,7 +123,12 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 	c.JSON(http.StatusOK, currentUser)
 }
 
-func (h *UserHandler) UpdateUser(c *gin.Context) {
+func (h *Handler) UpdateUser(c *gin.Context) {
+	if h == nil || h.userSvc == nil {
+		httperrors.WriteError(c, apperr.Internal("serviço indisponível", nil))
+		return
+	}
+
 	currentUser, ok := middleware.GetCurrentUser(c)
 	if !ok {
 		httperrors.WriteError(c, apperr.Unauthorized("autenticação necessária"))
@@ -137,16 +143,19 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 
 	input := usersvc.UserUpdateInput{
 		UserID: currentUser.ID,
+		CPF:    req.CPF,
+		Phone:  req.Phone,
 	}
 
+	if req.FullName != nil {
+		input.FullName = req.FullName
+	}
 	if req.BirthDate != nil {
-		// BirthDate format já foi validado pelo binding datetime
-		// Apenas converter string → time.Time
 		parsed, _ := common.ParseBirthDate(*req.BirthDate)
 		input.BirthDate = &parsed
 	}
 
-	updated, err := h.svc.Update(c.Request.Context(), input)
+	updated, err := h.userSvc.Update(c.Request.Context(), input)
 	if err != nil {
 		httperrors.WriteError(c, err)
 		return
@@ -155,9 +164,8 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 	c.JSON(http.StatusOK, updated)
 }
 
-func (h *UserHandler) HardDeleteUser(c *gin.Context) {
-	// 0) Wiring safety
-	if h.svc == nil {
+func (h *Handler) HardDeleteUser(c *gin.Context) {
+	if h == nil || h.userSvc == nil {
 		httperrors.WriteError(c, apperr.Internal("serviço indisponível", nil))
 		return
 	}
@@ -168,11 +176,14 @@ func (h *UserHandler) HardDeleteUser(c *gin.Context) {
 		return
 	}
 
-	err := h.svc.Delete(c.Request.Context(), currentUser.ID)
-	if err != nil {
+	if err := h.userSvc.Delete(c.Request.Context(), currentUser.ID); err != nil {
 		httperrors.WriteError(c, err)
 		return
 	}
 
 	c.Status(http.StatusNoContent)
+}
+
+func (h *Handler) ListMyPatients(c *gin.Context) {
+	panic("unimplemented")
 }
