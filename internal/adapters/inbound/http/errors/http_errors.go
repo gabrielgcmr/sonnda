@@ -22,11 +22,7 @@ func StatusFromCode(code apperr.ErrorCode) int {
 		return http.StatusForbidden // 403
 
 	// VALIDATION
-	case apperr.VALIDATION_FAILED,
-		apperr.REQUIRED_FIELD_MISSING,
-		apperr.INVALID_FIELD_FORMAT,
-		apperr.INVALID_ENUM_VALUE,
-		apperr.INVALID_DATE:
+	case apperr.VALIDATION_FAILED:
 		return http.StatusBadRequest // 400
 
 	// NOT FOUND

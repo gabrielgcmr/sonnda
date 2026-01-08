@@ -9,7 +9,7 @@ import (
 	"sonnda-api/internal/app/apperr"
 	"sonnda-api/internal/domain/model/identity"
 	"sonnda-api/internal/domain/model/user"
-	external "sonnda-api/internal/domain/ports/integrations"
+	external "sonnda-api/internal/domain/ports/integration"
 
 	"github.com/gin-gonic/gin"
 )

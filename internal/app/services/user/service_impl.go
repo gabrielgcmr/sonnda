@@ -7,29 +7,29 @@ import (
 
 	"sonnda-api/internal/app/apperr"
 
-	userrepo "sonnda-api/internal/adapters/outbound/persistence/repository/user"
+	userrepo "sonnda-api/internal/adapters/outbound/persistence/repository"
 	professionalsvc "sonnda-api/internal/app/services/professional"
 	"sonnda-api/internal/domain/model/professional"
 	"sonnda-api/internal/domain/model/user"
-	external "sonnda-api/internal/domain/ports/integrations"
-	"sonnda-api/internal/domain/ports/repositories"
+	external "sonnda-api/internal/domain/ports/integration"
+	"sonnda-api/internal/domain/ports/repository"
 
 	"github.com/google/uuid"
 )
 
 type service struct {
-	userRepo repositories.UserRepository
-	profRepo repositories.ProfessionalRepository
+	userRepo repository.User
+	profRepo repository.Professional
 	authSvc  external.IdentityService
 }
 
-var _ UserService = (*service)(nil)
+var _ Service = (*service)(nil)
 
 func New(
-	userRepo repositories.UserRepository,
-	profRepo repositories.ProfessionalRepository,
+	userRepo repository.User,
+	profRepo repository.Professional,
 	authSvc external.IdentityService,
-) UserService {
+) Service {
 	return &service{
 		userRepo: userRepo,
 		profRepo: profRepo,
@@ -60,9 +60,9 @@ func (s *service) createUser(ctx context.Context, input UserRegisterInput) (*use
 		return nil, mapUserDomainError(err)
 	}
 
-	if err := s.userRepo.Create(ctx, *newUser); err != nil {
+	if err := s.userRepo.Create(ctx, newUser); err != nil {
 		switch {
-		case errors.Is(err, userrepo.ErrAlreadyExists):
+		case errors.Is(err, userrepo.ErrUserAlreadyExists):
 			return nil, apperr.Conflict("usuário já cadastrado")
 		default:
 			return nil, err
@@ -163,7 +163,7 @@ func (s *service) Update(ctx context.Context, input UserUpdateInput) (*user.User
 		return existingUser, nil
 	}
 
-	if err := s.userRepo.Update(ctx, *existingUser); err != nil {
+	if err := s.userRepo.Update(ctx, existingUser); err != nil {
 		return nil, mapInfraError("userRepo.Update", err)
 	}
 
@@ -208,7 +208,7 @@ func (s *service) SoftDelete(ctx context.Context, userID uuid.UUID) error {
 		// }
 
 		// B) Idempotente (recomendado): se já estava deletado, considere sucesso
-		if errors.Is(err, userrepo.ErrNotFound) {
+		if errors.Is(err, userrepo.ErrUserNotFound) {
 			return nil
 		}
 		return err

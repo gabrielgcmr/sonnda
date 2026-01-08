@@ -1,4 +1,4 @@
-﻿package repositories
+package repository
 
 import (
 	"context"
@@ -13,9 +13,9 @@ import (
 type PatientAccessRepository interface {
 	// Retorna o vínculo (ativo ou revogado) se existir
 	Find(ctx context.Context, patientID, userID uuid.UUID) (*patientaccess.PatientAccess, error)
-	//Quais vinculos ativos um usuário tem?
+	// Quais vínculos ativos um usuário tem?
 	FindActive(ctx context.Context, patientID, userID uuid.UUID) ([]*patientaccess.PatientAccess, error)
-	//Quais pacientes um usuário tem acesso?
+	// Quais pacientes um usuário tem acesso?
 	ListByPatient(ctx context.Context, patientID uuid.UUID) ([]*patientaccess.PatientAccess, error)
 
 	Upsert(ctx context.Context, access *patientaccess.PatientAccess) error

@@ -14,11 +14,11 @@ import (
 
 	labsvc "sonnda-api/internal/app/services/labs"
 
-	"sonnda-api/internal/app/apperr"
-	"sonnda-api/internal/domain/model/medicalrecord/labs"
-	external "sonnda-api/internal/domain/ports/integrations"
 	httperrors "sonnda-api/internal/adapters/inbound/http/errors"
 	"sonnda-api/internal/adapters/inbound/http/middleware"
+	"sonnda-api/internal/app/apperr"
+	"sonnda-api/internal/domain/model/medicalrecord/labs"
+	external "sonnda-api/internal/domain/ports/integration"
 
 	applog "sonnda-api/internal/app/observability"
 )

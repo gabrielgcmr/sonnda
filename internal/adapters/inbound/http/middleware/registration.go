@@ -1,12 +1,12 @@
 package middleware
 
 import (
+	httperrors "sonnda-api/internal/adapters/inbound/http/errors"
 	"sonnda-api/internal/app/apperr"
 	applog "sonnda-api/internal/app/observability"
 	"sonnda-api/internal/domain/model/identity"
 	"sonnda-api/internal/domain/model/user"
-	"sonnda-api/internal/domain/ports/repositories"
-	httperrors "sonnda-api/internal/adapters/inbound/http/errors"
+	"sonnda-api/internal/domain/ports/repository"
 
 	"github.com/gin-gonic/gin"
 )
@@ -14,13 +14,13 @@ import (
 const CurrentUserKey = "current_user"
 
 type RegistrationMiddleware struct {
-	userRepo    repositories.UserRepository
-	patientRepo repositories.PatientRepository
+	userRepo    repository.User
+	patientRepo repository.PatientRepository
 }
 
 func NewRegistrationMiddleware(
-	userRepo repositories.UserRepository,
-	patientRepo repositories.PatientRepository,
+	userRepo repository.User,
+	patientRepo repository.PatientRepository,
 ) *RegistrationMiddleware {
 	return &RegistrationMiddleware{
 		userRepo:    userRepo,

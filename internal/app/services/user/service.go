@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type UserService interface {
+type Service interface {
 	Register(ctx context.Context, input UserRegisterInput) (*user.User, error)
 	Update(ctx context.Context, input UserUpdateInput) (*user.User, error)
 	Delete(ctx context.Context, userID uuid.UUID) error

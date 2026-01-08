@@ -8,7 +8,7 @@ import (
 	"sonnda-api/internal/app/apperr"
 	"sonnda-api/internal/domain/model/rbac"
 	"sonnda-api/internal/domain/model/user"
-	"sonnda-api/internal/domain/ports/repositories"
+	"sonnda-api/internal/domain/ports/repository"
 
 	"github.com/google/uuid"
 )
@@ -19,15 +19,15 @@ type Authorizer interface {
 
 type Service struct {
 	rbacPolicy        *rbac.RbacPolicy
-	patientRepo       repositories.PatientRepository
-	patientAccessRepo repositories.PatientAccessRepository
-	profRepo          repositories.ProfessionalRepository
+	patientRepo       repository.PatientRepository
+	patientAccessRepo repository.PatientAccessRepository
+	profRepo          repository.Professional
 }
 
 func New(
-	patientRepo repositories.PatientRepository,
-	patientAccessRepo repositories.PatientAccessRepository,
-	profRepo repositories.ProfessionalRepository,
+	patientRepo repository.PatientRepository,
+	patientAccessRepo repository.PatientAccessRepository,
+	profRepo repository.Professional,
 ) *Service {
 	return &Service{
 		rbacPolicy:        rbac.NewRbacPolicy(),

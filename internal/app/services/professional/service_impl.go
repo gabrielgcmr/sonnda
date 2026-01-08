@@ -5,18 +5,18 @@ import (
 	"errors"
 
 	"sonnda-api/internal/domain/model/professional"
-	"sonnda-api/internal/domain/ports/repositories"
+	"sonnda-api/internal/domain/ports/repository"
 
 	"github.com/google/uuid"
 )
 
 type service struct {
-	repo repositories.ProfessionalRepository
+	repo repository.Professional
 }
 
 var _ Service = (*service)(nil)
 
-func New(repo repositories.ProfessionalRepository) Service {
+func New(repo repository.Professional) Service {
 	return &service{repo: repo}
 }
 

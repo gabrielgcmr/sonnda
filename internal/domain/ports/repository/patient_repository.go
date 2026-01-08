@@ -1,5 +1,5 @@
 // core/ports/repositories/patient_repo.go
-package repositories
+package repository
 
 import (
 	"context"

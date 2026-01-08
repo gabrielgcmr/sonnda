@@ -14,4 +14,8 @@ var (
 	ErrInvalidFullName     = errors.New("invalid full name")
 	ErrInvalidPhone        = errors.New("invalid phone")
 	ErrInvalidCPF          = errors.New("invalid cpf")
+	//not found
+	ErrUserNotFound = errors.New("user not found")
+	//already exists
+	ErrUserExists = errors.New("user already exists")
 )

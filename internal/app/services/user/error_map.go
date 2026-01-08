@@ -23,10 +23,18 @@ func mapUserDomainError(err error) error {
 		errors.Is(err, user.ErrInvalidBirthDate),
 		errors.Is(err, user.ErrInvalidCPF),
 		errors.Is(err, user.ErrInvalidPhone):
-		return apperr.Validation("dados inválidos", apperr.Violation{Reason: err.Error()})
+		return &apperr.AppError{
+			Code:    apperr.VALIDATION_FAILED,
+			Message: "dados do usuário inválidos",
+			Cause:   err,
+		}
 
 	default:
-		return apperr.Internal("erro inesperado", err)
+		return &apperr.AppError{
+			Code:    apperr.INTERNAL_ERROR,
+			Message: "erro inesperado",
+			Cause:   err,
+		}
 	}
 }
 
@@ -36,7 +44,12 @@ func mapProfessionalDomainError(err error) error {
 		errors.Is(err, professional.ErrInvalidKind),
 		errors.Is(err, professional.ErrInvalidRegistrationNumber),
 		errors.Is(err, professional.ErrInvalidRegistrationIssuer):
-		return apperr.Validation("dados profissionais inválidos", apperr.Violation{Reason: err.Error()})
+		return &apperr.AppError{
+			Code:    apperr.VALIDATION_FAILED,
+			Message: "dados do profissional inválidos",
+			Cause:   err,
+		}
+
 	default:
 		return &apperr.AppError{
 			Code:    apperr.INTERNAL_ERROR,

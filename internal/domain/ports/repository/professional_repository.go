@@ -1,4 +1,4 @@
-package repositories
+package repository
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type ProfessionalRepository interface {
+type Professional interface {
 	// CRUD basico
 	Create(ctx context.Context, profile *professional.Professional) error
 	Update(ctx context.Context, profile *professional.Professional) error

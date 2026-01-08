@@ -66,7 +66,7 @@ func (h *PatientHandler) Create(c *gin.Context) {
 	gender, err := ParseGender(req.Gender)
 	if err != nil {
 		httperrors.WriteError(c, &apperr.AppError{
-			Code:    apperr.INVALID_ENUM_VALUE,
+			Code:    apperr.VALIDATION_FAILED,
 			Message: "gênero inválido",
 			Cause:   err,
 		})
@@ -76,7 +76,7 @@ func (h *PatientHandler) Create(c *gin.Context) {
 	race, err := ParseRace(req.Race)
 	if err != nil {
 		httperrors.WriteError(c, &apperr.AppError{
-			Code:    apperr.INVALID_ENUM_VALUE,
+			Code:    apperr.VALIDATION_FAILED,
 			Message: "raça inválida",
 			Cause:   err,
 		})
@@ -128,7 +128,7 @@ func (h *PatientHandler) GetByID(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
 		httperrors.WriteError(c, &apperr.AppError{
-			Code:    apperr.REQUIRED_FIELD_MISSING,
+			Code:    apperr.VALIDATION_FAILED,
 			Message: "patient_id é obrigatório",
 		})
 		return
@@ -137,7 +137,7 @@ func (h *PatientHandler) GetByID(c *gin.Context) {
 	parsedID, err := uuid.Parse(id)
 	if err != nil {
 		httperrors.WriteError(c, &apperr.AppError{
-			Code:    apperr.INVALID_FIELD_FORMAT,
+			Code:    apperr.VALIDATION_FAILED,
 			Message: "patient_id inválido",
 			Cause:   err,
 		})
@@ -177,7 +177,7 @@ func (h *PatientHandler) UpdateByID(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
 		httperrors.WriteError(c, &apperr.AppError{
-			Code:    apperr.REQUIRED_FIELD_MISSING,
+			Code:    apperr.VALIDATION_FAILED,
 			Message: "patient_id é obrigatório",
 		})
 		return
@@ -186,7 +186,7 @@ func (h *PatientHandler) UpdateByID(c *gin.Context) {
 	parsedID, err := uuid.Parse(id)
 	if err != nil {
 		httperrors.WriteError(c, &apperr.AppError{
-			Code:    apperr.INVALID_FIELD_FORMAT,
+			Code:    apperr.VALIDATION_FAILED,
 			Message: "patient_id inválido",
 			Cause:   err,
 		})

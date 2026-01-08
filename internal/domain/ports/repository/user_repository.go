@@ -1,5 +1,5 @@
 // internal/domain/user_repository.go
-package repositories
+package repository
 
 import (
 	"context"
@@ -9,10 +9,10 @@ import (
 	"github.com/google/uuid"
 )
 
-type UserRepository interface {
+type User interface {
 	// CRUD basico
-	Create(ctx context.Context, u user.User) error
-	Update(ctx context.Context, u user.User) error
+	Create(ctx context.Context, u *user.User) error
+	Update(ctx context.Context, u *user.User) error
 	Delete(ctx context.Context, id uuid.UUID) error
 	SoftDelete(ctx context.Context, id uuid.UUID) error
 

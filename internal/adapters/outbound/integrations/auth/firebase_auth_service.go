@@ -13,7 +13,7 @@ import (
 	"google.golang.org/api/option"
 
 	"sonnda-api/internal/domain/model/identity"
-	"sonnda-api/internal/domain/ports/integrations"
+	"sonnda-api/internal/domain/ports/integration"
 )
 
 type FirebaseAuthService struct {
@@ -56,7 +56,7 @@ func NewFirebaseAuthService(ctx context.Context) (*FirebaseAuthService, error) {
 	return &FirebaseAuthService{client: client}, nil
 }
 
-var _ integrations.IdentityService = (*FirebaseAuthService)(nil)
+var _ integration.IdentityService = (*FirebaseAuthService)(nil)
 
 func (s *FirebaseAuthService) ProviderName() string {
 	return "firebase"

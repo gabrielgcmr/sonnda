@@ -5,23 +5,23 @@ import (
 	"context"
 	"errors"
 
+	patientrepo "sonnda-api/internal/adapters/outbound/persistence/repository"
 	"sonnda-api/internal/app/apperr"
-	"sonnda-api/internal/domain/ports/repositories"
 	"sonnda-api/internal/domain/model/patient"
 	"sonnda-api/internal/domain/model/user"
-	patientrepo "sonnda-api/internal/adapters/outbound/persistence/repository/patient"
+	"sonnda-api/internal/domain/ports/repository"
 
 	"github.com/google/uuid"
 )
 
 type service struct {
-	repo   repositories.PatientRepository
+	repo   repository.PatientRepository
 	policy AccessPolicy
 }
 
 var _ Service = (*service)(nil)
 
-func New(repo repositories.PatientRepository, policy AccessPolicy) Service {
+func New(repo repository.PatientRepository, policy AccessPolicy) Service {
 	if policy == nil {
 		policy = AllowAllPolicy{}
 	}

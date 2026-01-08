@@ -7,22 +7,22 @@ import (
 
 	"sonnda-api/internal/app/apperr"
 
-	"sonnda-api/internal/domain/ports/repositories"
-	usersvc "sonnda-api/internal/app/services/user"
-	"sonnda-api/internal/domain/model/professional"
-	"sonnda-api/internal/domain/model/user"
 	"sonnda-api/internal/adapters/inbound/http/api/handlers/common"
 	httperrors "sonnda-api/internal/adapters/inbound/http/errors"
 	"sonnda-api/internal/adapters/inbound/http/middleware"
+	usersvc "sonnda-api/internal/app/services/user"
+	"sonnda-api/internal/domain/model/professional"
+	"sonnda-api/internal/domain/model/user"
+	"sonnda-api/internal/domain/ports/repository"
 )
 
 type UserHandler struct {
-	svc usersvc.UserService
+	svc usersvc.Service
 }
 
 func NewUserHandler(
-	svc usersvc.UserService,
-	patientAccessRepo repositories.PatientAccessRepository,
+	svc usersvc.Service,
+	patientAccessRepo repository.PatientAccessRepository,
 ) *UserHandler {
 	return &UserHandler{
 		svc: svc,

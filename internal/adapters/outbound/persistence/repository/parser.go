@@ -1,23 +1,13 @@
-package helpers
+package repository
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
-
-/* ============================================================
-   Common errors
-   ============================================================ */
-
-func IsPgNotFound(err error) bool {
-	return errors.Is(err, pgx.ErrNoRows)
-}
 
 /* ============================================================
    Text conversions (*string <-> pgtype.Text)
