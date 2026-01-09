@@ -6,13 +6,6 @@ import (
 	"github.com/google/uuid"
 )
 
-type CreateFromDocumentInput struct {
-	PatientID        uuid.UUID
-	DocumentURI      string
-	MimeType         string
-	UploadedByUserID uuid.UUID
-}
-
 type LabReportOutput struct {
 	ID                uuid.UUID
 	PatientID         uuid.UUID

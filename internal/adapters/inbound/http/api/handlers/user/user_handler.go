@@ -6,41 +6,41 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"sonnda-api/internal/adapters/inbound/http/api/handlers/common"
+	"sonnda-api/internal/adapters/inbound/http/api/handlers"
 	httperrors "sonnda-api/internal/adapters/inbound/http/errors"
 	"sonnda-api/internal/adapters/inbound/http/middleware"
 	"sonnda-api/internal/app/apperr"
-	registrationsvc "sonnda-api/internal/app/services/registration"
 	usersvc "sonnda-api/internal/app/services/user"
+	registrationuc "sonnda-api/internal/app/usecase/registration"
 	"sonnda-api/internal/domain/model/professional"
 	"sonnda-api/internal/domain/model/user"
 )
 
 type Handler struct {
-	regSvc  registrationsvc.Service
+	regUC   registrationuc.UseCase
 	userSvc usersvc.Service
 }
 
 func NewHandler(
-	regSvc registrationsvc.Service,
+	regUC registrationuc.UseCase,
 	userSvc usersvc.Service,
 
 ) *Handler {
 	return &Handler{
-		regSvc:  regSvc,
+		regUC:   regUC,
 		userSvc: userSvc,
 	}
 }
 
 func (h *Handler) Register(c *gin.Context) {
-	if h == nil || h.regSvc == nil {
-		httperrors.WriteError(c, apperr.Internal("serviço indisponível", nil))
+	if h == nil || h.regUC == nil {
+		httperrors.WriteError(c, apperr.Internal("serviÇõo indisponÇðvel", nil))
 		return
 	}
 
 	identity, ok := middleware.GetIdentity(c)
 	if !ok {
-		httperrors.WriteError(c, apperr.Unauthorized("autenticação necessária"))
+		httperrors.WriteError(c, apperr.Unauthorized("autenticaÇõÇœo necessÇ­ria"))
 		return
 	}
 
@@ -52,9 +52,9 @@ func (h *Handler) Register(c *gin.Context) {
 
 	accountType := user.AccountType(req.AccountType).Normalize()
 
-	birthDate, err := common.ParseBirthDate(req.BirthDate)
+	birthDate, err := handlers.ParseBirthDate(req.BirthDate)
 	if err != nil {
-		httperrors.WriteError(c, apperr.Validation("data de nascimento inválida",
+		httperrors.WriteError(c, apperr.Validation("data de nascimento invÇ­lida",
 			apperr.Violation{
 				Field:  "birth_date",
 				Reason: "invalid_format",
@@ -62,7 +62,7 @@ func (h *Handler) Register(c *gin.Context) {
 		return
 	}
 
-	input := registrationsvc.RegisterInput{
+	input := registrationuc.RegisterInput{
 		Provider:    identity.Provider,
 		Subject:     identity.Subject,
 		Email:       identity.Email,
@@ -75,7 +75,7 @@ func (h *Handler) Register(c *gin.Context) {
 
 	if accountType == user.AccountTypeProfessional {
 		kind := professional.Kind(req.Professional.Kind).Normalize()
-		input.Professional = &registrationsvc.ProfessionalInput{
+		input.Professional = &registrationuc.ProfessionalInput{
 			Kind:               kind,
 			RegistrationNumber: req.Professional.RegistrationNumber,
 			RegistrationIssuer: req.Professional.RegistrationIssuer,
@@ -83,7 +83,7 @@ func (h *Handler) Register(c *gin.Context) {
 		}
 	}
 
-	created, err := h.regSvc.Register(c.Request.Context(), input)
+	created, err := h.regUC.Register(c.Request.Context(), input)
 	if err != nil {
 		httperrors.WriteError(c, err)
 		return
@@ -116,7 +116,7 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 		input.FullName = req.FullName
 	}
 	if req.BirthDate != nil {
-		parsed, _ := common.ParseBirthDate(*req.BirthDate)
+		parsed, _ := handlers.ParseBirthDate(*req.BirthDate)
 		input.BirthDate = &parsed
 	}
 

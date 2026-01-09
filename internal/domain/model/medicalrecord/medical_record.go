@@ -3,8 +3,8 @@ package medicalrecord
 import (
 	"time"
 
+	"sonnda-api/internal/domain/model/labs"
 	"sonnda-api/internal/domain/model/medicalrecord/antecedents"
-	"sonnda-api/internal/domain/model/medicalrecord/labs"
 	"sonnda-api/internal/domain/model/medicalrecord/physical"
 	"sonnda-api/internal/domain/model/medicalrecord/prevention"
 	"sonnda-api/internal/domain/model/medicalrecord/problem"

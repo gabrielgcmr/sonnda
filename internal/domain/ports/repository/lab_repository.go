@@ -3,12 +3,12 @@
 import (
 	"context"
 
-	"sonnda-api/internal/domain/model/medicalrecord/labs"
+	"sonnda-api/internal/domain/model/labs"
 
 	"github.com/google/uuid"
 )
 
-type LabRepository interface {
+type LabsRepository interface {
 	// CRUD basico
 	Create(ctx context.Context, report *labs.LabReport) error
 	FindByID(ctx context.Context, reportID uuid.UUID) (*labs.LabReport, error)

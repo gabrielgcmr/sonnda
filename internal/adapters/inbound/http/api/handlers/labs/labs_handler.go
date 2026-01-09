@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
@@ -13,60 +12,37 @@ import (
 	"github.com/google/uuid"
 
 	labsvc "sonnda-api/internal/app/services/labs"
+	labsuc "sonnda-api/internal/app/usecase/labs"
 
+	"sonnda-api/internal/adapters/inbound/http/api/handlers"
 	httperrors "sonnda-api/internal/adapters/inbound/http/errors"
 	"sonnda-api/internal/adapters/inbound/http/middleware"
 	"sonnda-api/internal/app/apperr"
-	"sonnda-api/internal/domain/model/medicalrecord/labs"
+	"sonnda-api/internal/domain/model/labs"
 	external "sonnda-api/internal/domain/ports/integration"
-
-	applog "sonnda-api/internal/app/observability"
 )
 
 type LabsHandler struct {
-	svc     labsvc.Service
-	storage external.StorageService
+	svc      labsvc.Service
+	createUC labsuc.CreateLabReportFromDocumentUseCase
+	storage  external.StorageService
 }
 
 func NewLabsHandler(
 	svc labsvc.Service,
+	createUC labsuc.CreateLabReportFromDocumentUseCase,
 	storageClient external.StorageService,
 ) *LabsHandler {
 	return &LabsHandler{
-		svc:     svc,
-		storage: storageClient,
+		svc:      svc,
+		createUC: createUC,
+		storage:  storageClient,
 	}
 }
 
 func (h *LabsHandler) ListLabs(c *gin.Context) {
-	if h == nil || h.svc == nil {
-		httperrors.WriteError(c, &apperr.AppError{
-			Code:    apperr.INTERNAL_ERROR,
-			Message: "serviço indisponível",
-			Cause:   errors.New("labs service not configured"),
-		})
-		return
-	}
-
-	patientID := c.Param("id")
-	if patientID == "" {
-		patientID = c.Param("patientID")
-	}
-	if patientID == "" {
-		httperrors.WriteError(c, &apperr.AppError{
-			Code:    apperr.REQUIRED_FIELD_MISSING,
-			Message: "patient_id é obrigatório",
-		})
-		return
-	}
-
-	parsedID, err := uuid.Parse(patientID)
-	if err != nil {
-		httperrors.WriteError(c, &apperr.AppError{
-			Code:    apperr.INVALID_FIELD_FORMAT,
-			Message: "patient_id inválido",
-			Cause:   err,
-		})
+	patientID, ok := handlers.ParsePatientIDParam(c, "id")
+	if !ok {
 		return
 	}
 
@@ -75,7 +51,7 @@ func (h *LabsHandler) ListLabs(c *gin.Context) {
 		return
 	}
 
-	list, err := h.svc.List(c.Request.Context(), parsedID, limit, offset)
+	list, err := h.svc.List(c.Request.Context(), patientID, limit, offset)
 	if err != nil {
 		writeLabsServiceError(c, err)
 		return
@@ -85,20 +61,9 @@ func (h *LabsHandler) ListLabs(c *gin.Context) {
 }
 
 func (h *LabsHandler) ListFullLabs(c *gin.Context) {
-	if h == nil || h.svc == nil {
-		httperrors.WriteError(c, &apperr.AppError{
-			Code:    apperr.INTERNAL_ERROR,
-			Message: "serviço indisponível",
-			Cause:   errors.New("labs service not configured"),
-		})
-		return
-	}
 
-	patientID := c.Param("id")
-	if patientID == "" {
-		patientID = c.Param("patientID")
-	}
-	if patientID == "" {
+	idStr := c.Param("id")
+	if idStr == "" {
 		httperrors.WriteError(c, &apperr.AppError{
 			Code:    apperr.REQUIRED_FIELD_MISSING,
 			Message: "patient_id é obrigatório",
@@ -106,7 +71,7 @@ func (h *LabsHandler) ListFullLabs(c *gin.Context) {
 		return
 	}
 
-	parsedID, err := uuid.Parse(patientID)
+	parsedID, err := uuid.Parse(idStr)
 	if err != nil {
 		httperrors.WriteError(c, &apperr.AppError{
 			Code:    apperr.INVALID_FIELD_FORMAT,
@@ -134,31 +99,10 @@ func (h *LabsHandler) ListFullLabs(c *gin.Context) {
 // POST /:patientID/labs/upload
 // field: file (PDF/JPEG/PNG)
 func (h *LabsHandler) UploadAndProcessLabs(c *gin.Context) {
-	if h == nil || h.svc == nil || h.storage == nil {
-		httperrors.WriteError(c, &apperr.AppError{
-			Code:    apperr.INTERNAL_ERROR,
-			Message: "serviço indisponível",
-			Cause:   errors.New("labs dependencies not configured"),
-		})
-		return
-	}
+	user := middleware.MustGetCurrentUser(c)
 
-	log := applog.FromContext(c.Request.Context())
-
-	user, ok := middleware.GetCurrentUser(c)
-	if !ok {
-		httperrors.WriteError(c, &apperr.AppError{
-			Code:    apperr.AUTH_REQUIRED,
-			Message: "autenticação necessária",
-		})
-		return
-	}
-
-	patientID := c.Param("id")
-	if patientID == "" {
-		patientID = c.Param("patientID")
-	}
-	if patientID == "" {
+	idStr := c.Param("id")
+	if idStr == "" {
 		httperrors.WriteError(c, &apperr.AppError{
 			Code:    apperr.REQUIRED_FIELD_MISSING,
 			Message: "patient_id é obrigatório",
@@ -166,7 +110,7 @@ func (h *LabsHandler) UploadAndProcessLabs(c *gin.Context) {
 		return
 	}
 
-	parsedID, err := uuid.Parse(patientID)
+	parsedID, err := uuid.Parse(idStr)
 	if err != nil {
 		httperrors.WriteError(c, &apperr.AppError{
 			Code:    apperr.INVALID_FIELD_FORMAT,
@@ -182,18 +126,17 @@ func (h *LabsHandler) UploadAndProcessLabs(c *gin.Context) {
 		return
 	}
 
-	output, err := h.svc.CreateFromDocument(c.Request.Context(), labsvc.CreateFromDocumentInput{
+	output, err := h.createUC.Execute(c.Request.Context(), labsuc.CreateLabReportFromDocumentInput{
 		PatientID:        parsedID,
 		DocumentURI:      documentURI,
 		MimeType:         mimeType,
 		UploadedByUserID: user.ID,
 	})
 	if err != nil {
-		writeLabsServiceError(c, err)
+		httperrors.WriteError(c, err)
 		return
 	}
 
-	log.Info("labs_report_created", slog.String("patient_id", patientID))
 	c.JSON(http.StatusCreated, output)
 }
 

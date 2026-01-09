@@ -1,6 +1,4 @@
-package integration
-
-import "context"
+package documentai
 
 // ExtractedTestItem representa um test_item vindo do Document AI.
 type ExtractedTestItem struct {
@@ -23,7 +21,7 @@ type ExtractedTestResult struct {
 // ExtractedLabReport é o "DTO" vindo do Document AI já estruturado.
 type ExtractedLabReport struct {
 	PatientName       *string
-	PatientDOB        *string // também como string por enquanto
+	PatientDOB        *string
 	LabName           *string
 	LabPhone          *string
 	InsuranceProvider *string
@@ -33,13 +31,4 @@ type ExtractedLabReport struct {
 	RawText           *string
 
 	Tests []ExtractedTestResult
-}
-
-type ExtractedImageExam struct {
-	//TODO: criar um DTO para extração de exames de imagem.
-}
-
-type DocumentExtractor interface {
-	ExtractLabReport(ctx context.Context, documentURI, mimeType string) (*ExtractedLabReport, error)
-	ExtractImageExam(ctx context.Context, documentURI, mimeType string) (*ExtractedImageExam, error)
 }

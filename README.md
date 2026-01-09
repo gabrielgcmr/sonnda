@@ -22,7 +22,7 @@ A Sonnda resolve um problema recorrente na pratica clinica: pacientes precisam c
   - [O que este repositorio entrega (MVP)](#o-que-este-repositorio-entrega-mvp)
   - [Sumario](#sumario)
   - [Arquitetura](#arquitetura)
-  - [Autorizacao (RBAC + ReBAC)](#autorizacao-rbac--rebac)
+  - [Autorizacao (fora do MVP)](#autorizacao-fora-do-mvp)
   - [Stack Tecnologico](#stack-tecnologico)
   - [Logging](#logging)
   - [Endpoints](#endpoints)
@@ -43,14 +43,14 @@ A arquitetura foi simplificada em camadas diretas, com baixo acoplamento:
 
 ---
 
-## Autorizacao (RBAC + ReBAC)
+## Autorizacao (fora do MVP)
 
-Este projeto combina:
+RBAC e ReBAC **foram retirados do MVP**. Nesta fase, o foco e entregar o fluxo principal de cadastro, upload e extracao; a API aplica apenas:
 
-- **RBAC (acoes)**: limita o que um tipo de conta pode fazer.
-- **ReBAC (relacionamento)**: limita em qual paciente o usuario pode operar.
+- autenticacao (token Firebase);
+- registro no banco (middleware de usuario registrado).
 
-Detalhes: `docs/architecture/access-control.md`.
+O desenho de autorizacao (RBAC por acoes + ReBAC por relacionamento) fica documentado para uma fase posterior em: `docs/architecture/access-control.md`.
 
 ---
 

@@ -4,8 +4,8 @@ import (
 	"sonnda-api/internal/adapters/inbound/http/api/handlers/user"
 	"sonnda-api/internal/adapters/inbound/http/middleware"
 	professionalsvc "sonnda-api/internal/app/services/professional"
-	registrationsvc "sonnda-api/internal/app/services/registration"
 	usersvc "sonnda-api/internal/app/services/user"
+	registrationuc "sonnda-api/internal/app/usecase/registration"
 
 	repo "sonnda-api/internal/adapters/outbound/persistence/repository"
 	"sonnda-api/internal/adapters/outbound/persistence/repository/db"
@@ -25,9 +25,9 @@ func NewUserModule(db *db.Client, identityService integration.IdentityService) *
 
 	userSvc := usersvc.New(userRepo, patientAccessRepo)
 	profSvc := professionalsvc.New(profRepo)
-	regSvc := registrationsvc.New(userRepo, userSvc, profSvc, identityService)
+	regUC := registrationuc.New(userRepo, userSvc, profSvc, identityService)
 
-	handler := user.NewHandler(regSvc, userSvc)
+	handler := user.NewHandler(regUC, userSvc)
 	regMiddleware := middleware.NewRegistrationMiddleware(userRepo, patientRepo)
 
 	return &UserModule{

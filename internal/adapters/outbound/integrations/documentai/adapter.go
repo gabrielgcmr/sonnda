@@ -3,7 +3,7 @@ package documentai
 import (
 	"context"
 	"fmt"
-	integrations "sonnda-api/internal/domain/ports/integration"
+	"sonnda-api/internal/domain/ports/integration/documentai"
 )
 
 // LabReportExtractor já está definido em labs/ai.go
@@ -19,7 +19,7 @@ type DocumentAIAdapter struct {
 }
 
 // Garante que implementa a interface
-var _ integrations.DocumentExtractor = (*DocumentAIAdapter)(nil)
+var _ documentai.DocumentExtractor = (*DocumentAIAdapter)(nil)
 
 // NewDocumentAIAdapter é o construtor que você vai usar no module.go.
 func NewDocumentAIAdapter(client Client, processorID string) *DocumentAIAdapter {
@@ -32,7 +32,7 @@ func NewDocumentAIAdapter(client Client, processorID string) *DocumentAIAdapter 
 func (a *DocumentAIAdapter) ExtractLabReport(
 	ctx context.Context,
 	documentURI, mimeType string,
-) (*integrations.ExtractedLabReport, error) {
+) (*documentai.ExtractedLabReport, error) {
 	// 1. Processa documento via Google Document AI
 	doc, err := a.client.ProcessDocument(ctx, a.processorID, documentURI, mimeType)
 	if err != nil {
@@ -55,7 +55,7 @@ func (a *DocumentAIAdapter) ExtractLabReport(
 	return extracted, nil
 }
 
-func (a *DocumentAIAdapter) validateExtracted(extracted *integrations.ExtractedLabReport) error {
+func (a *DocumentAIAdapter) validateExtracted(extracted *documentai.ExtractedLabReport) error {
 	// Você pode adicionar validações aqui se necessário
 	// Por exemplo: garantir que pelo menos um teste foi extraído
 	if len(extracted.Tests) == 0 {
@@ -63,13 +63,4 @@ func (a *DocumentAIAdapter) validateExtracted(extracted *integrations.ExtractedL
 	}
 
 	return nil
-}
-
-func (a *DocumentAIAdapter) ExtractImageExam(
-	ctx context.Context,
-	documentURI, mimeType string,
-) (*integrations.ExtractedImageExam, error) {
-	//TODO: Implementar
-	return nil, nil
-
 }

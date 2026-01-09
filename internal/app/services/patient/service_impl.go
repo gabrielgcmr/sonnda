@@ -28,10 +28,6 @@ func New(repo repository.Patient, auth authorization.Authorizer) Service {
 }
 
 func (s *service) Create(ctx context.Context, currentUser *user.User, input CreateInput) (*patient.Patient, error) {
-	if err := s.auth.Require(ctx, currentUser, rbac.ActionCreatePatient, nil); err != nil {
-		return nil, err
-	}
-
 	newPatient, err := patient.NewPatient(patient.NewPatientParams{
 		UserID:    input.UserID,
 		CPF:       input.CPF,
@@ -55,9 +51,6 @@ func (s *service) Create(ctx context.Context, currentUser *user.User, input Crea
 }
 
 func (s *service) Get(ctx context.Context, currentUser *user.User, id uuid.UUID) (*patient.Patient, error) {
-	if err := s.auth.Require(ctx, currentUser, rbac.ActionReadPatient, &id); err != nil {
-		return nil, err
-	}
 
 	p, err := s.repo.FindByID(ctx, id)
 	if err != nil {
@@ -70,9 +63,6 @@ func (s *service) Get(ctx context.Context, currentUser *user.User, id uuid.UUID)
 }
 
 func (s *service) Update(ctx context.Context, currentUser *user.User, id uuid.UUID, input UpdateInput) (*patient.Patient, error) {
-	if err := s.auth.Require(ctx, currentUser, rbac.ActionUpdatePatient, &id); err != nil {
-		return nil, err
-	}
 
 	p, err := s.repo.FindByID(ctx, id)
 	if err != nil {
@@ -102,9 +92,6 @@ func (s *service) Update(ctx context.Context, currentUser *user.User, id uuid.UU
 }
 
 func (s *service) SoftDelete(ctx context.Context, currentUser *user.User, id uuid.UUID) error {
-	if err := s.auth.Require(ctx, currentUser, rbac.ActionSoftDeletePatient, &id); err != nil {
-		return err
-	}
 
 	p, err := s.repo.FindByID(ctx, id)
 	if err != nil {

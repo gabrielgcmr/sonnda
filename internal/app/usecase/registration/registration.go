@@ -1,4 +1,4 @@
-package registrationsvc
+package registration
 
 import (
 	"context"
@@ -12,17 +12,21 @@ import (
 	"sonnda-api/internal/domain/ports/repository"
 )
 
-type service struct {
+type UseCase interface {
+	Register(ctx context.Context, input RegisterInput) (*user.User, error)
+}
+
+type usecase struct {
 	userRepo repository.User
 	userSvc  usersvc.Service
 	profSvc  professionalsvc.Service
 	authSvc  integration.IdentityService
 }
 
-var _ Service = (*service)(nil)
+var _ UseCase = (*usecase)(nil)
 
-func New(userRepo repository.User, userSvc usersvc.Service, profSvc professionalsvc.Service, authSvc integration.IdentityService) Service {
-	return &service{
+func New(userRepo repository.User, userSvc usersvc.Service, profSvc professionalsvc.Service, authSvc integration.IdentityService) *usecase {
+	return &usecase{
 		userRepo: userRepo,
 		userSvc:  userSvc,
 		profSvc:  profSvc,
@@ -30,9 +34,9 @@ func New(userRepo repository.User, userSvc usersvc.Service, profSvc professional
 	}
 }
 
-func (s *service) Register(ctx context.Context, input RegisterInput) (*user.User, error) {
-	// Verificar se usuário já existe
-	existing, err := s.userRepo.FindByAuthIdentity(ctx, input.Provider, input.Subject)
+func (u *usecase) Register(ctx context.Context, input RegisterInput) (*user.User, error) {
+	// Verificar se usuǭrio jǭ existe
+	existing, err := u.userRepo.FindByAuthIdentity(ctx, input.Provider, input.Subject)
 	if err != nil {
 		return nil, &apperr.AppError{
 			Code:    apperr.INFRA_DATABASE_ERROR,
@@ -43,11 +47,11 @@ func (s *service) Register(ctx context.Context, input RegisterInput) (*user.User
 	if existing != nil {
 		return nil, &apperr.AppError{
 			Code:    apperr.RESOURCE_ALREADY_EXISTS,
-			Message: "usuário já cadastrado",
+			Message: "usuǭrio jǭ cadastrado",
 		}
 	}
 
-	createdUser, err := s.userSvc.Create(ctx, usersvc.UserCreateInput{
+	createdUser, err := u.userSvc.Create(ctx, usersvc.UserCreateInput{
 		Provider:    input.Provider,
 		Subject:     input.Subject,
 		Email:       input.Email,
@@ -66,10 +70,10 @@ func (s *service) Register(ctx context.Context, input RegisterInput) (*user.User
 	}
 
 	if input.Professional == nil {
-		return nil, apperr.Validation("dados do profissional inválidos")
+		return nil, apperr.Validation("dados do profissional invǭlidos")
 	}
 
-	_, err = s.profSvc.Create(ctx, professionalsvc.CreateInput{
+	_, err = u.profSvc.Create(ctx, professionalsvc.CreateInput{
 		UserID:             createdUser.ID,
 		Kind:               input.Professional.Kind,
 		RegistrationNumber: input.Professional.RegistrationNumber,
@@ -80,11 +84,11 @@ func (s *service) Register(ctx context.Context, input RegisterInput) (*user.User
 		return createdUser, nil
 	}
 
-	rollbackErr := s.rollbackCreatedUser(ctx, createdUser)
+	rollbackErr := u.rollbackCreatedUser(ctx, createdUser)
 	if rollbackErr != nil {
 		return nil, &apperr.AppError{
 			Code:    apperr.INFRA_DATABASE_ERROR,
-			Message: "falha técnica",
+			Message: "falha tǸcnica",
 			Cause:   errors.Join(err, rollbackErr),
 		}
 	}
@@ -92,15 +96,15 @@ func (s *service) Register(ctx context.Context, input RegisterInput) (*user.User
 	return nil, err
 }
 
-func (s *service) rollbackCreatedUser(ctx context.Context, createdUser *user.User) error {
+func (u *usecase) rollbackCreatedUser(ctx context.Context, createdUser *user.User) error {
 	if createdUser == nil {
 		return nil
 	}
 
 	var rollbackErr error
 
-	if createdUser.AuthProvider == "firebase" && s.authSvc != nil {
-		rollbackErr = errors.Join(rollbackErr, s.authSvc.DisableUser(ctx, createdUser.AuthSubject))
+	if createdUser.AuthProvider == "firebase" && u.authSvc != nil {
+		rollbackErr = errors.Join(rollbackErr, u.authSvc.DisableUser(ctx, createdUser.AuthSubject))
 	}
 
 	return rollbackErr

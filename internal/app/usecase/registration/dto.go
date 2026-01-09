@@ -1,4 +1,4 @@
-package registrationsvc
+package registration
 
 import (
 	"time"

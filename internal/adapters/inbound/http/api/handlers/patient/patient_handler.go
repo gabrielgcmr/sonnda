@@ -10,7 +10,7 @@ import (
 	applog "sonnda-api/internal/app/observability"
 	patientsvc "sonnda-api/internal/app/services/patient"
 
-	"sonnda-api/internal/adapters/inbound/http/api/handlers/common"
+	"sonnda-api/internal/adapters/inbound/http/api/handlers"
 	httperrors "sonnda-api/internal/adapters/inbound/http/errors"
 	"sonnda-api/internal/adapters/inbound/http/middleware"
 )
@@ -45,7 +45,7 @@ func (h *PatientHandler) Create(c *gin.Context) {
 	}
 
 	// 3. Parsing / normalização de fronteira
-	birthDate, err := common.ParseBirthDate(req.BirthDate)
+	birthDate, err := handlers.ParseBirthDate(req.BirthDate)
 	if err != nil {
 		httperrors.WriteError(c, &apperr.AppError{
 			Code:    apperr.VALIDATION_FAILED,
@@ -139,16 +139,6 @@ func (h *PatientHandler) GetPatient(c *gin.Context) {
 }
 
 func (h *PatientHandler) UpdatePatient(c *gin.Context) {
-	if h == nil || h.svc == nil {
-		httperrors.WriteError(c, &apperr.AppError{
-			Code:    apperr.INTERNAL_ERROR,
-			Message: "serviço indisponível",
-		})
-		return
-	}
-
-	log := applog.FromContext(c.Request.Context())
-	log.Info("patient_update_by_id")
 
 	currentUser, ok := middleware.GetCurrentUser(c)
 	if !ok || currentUser == nil {
@@ -205,9 +195,6 @@ func (h *PatientHandler) ListPatients(c *gin.Context) {
 		})
 		return
 	}
-
-	log := applog.FromContext(c.Request.Context())
-	log.Info("patient_list")
 
 	currentUser, ok := middleware.GetCurrentUser(c)
 	if !ok || currentUser == nil {
