@@ -1,4 +1,4 @@
-package errors
+package httperr
 
 import (
 	"encoding/json"
@@ -95,4 +95,3 @@ func TestWriteError_OmitsViolationsWhenEmpty(t *testing.T) {
 		t.Fatalf("did not expect 'violations' in response when empty")
 	}
 }
-

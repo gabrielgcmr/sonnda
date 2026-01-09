@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	httperrors "sonnda-api/internal/adapters/inbound/http/errors"
+	httperr "sonnda-api/internal/adapters/inbound/http/httperr"
 	"sonnda-api/internal/app/apperr"
 	applog "sonnda-api/internal/app/observability"
 	"sonnda-api/internal/domain/model/identity"
@@ -32,7 +32,7 @@ func (m *RegistrationMiddleware) RequireRegisteredUser() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		id, ok := GetIdentity(ctx)
 		if !ok {
-			httperrors.WriteError(ctx, apperr.Unauthorized("autenticação necessária"))
+			httperr.WriteError(ctx, apperr.Unauthorized("autenticação necessária"))
 			ctx.Abort()
 			return
 		}
@@ -89,7 +89,7 @@ func (m *RegistrationMiddleware) resolveUser(ctx *gin.Context, identity *identit
 		identity.Subject,
 	)
 	if err != nil {
-		httperrors.WriteError(ctx, &apperr.AppError{
+		httperr.WriteError(ctx, &apperr.AppError{
 			Code:    apperr.INFRA_DATABASE_ERROR,
 			Message: "erro ao buscar usuário",
 			Cause:   err,
@@ -99,7 +99,7 @@ func (m *RegistrationMiddleware) resolveUser(ctx *gin.Context, identity *identit
 	}
 
 	if currentUser == nil {
-		httperrors.WriteError(ctx, &apperr.AppError{
+		httperr.WriteError(ctx, &apperr.AppError{
 			Code:    apperr.ACCESS_DENIED,
 			Message: "usuário não registrado",
 		})

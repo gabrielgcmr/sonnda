@@ -11,7 +11,8 @@ import (
 	patientsvc "sonnda-api/internal/app/services/patient"
 
 	"sonnda-api/internal/adapters/inbound/http/api/handlers"
-	httperrors "sonnda-api/internal/adapters/inbound/http/errors"
+	"sonnda-api/internal/adapters/inbound/http/binder"
+	"sonnda-api/internal/adapters/inbound/http/httperr"
 	"sonnda-api/internal/adapters/inbound/http/middleware"
 )
 
@@ -30,7 +31,7 @@ func (h *PatientHandler) Create(c *gin.Context) {
 
 	user, ok := middleware.GetCurrentUser(c)
 	if !ok || user == nil {
-		httperrors.WriteError(c, &apperr.AppError{
+		httperr.WriteError(c, &apperr.AppError{
 			Code:    apperr.AUTH_REQUIRED,
 			Message: "autenticação necessária",
 		})
@@ -39,15 +40,15 @@ func (h *PatientHandler) Create(c *gin.Context) {
 
 	var req CreatePatientRequest
 	// 1. Bind do request
-	if err := httperrors.BindJSON(c, &req); err != nil {
-		httperrors.WriteError(c, err)
+	if err := binder.BindJSON(c, &req); err != nil {
+		httperr.WriteError(c, err)
 		return
 	}
 
 	// 3. Parsing / normalização de fronteira
 	birthDate, err := handlers.ParseBirthDate(req.BirthDate)
 	if err != nil {
-		httperrors.WriteError(c, &apperr.AppError{
+		httperr.WriteError(c, &apperr.AppError{
 			Code:    apperr.VALIDATION_FAILED,
 			Message: "data de nascimento inválida",
 			Cause:   err,
@@ -57,7 +58,7 @@ func (h *PatientHandler) Create(c *gin.Context) {
 
 	gender, err := ParseGender(req.Gender)
 	if err != nil {
-		httperrors.WriteError(c, &apperr.AppError{
+		httperr.WriteError(c, &apperr.AppError{
 			Code:    apperr.VALIDATION_FAILED,
 			Message: "gênero inválido",
 			Cause:   err,
@@ -67,7 +68,7 @@ func (h *PatientHandler) Create(c *gin.Context) {
 
 	race, err := ParseRace(req.Race)
 	if err != nil {
-		httperrors.WriteError(c, &apperr.AppError{
+		httperr.WriteError(c, &apperr.AppError{
 			Code:    apperr.VALIDATION_FAILED,
 			Message: "raça inválida",
 			Cause:   err,
@@ -89,7 +90,7 @@ func (h *PatientHandler) Create(c *gin.Context) {
 	// 5. Execução do use case
 	p, err := h.svc.Create(ctx, user, input)
 	if err != nil {
-		httperrors.WriteError(c, err)
+		httperr.WriteError(c, err)
 		return
 	}
 
@@ -103,7 +104,7 @@ func (h *PatientHandler) GetPatient(c *gin.Context) {
 
 	currentUser, ok := middleware.GetCurrentUser(c)
 	if !ok || currentUser == nil {
-		httperrors.WriteError(c, &apperr.AppError{
+		httperr.WriteError(c, &apperr.AppError{
 			Code:    apperr.AUTH_REQUIRED,
 			Message: "autenticação necessária",
 		})
@@ -112,7 +113,7 @@ func (h *PatientHandler) GetPatient(c *gin.Context) {
 
 	id := c.Param("id")
 	if id == "" {
-		httperrors.WriteError(c, &apperr.AppError{
+		httperr.WriteError(c, &apperr.AppError{
 			Code:    apperr.VALIDATION_FAILED,
 			Message: "patient_id é obrigatório",
 		})
@@ -121,7 +122,7 @@ func (h *PatientHandler) GetPatient(c *gin.Context) {
 
 	parsedID, err := uuid.Parse(id)
 	if err != nil {
-		httperrors.WriteError(c, &apperr.AppError{
+		httperr.WriteError(c, &apperr.AppError{
 			Code:    apperr.VALIDATION_FAILED,
 			Message: "patient_id inválido",
 			Cause:   err,
@@ -131,7 +132,7 @@ func (h *PatientHandler) GetPatient(c *gin.Context) {
 
 	p, err := h.svc.Get(c.Request.Context(), currentUser, parsedID)
 	if err != nil {
-		httperrors.WriteError(c, err)
+		httperr.WriteError(c, err)
 		return
 	}
 
@@ -142,7 +143,7 @@ func (h *PatientHandler) UpdatePatient(c *gin.Context) {
 
 	currentUser, ok := middleware.GetCurrentUser(c)
 	if !ok || currentUser == nil {
-		httperrors.WriteError(c, &apperr.AppError{
+		httperr.WriteError(c, &apperr.AppError{
 			Code:    apperr.AUTH_REQUIRED,
 			Message: "autenticação necessária",
 		})
@@ -151,7 +152,7 @@ func (h *PatientHandler) UpdatePatient(c *gin.Context) {
 
 	id := c.Param("id")
 	if id == "" {
-		httperrors.WriteError(c, &apperr.AppError{
+		httperr.WriteError(c, &apperr.AppError{
 			Code:    apperr.VALIDATION_FAILED,
 			Message: "patient_id é obrigatório",
 		})
@@ -160,7 +161,7 @@ func (h *PatientHandler) UpdatePatient(c *gin.Context) {
 
 	parsedID, err := uuid.Parse(id)
 	if err != nil {
-		httperrors.WriteError(c, &apperr.AppError{
+		httperr.WriteError(c, &apperr.AppError{
 			Code:    apperr.VALIDATION_FAILED,
 			Message: "patient_id inválido",
 			Cause:   err,
@@ -170,7 +171,7 @@ func (h *PatientHandler) UpdatePatient(c *gin.Context) {
 
 	var input patientsvc.UpdateInput
 	if err := c.ShouldBindJSON(&input); err != nil {
-		httperrors.WriteError(c, &apperr.AppError{
+		httperr.WriteError(c, &apperr.AppError{
 			Code:    apperr.VALIDATION_FAILED,
 			Message: "payload inválido",
 			Cause:   err,
@@ -180,7 +181,7 @@ func (h *PatientHandler) UpdatePatient(c *gin.Context) {
 
 	p, err := h.svc.Update(c.Request.Context(), currentUser, parsedID, input)
 	if err != nil {
-		httperrors.WriteError(c, err)
+		httperr.WriteError(c, err)
 		return
 	}
 
@@ -189,7 +190,7 @@ func (h *PatientHandler) UpdatePatient(c *gin.Context) {
 
 func (h *PatientHandler) ListPatients(c *gin.Context) {
 	if h == nil || h.svc == nil {
-		httperrors.WriteError(c, &apperr.AppError{
+		httperr.WriteError(c, &apperr.AppError{
 			Code:    apperr.INTERNAL_ERROR,
 			Message: "serviço indisponível",
 		})
@@ -198,7 +199,7 @@ func (h *PatientHandler) ListPatients(c *gin.Context) {
 
 	currentUser, ok := middleware.GetCurrentUser(c)
 	if !ok || currentUser == nil {
-		httperrors.WriteError(c, &apperr.AppError{
+		httperr.WriteError(c, &apperr.AppError{
 			Code:    apperr.AUTH_REQUIRED,
 			Message: "autenticação necessária",
 		})
@@ -207,7 +208,7 @@ func (h *PatientHandler) ListPatients(c *gin.Context) {
 
 	list, err := h.svc.List(c.Request.Context(), currentUser, 100, 0)
 	if err != nil {
-		httperrors.WriteError(c, err)
+		httperr.WriteError(c, err)
 		return
 	}
 
@@ -219,7 +220,7 @@ func (h *PatientHandler) HardDeletePatient(c *gin.Context) {
 
 	id := c.Param("id")
 	if id == "" {
-		httperrors.WriteError(c, &apperr.AppError{
+		httperr.WriteError(c, &apperr.AppError{
 			Code:    apperr.VALIDATION_FAILED,
 			Message: "patient_id é obrigatório",
 		})
@@ -228,7 +229,7 @@ func (h *PatientHandler) HardDeletePatient(c *gin.Context) {
 
 	parsedID, err := uuid.Parse(id)
 	if err != nil {
-		httperrors.WriteError(c, &apperr.AppError{
+		httperr.WriteError(c, &apperr.AppError{
 			Code:    apperr.INVALID_FIELD_FORMAT,
 			Message: "patient_id inválido",
 			Cause:   err,
@@ -237,7 +238,7 @@ func (h *PatientHandler) HardDeletePatient(c *gin.Context) {
 	}
 
 	if err := h.svc.HardDelete(c.Request.Context(), currentUser, parsedID); err != nil {
-		httperrors.WriteError(c, err)
+		httperr.WriteError(c, err)
 		return
 	}
 

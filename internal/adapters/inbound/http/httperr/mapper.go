@@ -1,5 +1,5 @@
 // internal/app/common/http_mapper.go
-package errors
+package httperr
 
 import (
 	"errors"

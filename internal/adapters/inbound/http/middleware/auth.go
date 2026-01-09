@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strings"
 
-	httperrors "sonnda-api/internal/adapters/inbound/http/errors"
+	httperr "sonnda-api/internal/adapters/inbound/http/httperr"
 	"sonnda-api/internal/app/apperr"
 	"sonnda-api/internal/domain/model/identity"
 	"sonnda-api/internal/domain/model/user"
@@ -68,7 +68,7 @@ func extractBearerToken(ctx *gin.Context) (string, error) {
 }
 
 func (m *AuthMiddleware) abortUnauthorized(ctx *gin.Context, code apperr.ErrorCode, msg string, cause error) {
-	httperrors.WriteError(ctx, &apperr.AppError{
+	httperr.WriteError(ctx, &apperr.AppError{
 		Code:    code,
 		Message: msg,
 		Cause:   cause,

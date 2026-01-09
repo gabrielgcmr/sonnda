@@ -1,33 +1,12 @@
-package errors
+package bind
 
 import (
 	"errors"
-	"sonnda-api/internal/app/apperr"
 	"strings"
 	"unicode"
 
-	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
-)
-
-func BindJSON(c *gin.Context, dst any) error {
-	if err := c.ShouldBindJSON(dst); err != nil {
-		violations := ValidationErrorsToViolations(err)
-
-		appErr := &apperr.AppError{
-			Code:    apperr.VALIDATION_FAILED,
-			Message: "dados de entrada inválidos",
-			Cause:   err,
-		}
-
-		if len(violations) > 0 {
-			appErr.Violations = violations
-		}
-
-		return appErr
-	}
-	return nil
-}
+)er
 
 // ValidationErrorsToViolations converte erros do validator em violações agnósticas.
 func ValidationErrorsToViolations(err error) []apperr.Violation {

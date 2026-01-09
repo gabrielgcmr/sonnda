@@ -1,5 +1,5 @@
-// internal/http/errors/error_presenter.go
-package errors
+// internal/http/httperr/presenter.go
+package httperr
 
 import (
 	"log/slog"

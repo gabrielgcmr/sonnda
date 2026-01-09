@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"fmt"
-	httperrors "sonnda-api/internal/adapters/inbound/http/errors"
+	"sonnda-api/internal/adapters/inbound/http/httperr"
 	"sonnda-api/internal/app/apperr"
 	"sonnda-api/internal/domain/model/demographics"
 	"time"
@@ -27,7 +27,7 @@ func ParseBirthDate(dateStr string) (time.Time, error) {
 func ParsePatientIDParam(c *gin.Context, id string) (uuid.UUID, bool) {
 	idStr := c.Param(id)
 	if idStr == "" {
-		httperrors.WriteError(c, &apperr.AppError{
+		httperr.WriteError(c, &apperr.AppError{
 			Code:    apperr.REQUIRED_FIELD_MISSING,
 			Message: "patient_id é obrigatório",
 		})
@@ -36,7 +36,7 @@ func ParsePatientIDParam(c *gin.Context, id string) (uuid.UUID, bool) {
 
 	parsedID, err := uuid.Parse(idStr)
 	if err != nil {
-		httperrors.WriteError(c, &apperr.AppError{
+		httperr.WriteError(c, &apperr.AppError{
 			Code:    apperr.INVALID_FIELD_FORMAT,
 			Message: "patient_id inválido",
 			Cause:   err,

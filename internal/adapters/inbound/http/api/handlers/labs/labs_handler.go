@@ -15,7 +15,7 @@ import (
 	labsuc "sonnda-api/internal/app/usecase/labs"
 
 	"sonnda-api/internal/adapters/inbound/http/api/handlers"
-	httperrors "sonnda-api/internal/adapters/inbound/http/errors"
+	"sonnda-api/internal/adapters/inbound/http/httperr"
 	"sonnda-api/internal/adapters/inbound/http/middleware"
 	"sonnda-api/internal/app/apperr"
 	"sonnda-api/internal/domain/model/labs"
@@ -64,7 +64,7 @@ func (h *LabsHandler) ListFullLabs(c *gin.Context) {
 
 	idStr := c.Param("id")
 	if idStr == "" {
-		httperrors.WriteError(c, &apperr.AppError{
+		httperr.WriteError(c, &apperr.AppError{
 			Code:    apperr.REQUIRED_FIELD_MISSING,
 			Message: "patient_id é obrigatório",
 		})
@@ -73,7 +73,7 @@ func (h *LabsHandler) ListFullLabs(c *gin.Context) {
 
 	parsedID, err := uuid.Parse(idStr)
 	if err != nil {
-		httperrors.WriteError(c, &apperr.AppError{
+		httperr.WriteError(c, &apperr.AppError{
 			Code:    apperr.INVALID_FIELD_FORMAT,
 			Message: "patient_id inválido",
 			Cause:   err,
@@ -103,7 +103,7 @@ func (h *LabsHandler) UploadAndProcessLabs(c *gin.Context) {
 
 	idStr := c.Param("id")
 	if idStr == "" {
-		httperrors.WriteError(c, &apperr.AppError{
+		httperr.WriteError(c, &apperr.AppError{
 			Code:    apperr.REQUIRED_FIELD_MISSING,
 			Message: "patient_id é obrigatório",
 		})
@@ -112,7 +112,7 @@ func (h *LabsHandler) UploadAndProcessLabs(c *gin.Context) {
 
 	parsedID, err := uuid.Parse(idStr)
 	if err != nil {
-		httperrors.WriteError(c, &apperr.AppError{
+		httperr.WriteError(c, &apperr.AppError{
 			Code:    apperr.INVALID_FIELD_FORMAT,
 			Message: "patient_id inválido",
 			Cause:   err,
@@ -133,7 +133,7 @@ func (h *LabsHandler) UploadAndProcessLabs(c *gin.Context) {
 		UploadedByUserID: user.ID,
 	})
 	if err != nil {
-		httperrors.WriteError(c, err)
+		httperr.WriteError(c, err)
 		return
 	}
 
@@ -214,7 +214,7 @@ func parsePagination(c *gin.Context, defaultLimit, defaultOffset int) (limit, of
 	if limitStr := c.Query("limit"); limitStr != "" {
 		l, err := strconv.Atoi(limitStr)
 		if err != nil || l <= 0 {
-			httperrors.WriteError(c, &apperr.AppError{
+			httperr.WriteError(c, &apperr.AppError{
 				Code:    apperr.VALIDATION_FAILED,
 				Message: "limit deve ser > 0",
 				Cause:   err,
@@ -227,7 +227,7 @@ func parsePagination(c *gin.Context, defaultLimit, defaultOffset int) (limit, of
 	if offsetStr := c.Query("offset"); offsetStr != "" {
 		o, err := strconv.Atoi(offsetStr)
 		if err != nil || o < 0 {
-			httperrors.WriteError(c, &apperr.AppError{
+			httperr.WriteError(c, &apperr.AppError{
 				Code:    apperr.VALIDATION_FAILED,
 				Message: "offset deve ser >= 0",
 				Cause:   err,
@@ -275,15 +275,15 @@ func writeLabsServiceError(c *gin.Context, err error) {
 
 	var appErr *apperr.AppError
 	if errors.As(err, &appErr) && appErr != nil {
-		httperrors.WriteError(c, err)
+		httperr.WriteError(c, err)
 		return
 	}
 
 	switch {
 	case errors.Is(err, labs.ErrLabReportNotFound):
-		httperrors.WriteError(c, &apperr.AppError{Code: apperr.NOT_FOUND, Message: "laudo não encontrado", Cause: err})
+		httperr.WriteError(c, &apperr.AppError{Code: apperr.NOT_FOUND, Message: "laudo não encontrado", Cause: err})
 	case errors.Is(err, labs.ErrLabReportAlreadyExists):
-		httperrors.WriteError(c, &apperr.AppError{Code: apperr.RESOURCE_ALREADY_EXISTS, Message: "laudo já existe", Cause: err})
+		httperr.WriteError(c, &apperr.AppError{Code: apperr.RESOURCE_ALREADY_EXISTS, Message: "laudo já existe", Cause: err})
 	case errors.Is(err, labs.ErrInvalidInput),
 		errors.Is(err, labs.ErrMissingId),
 		errors.Is(err, labs.ErrInvalidDateFormat),
@@ -292,11 +292,11 @@ func writeLabsServiceError(c *gin.Context, err error) {
 		errors.Is(err, labs.ErrInvalidUploadedByUser),
 		errors.Is(err, labs.ErrInvalidTestName),
 		errors.Is(err, labs.ErrInvalidParameterName):
-		httperrors.WriteError(c, &apperr.AppError{Code: apperr.VALIDATION_FAILED, Message: "entrada inválida", Cause: err})
+		httperr.WriteError(c, &apperr.AppError{Code: apperr.VALIDATION_FAILED, Message: "entrada inválida", Cause: err})
 	case errors.Is(err, labs.ErrDocumentProcessing):
-		httperrors.WriteError(c, &apperr.AppError{Code: apperr.INFRA_EXTERNAL_SERVICE_ERROR, Message: "falha ao processar documento", Cause: err})
+		httperr.WriteError(c, &apperr.AppError{Code: apperr.INFRA_EXTERNAL_SERVICE_ERROR, Message: "falha ao processar documento", Cause: err})
 	default:
-		httperrors.WriteError(c, &apperr.AppError{Code: apperr.INTERNAL_ERROR, Message: "erro inesperado", Cause: err})
+		httperr.WriteError(c, &apperr.AppError{Code: apperr.INTERNAL_ERROR, Message: "erro inesperado", Cause: err})
 	}
 }
 
@@ -308,18 +308,18 @@ func writeUploadError(c *gin.Context, err error) {
 	msg := err.Error()
 	switch {
 	case strings.HasPrefix(msg, "file_required"):
-		httperrors.WriteError(c, &apperr.AppError{Code: apperr.REQUIRED_FIELD_MISSING, Message: "arquivo é obrigatório", Cause: err})
+		httperr.WriteError(c, &apperr.AppError{Code: apperr.REQUIRED_FIELD_MISSING, Message: "arquivo é obrigatório", Cause: err})
 	case msg == "empty_file":
-		httperrors.WriteError(c, &apperr.AppError{Code: apperr.VALIDATION_FAILED, Message: "arquivo vazio", Cause: err})
+		httperr.WriteError(c, &apperr.AppError{Code: apperr.VALIDATION_FAILED, Message: "arquivo vazio", Cause: err})
 	case msg == "file_too_large":
-		httperrors.WriteError(c, &apperr.AppError{Code: apperr.UPLOAD_SIZE_EXCEEDED, Message: "arquivo muito grande", Cause: err})
+		httperr.WriteError(c, &apperr.AppError{Code: apperr.UPLOAD_SIZE_EXCEEDED, Message: "arquivo muito grande", Cause: err})
 	case strings.HasPrefix(msg, "unsupported_mime_type:"):
-		httperrors.WriteError(c, &apperr.AppError{Code: apperr.INVALID_FIELD_FORMAT, Message: "tipo de arquivo não suportado", Cause: err})
+		httperr.WriteError(c, &apperr.AppError{Code: apperr.INVALID_FIELD_FORMAT, Message: "tipo de arquivo não suportado", Cause: err})
 	case strings.HasPrefix(msg, "open_file_failed"):
-		httperrors.WriteError(c, &apperr.AppError{Code: apperr.INTERNAL_ERROR, Message: "falha ao abrir arquivo", Cause: err})
+		httperr.WriteError(c, &apperr.AppError{Code: apperr.INTERNAL_ERROR, Message: "falha ao abrir arquivo", Cause: err})
 	case strings.HasPrefix(msg, "upload_failed"):
-		httperrors.WriteError(c, &apperr.AppError{Code: apperr.INFRA_STORAGE_ERROR, Message: "falha no upload", Cause: err})
+		httperr.WriteError(c, &apperr.AppError{Code: apperr.INFRA_STORAGE_ERROR, Message: "falha no upload", Cause: err})
 	default:
-		httperrors.WriteError(c, &apperr.AppError{Code: apperr.VALIDATION_FAILED, Message: "falha no upload", Cause: err})
+		httperr.WriteError(c, &apperr.AppError{Code: apperr.VALIDATION_FAILED, Message: "falha no upload", Cause: err})
 	}
 }
