@@ -8,28 +8,43 @@ import (
 	professionalsvc "sonnda-api/internal/app/services/professional"
 	usersvc "sonnda-api/internal/app/services/user"
 	"sonnda-api/internal/domain/model/user"
-	external "sonnda-api/internal/domain/ports/integration"
+	"sonnda-api/internal/domain/ports/integration"
+	"sonnda-api/internal/domain/ports/repository"
 )
 
 type service struct {
-	userSvc usersvc.Service
-	profSvc professionalsvc.Service
-	authSvc external.IdentityService
+	userRepo repository.User
+	userSvc  usersvc.Service
+	profSvc  professionalsvc.Service
+	authSvc  integration.IdentityService
 }
 
 var _ Service = (*service)(nil)
 
-func New(userSvc usersvc.Service, profSvc professionalsvc.Service, authSvc external.IdentityService) Service {
+func New(userRepo repository.User, userSvc usersvc.Service, profSvc professionalsvc.Service, authSvc integration.IdentityService) Service {
 	return &service{
-		userSvc: userSvc,
-		profSvc: profSvc,
-		authSvc: authSvc,
+		userRepo: userRepo,
+		userSvc:  userSvc,
+		profSvc:  profSvc,
+		authSvc:  authSvc,
 	}
 }
 
 func (s *service) Register(ctx context.Context, input RegisterInput) (*user.User, error) {
-	if s == nil || s.userSvc == nil {
-		return nil, apperr.Internal("serviço indisponível", errors.New("user service not configured"))
+	// Verificar se usuário já existe
+	existing, err := s.userRepo.FindByAuthIdentity(ctx, input.Provider, input.Subject)
+	if err != nil {
+		return nil, &apperr.AppError{
+			Code:    apperr.INFRA_DATABASE_ERROR,
+			Message: "falha ao verificar registro",
+			Cause:   err,
+		}
+	}
+	if existing != nil {
+		return nil, &apperr.AppError{
+			Code:    apperr.RESOURCE_ALREADY_EXISTS,
+			Message: "usuário já cadastrado",
+		}
 	}
 
 	createdUser, err := s.userSvc.Create(ctx, usersvc.UserCreateInput{
@@ -50,9 +65,6 @@ func (s *service) Register(ctx context.Context, input RegisterInput) (*user.User
 		return createdUser, nil
 	}
 
-	if s.profSvc == nil {
-		return nil, apperr.Internal("serviço indisponível", errors.New("professional service not configured"))
-	}
 	if input.Professional == nil {
 		return nil, apperr.Validation("dados do profissional inválidos")
 	}
@@ -86,9 +98,6 @@ func (s *service) rollbackCreatedUser(ctx context.Context, createdUser *user.Use
 	}
 
 	var rollbackErr error
-	if s.userSvc != nil {
-		rollbackErr = errors.Join(rollbackErr, s.userSvc.SoftDelete(ctx, createdUser.ID))
-	}
 
 	if createdUser.AuthProvider == "firebase" && s.authSvc != nil {
 		rollbackErr = errors.Join(rollbackErr, s.authSvc.DisableUser(ctx, createdUser.AuthSubject))

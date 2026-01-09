@@ -2,6 +2,7 @@ package user
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 
@@ -92,26 +93,12 @@ func (h *Handler) Register(c *gin.Context) {
 }
 
 func (h *Handler) GetUser(c *gin.Context) {
-	currentUser, ok := middleware.GetCurrentUser(c)
-	if !ok || currentUser == nil {
-		httperrors.WriteError(c, apperr.Unauthorized("autenticação necessária"))
-		return
-	}
-
+	currentUser := middleware.MustGetCurrentUser(c)
 	c.JSON(http.StatusOK, currentUser)
 }
 
 func (h *Handler) UpdateUser(c *gin.Context) {
-	if h == nil || h.userSvc == nil {
-		httperrors.WriteError(c, apperr.Internal("serviço indisponível", nil))
-		return
-	}
-
-	currentUser, ok := middleware.GetCurrentUser(c)
-	if !ok {
-		httperrors.WriteError(c, apperr.Unauthorized("autenticação necessária"))
-		return
-	}
+	currentUser := middleware.MustGetCurrentUser(c)
 
 	var req UpdateUserRequest
 	if err := httperrors.BindJSON(c, &req); err != nil {
@@ -143,16 +130,7 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 }
 
 func (h *Handler) HardDeleteUser(c *gin.Context) {
-	if h == nil || h.userSvc == nil {
-		httperrors.WriteError(c, apperr.Internal("serviço indisponível", nil))
-		return
-	}
-
-	currentUser, ok := middleware.GetCurrentUser(c)
-	if !ok || currentUser == nil {
-		httperrors.WriteError(c, apperr.Unauthorized("autenticação necessária"))
-		return
-	}
+	currentUser := middleware.MustGetCurrentUser(c)
 
 	if err := h.userSvc.Delete(c.Request.Context(), currentUser.ID); err != nil {
 		httperrors.WriteError(c, err)
@@ -163,5 +141,27 @@ func (h *Handler) HardDeleteUser(c *gin.Context) {
 }
 
 func (h *Handler) ListMyPatients(c *gin.Context) {
-	panic("unimplemented")
+	currentUser := middleware.MustGetCurrentUser(c)
+
+	// Parse query params
+	limit := 20
+	offset := 0
+	if l := c.Query("limit"); l != "" {
+		if parsed, err := strconv.Atoi(l); err == nil && parsed > 0 {
+			limit = parsed
+		}
+	}
+	if o := c.Query("offset"); o != "" {
+		if parsed, err := strconv.Atoi(o); err == nil && parsed >= 0 {
+			offset = parsed
+		}
+	}
+
+	result, err := h.userSvc.ListMyPatients(c.Request.Context(), currentUser.ID, limit, offset)
+	if err != nil {
+		httperrors.WriteError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
 }

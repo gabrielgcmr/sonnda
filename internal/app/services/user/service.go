@@ -21,4 +21,7 @@ type Service interface {
 	//
 	// This is intentional so callers can safely retry without turning a previously successful delete into an error.
 	SoftDelete(ctx context.Context, userID uuid.UUID) error
+
+	// ListMyPatients returns a minimal list of patients the user has access to
+	ListMyPatients(ctx context.Context, userID uuid.UUID, limit, offset int) (*MyPatientsOutput, error)
 }

@@ -99,14 +99,7 @@ func (h *PatientHandler) Create(c *gin.Context) {
 	})
 }
 
-func (h *PatientHandler) GetByID(c *gin.Context) {
-	if h == nil || h.svc == nil {
-		httperrors.WriteError(c, &apperr.AppError{
-			Code:    apperr.INTERNAL_ERROR,
-			Message: "serviço indisponível",
-		})
-		return
-	}
+func (h *PatientHandler) GetPatient(c *gin.Context) {
 
 	currentUser, ok := middleware.GetCurrentUser(c)
 	if !ok || currentUser == nil {
@@ -136,7 +129,7 @@ func (h *PatientHandler) GetByID(c *gin.Context) {
 		return
 	}
 
-	p, err := h.svc.GetByID(c.Request.Context(), currentUser, parsedID)
+	p, err := h.svc.Get(c.Request.Context(), currentUser, parsedID)
 	if err != nil {
 		httperrors.WriteError(c, err)
 		return
@@ -145,7 +138,7 @@ func (h *PatientHandler) GetByID(c *gin.Context) {
 	c.JSON(http.StatusOK, p)
 }
 
-func (h *PatientHandler) UpdateByID(c *gin.Context) {
+func (h *PatientHandler) UpdatePatient(c *gin.Context) {
 	if h == nil || h.svc == nil {
 		httperrors.WriteError(c, &apperr.AppError{
 			Code:    apperr.INTERNAL_ERROR,
@@ -195,7 +188,7 @@ func (h *PatientHandler) UpdateByID(c *gin.Context) {
 		return
 	}
 
-	p, err := h.svc.UpdateByID(c.Request.Context(), currentUser, parsedID, input)
+	p, err := h.svc.Update(c.Request.Context(), currentUser, parsedID, input)
 	if err != nil {
 		httperrors.WriteError(c, err)
 		return
@@ -204,7 +197,7 @@ func (h *PatientHandler) UpdateByID(c *gin.Context) {
 	c.JSON(http.StatusOK, p)
 }
 
-func (h *PatientHandler) List(c *gin.Context) {
+func (h *PatientHandler) ListPatients(c *gin.Context) {
 	if h == nil || h.svc == nil {
 		httperrors.WriteError(c, &apperr.AppError{
 			Code:    apperr.INTERNAL_ERROR,
@@ -232,4 +225,35 @@ func (h *PatientHandler) List(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, list)
+}
+
+func (h *PatientHandler) HardDeletePatient(c *gin.Context) {
+	currentUser := middleware.MustGetCurrentUser(c)
+
+	id := c.Param("id")
+	if id == "" {
+		httperrors.WriteError(c, &apperr.AppError{
+			Code:    apperr.VALIDATION_FAILED,
+			Message: "patient_id é obrigatório",
+		})
+		return
+	}
+
+	parsedID, err := uuid.Parse(id)
+	if err != nil {
+		httperrors.WriteError(c, &apperr.AppError{
+			Code:    apperr.INVALID_FIELD_FORMAT,
+			Message: "patient_id inválido",
+			Cause:   err,
+		})
+		return
+	}
+
+	if err := h.svc.HardDelete(c.Request.Context(), currentUser, parsedID); err != nil {
+		httperrors.WriteError(c, err)
+		return
+	}
+
+	c.Status(http.StatusNoContent)
+
 }

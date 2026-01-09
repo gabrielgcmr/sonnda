@@ -149,15 +149,15 @@ func (s *Service) requirePatientAccess(ctx context.Context, actorID uuid.UUID, p
 		return nil
 	}
 
-	access, err := s.patientAccessRepo.Find(ctx, patientID, actorID)
+	hasAccess, err := s.patientAccessRepo.HasActiveAccess(ctx, patientID, actorID)
 	if err != nil {
 		return &apperr.AppError{
 			Code:    apperr.INFRA_DATABASE_ERROR,
 			Message: "falha técnica",
-			Cause:   fmt.Errorf("patientAccessRepo.Find: %w", err),
+			Cause:   fmt.Errorf("patientAccessRepo.HasActiveAccess: %w", err),
 		}
 	}
-	if access != nil {
+	if hasAccess {
 		return nil
 	}
 

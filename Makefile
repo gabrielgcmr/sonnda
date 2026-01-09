@@ -35,8 +35,8 @@ dev-web:
 sqlc-check:
 	sqlc compile -f internal/infrastructure/persistence/sqlc/sqlc.yaml
 
-sqlc-generate:
-	sqlc generate -f internal/infrastructure/persistence/sqlc/sqlc.yaml
+sqlc:
+	sqlc generate -f internal/adapters/outbound/persistence/sqlc/sqlc.yaml
 
 # Docker
 docker-up:

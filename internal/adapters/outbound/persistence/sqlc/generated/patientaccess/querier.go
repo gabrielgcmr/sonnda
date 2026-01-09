@@ -6,12 +6,19 @@ package patientaccesssqlc
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
+	// Total count for pagination of accessible patients by user
+	CountAccessiblePatientsByUser(ctx context.Context, granteeID pgtype.UUID) (int64, error)
 	FindPatientAccess(ctx context.Context, arg FindPatientAccessParams) (PatientAccess, error)
-	ListPatientAccessByPatient(ctx context.Context, patientID string) ([]PatientAccess, error)
-	ListPatientAccessByUser(ctx context.Context, userID string) ([]PatientAccess, error)
+	// Minimal list of patients accessible by a user (for UI listing)
+	// Returns patient basic info and the relation type. Paginates by full_name.
+	ListAccessiblePatientsByUser(ctx context.Context, arg ListAccessiblePatientsByUserParams) ([]ListAccessiblePatientsByUserRow, error)
+	ListPatientAccessByPatient(ctx context.Context, patientID pgtype.UUID) ([]PatientAccess, error)
+	ListPatientAccessByUser(ctx context.Context, granteeID pgtype.UUID) ([]PatientAccess, error)
 	RevokePatientAccess(ctx context.Context, arg RevokePatientAccessParams) (int64, error)
 	// internal/adapters/outbound/database/sqlc/patientaccess/queries.sql
 	UpsertPatientAccess(ctx context.Context, arg UpsertPatientAccessParams) error

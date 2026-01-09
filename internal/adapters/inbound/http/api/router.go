@@ -46,20 +46,8 @@ func SetupRoutes(
 	authenticated := api.Group("")
 	authenticated.Use(authMiddleware.Authenticate())
 	{
-		// Essa é a rota mágica!
-		// O App chama ela logo após o login.
-		// Se der 404/403, o App sabe que tem que mostrar a tela de cadastro.
-		// Se der 200, o App vai pra Home.
-		authenticated.GET("/check-registration",
-			registrationMiddleware.RequireRegisteredUser(),
-			userHandler.GetUser,
-		)
-
 		// Rota de Cadastro (Onboarding)
-		// O middleware RequireUnregisteredUser garante que quem já tem cadastro
-		// não consiga criar de novo (evita duplicidade).
 		authenticated.POST("/register",
-			registrationMiddleware.RequireUnregisteredUser(),
 			userHandler.Register,
 		)
 	}
@@ -86,12 +74,12 @@ func SetupRoutes(
 		{
 			//Cria paciente
 			patients.POST("", patientHandler.Create)
-			patients.GET("", patientHandler.List)
+			patients.GET("", patientHandler.ListPatients)
 			//Lista pacientes que o usuário tem acesso.
 			//patients.GET("", patientHandler.ListAcessiblePatients)
 
 			//Dados básicos do paciente
-			patients.GET("/:id", patientHandler.GetByID)
+			patients.GET("/:id", patientHandler.GetPatient)
 
 			//Memberships do paciente
 			//patients.GET("/members", patientHandler.ListPatientMembers)

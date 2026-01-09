@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"errors"
-	"time"
 
 	"sonnda-api/internal/adapters/outbound/persistence/repository/db"
 
@@ -18,6 +17,31 @@ import (
 type PatientRepository struct {
 	client  *db.Client
 	queries *patientsqlc.Queries
+}
+
+// FindByName implements [repository.Patient].
+func (r *PatientRepository) FindByName(ctx context.Context, name string) ([]patient.Patient, error) {
+	panic("unimplemented")
+}
+
+// SearchByName implements [repository.Patient].
+func (r *PatientRepository) SearchByName(ctx context.Context, name string, limit int, offset int) ([]patient.Patient, error) {
+	panic("unimplemented")
+}
+
+// HardDelete implements [repository.Patient].
+func (r *PatientRepository) HardDelete(ctx context.Context, id uuid.UUID) error {
+	panic("unimplemented")
+}
+
+// List implements [repository.Patient].
+func (r *PatientRepository) List(ctx context.Context, limit int, offset int) ([]patient.Patient, error) {
+	panic("unimplemented")
+}
+
+// Update implements [repository.Patient].
+func (r *PatientRepository) Update(ctx context.Context, patient *patient.Patient) error {
+	panic("unimplemented")
 }
 
 var _ repository.Patient = (*PatientRepository)(nil)
@@ -123,29 +147,4 @@ func (p *PatientRepository) FindByID(ctx context.Context, id uuid.UUID) (*patien
 		CreatedAt:   row.CreatedAt.Time,
 		UpdatedAt:   row.UpdatedAt.Time,
 	}, nil
-}
-
-// List implements [repository.Patient].
-func (p *PatientRepository) List(ctx context.Context, limit int, offset int) ([]patient.Patient, error) {
-	panic("unimplemented")
-}
-
-// ListByBirthDate implements [repository.Patient].
-func (p *PatientRepository) ListByBirthDate(ctx context.Context, birthDate time.Time, limit int, offset int) ([]patient.Patient, error) {
-	panic("unimplemented")
-}
-
-// ListByIDs implements [repository.Patient].
-func (p *PatientRepository) ListByIDs(ctx context.Context, ids []uuid.UUID) ([]patient.Patient, error) {
-	panic("unimplemented")
-}
-
-// ListByName implements [repository.Patient].
-func (p *PatientRepository) ListByName(ctx context.Context, name string, limit int, offset int) ([]patient.Patient, error) {
-	panic("unimplemented")
-}
-
-// Update implements [repository.Patient].
-func (p *PatientRepository) Update(ctx context.Context, patient *patient.Patient) error {
-	panic("unimplemented")
 }

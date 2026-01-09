@@ -12,13 +12,17 @@ import (
 )
 
 type service struct {
-	userRepo repository.User
+	userRepo          repository.User
+	patientAccessRepo repository.PatientAccess
 }
 
 var _ Service = (*service)(nil)
 
-func New(userRepo repository.User) Service {
-	return &service{userRepo: userRepo}
+func New(userRepo repository.User, patientAccessRepo repository.PatientAccess) Service {
+	return &service{
+		userRepo:          userRepo,
+		patientAccessRepo: patientAccessRepo,
+	}
 }
 
 func (s *service) Create(ctx context.Context, input UserCreateInput) (*user.User, error) {
@@ -112,4 +116,41 @@ func (s *service) SoftDelete(ctx context.Context, userID uuid.UUID) error {
 	}
 
 	return nil
+}
+
+func (s *service) ListMyPatients(ctx context.Context, userID uuid.UUID, limit, offset int) (*MyPatientsOutput, error) {
+	// Validar parâmetros
+	if limit <= 0 {
+		limit = 20
+	}
+	if limit > 100 {
+		limit = 100
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
+	// Buscar pacientes acessíveis
+	patients, total, err := s.patientAccessRepo.ListAccessiblePatientsByUser(ctx, userID, limit, offset)
+	if err != nil {
+		return nil, mapRepoError("patientAccessRepo.ListAccessiblePatientsByUser", err)
+	}
+
+	// Mapear para DTO
+	summaries := make([]PatientSummary, len(patients))
+	for i, p := range patients {
+		summaries[i] = PatientSummary{
+			ID:           p.PatientID,
+			FullName:     p.FullName,
+			AvatarURL:    p.AvatarURL,
+			RelationType: p.RelationType,
+		}
+	}
+
+	return &MyPatientsOutput{
+		Patients: summaries,
+		Total:    total,
+		Limit:    limit,
+		Offset:   offset,
+	}, nil
 }

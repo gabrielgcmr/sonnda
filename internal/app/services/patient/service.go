@@ -12,10 +12,9 @@ import (
 
 type Service interface {
 	Create(ctx context.Context, currentUser *user.User, input CreateInput) (*patient.Patient, error)
-	GetByID(ctx context.Context, currentUser *user.User, id uuid.UUID) (*patient.Patient, error)
-	UpdateByID(ctx context.Context, currentUser *user.User, id uuid.UUID, input UpdateInput) (*patient.Patient, error)
-	SoftDeleteByID(ctx context.Context, currentUser *user.User, id uuid.UUID) error
-	HardDeleteByID(ctx context.Context, currentUser *user.User, id uuid.UUID) error
+	Get(ctx context.Context, currentUser *user.User, id uuid.UUID) (*patient.Patient, error)
+	Update(ctx context.Context, currentUser *user.User, id uuid.UUID, input UpdateInput) (*patient.Patient, error)
+	SoftDelete(ctx context.Context, currentUser *user.User, id uuid.UUID) error
+	HardDelete(ctx context.Context, currentUser *user.User, id uuid.UUID) error
 	List(ctx context.Context, currentUser *user.User, limit, offset int) ([]*patient.Patient, error)
-	ListByName(ctx context.Context, currentUser *user.User, name string, limit, offset int) ([]*patient.Patient, error)
 }

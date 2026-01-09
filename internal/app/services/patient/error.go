@@ -58,7 +58,11 @@ func mapRepoError(op string, err error) error {
 		}
 
 	case errors.Is(err, repoerr.ErrPatientNotFound):
-		return patientNotFound(err)
+		return &apperr.AppError{
+			Code:    apperr.NOT_FOUND,
+			Message: "paciente não encontrado",
+			Cause:   err,
+		}
 
 	case errors.Is(err, repoerr.ErrRepositoryFailure):
 		return &apperr.AppError{
@@ -76,10 +80,9 @@ func mapRepoError(op string, err error) error {
 	}
 }
 
-func patientNotFound(cause error) error {
+func patientNotFound() error {
 	return &apperr.AppError{
 		Code:    apperr.NOT_FOUND,
 		Message: "paciente não encontrado",
-		Cause:   cause,
 	}
 }

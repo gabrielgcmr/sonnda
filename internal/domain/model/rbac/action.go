@@ -7,6 +7,7 @@ const (
 	ActionCreatePatient     Action = "patient:create"
 	ActionListPatients      Action = "patient:list"
 	ActionSoftDeletePatient Action = "patient:soft_delete"
+	ActionHardDeletePatient Action = "patient:hard_delete"
 	ActionReadPatient       Action = "patient:read"
 	ActionUpdatePatient     Action = "patient:update"
 	//

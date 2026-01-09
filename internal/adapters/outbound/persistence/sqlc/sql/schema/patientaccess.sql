@@ -1,14 +1,16 @@
--- PatientAccess: N:N relationship linking app users to patients with specific roles.
--- Mirrors the domain model: patient_id, user_id, role, timestamps.
+-- PatientAccess: N:N relationship linking app users to patients with specific relation types.
+-- Mirrors the domain model: patient_id, grantee_id, relation_type, created_at, revoked_at, granted_by.
 CREATE TABLE patient_access (
-    patient_id TEXT NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
-    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    role TEXT NOT NULL CHECK (role IN ('caregiver', 'professional')),
+    patient_id UUID NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
+    grantee_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    relation_type TEXT NOT NULL CHECK (relation_type IN ('caregiver', 'family', 'professional', 'self')),
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-    PRIMARY KEY (patient_id, user_id)
+    revoked_at TIMESTAMP WITH TIME ZONE,
+    granted_by UUID REFERENCES users(id),
+    PRIMARY KEY (patient_id, grantee_id)
 );
 
 -- Indexes for common lookups
-CREATE INDEX idx_patient_access_user ON patient_access(user_id);
+CREATE INDEX idx_patient_access_grantee ON patient_access(grantee_id);
 CREATE INDEX idx_patient_access_patient ON patient_access(patient_id);
+CREATE INDEX idx_patient_access_active ON patient_access(grantee_id, patient_id) WHERE revoked_at IS NULL;

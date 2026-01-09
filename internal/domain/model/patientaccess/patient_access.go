@@ -10,7 +10,7 @@ import (
 // Não foi criado um status para o vínculo, pois ele se ele existe já é ativo ou não ser que tenha sido explicitamente revogado.
 type PatientAccess struct {
 	PatientID uuid.UUID
-	UserID    uuid.UUID
+	GranteeID uuid.UUID // Usuário que recebeu o acesso
 
 	RelationType RelationshipType
 
@@ -42,7 +42,7 @@ func NewPatientAccess(
 
 	pa := &PatientAccess{
 		PatientID:    patientID,
-		UserID:       userID,
+		GranteeID:    userID,
 		RelationType: relType,
 		CreatedAt:    now,
 		RevokedAt:    nil,
@@ -60,7 +60,7 @@ func (pa *PatientAccess) Validate() error {
 	if pa.PatientID == uuid.Nil {
 		return ErrInvalidPatientID
 	}
-	if pa.UserID == uuid.Nil {
+	if pa.GranteeID == uuid.Nil {
 		return ErrInvalidUserID
 	}
 

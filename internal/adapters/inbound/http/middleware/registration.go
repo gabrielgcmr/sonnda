@@ -47,46 +47,6 @@ func (m *RegistrationMiddleware) RequireRegisteredUser() gin.HandlerFunc {
 	}
 }
 
-func (m *RegistrationMiddleware) RequireUnregisteredUser() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		id, ok := GetIdentity(ctx)
-		if !ok {
-			httperrors.WriteError(ctx, &apperr.AppError{
-				Code:    apperr.AUTH_REQUIRED,
-				Message: "autenticação necessária",
-			})
-			ctx.Abort()
-			return
-		}
-
-		existing, err := m.userRepo.FindByAuthIdentity(
-			ctx.Request.Context(),
-			id.Provider,
-			id.Subject,
-		)
-		if err != nil {
-			httperrors.WriteError(ctx, &apperr.AppError{
-				Code:    apperr.INFRA_DATABASE_ERROR,
-				Message: "falha ao verificar registro",
-				Cause:   err,
-			})
-			ctx.Abort()
-			return
-		}
-
-		if existing != nil {
-			httperrors.WriteError(ctx, &apperr.AppError{
-				Code:    apperr.RESOURCE_ALREADY_EXISTS,
-				Message: "usuário já cadastrado",
-			})
-			ctx.Abort()
-			return
-		}
-
-		ctx.Next()
-	}
-}
-
 // LoadCurrentUser tenta carregar o usuario e setar no contexto sem bloquear o fluxo.
 func (m *RegistrationMiddleware) LoadCurrentUser() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
@@ -158,4 +118,14 @@ func GetCurrentUser(c *gin.Context) (*user.User, bool) {
 	}
 	currentUser, ok := val.(*user.User)
 	return currentUser, ok
+}
+
+// MustGetCurrentUser obtém o usuário do contexto ou entra em pânico.
+// Use apenas em handlers protegidos por RequireRegisteredUser().
+func MustGetCurrentUser(c *gin.Context) *user.User {
+	currentUser, ok := GetCurrentUser(c)
+	if !ok || currentUser == nil {
+		panic("MustGetCurrentUser: user not found in context (middleware not applied?)")
+	}
+	return currentUser
 }

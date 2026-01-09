@@ -22,7 +22,7 @@ A Sonnda resolve um problema recorrente na pratica clinica: pacientes precisam c
   - [O que este repositorio entrega (MVP)](#o-que-este-repositorio-entrega-mvp)
   - [Sumario](#sumario)
   - [Arquitetura](#arquitetura)
-  - [Autorizacao (ReBAC)](#autorizacao-rebac)
+  - [Autorizacao (RBAC + ReBAC)](#autorizacao-rbac--rebac)
   - [Stack Tecnologico](#stack-tecnologico)
   - [Logging](#logging)
   - [Endpoints](#endpoints)
@@ -77,7 +77,7 @@ Detalhes: `docs/architecture/access-control.md`.
 Comandos:
 
 ```bash
-make dev-web
+make dev
 ```
 
 ---

@@ -8,19 +8,23 @@ import (
 	"github.com/google/uuid"
 )
 
+// AccessiblePatient representa os dados mínimos de um paciente para listagem na UI
+type AccessiblePatient struct {
+	PatientID    uuid.UUID
+	FullName     string
+	AvatarURL    *string
+	RelationType string
+}
+
 // PatientAccess armazena e consulta permissões por paciente para um app user.
-// Usado quando caregiver/professional acessa pacientes que não são "dele".
 type PatientAccess interface {
-	// Lista todos os vínculos ativos
-	ListPatientAcessByUser(ctx context.Context, userID uuid.UUID, limit, offset int) ([]*patientaccess.PatientAccess, error)
+	// Lista mínima de pacientes acessíveis (para UI) com paginação
+	// Retorna: lista de pacientes, total count, erro
+	ListAccessiblePatientsByUser(ctx context.Context, granteeID uuid.UUID, limit, offset int) ([]AccessiblePatient, int64, error)
 
-	// Retorna o vínculo (ativo ou revogado) se existir
-	Find(ctx context.Context, patientID, userID uuid.UUID) (*patientaccess.PatientAccess, error)
-	// Quais vínculos ativos um usuário tem?
-
-	FindActive(ctx context.Context, patientID, userID uuid.UUID) ([]*patientaccess.PatientAccess, error)
-	// Quais pacientes um usuário tem acesso?
-	ListByPatient(ctx context.Context, patientID uuid.UUID) ([]*patientaccess.PatientAccess, error)
-
+	// Cria ou atualiza um vínculo (reativa se estava revogado)
 	Upsert(ctx context.Context, access *patientaccess.PatientAccess) error
+
+	// Verifica se o usuário tem acesso ativo ao paciente
+	HasActiveAccess(ctx context.Context, patientID, granteeID uuid.UUID) (bool, error)
 }

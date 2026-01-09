@@ -25,11 +25,12 @@ type Patient struct {
 }
 
 type PatientAccess struct {
-	PatientID string             `json:"patient_id"`
-	UserID    string             `json:"user_id"`
-	Role      string             `json:"role"`
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	PatientID    pgtype.UUID        `json:"patient_id"`
+	GranteeID    pgtype.UUID        `json:"grantee_id"`
+	RelationType string             `json:"relation_type"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	RevokedAt    pgtype.Timestamptz `json:"revoked_at"`
+	GrantedBy    pgtype.UUID        `json:"granted_by"`
 }
 
 type User struct {

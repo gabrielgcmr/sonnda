@@ -7,51 +7,128 @@ package patientaccesssqlc
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
+
+const countAccessiblePatientsByUser = `-- name: CountAccessiblePatientsByUser :one
+SELECT COUNT(*) AS total
+FROM patient_access pa
+JOIN patients p ON p.id = pa.patient_id
+WHERE pa.grantee_id = $1
+  AND pa.revoked_at IS NULL
+  AND p.deleted_at IS NULL
+`
+
+// Total count for pagination of accessible patients by user
+func (q *Queries) CountAccessiblePatientsByUser(ctx context.Context, granteeID pgtype.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countAccessiblePatientsByUser, granteeID)
+	var total int64
+	err := row.Scan(&total)
+	return total, err
+}
 
 const findPatientAccess = `-- name: FindPatientAccess :one
 SELECT
     patient_id,
-    user_id,
-    role,
+    grantee_id,
+    relation_type,
     created_at,
-    updated_at
+    revoked_at,
+    granted_by
 FROM patient_access
 WHERE patient_id = $1
-  AND user_id = $2
+  AND grantee_id = $2
 `
 
 type FindPatientAccessParams struct {
-	PatientID string `json:"patient_id"`
-	UserID    string `json:"user_id"`
+	PatientID pgtype.UUID `json:"patient_id"`
+	GranteeID pgtype.UUID `json:"grantee_id"`
 }
 
 func (q *Queries) FindPatientAccess(ctx context.Context, arg FindPatientAccessParams) (PatientAccess, error) {
-	row := q.db.QueryRow(ctx, findPatientAccess, arg.PatientID, arg.UserID)
+	row := q.db.QueryRow(ctx, findPatientAccess, arg.PatientID, arg.GranteeID)
 	var i PatientAccess
 	err := row.Scan(
 		&i.PatientID,
-		&i.UserID,
-		&i.Role,
+		&i.GranteeID,
+		&i.RelationType,
 		&i.CreatedAt,
-		&i.UpdatedAt,
+		&i.RevokedAt,
+		&i.GrantedBy,
 	)
 	return i, err
+}
+
+const listAccessiblePatientsByUser = `-- name: ListAccessiblePatientsByUser :many
+SELECT
+    pa.patient_id,
+    p.full_name,
+    p.avatar_url,
+    pa.relation_type
+FROM patient_access pa
+JOIN patients p ON p.id = pa.patient_id
+WHERE pa.grantee_id = $1
+  AND pa.revoked_at IS NULL
+  AND p.deleted_at IS NULL
+ORDER BY p.full_name
+LIMIT $2 OFFSET $3
+`
+
+type ListAccessiblePatientsByUserParams struct {
+	GranteeID pgtype.UUID `json:"grantee_id"`
+	Limit     int32       `json:"limit"`
+	Offset    int32       `json:"offset"`
+}
+
+type ListAccessiblePatientsByUserRow struct {
+	PatientID    pgtype.UUID `json:"patient_id"`
+	FullName     string      `json:"full_name"`
+	AvatarUrl    pgtype.Text `json:"avatar_url"`
+	RelationType string      `json:"relation_type"`
+}
+
+// Minimal list of patients accessible by a user (for UI listing)
+// Returns patient basic info and the relation type. Paginates by full_name.
+func (q *Queries) ListAccessiblePatientsByUser(ctx context.Context, arg ListAccessiblePatientsByUserParams) ([]ListAccessiblePatientsByUserRow, error) {
+	rows, err := q.db.Query(ctx, listAccessiblePatientsByUser, arg.GranteeID, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListAccessiblePatientsByUserRow
+	for rows.Next() {
+		var i ListAccessiblePatientsByUserRow
+		if err := rows.Scan(
+			&i.PatientID,
+			&i.FullName,
+			&i.AvatarUrl,
+			&i.RelationType,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listPatientAccessByPatient = `-- name: ListPatientAccessByPatient :many
 SELECT
     patient_id,
-    user_id,
-    role,
+    grantee_id,
+    relation_type,
     created_at,
-    updated_at
+    revoked_at,
+    granted_by
 FROM patient_access
 WHERE patient_id = $1
-ORDER BY user_id
+ORDER BY grantee_id
 `
 
-func (q *Queries) ListPatientAccessByPatient(ctx context.Context, patientID string) ([]PatientAccess, error) {
+func (q *Queries) ListPatientAccessByPatient(ctx context.Context, patientID pgtype.UUID) ([]PatientAccess, error) {
 	rows, err := q.db.Query(ctx, listPatientAccessByPatient, patientID)
 	if err != nil {
 		return nil, err
@@ -62,10 +139,11 @@ func (q *Queries) ListPatientAccessByPatient(ctx context.Context, patientID stri
 		var i PatientAccess
 		if err := rows.Scan(
 			&i.PatientID,
-			&i.UserID,
-			&i.Role,
+			&i.GranteeID,
+			&i.RelationType,
 			&i.CreatedAt,
-			&i.UpdatedAt,
+			&i.RevokedAt,
+			&i.GrantedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -80,17 +158,18 @@ func (q *Queries) ListPatientAccessByPatient(ctx context.Context, patientID stri
 const listPatientAccessByUser = `-- name: ListPatientAccessByUser :many
 SELECT
     patient_id,
-    user_id,
-    role,
+    grantee_id,
+    relation_type,
     created_at,
-    updated_at
+    revoked_at,
+    granted_by
 FROM patient_access
-WHERE user_id = $1
+WHERE grantee_id = $1
 ORDER BY patient_id
 `
 
-func (q *Queries) ListPatientAccessByUser(ctx context.Context, userID string) ([]PatientAccess, error) {
-	rows, err := q.db.Query(ctx, listPatientAccessByUser, userID)
+func (q *Queries) ListPatientAccessByUser(ctx context.Context, granteeID pgtype.UUID) ([]PatientAccess, error) {
+	rows, err := q.db.Query(ctx, listPatientAccessByUser, granteeID)
 	if err != nil {
 		return nil, err
 	}
@@ -100,10 +179,11 @@ func (q *Queries) ListPatientAccessByUser(ctx context.Context, userID string) ([
 		var i PatientAccess
 		if err := rows.Scan(
 			&i.PatientID,
-			&i.UserID,
-			&i.Role,
+			&i.GranteeID,
+			&i.RelationType,
 			&i.CreatedAt,
-			&i.UpdatedAt,
+			&i.RevokedAt,
+			&i.GrantedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -116,18 +196,20 @@ func (q *Queries) ListPatientAccessByUser(ctx context.Context, userID string) ([
 }
 
 const revokePatientAccess = `-- name: RevokePatientAccess :execrows
-DELETE FROM patient_access
+UPDATE patient_access
+SET revoked_at = now()
 WHERE patient_id = $1
-  AND user_id = $2
+  AND grantee_id = $2
+  AND revoked_at IS NULL
 `
 
 type RevokePatientAccessParams struct {
-	PatientID string `json:"patient_id"`
-	UserID    string `json:"user_id"`
+	PatientID pgtype.UUID `json:"patient_id"`
+	GranteeID pgtype.UUID `json:"grantee_id"`
 }
 
 func (q *Queries) RevokePatientAccess(ctx context.Context, arg RevokePatientAccessParams) (int64, error) {
-	result, err := q.db.Exec(ctx, revokePatientAccess, arg.PatientID, arg.UserID)
+	result, err := q.db.Exec(ctx, revokePatientAccess, arg.PatientID, arg.GranteeID)
 	if err != nil {
 		return 0, err
 	}
@@ -138,23 +220,31 @@ const upsertPatientAccess = `-- name: UpsertPatientAccess :exec
 
 INSERT INTO patient_access (
     patient_id,
-    user_id,
-    role
-) VALUES ($1, $2, $3)
-ON CONFLICT (patient_id, user_id)
+    grantee_id,
+    relation_type,
+    granted_by
+) VALUES ($1, $2, $3, $4)
+ON CONFLICT (patient_id, grantee_id)
 DO UPDATE SET
-    role = EXCLUDED.role,
-    updated_at = now()
+    relation_type = EXCLUDED.relation_type,
+    granted_by = EXCLUDED.granted_by,
+    revoked_at = NULL
 `
 
 type UpsertPatientAccessParams struct {
-	PatientID string `json:"patient_id"`
-	UserID    string `json:"user_id"`
-	Role      string `json:"role"`
+	PatientID    pgtype.UUID `json:"patient_id"`
+	GranteeID    pgtype.UUID `json:"grantee_id"`
+	RelationType string      `json:"relation_type"`
+	GrantedBy    pgtype.UUID `json:"granted_by"`
 }
 
 // internal/adapters/outbound/database/sqlc/patientaccess/queries.sql
 func (q *Queries) UpsertPatientAccess(ctx context.Context, arg UpsertPatientAccessParams) error {
-	_, err := q.db.Exec(ctx, upsertPatientAccess, arg.PatientID, arg.UserID, arg.Role)
+	_, err := q.db.Exec(ctx, upsertPatientAccess,
+		arg.PatientID,
+		arg.GranteeID,
+		arg.RelationType,
+		arg.GrantedBy,
+	)
 	return err
 }
