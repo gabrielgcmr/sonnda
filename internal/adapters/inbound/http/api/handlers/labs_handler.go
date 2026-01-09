@@ -1,4 +1,4 @@
-package labs
+package handlers
 
 import (
 	"errors"
@@ -14,7 +14,6 @@ import (
 	labsvc "sonnda-api/internal/app/services/labs"
 	labsuc "sonnda-api/internal/app/usecase/labs"
 
-	"sonnda-api/internal/adapters/inbound/http/api/handlers"
 	"sonnda-api/internal/adapters/inbound/http/httperr"
 	"sonnda-api/internal/adapters/inbound/http/middleware"
 	"sonnda-api/internal/app/apperr"
@@ -41,7 +40,7 @@ func NewLabsHandler(
 }
 
 func (h *LabsHandler) ListLabs(c *gin.Context) {
-	patientID, ok := handlers.ParsePatientIDParam(c, "id")
+	patientID, ok := parsePatientIDParam(c, "id")
 	if !ok {
 		return
 	}
@@ -61,23 +60,8 @@ func (h *LabsHandler) ListLabs(c *gin.Context) {
 }
 
 func (h *LabsHandler) ListFullLabs(c *gin.Context) {
-
-	idStr := c.Param("id")
-	if idStr == "" {
-		httperr.WriteError(c, &apperr.AppError{
-			Code:    apperr.REQUIRED_FIELD_MISSING,
-			Message: "patient_id é obrigatório",
-		})
-		return
-	}
-
-	parsedID, err := uuid.Parse(idStr)
-	if err != nil {
-		httperr.WriteError(c, &apperr.AppError{
-			Code:    apperr.INVALID_FIELD_FORMAT,
-			Message: "patient_id inválido",
-			Cause:   err,
-		})
+	patientID, ok := parsePatientIDParam(c, "id")
+	if !ok {
 		return
 	}
 
@@ -86,7 +70,7 @@ func (h *LabsHandler) ListFullLabs(c *gin.Context) {
 		return
 	}
 
-	list, err := h.svc.ListFull(c.Request.Context(), parsedID, limit, offset)
+	list, err := h.svc.ListFull(c.Request.Context(), patientID, limit, offset)
 	if err != nil {
 		writeLabsServiceError(c, err)
 		return
@@ -101,33 +85,19 @@ func (h *LabsHandler) ListFullLabs(c *gin.Context) {
 func (h *LabsHandler) UploadAndProcessLabs(c *gin.Context) {
 	user := middleware.MustGetCurrentUser(c)
 
-	idStr := c.Param("id")
-	if idStr == "" {
-		httperr.WriteError(c, &apperr.AppError{
-			Code:    apperr.REQUIRED_FIELD_MISSING,
-			Message: "patient_id é obrigatório",
-		})
+	patientID, ok := parsePatientIDParam(c, "id")
+	if !ok {
 		return
 	}
 
-	parsedID, err := uuid.Parse(idStr)
-	if err != nil {
-		httperr.WriteError(c, &apperr.AppError{
-			Code:    apperr.INVALID_FIELD_FORMAT,
-			Message: "patient_id inválido",
-			Cause:   err,
-		})
-		return
-	}
-
-	documentURI, mimeType, err := h.handleFileUpload(c)
+	documentURI, mimeType, err := h.handleFileUpload(c, patientID)
 	if err != nil {
 		writeUploadError(c, err)
 		return
 	}
 
 	output, err := h.createUC.Execute(c.Request.Context(), labsuc.CreateLabReportFromDocumentInput{
-		PatientID:        parsedID,
+		PatientID:        patientID,
 		DocumentURI:      documentURI,
 		MimeType:         mimeType,
 		UploadedByUserID: user.ID,
@@ -147,6 +117,7 @@ func (h *LabsHandler) UploadAndProcessLabs(c *gin.Context) {
 // - retornar (URI, MIME)
 func (h *LabsHandler) handleFileUpload(
 	c *gin.Context,
+	patientID uuid.UUID,
 ) (string, string, error) {
 	const MaxFileSize = 15 * 1024 * 1024 // 15MB
 
@@ -189,15 +160,11 @@ func (h *LabsHandler) handleFileUpload(
 		return "", "", fmt.Errorf("unsupported_mime_type:%s", contentType)
 	}
 
-	patientIDStr := c.Param("id")
-	if patientIDStr == "" {
-		patientIDStr = c.Param("patientID")
-	}
-	if patientIDStr == "" {
+	if patientID == uuid.Nil {
 		return "", "", fmt.Errorf("missing_patient_id")
 	}
 
-	objectName := fmt.Sprintf("patients/%s/lab-reports/%s%s", patientIDStr, uniqueID, ext)
+	objectName := fmt.Sprintf("patients/%s/lab-reports/%s%s", patientID.String(), uniqueID, ext)
 
 	uri, err := h.storage.Upload(c.Request.Context(), file, objectName, contentType)
 	if err != nil {

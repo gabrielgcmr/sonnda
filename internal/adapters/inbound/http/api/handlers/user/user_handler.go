@@ -102,7 +102,7 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 	currentUser := middleware.MustGetCurrentUser(c)
 
 	var req UpdateUserRequest
-	if err := httperr.BindJSON(c, &req); err != nil {
+	if err := binder.BindJSON(c, &req); err != nil {
 		httperr.WriteError(c, err)
 		return
 	}

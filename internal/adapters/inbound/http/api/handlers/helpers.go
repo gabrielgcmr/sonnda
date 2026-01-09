@@ -24,7 +24,7 @@ func ParseBirthDate(dateStr string) (time.Time, error) {
 	return birthDate, nil
 }
 
-func ParsePatientIDParam(c *gin.Context, id string) (uuid.UUID, bool) {
+func parsePatientIDParam(c *gin.Context, id string) (uuid.UUID, bool) {
 	idStr := c.Param(id)
 	if idStr == "" {
 		httperr.WriteError(c, &apperr.AppError{

@@ -1,7 +1,7 @@
 package bootstrap
 
 import (
-	labshandler "sonnda-api/internal/adapters/inbound/http/api/handlers/labs"
+	labshandler "sonnda-api/internal/adapters/inbound/http/api/handlers"
 	labsrepo "sonnda-api/internal/adapters/outbound/persistence/repository"
 	patientrepo "sonnda-api/internal/adapters/outbound/persistence/repository"
 	"sonnda-api/internal/adapters/outbound/persistence/repository/db"

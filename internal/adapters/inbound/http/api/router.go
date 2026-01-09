@@ -3,7 +3,7 @@ package api
 import (
 	"net/http"
 
-	"sonnda-api/internal/adapters/inbound/http/api/handlers/labs"
+	"sonnda-api/internal/adapters/inbound/http/api/handlers"
 	"sonnda-api/internal/adapters/inbound/http/api/handlers/patient"
 	"sonnda-api/internal/adapters/inbound/http/api/handlers/user"
 	"sonnda-api/internal/adapters/inbound/http/middleware"
@@ -19,7 +19,7 @@ func SetupRoutes(
 	registrationMiddleware *middleware.RegistrationMiddleware,
 	userHandler *user.Handler,
 	patientHandler *patient.PatientHandler,
-	labsHandler *labs.LabsHandler,
+	labsHandler *handlers.LabsHandler,
 
 ) {
 	r.GET("/favicon.ico", func(c *gin.Context) {
@@ -81,19 +81,11 @@ func SetupRoutes(
 			//Dados básicos do paciente
 			patients.GET("/:id", patientHandler.GetPatient)
 
-			//Memberships do paciente
-			//patients.GET("/members", patientHandler.ListPatientMembers)
-			//patients.POST("/members", patientHandler.LinkToPatientByID)
-			//patients.DELETE("/members", patientHandler.UnlinkFromPatientByID)
-			//Atualiza paciente
-			//patients.PUT("", patientHandler.UpdatePatientByID)
-			//Deleta paciente
-			//patients.DELETE("", patientHandler.DeletePatientByID)
-			medicalRecords := patients.Group("/:id/medical-records")
+			labs := patients.Group("/:id/labs")
 			{
-				medicalRecords.GET("/labs", labsHandler.ListFullLabs)
-				medicalRecords.POST("/labs/upload", labsHandler.UploadAndProcessLabs)
-				medicalRecords.GET("/labs/summary", labsHandler.ListLabs)
+				labs.POST("/upload", labsHandler.UploadAndProcessLabs)
+				labs.GET("", labsHandler.ListLabs)
+				labs.GET("/full", labsHandler.ListFullLabs)
 			}
 
 		}

@@ -1,12 +1,13 @@
-package bind
+package binder
 
 import (
 	"errors"
+	"sonnda-api/internal/app/apperr"
 	"strings"
 	"unicode"
 
 	"github.com/go-playground/validator/v10"
-)er
+)
 
 // ValidationErrorsToViolations converte erros do validator em violações agnósticas.
 func ValidationErrorsToViolations(err error) []apperr.Violation {

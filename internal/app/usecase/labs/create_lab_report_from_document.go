@@ -44,6 +44,7 @@ func NewCreateLabReportFromDocument(
 }
 
 func (u *createLabReportFromDocumentUseCase) Execute(ctx context.Context, input CreateLabReportFromDocumentInput) (*labsvc.LabReportOutput, error) {
+	//Valida o input
 	if err := u.validateInput(input); err != nil {
 		return nil, err
 	}
@@ -52,7 +53,7 @@ func (u *createLabReportFromDocumentUseCase) Execute(ctx context.Context, input 
 	if err != nil {
 		return nil, &apperr.AppError{
 			Code:    apperr.INFRA_DATABASE_ERROR,
-			Message: "falha tǸcnica",
+			Message: "falha técnica",
 			Cause:   err,
 		}
 	}
@@ -130,7 +131,7 @@ func (u *createLabReportFromDocumentUseCase) validateInput(input CreateLabReport
 	}
 
 	if len(violations) > 0 {
-		return apperr.Validation("entrada invǭlida", violations...)
+		return apperr.Validation("entrada inválida", violations...)
 	}
 
 	return nil
