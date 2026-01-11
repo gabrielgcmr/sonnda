@@ -3,6 +3,7 @@ package labsvc
 import (
 	"context"
 
+	"sonnda-api/internal/app/apperr"
 	"sonnda-api/internal/domain/model/labs"
 	"sonnda-api/internal/domain/ports/repository"
 
@@ -28,20 +29,20 @@ func New(
 
 func (s *service) List(ctx context.Context, patientID uuid.UUID, limit, offset int) ([]LabReportSummaryOutput, error) {
 	if patientID == uuid.Nil {
-		return nil, labs.ErrInvalidInput
+		return nil, apperr.Validation("entrada inválida", apperr.Violation{Field: "patient_id", Reason: "required"})
 	}
 
 	p, err := s.patientRepo.FindByID(ctx, patientID)
 	if err != nil {
-		return nil, err
+		return nil, mapRepoError("patient.find_by_id", err)
 	}
 	if p == nil {
-		return nil, ErrPatientNotFound
+		return nil, patientNotFound()
 	}
 
 	reports, err := s.labsRepo.ListLabs(ctx, p.ID, limit, offset)
 	if err != nil {
-		return nil, err
+		return nil, mapRepoError("labs.list", err)
 	}
 
 	out := make([]LabReportSummaryOutput, 0, len(reports))
@@ -49,7 +50,7 @@ func (s *service) List(ctx context.Context, patientID uuid.UUID, limit, offset i
 	for _, header := range reports {
 		fullReport, err := s.labsRepo.FindByID(ctx, header.ID)
 		if err != nil {
-			return nil, err
+			return nil, mapRepoError("labs.find_by_id", err)
 		}
 		if fullReport == nil {
 			continue
@@ -86,20 +87,20 @@ func (s *service) List(ctx context.Context, patientID uuid.UUID, limit, offset i
 
 func (s *service) ListFull(ctx context.Context, patientID uuid.UUID, limit, offset int) ([]*LabReportOutput, error) {
 	if patientID == uuid.Nil {
-		return nil, labs.ErrInvalidInput
+		return nil, apperr.Validation("entrada inválida", apperr.Violation{Field: "patient_id", Reason: "required"})
 	}
 
 	p, err := s.patientRepo.FindByID(ctx, patientID)
 	if err != nil {
-		return nil, err
+		return nil, mapRepoError("patient.find_by_id", err)
 	}
 	if p == nil {
-		return nil, ErrPatientNotFound
+		return nil, patientNotFound()
 	}
 
 	headers, err := s.labsRepo.ListLabs(ctx, p.ID, limit, offset)
 	if err != nil {
-		return nil, err
+		return nil, mapRepoError("labs.list", err)
 	}
 
 	out := make([]*LabReportOutput, 0, len(headers))
@@ -107,7 +108,7 @@ func (s *service) ListFull(ctx context.Context, patientID uuid.UUID, limit, offs
 	for _, header := range headers {
 		fullReport, err := s.labsRepo.FindByID(ctx, header.ID)
 		if err != nil {
-			return nil, err
+			return nil, mapRepoError("labs.find_by_id", err)
 		}
 		if fullReport == nil {
 			continue

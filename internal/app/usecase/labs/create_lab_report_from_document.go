@@ -60,7 +60,7 @@ func (u *createLabReportFromDocumentUseCase) Execute(ctx context.Context, input 
 	if p == nil {
 		return nil, &apperr.AppError{
 			Code:    apperr.NOT_FOUND,
-			Message: "paciente nǜo encontrado",
+			Message: "paciente não encontrado",
 		}
 	}
 
@@ -84,14 +84,14 @@ func (u *createLabReportFromDocumentUseCase) Execute(ctx context.Context, input 
 	if err != nil {
 		return nil, &apperr.AppError{
 			Code:    apperr.INFRA_DATABASE_ERROR,
-			Message: "falha tǸcnica",
+			Message: "falha técnica",
 			Cause:   err,
 		}
 	}
 	if exists {
 		return nil, &apperr.AppError{
 			Code:    apperr.RESOURCE_ALREADY_EXISTS,
-			Message: "laudo jǭ existe",
+			Message: "laudo já existe",
 		}
 	}
 
@@ -103,7 +103,7 @@ func (u *createLabReportFromDocumentUseCase) Execute(ctx context.Context, input 
 		}
 		return nil, &apperr.AppError{
 			Code:    apperr.INFRA_DATABASE_ERROR,
-			Message: "falha tǸcnica",
+			Message: "falha técnica",
 			Cause:   err,
 		}
 	}
@@ -231,7 +231,7 @@ func (u *createLabReportFromDocumentUseCase) mapDomainError(err error) error {
 		errors.Is(err, labs.ErrInvalidUploadedByUser),
 		errors.Is(err, labs.ErrInvalidTestName),
 		errors.Is(err, labs.ErrInvalidParameterName):
-		return &apperr.AppError{Code: apperr.VALIDATION_FAILED, Message: "entrada invǭlida", Cause: err}
+		return &apperr.AppError{Code: apperr.VALIDATION_FAILED, Message: "entrada inválida", Cause: err}
 	default:
 		return &apperr.AppError{Code: apperr.INTERNAL_ERROR, Message: "erro inesperado", Cause: err}
 	}

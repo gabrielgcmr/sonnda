@@ -83,8 +83,9 @@ func SetupRoutes(
 
 			labs := patients.Group("/:id/labs")
 			{
-				labs.POST("/upload", labsHandler.UploadAndProcessLabs)
 				labs.GET("", labsHandler.ListLabs)
+				labs.POST("/upload", labsHandler.UploadAndProcessLabs)
+
 				labs.GET("/full", labsHandler.ListFullLabs)
 			}
 

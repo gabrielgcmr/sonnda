@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -17,7 +16,6 @@ import (
 	"sonnda-api/internal/adapters/inbound/http/httperr"
 	"sonnda-api/internal/adapters/inbound/http/middleware"
 	"sonnda-api/internal/app/apperr"
-	"sonnda-api/internal/domain/model/labs"
 	external "sonnda-api/internal/domain/ports/integration"
 )
 
@@ -52,7 +50,7 @@ func (h *LabsHandler) ListLabs(c *gin.Context) {
 
 	list, err := h.svc.List(c.Request.Context(), patientID, limit, offset)
 	if err != nil {
-		writeLabsServiceError(c, err)
+		httperr.WriteError(c, err)
 		return
 	}
 
@@ -72,7 +70,7 @@ func (h *LabsHandler) ListFullLabs(c *gin.Context) {
 
 	list, err := h.svc.ListFull(c.Request.Context(), patientID, limit, offset)
 	if err != nil {
-		writeLabsServiceError(c, err)
+		httperr.WriteError(c, err)
 		return
 	}
 
@@ -92,7 +90,7 @@ func (h *LabsHandler) UploadAndProcessLabs(c *gin.Context) {
 
 	documentURI, mimeType, err := h.handleFileUpload(c, patientID)
 	if err != nil {
-		writeUploadError(c, err)
+		httperr.WriteError(c, err)
 		return
 	}
 
@@ -123,19 +121,29 @@ func (h *LabsHandler) handleFileUpload(
 
 	fileHeader, err := c.FormFile("file")
 	if err != nil {
-		return "", "", fmt.Errorf("file_required: %w", err)
+		return "", "", &apperr.AppError{
+			Code:    apperr.REQUIRED_FIELD_MISSING,
+			Message: "arquivo é obrigatório",
+			Cause:   err,
+		}
 	}
 	if fileHeader.Size == 0 {
-		return "", "", fmt.Errorf("empty_file")
+		return "", "", &apperr.AppError{
+			Code:    apperr.VALIDATION_FAILED,
+			Message: "arquivo vazio",
+		}
 	}
 
 	if fileHeader.Size > MaxFileSize {
-		return "", "", fmt.Errorf("file_too_large")
+		return "", "", &apperr.AppError{
+			Code:    apperr.UPLOAD_SIZE_EXCEEDED,
+			Message: "arquivo muito grande",
+		}
 	}
 
 	file, err := fileHeader.Open()
 	if err != nil {
-		return "", "", fmt.Errorf("open_file_failed: %w", err)
+		return "", "", apperr.Internal("falha ao abrir arquivo", err)
 	}
 	defer file.Close()
 
@@ -151,24 +159,36 @@ func (h *LabsHandler) handleFileUpload(
 	}
 
 	if !isSupportedMimeType(contentType) {
-		return "", "", fmt.Errorf("unsupported_mime_type: %s", contentType)
+		return "", "", &apperr.AppError{
+			Code:    apperr.INVALID_FIELD_FORMAT,
+			Message: "tipo de arquivo não suportado",
+			Cause:   fmt.Errorf("content_type=%s", contentType),
+		}
 	}
 
 	uniqueID := uuid.NewString()
 	ext := mimeToExt(contentType)
 	if ext == "" {
-		return "", "", fmt.Errorf("unsupported_mime_type:%s", contentType)
+		return "", "", &apperr.AppError{
+			Code:    apperr.INVALID_FIELD_FORMAT,
+			Message: "tipo de arquivo não suportado",
+			Cause:   fmt.Errorf("content_type=%s", contentType),
+		}
 	}
 
 	if patientID == uuid.Nil {
-		return "", "", fmt.Errorf("missing_patient_id")
+		return "", "", apperr.Validation("entrada inválida", apperr.Violation{Field: "patient_id", Reason: "required"})
 	}
 
 	objectName := fmt.Sprintf("patients/%s/lab-reports/%s%s", patientID.String(), uniqueID, ext)
 
 	uri, err := h.storage.Upload(c.Request.Context(), file, objectName, contentType)
 	if err != nil {
-		return "", "", fmt.Errorf("upload_failed: %w", err)
+		return "", "", &apperr.AppError{
+			Code:    apperr.INFRA_STORAGE_ERROR,
+			Message: "falha no upload",
+			Cause:   err,
+		}
 	}
 
 	return uri, contentType, nil
@@ -232,61 +252,5 @@ func mimeToExt(ct string) string {
 		return ".png"
 	default:
 		return ""
-	}
-}
-
-func writeLabsServiceError(c *gin.Context, err error) {
-	if err == nil {
-		return
-	}
-
-	var appErr *apperr.AppError
-	if errors.As(err, &appErr) && appErr != nil {
-		httperr.WriteError(c, err)
-		return
-	}
-
-	switch {
-	case errors.Is(err, labs.ErrLabReportNotFound):
-		httperr.WriteError(c, &apperr.AppError{Code: apperr.NOT_FOUND, Message: "laudo não encontrado", Cause: err})
-	case errors.Is(err, labs.ErrLabReportAlreadyExists):
-		httperr.WriteError(c, &apperr.AppError{Code: apperr.RESOURCE_ALREADY_EXISTS, Message: "laudo já existe", Cause: err})
-	case errors.Is(err, labs.ErrInvalidInput),
-		errors.Is(err, labs.ErrMissingId),
-		errors.Is(err, labs.ErrInvalidDateFormat),
-		errors.Is(err, labs.ErrInvalidDocument),
-		errors.Is(err, labs.ErrInvalidPatientID),
-		errors.Is(err, labs.ErrInvalidUploadedByUser),
-		errors.Is(err, labs.ErrInvalidTestName),
-		errors.Is(err, labs.ErrInvalidParameterName):
-		httperr.WriteError(c, &apperr.AppError{Code: apperr.VALIDATION_FAILED, Message: "entrada inválida", Cause: err})
-	case errors.Is(err, labs.ErrDocumentProcessing):
-		httperr.WriteError(c, &apperr.AppError{Code: apperr.INFRA_EXTERNAL_SERVICE_ERROR, Message: "falha ao processar documento", Cause: err})
-	default:
-		httperr.WriteError(c, &apperr.AppError{Code: apperr.INTERNAL_ERROR, Message: "erro inesperado", Cause: err})
-	}
-}
-
-func writeUploadError(c *gin.Context, err error) {
-	if err == nil {
-		return
-	}
-
-	msg := err.Error()
-	switch {
-	case strings.HasPrefix(msg, "file_required"):
-		httperr.WriteError(c, &apperr.AppError{Code: apperr.REQUIRED_FIELD_MISSING, Message: "arquivo é obrigatório", Cause: err})
-	case msg == "empty_file":
-		httperr.WriteError(c, &apperr.AppError{Code: apperr.VALIDATION_FAILED, Message: "arquivo vazio", Cause: err})
-	case msg == "file_too_large":
-		httperr.WriteError(c, &apperr.AppError{Code: apperr.UPLOAD_SIZE_EXCEEDED, Message: "arquivo muito grande", Cause: err})
-	case strings.HasPrefix(msg, "unsupported_mime_type:"):
-		httperr.WriteError(c, &apperr.AppError{Code: apperr.INVALID_FIELD_FORMAT, Message: "tipo de arquivo não suportado", Cause: err})
-	case strings.HasPrefix(msg, "open_file_failed"):
-		httperr.WriteError(c, &apperr.AppError{Code: apperr.INTERNAL_ERROR, Message: "falha ao abrir arquivo", Cause: err})
-	case strings.HasPrefix(msg, "upload_failed"):
-		httperr.WriteError(c, &apperr.AppError{Code: apperr.INFRA_STORAGE_ERROR, Message: "falha no upload", Cause: err})
-	default:
-		httperr.WriteError(c, &apperr.AppError{Code: apperr.VALIDATION_FAILED, Message: "falha no upload", Cause: err})
 	}
 }

@@ -2,10 +2,11 @@ package handlers
 
 import (
 	"fmt"
+	"time"
+
 	"sonnda-api/internal/adapters/inbound/http/httperr"
 	"sonnda-api/internal/app/apperr"
 	"sonnda-api/internal/domain/model/demographics"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -46,3 +47,4 @@ func parsePatientIDParam(c *gin.Context, id string) (uuid.UUID, bool) {
 
 	return parsedID, true
 }
+
