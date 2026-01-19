@@ -2,6 +2,8 @@
 package httperr
 
 import (
+	"errors"
+	"fmt"
 	"log/slog"
 	"sonnda-api/internal/app/apperr"
 	applog "sonnda-api/internal/app/observability"
@@ -37,6 +39,9 @@ func WriteError(c *gin.Context, err error) {
 
 	if err != nil {
 		attrs = append(attrs, slog.Any("err", err))
+		if chain := errorChain(err); len(chain) > 0 {
+			attrs = append(attrs, slog.Any("error_chain", chain))
+		}
 	}
 
 	// Log quando level >= Warn (429, 413, etc.) OU status >= 500
@@ -46,4 +51,33 @@ func WriteError(c *gin.Context, err error) {
 
 	c.Abort()
 	c.JSON(status, gin.H{"error": resp})
+}
+
+func errorChain(err error) []string {
+	if err == nil {
+		return nil
+	}
+
+	chain := make([]string, 0, 4)
+	seen := map[error]struct{}{}
+	for err != nil {
+		if _, ok := seen[err]; ok {
+			chain = append(chain, "cycle_detected")
+			break
+		}
+		seen[err] = struct{}{}
+
+		chain = append(chain, describeError(err))
+		err = errors.Unwrap(err)
+	}
+
+	return chain
+}
+
+func describeError(err error) string {
+	var appErr *apperr.AppError
+	if errors.As(err, &appErr) && appErr != nil {
+		return fmt.Sprintf("app_error code=%s msg=%s", appErr.Code, appErr.Message)
+	}
+	return err.Error()
 }
