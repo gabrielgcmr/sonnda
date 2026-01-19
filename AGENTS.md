@@ -9,6 +9,7 @@ Simple instructions for coding agents working on this repo.
 - Avoid editing generated files unless explicitly asked.
 - Do not touch secrets or files under `secrets/`.
 - Follow the existing error-handling and logging architecture described below.
+ - Always start every source file you create or modify with a one-line header comment containing the workspace-relative path to that file, formatted as "File: path/to/file". Use the language's comment syntax (Go/TS/JS: //, HTML/Markdown: <!-- -->, CSS: /* */). Example: // File: internal/app/services/patient/service.go. Skip only when the format does not support comments or the file is auto-generated.
 
 ---
 
