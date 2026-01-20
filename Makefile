@@ -1,12 +1,8 @@
 # Makefile
-.PHONY: run build dev dev-web tailwind tailwind-watch sqlc-check sqlc-generate docker-up docker-up-build docker-logs docker-down docker-restart clean db-migrate test help
+.PHONY: run build dev dev-web sqlc-check sqlc-generate docker-up docker-up-build docker-logs docker-down docker-restart clean db-migrate test help
 
-
-APP_NAME := sonnda-api
+APP_NAME := sonnda-api``
 MAIN     := ./cmd/api
-TAILWIND_BIN   := tools/tailwindcss.exe
-TAILWIND_INPUT := internal/http/htmx/render/static/css/input.css
-TAILWIND_OUTPUT := internal/http/htmx/render/static/css/tailwind.css
 
 # Executar localmente
 run:
@@ -19,17 +15,6 @@ build:
 # Executar com hot reload (air)
 dev:
 	air -c .air.toml
-
-# Tailwind CSS
-tailwind:
-	$(TAILWIND_BIN) -c tailwind.config.js -i $(TAILWIND_INPUT) -o $(TAILWIND_OUTPUT)
-
-tailwind-watch:
-	$(TAILWIND_BIN) -c tailwind.config.js -i $(TAILWIND_INPUT) -o $(TAILWIND_OUTPUT) --watch
-
-# Hot reload + Tailwind watch (Windows)
-dev-web:
-	powershell -NoProfile -Command "Start-Process -WindowStyle Hidden -FilePath '$(TAILWIND_BIN)' -ArgumentList '-c','tailwind.config.js','-i','$(TAILWIND_INPUT)','-o','$(TAILWIND_OUTPUT)','--watch'; & air -c .air.toml"
 
 #sqlc
 sqlc-check:
@@ -67,9 +52,6 @@ help:
 	@echo "Comandos disponíveis:"
 	@echo "  run            - Executar aplicação local"
 	@echo "  dev            - Executar com hot reload (air)"
-	@echo "  dev-web        - Hot reload + Tailwind watch"
-	@echo "  tailwind       - Build do CSS Tailwind"
-	@echo "  tailwind-watch - Watch do CSS Tailwind"
 	@echo "  build          - Build da aplicação"
 	@echo "  sqlc-check     - Validar queries SQLC"
 	@echo "  sqlc-generate  - Gerar código SQLC"
