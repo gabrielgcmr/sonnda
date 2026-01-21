@@ -1,3 +1,4 @@
+// File: internal/app/bootstrap/user.go
 package bootstrap
 
 import (

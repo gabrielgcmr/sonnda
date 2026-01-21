@@ -1,3 +1,4 @@
+// File: cmd/api/main.go
 package main
 
 import (
@@ -13,13 +14,12 @@ import (
 	"sonnda-api/internal/app/config"
 	"sonnda-api/internal/app/observability"
 
-	"sonnda-api/internal/adapters/inbound/http/api"
-
+	httpserver "sonnda-api/internal/adapters/inbound/http"
 	"sonnda-api/internal/adapters/inbound/http/middleware"
 	authinfra "sonnda-api/internal/adapters/outbound/integrations/auth"
 	"sonnda-api/internal/adapters/outbound/integrations/documentai"
-	"sonnda-api/internal/adapters/outbound/persistence/repository/db"
 	"sonnda-api/internal/adapters/outbound/integrations/storage"
+	"sonnda-api/internal/adapters/outbound/persistence/repository/db"
 )
 
 func main() {
@@ -80,20 +80,21 @@ func main() {
 	authMiddleware := middleware.NewAuthMiddleware(authService)
 
 	//7. Inicializa os repositórios
-	patientHandler := bootstrap.NewPatientModule(dbClient)
-	userModule := bootstrap.NewUserModule(dbClient, authService)
-	registrationMiddleware := userModule.RegistrationMiddleware
-	labsHandler := bootstrap.NewLabsModule(dbClient, docExtractor, storageService)
+	modules := bootstrap.NewModules(dbClient, authService, docExtractor, storageService)
+	registrationMiddleware := modules.User.RegistrationMiddleware
 
 	// 8. Configura o Gin
 	gin.SetMode(gin.ReleaseMode)
-	r := gin.New()
-	r.Use(middleware.RequestID())
-	r.Use(middleware.AccessLog(appLogger))
-	r.Use(middleware.Recovery(appLogger))
-
-	// 9. Montar rotas
-	api.SetupRoutes(r, authMiddleware, registrationMiddleware, userModule.Handler, patientHandler, labsHandler)
+	r := httpserver.NewRouter(
+		httpserver.Infra{Logger: appLogger},
+		httpserver.Dependencies{
+			AuthMiddleware:         authMiddleware,
+			RegistrationMiddleware: registrationMiddleware,
+			UserHandler:            modules.User.Handler,
+			PatientHandler:         modules.Patient.Handler,
+			LabsHandler:            modules.Labs.Handler,
+		},
+	)
 
 	// 10. Inicia o servidor
 	slog.Info(

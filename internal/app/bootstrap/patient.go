@@ -1,4 +1,4 @@
-// internal/app/bootstrap/patient.go
+// File: internal/app/bootstrap/patient.go
 package bootstrap
 
 import (
@@ -9,7 +9,11 @@ import (
 	patientsvc "sonnda-api/internal/app/services/patient"
 )
 
-func NewPatientModule(db *db.Client) *patienthandler.PatientHandler {
+type PatientModule struct {
+	Handler *patienthandler.PatientHandler
+}
+
+func NewPatientModule(db *db.Client) *PatientModule {
 	patientRepo := repo.NewPatientRepository(db)
 	accessRepo := repo.NewPatientAccessRepository(db)
 	profRepo := repo.NewProfessionalRepository(db)
@@ -17,5 +21,7 @@ func NewPatientModule(db *db.Client) *patienthandler.PatientHandler {
 	authz := authorization.New(patientRepo, accessRepo, profRepo)
 	svc := patientsvc.New(patientRepo, authz)
 
-	return patienthandler.NewPatientHandler(svc)
+	return &PatientModule{
+		Handler: patienthandler.NewPatientHandler(svc),
+	}
 }
