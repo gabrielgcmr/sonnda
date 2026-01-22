@@ -1,4 +1,4 @@
-// internal/http/middleware/auth.go
+// internal/adapters/inbound/http/middleware/auth.go
 package middleware
 
 import (
@@ -15,13 +15,15 @@ import (
 )
 
 const (
-	identityKey = "identity"
-	IdentityKey = identityKey
+	identityKey       = "identity"
+	IdentityKey       = identityKey
+	sessionCookieName = "__session"
 )
 
 var (
 	errAuthorizationHeaderMissing = errors.New("authorization header missing")
 	errAuthorizationHeaderInvalid = errors.New("invalid authorization header format")
+	errSessionCookieMissing       = errors.New("session cookie missing")
 )
 
 type AuthMiddleware struct {
@@ -34,26 +36,48 @@ func NewAuthMiddleware(identityService external.IdentityService) *AuthMiddleware
 
 func (m *AuthMiddleware) Authenticate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+		// Try to authenticate using a Firebase session cookie first (web UI flow).
+		if cookie, err := extractSessionCookieFromCookie(ctx); err == nil {
+			id, err := m.identityService.VerifySessionCookie(ctx.Request.Context(), cookie)
+			if err != nil {
+				m.abortUnauthorized(ctx, apperr.AUTH_TOKEN_INVALID, "token invÃ¡lido ou expirado", err)
+				return
+			}
+
+			ctx.Set(identityKey, id)
+			ctx.Next()
+			return
+		}
+
+		// Fallback to Authorization header (API/mobile flow).
 		token, err := extractBearerToken(ctx)
 		if err != nil {
 			switch {
 			case errors.Is(err, errAuthorizationHeaderMissing):
-				m.abortUnauthorized(ctx, apperr.AUTH_REQUIRED, "autenticação necessária", err)
+				m.abortUnauthorized(ctx, apperr.AUTH_REQUIRED, "autenticaÃ§Ã£o necessÃ¡ria", err)
 			default:
-				m.abortUnauthorized(ctx, apperr.AUTH_TOKEN_INVALID, "token inválido", err)
+				m.abortUnauthorized(ctx, apperr.AUTH_TOKEN_INVALID, "token invÃ¡lido", err)
 			}
 			return
 		}
 
 		id, err := m.identityService.VerifyToken(ctx.Request.Context(), token)
 		if err != nil {
-			m.abortUnauthorized(ctx, apperr.AUTH_TOKEN_INVALID, "token inválido ou expirado", err)
+			m.abortUnauthorized(ctx, apperr.AUTH_TOKEN_INVALID, "token invÃ¡lido ou expirado", err)
 			return
 		}
 
 		ctx.Set(identityKey, id)
 		ctx.Next()
 	}
+}
+
+func extractSessionCookieFromCookie(ctx *gin.Context) (string, error) {
+	cookie, err := ctx.Cookie(sessionCookieName)
+	if err != nil || cookie == "" {
+		return "", errSessionCookieMissing
+	}
+	return cookie, nil
 }
 
 func extractBearerToken(ctx *gin.Context) (string, error) {
@@ -92,3 +116,4 @@ func ActorFromCurrentUser(c *gin.Context) (userID string, at user.AccountType, o
 	}
 	return u.ID.String(), u.AccountType, true
 }
+

@@ -45,22 +45,22 @@ func main() {
 	})
 	slog.SetDefault(appLogger)
 
-	// 4. Conectar db (Supabase via pgxpool)
+	// 5. Conectar db (Supabase via pgxpool)
 	dbClient, err := db.NewClient(config.SupabaseConfig(*cfg))
 	if err != nil {
 		log.Fatalf("falha ao criar client do supabase: %v", err)
 	}
 	defer dbClient.Close()
 
-	//5. Conectando outros servicos
-	//5.1 Storage Service (GCS)
+	//6. Conectando outros servicos
+	//6.1 Storage Service (GCS)
 	storageService, err := storage.NewStorageAdapter(ctx, cfg.GCSBucket, cfg.GCPProjectID)
 	if err != nil {
 		log.Fatalf("falha ao criar storage do GCS: %v", err)
 	}
 	defer storageService.Close()
 
-	//5.2 Document AI Service
+	//6.2 Document AI Service
 	docAIClient, err := documentai.NewClient(ctx, cfg.GCPProjectID, cfg.GCPLocation)
 	if err != nil {
 		log.Fatalf("falha ao criar DocAI client: %v", err)
@@ -72,7 +72,7 @@ func main() {
 		cfg.LabsProcessorID,
 	)
 
-	//6 Auth (Firebase only)
+	//6.3 Auth (Firebase only)
 	authService, err := authinfra.NewFirebaseAuthService(ctx)
 	if err != nil {
 		log.Fatalf("falha ao criar auth do firebase: %v", err)
@@ -86,7 +86,10 @@ func main() {
 	// 8. Configura o Gin
 	gin.SetMode(gin.ReleaseMode)
 	r := httpserver.NewRouter(
-		httpserver.Infra{Logger: appLogger},
+		httpserver.Infra{
+			Logger:          appLogger,
+			IdentityService: authService,
+		},
 		httpserver.Dependencies{
 			AuthMiddleware:         authMiddleware,
 			RegistrationMiddleware: registrationMiddleware,

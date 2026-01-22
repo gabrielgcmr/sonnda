@@ -1,0 +1,159 @@
+<!-- internal/adapters/inbound/http/web/templates/pages/login.html -->
+{{define "pages/login"}}
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login - Sonnda</title>
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <link rel="stylesheet" href="/assets/static/tailwind.css" />
+  <script src="/assets/static/firebase-auth.js"></script>
+</head>
+<body class="bg-gray-50">
+  <main class="container mx-auto max-w-6xl px-4 py-8">
+<div class="min-h-screen flex items-center justify-center px-4 py-8 bg-gray-50">
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-8 w-full max-w-sm">
+    <div class="text-center mb-8">
+      <h1 class="text-2xl font-bold text-gray-900 mb-2">Bem-vindo de volta</h1>
+      <p class="text-sm text-gray-600">Entre com sua conta para continuar</p>
+    </div>
+
+    <!-- Alert messages -->
+    <div id="alert-container"></div>
+
+    <!-- Login Form -->
+    <form id="loginForm" class="space-y-4">
+      <div>
+        <label for="email" class="block text-sm font-medium text-gray-700 mb-2">E-mail</label>
+        <input 
+          type="email" 
+          id="email" 
+          name="email" 
+          class="block w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors" 
+          placeholder="seuemail@email.com"
+          required
+          autocomplete="email"
+        />
+        <span class="text-xs text-red-600 mt-1" id="email-error"></span>
+      </div>
+
+      <div>
+        <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Senha</label>
+        <input 
+          type="password" 
+          id="password" 
+          name="password" 
+          class="block w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors" 
+          placeholder="••••••••"
+          required
+          autocomplete="current-password"
+        />
+        <span class="text-xs text-red-600 mt-1" id="password-error"></span>
+      </div>
+
+      <button type="submit" class="w-full inline-flex items-center justify-center px-5 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed" id="loginButton">
+        Entrar
+      </button>
+    </form>
+
+    <div class="text-center mt-6 text-sm text-gray-600">
+      Não tem uma conta? <a href="/register" class="text-blue-600 font-medium hover:underline">Cadastre-se</a>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+<script>
+  // Firebase configuration - TODO: Replace with your actual config
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
+
+  // Initialize Firebase
+  window.firebaseAuth.initialize(firebaseConfig).catch(err => {
+    showAlert('Erro ao inicializar autenticação: ' + err.message, 'error');
+  });
+
+  // Login form handler
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const button = document.getElementById('loginButton');
+    
+    // Clear previous errors
+    clearErrors();
+    
+    // Disable button and show loading
+    button.disabled = true;
+    button.innerHTML = '<span class="spinner"></span>Entrando...';
+    
+    try {
+      // Sign in with Firebase
+      const result = await window.firebaseAuth.signIn(email, password);
+      
+      if (result.success) {
+        showAlert('Login realizado com sucesso! Redirecionando...', 'success');
+        
+        // Redirect to home or dashboard after short delay
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 1000);
+      } else {
+        showAlert(result.error, 'error');
+        button.disabled = false;
+        button.innerHTML = 'Entrar';
+      }
+    } catch (error) {
+      showAlert('Erro inesperado: ' + error.message, 'error');
+      button.disabled = false;
+      button.innerHTML = 'Entrar';
+    }
+  });
+
+  // Helper functions
+  function showAlert(message, type) {
+    const alertContainer = document.getElementById('alert-container');
+    let alertClass = 'bg-blue-50 text-blue-800 border border-blue-200';
+    
+    if (type === 'error') {
+      alertClass = 'bg-red-50 text-red-800 border border-red-200';
+    } else if (type === 'success') {
+      alertClass = 'bg-green-50 text-green-800 border border-green-200';
+    }
+    
+    alertContainer.innerHTML = `
+      <div class="px-4 py-3 rounded-lg text-sm font-medium ${alertClass}">
+        ${message}
+      </div>
+    `;
+  }
+
+  function clearErrors() {
+    document.getElementById('email-error').textContent = '';
+    document.getElementById('password-error').textContent = '';
+    document.getElementById('alert-container').innerHTML = '';
+  }
+
+  // Check if already authenticated on page load
+  window.addEventListener('load', async () => {
+    const session = await window.firebaseAuth.checkSession();
+    if (session.authenticated) {
+      window.location.href = '/';
+    }
+  });
+</script>
+  </main>
+</body>
+</html>
+{{end}}

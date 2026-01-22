@@ -7,10 +7,11 @@
   <title>{{block "title" .}}Sonnda{{end}}</title>
 
   <script src="https://unpkg.com/htmx.org@1.9.12"></script>
-  <link rel="stylesheet" href="/assets/app.css" />
+  <link rel="stylesheet" href="/assets/tailwind.css" />
+  <script src="/assets/firebase-auth.js"></script>
 </head>
-<body>
-  <main style="max-width: 920px; margin: 0 auto; padding: 16px;">
+<body class="bg-gray-50">
+  <main class="container mx-auto max-w-6xl px-4 py-8">
     {{block "content" .}}{{end}}
   </main>
 </body>

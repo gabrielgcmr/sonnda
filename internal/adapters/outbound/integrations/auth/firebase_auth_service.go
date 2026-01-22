@@ -1,4 +1,4 @@
-// internal/infrastructure/auth/firebase_auth_service.go
+// internal/adapters/outbound/integrations/auth/firebase_auth_service.go
 package auth
 
 import (
@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	firebase "firebase.google.com/go/v4"
 	firebaseauth "firebase.google.com/go/v4/auth"
@@ -79,6 +80,50 @@ func (s *FirebaseAuthService) VerifyToken(ctx context.Context, tokenStr string) 
 		Subject:  token.UID,
 		Email:    email,
 	}, nil
+}
+
+func (s *FirebaseAuthService) VerifySessionCookie(ctx context.Context, sessionCookie string) (*identity.Identity, error) {
+	if s.client == nil {
+		return nil, errors.New("firebase client not configured")
+	}
+
+	token, err := s.client.VerifySessionCookieAndCheckRevoked(ctx, sessionCookie)
+	if err != nil {
+		return nil, errors.New("invalid session cookie")
+	}
+
+	email, _ := token.Claims["email"].(string)
+
+	return &identity.Identity{
+		Provider: "firebase",
+		Subject:  token.UID,
+		Email:    email,
+	}, nil
+}
+
+func (s *FirebaseAuthService) CreateSessionCookie(ctx context.Context, idToken string, expiresIn time.Duration) (string, error) {
+	if s.client == nil {
+		return "", errors.New("firebase client not configured")
+	}
+
+	sessionCookie, err := s.client.SessionCookie(ctx, idToken, expiresIn)
+	if err != nil {
+		return "", errors.New("invalid token")
+	}
+
+	return sessionCookie, nil
+}
+
+func (s *FirebaseAuthService) RevokeSessions(ctx context.Context, subject string) error {
+	if s.client == nil {
+		return errors.New("firebase client not configured")
+	}
+
+	if err := s.client.RevokeRefreshTokens(ctx, subject); err != nil {
+		return fmt.Errorf("firebase revoke refresh tokens: %w", err)
+	}
+
+	return nil
 }
 
 func (s *FirebaseAuthService) DisableUser(ctx context.Context, subject string) error {

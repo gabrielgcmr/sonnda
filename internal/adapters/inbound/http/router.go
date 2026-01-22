@@ -2,9 +2,7 @@
 package httpserver
 
 import (
-	"html/template"
 	"log/slog"
-	"path/filepath"
 
 	"github.com/gin-gonic/gin"
 
@@ -14,10 +12,12 @@ import (
 	"sonnda-api/internal/adapters/inbound/http/api/handlers/user"
 	"sonnda-api/internal/adapters/inbound/http/middleware"
 	"sonnda-api/internal/adapters/inbound/http/web"
+	"sonnda-api/internal/domain/ports/integration"
 )
 
 type Infra struct {
-	Logger *slog.Logger
+	Logger          *slog.Logger
+	IdentityService integration.IdentityService
 }
 
 type Dependencies struct {
@@ -44,25 +44,14 @@ func NewRouter(infra Infra, deps Dependencies) *gin.Engine {
 	)
 
 	// Static assets (css, js, imagens)
-	r.Static("/assets", "./assets")
+	// Use relative path that works from project root (where air runs from)
+	r.Static("/assets", "assets")
 
 	// Templates HTML (HTMX)
-	tmpl := template.Must(template.ParseGlob(
-		filepath.Join(
-			"internal",
-			"adapters",
-			"inbound",
-			"http",
-			"web",
-			"views",
-			"**",
-			"*.html",
-		),
-	))
-	r.SetHTMLTemplate(tmpl)
+	r.SetHTMLTemplate(mustLoadTemplates())
 
 	// ---- Rotas ----
-	web.SetupRoutes(r)
+	web.SetupRoutes(r, infra.IdentityService)
 	api.SetupRoutes(
 		r,
 		deps.AuthMiddleware,
