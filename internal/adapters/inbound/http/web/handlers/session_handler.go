@@ -2,6 +2,7 @@
 package handlers
 
 import (
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 
 	httperr "sonnda-api/internal/adapters/inbound/http/httperr"
 	"sonnda-api/internal/app/apperr"
+	"sonnda-api/internal/app/observability"
 	"sonnda-api/internal/domain/ports/integration"
 )
 
@@ -34,10 +36,25 @@ type CreateSessionRequest struct {
 func (h *SessionHandler) CreateSession(c *gin.Context) {
 	var req CreateSessionRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		logger := observability.FromContext(c.Request.Context())
+		logger.Error("failed to bind session request",
+			slog.String("error", err.Error()),
+		)
 		httperr.WriteError(c, &apperr.AppError{
 			Code:    apperr.VALIDATION_FAILED,
-			Message: "token invalido",
+			Message: "corpo da requisição inválido, esperado: {\"id_token\": \"...\"}",
 			Cause:   err,
+		})
+		return
+	}
+
+	if req.IDToken == "" {
+		logger := observability.FromContext(c.Request.Context())
+		logger.Error("id_token is empty")
+		httperr.WriteError(c, &apperr.AppError{
+			Code:    apperr.VALIDATION_FAILED,
+			Message: "id_token não pode estar vazio",
+			Cause:   nil,
 		})
 		return
 	}
@@ -138,4 +155,3 @@ func (h *SessionHandler) GetSession(c *gin.Context) {
 		},
 	})
 }
-

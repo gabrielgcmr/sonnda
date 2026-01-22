@@ -102,9 +102,10 @@ func main() {
 
 	// 10. Inicia o servidor
 	slog.Info(
-		"API is running",
-		slog.String("url", "http://localhost:"+cfg.Port+"/api/v1"),
-		slog.String("env", cfg.Env),
+		"Sonnda is running",
+		slog.String("Mode: env", cfg.Env),
+		slog.String("Api url", "http://localhost:"+cfg.Port+"/api/v1"),
+		slog.String("App url", "http://localhost:"+cfg.Port+"/"),
 	)
 	if err := r.Run(":" + cfg.Port); err != nil {
 		// 1. Loga o erro com nivel Error (estruturado)

@@ -7,8 +7,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Cadastro - Sonnda</title>
   <script src="https://unpkg.com/htmx.org@1.9.12"></script>
-  <link rel="stylesheet" href="/static/css/tailwind.css" />
-  <script src="/static/js/firebase-auth.js"></script>
+  <link rel="stylesheet" href="/static/css/app.css" />
+  <script type="module" src="/static/js/firebase-auth.js"></script>
   <script>
     window.firebaseConfig = {
       apiKey: "{{ .FirebaseConfig.apiKey }}",
@@ -224,8 +224,7 @@
 </div>
 
 <!-- Firebase Auth Manager -->
-<script src="/static/js/firebase-auth.js"></script>
-<script src="/static/js/register.js"></script>
+<script src="/static/js/register.js" defer></script>
   </main>
 </body>
 </html>
