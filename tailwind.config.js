@@ -1,8 +1,9 @@
+// tailwind.config.js
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: "class",
   content: [
-    "./internal/adapters/inbound/http/web/templates/**/*.{html,tmpl,gohtml}",
+    "./internal/adapters/inbound/http/web/assets/templates/**/*.{html,tmpl,gohtml}",
     "./internal/adapters/inbound/http/web/handlers/**/*.go",
   ],
   theme: {

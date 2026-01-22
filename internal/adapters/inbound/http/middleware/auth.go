@@ -40,7 +40,7 @@ func (m *AuthMiddleware) Authenticate() gin.HandlerFunc {
 		if cookie, err := extractSessionCookieFromCookie(ctx); err == nil {
 			id, err := m.identityService.VerifySessionCookie(ctx.Request.Context(), cookie)
 			if err != nil {
-				m.abortUnauthorized(ctx, apperr.AUTH_TOKEN_INVALID, "token invÃ¡lido ou expirado", err)
+				m.abortUnauthorized(ctx, apperr.AUTH_TOKEN_INVALID, "token inválido ou expirado", err)
 				return
 			}
 
@@ -54,16 +54,16 @@ func (m *AuthMiddleware) Authenticate() gin.HandlerFunc {
 		if err != nil {
 			switch {
 			case errors.Is(err, errAuthorizationHeaderMissing):
-				m.abortUnauthorized(ctx, apperr.AUTH_REQUIRED, "autenticaÃ§Ã£o necessÃ¡ria", err)
+				m.abortUnauthorized(ctx, apperr.AUTH_REQUIRED, "autenticação necessária", err)
 			default:
-				m.abortUnauthorized(ctx, apperr.AUTH_TOKEN_INVALID, "token invÃ¡lido", err)
+				m.abortUnauthorized(ctx, apperr.AUTH_TOKEN_INVALID, "token inválido", err)
 			}
 			return
 		}
 
 		id, err := m.identityService.VerifyToken(ctx.Request.Context(), token)
 		if err != nil {
-			m.abortUnauthorized(ctx, apperr.AUTH_TOKEN_INVALID, "token invÃ¡lido ou expirado", err)
+			m.abortUnauthorized(ctx, apperr.AUTH_TOKEN_INVALID, "token inválido ou expirado", err)
 			return
 		}
 
@@ -116,4 +116,3 @@ func ActorFromCurrentUser(c *gin.Context) (userID string, at user.AccountType, o
 	}
 	return u.ID.String(), u.AccountType, true
 }
-

@@ -12,13 +12,19 @@ import (
 type Config struct {
 	DBURL string
 
-	GCPProjectID    string
-	GCSBucket       string
-	GCPLocation     string
-	LabsProcessorID string
+	GCPProjectID     string
+	GCPProjectNumber string
+	GCSBucket        string
+	GCPLocation      string
+	LabsProcessorID  string
 
-	FirebaseProjectID       string
-	FirebaseCredentialsFile string
+	FirebaseProjectID         string
+	FirebaseCredentialsFile   string
+	FirebaseAPIKey            string
+	FirebaseAuthDomain        string
+	FirebaseStorageBucket     string
+	FirebaseMessagingSenderID string
+	FirebaseAppID             string
 
 	Port string // porta HTTP (ex.: "8080")
 	Env  string // ex.: "dev", "prod"
@@ -28,18 +34,28 @@ type Config struct {
 }
 
 func Load() (*Config, error) {
+	projectID := os.Getenv("GCP_PROJECT_ID")
+	projectNumber := os.Getenv("GCP_PROJECT_NUMBER")
+	gcsBucket := os.Getenv("GCS_BUCKET")
+
 	cfg := &Config{
-		DBURL:                   os.Getenv("SUPABASE_URL"),
-		GCPProjectID:            os.Getenv("GCP_PROJECT_ID"),
-		GCSBucket:               os.Getenv("GCS_BUCKET"),
-		GCPLocation:             os.Getenv("GCP_LOCATION"),
-		LabsProcessorID:         os.Getenv("DOCAI_LABS_PROCESSOR_ID"),
-		FirebaseProjectID:       os.Getenv("FIREBASE_PROJECT_ID"),
-		FirebaseCredentialsFile: os.Getenv("FIREBASE_CREDENTIALS_FILE"),
-		Port:                    getEnvOrDefault("PORT", "8080"),
-		Env:                     getEnvOrDefault("APP_ENV", "dev"),
-		LogLevel:                getEnvOrDefault("LOG_LEVEL", "info"),
-		LogFormat:               getEnvOrDefault("LOG_FORMAT", "text"),
+		DBURL:                     os.Getenv("SUPABASE_URL"),
+		GCPProjectID:              projectID,
+		GCPProjectNumber:          projectNumber,
+		GCSBucket:                 gcsBucket,
+		GCPLocation:               os.Getenv("GCP_LOCATION"),
+		LabsProcessorID:           os.Getenv("DOCAI_LABS_PROCESSOR_ID"),
+		FirebaseProjectID:         projectID,
+		FirebaseCredentialsFile:   os.Getenv("FIREBASE_CREDENTIALS_FILE"),
+		FirebaseAPIKey:            os.Getenv("FIREBASE_API_KEY"),
+		FirebaseAuthDomain:        os.Getenv("FIREBASE_AUTH_DOMAIN"),
+		FirebaseStorageBucket:     gcsBucket,
+		FirebaseMessagingSenderID: projectNumber,
+		FirebaseAppID:             os.Getenv("FIREBASE_APP_ID"),
+		Port:                      getEnvOrDefault("PORT", "8080"),
+		Env:                       getEnvOrDefault("APP_ENV", "dev"),
+		LogLevel:                  getEnvOrDefault("LOG_LEVEL", "info"),
+		LogFormat:                 getEnvOrDefault("LOG_FORMAT", "text"),
 	}
 
 	if cfg.Env == "prod" && cfg.LogFormat == "text" {

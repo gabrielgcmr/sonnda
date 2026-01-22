@@ -1,8 +1,9 @@
-// File: internal/adapters/inbound/http/router.go
+// internal/adapters/inbound/http/router.go
 package httpserver
 
 import (
 	"log/slog"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 
@@ -12,12 +13,14 @@ import (
 	"sonnda-api/internal/adapters/inbound/http/api/handlers/user"
 	"sonnda-api/internal/adapters/inbound/http/middleware"
 	"sonnda-api/internal/adapters/inbound/http/web"
+	"sonnda-api/internal/app/config"
 	"sonnda-api/internal/domain/ports/integration"
 )
 
 type Infra struct {
 	Logger          *slog.Logger
 	IdentityService integration.IdentityService
+	Config          *config.Config
 }
 
 type Dependencies struct {
@@ -45,13 +48,22 @@ func NewRouter(infra Infra, deps Dependencies) *gin.Engine {
 
 	// Static assets (css, js, imagens)
 	// Use relative path that works from project root (where air runs from)
-	r.Static("/assets", "assets")
+	r.Static("/static", "internal/adapters/inbound/http/web/assets/static")
+
+	// Favicon embutido no binário
+	r.GET("/favicon.ico", func(c *gin.Context) {
+		if len(faviconBytes) == 0 {
+			c.Status(http.StatusNotFound)
+			return
+		}
+		c.Data(http.StatusOK, "image/x-icon", faviconBytes)
+	})
 
 	// Templates HTML (HTMX)
 	r.SetHTMLTemplate(mustLoadTemplates())
 
 	// ---- Rotas ----
-	web.SetupRoutes(r, infra.IdentityService)
+	web.SetupRoutes(r, infra.Config, infra.IdentityService)
 	api.SetupRoutes(
 		r,
 		deps.AuthMiddleware,

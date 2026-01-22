@@ -1,14 +1,10 @@
 package api
 
 import (
-	"net/http"
-
 	"sonnda-api/internal/adapters/inbound/http/api/handlers"
 	"sonnda-api/internal/adapters/inbound/http/api/handlers/patient"
 	"sonnda-api/internal/adapters/inbound/http/api/handlers/user"
 	"sonnda-api/internal/adapters/inbound/http/middleware"
-
-	"sonnda-api/assets"
 
 	"github.com/gin-gonic/gin"
 )
@@ -22,10 +18,6 @@ func SetupRoutes(
 	labsHandler *handlers.LabsHandler,
 
 ) {
-	r.GET("/favicon.ico", func(c *gin.Context) {
-		b, _ := assets.FS.ReadFile("favicon.ico")
-		c.Data(http.StatusOK, "image/x-icon", b)
-	})
 
 	api := r.Group("/api/v1")
 
@@ -47,7 +39,7 @@ func SetupRoutes(
 	authenticated.Use(authMiddleware.Authenticate())
 	{
 		// Rota de Cadastro (Onboarding)
-		authenticated.POST("/register",
+		authenticated.POST("/api/v1/register",
 			userHandler.Register,
 		)
 	}

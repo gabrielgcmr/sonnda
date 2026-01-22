@@ -89,6 +89,7 @@ func main() {
 		httpserver.Infra{
 			Logger:          appLogger,
 			IdentityService: authService,
+			Config:          cfg,
 		},
 		httpserver.Dependencies{
 			AuthMiddleware:         authMiddleware,

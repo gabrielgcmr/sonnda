@@ -8,16 +8,16 @@ import (
 
 // Embedding inbute os templates no binário final do Go.
 //
-//go:embed web/templates/**/*.html
+//go:embed web/assets/templates/**/*.html
 var viewsFS embed.FS
 
 func mustLoadTemplates() *template.Template {
 	// ParseFS aceita patterns glob dentro do FS embutido
 	t, err := template.New("").ParseFS(
 		viewsFS,
-		"web/templates/layouts/*.html",
-		"web/templates/pages/*.html",
-		"web/templates/partials/*.html",
+		"web/assets/templates/layouts/*.html",
+		"web/assets/templates/pages/*.html",
+		"web/assets/templates/partials/*.html",
 	)
 	if err != nil {
 		panic(err)

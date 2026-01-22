@@ -5,12 +5,13 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"sonnda-api/internal/adapters/inbound/http/web/handlers"
+	"sonnda-api/internal/app/config"
 	"sonnda-api/internal/domain/ports/integration"
 )
 
-func SetupRoutes(r *gin.Engine, identityService integration.IdentityService) {
+func SetupRoutes(r *gin.Engine, cfg *config.Config, identityService integration.IdentityService) {
 	h := handlers.NewHomeHandler()
-	authHandler := handlers.NewAuthHandler()
+	authHandler := handlers.NewAuthHandler(cfg)
 	sessionHandler := handlers.NewSessionHandler(identityService)
 
 	// Home

@@ -1,8 +1,9 @@
-// assets/static/firebase-auth.js
+// internal/adapters/inbound/http/web/assets/static/js/firebase-auth.js
 
 /**
  * Firebase Authentication Manager (httpOnly Cookie Version)
  * Handles Firebase initialization, authentication flows, and session management via httpOnly cookies
+ * Configuration is injected via window.firebaseConfig in the HTML template
  */
 
 class FirebaseAuthManager {
@@ -14,17 +15,22 @@ class FirebaseAuthManager {
 
   /**
    * Initialize Firebase with configuration
+   * Configuration should be available as window.firebaseConfig
    * Call this before using any auth methods
    */
-  async initialize(config) {
+  async initialize() {
     try {
       if (this.initialized) {
         console.warn('Firebase already initialized');
         return;
       }
 
+      if (!window.firebaseConfig) {
+        throw new Error('Firebase configuration not found in window.firebaseConfig');
+      }
+
       // Initialize Firebase
-      firebase.initializeApp(config);
+      firebase.initializeApp(window.firebaseConfig);
       this.auth = firebase.auth();
       this.initialized = true;
 
@@ -196,26 +202,6 @@ class FirebaseAuthManager {
   }
 
   /**
-   * Refresh session (extends cookie expiration)
-   */
-  async refreshSession() {
-    this.ensureInitialized();
-    
-    if (!this.currentUser) {
-      return { success: false, error: 'No user logged in' };
-    }
-
-    try {
-      const idToken = await this.currentUser.getIdToken(true); // Force refresh
-      await this.createSession(idToken);
-      return { success: true };
-    } catch (error) {
-      console.error('Refresh session error:', error);
-      return { success: false, error: error.message };
-    }
-  }
-
-  /**
    * Get current ID token (from Firebase, not storage)
    */
   async getIdToken(forceRefresh = false) {
@@ -272,17 +258,13 @@ class FirebaseAuthManager {
 // Create global instance
 window.firebaseAuth = new FirebaseAuthManager();
 
-/**
- * Configure HTMX to handle auth errors
- */
+// Auto-initialize Firebase when the DOM is ready if config is available
 document.addEventListener('DOMContentLoaded', () => {
-  // Handle unauthorized responses (redirect to login)
-  document.body.addEventListener('htmx:responseError', (event) => {
-    const xhr = event.detail.xhr;
-    if (xhr.status === 401) {
-      window.location.href = '/login';
-    }
-  });
+  if (window.firebaseConfig) {
+    window.firebaseAuth.initialize().catch(err => {
+      console.error('Failed to initialize Firebase:', err);
+    });
+  }
 });
 
 /**

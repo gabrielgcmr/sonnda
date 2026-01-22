@@ -3,7 +3,7 @@
 Simple instructions for coding agents working on this repo.
 
 ## General
-- The project is being done by a solo developer who is learning programming.
+- The project is being done by a solo developer.
 - When suggesting a solution to a problem, offer the correct way (even if it requires refactoring) and a simple way to solve it.
 - Prefer small, readable functions and clear naming.
 - Avoid editing generated files unless explicitly asked.

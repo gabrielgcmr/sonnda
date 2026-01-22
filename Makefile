@@ -4,8 +4,8 @@
 APP_NAME := sonnda-api
 MAIN     := ./cmd/api
 TAILWIND_BIN   := tools/tailwindcss.exe
-TAILWIND_INPUT := assets/static/input.css
-TAILWIND_OUTPUT := assets/static/tailwind.css
+TAILWIND_INPUT := internal/adapters/inbound/http/web/assets/static/css/input.css
+TAILWIND_OUTPUT := internal/adapters/inbound/http/web/assets/static/css/app.css
 
 # Executar localmente
 run:
