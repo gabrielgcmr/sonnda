@@ -1,70 +1,136 @@
-# Patient (create, get, update, soft delete)
+<!-- docs/api/patient.md -->
+# Pacientes
 
-Documentacao tecnica da implementacao do modulo de pacientes.
+Endpoints para criação e consulta de pacientes.
 
-## Visao geral (camadas)
+## Base URL
 
-- HTTP: `internal/http/api/handlers/patient/patient_handler.go` (entrada API, bind/parse e resposta).
-- Application (service): `internal/app/services/patient` (orquestracao e mapeamento de erros para `*apperr.AppError`).
-- Dominio: `internal/domain/model/patient` (entidade, invariantes e validacoes).
-- Persistencia: `internal/infrastructure/persistence/repository/patient/patient_repo.go`.
-- SQL (sqlc): `internal/infrastructure/persistence/sqlc/sql/queries/patient_queries.sql`.
+`/api/v1`
 
-## Status atual
+## Autenticação
 
-- Criacao e busca por ID estao implementadas ponta-a-ponta.
-- List/update/soft delete existem no service/handler, mas podem depender de implementacao completa no repository e de rotas habilitadas no router.
+Todas as rotas exigem `Authorization: Bearer <id_token>` e usuário registrado.
+
+## Campos e enums
+
+### Create (obrigatórios)
+
+- `cpf` (string) — 11 dígitos
+- `full_name` (string)
+- `birth_date` (string) — formato `YYYY-MM-DD`
+- `gender` — `MALE | FEMALE | OTHER | UNKNOWN`
+- `race` — `WHITE | BLACK | ASIAN | MIXED | INDIGENOUS | UNKNOWN`
+
+### Create (opcionais)
+
+- `phone` (string)
+- `avatar_url` (string)
+
+### Update (opcionais)
+
+Mesmo conjunto de campos, todos opcionais.
+
+## Endpoints
+
+| Método | Rota | Status |
+|---|---|---|
+| POST | `/patients` | Ativo |
+| GET | `/patients` | Ativo |
+| GET | `/patients/:id` | Ativo |
+| PUT | `/patients/:id` | Handler existe, rota não registrada |
+| DELETE | `/patients/:id` | Handler existe, rota não registrada |
 
 ## Criar paciente (POST /api/v1/patients)
 
-Arquivos-chave:
-- Handler: `internal/http/api/handlers/patient/patient_handler.go` (Create)
-- Service: `internal/app/services/patient/service_impl.go` (Create)
-- Dominio: `internal/domain/model/patient/patient.go` (NewPatient)
-- Repository: `internal/infrastructure/persistence/repository/patient/patient_repo.go` (Create, FindByCPF)
+**Request (JSON):**
+```json
+{
+  "cpf": "12345678901",
+  "full_name": "Joana Silva",
+  "birth_date": "1990-05-12",
+  "gender": "FEMALE",
+  "race": "WHITE",
+  "phone": "+55 11 99999-0000",
+  "avatar_url": "https://example.com/avatar.png"
+}
+```
 
-Fluxo (alto nivel):
-1) Handler valida autenticacao/registro e faz bind do JSON.
-2) Handler faz parsing/normalizacao de fronteira:
-   - `birth_date` (layout `2006-01-02`) via `common.ParseBirthDate`.
-   - `gender` e `race` via `ParseGender/ParseRace` do handler.
-3) Service monta entidade via `patient.NewPatient` (normaliza/valida invariantes).
-4) Service checa duplicidade por CPF (`repo.FindByCPF`).
-5) Repository persiste via sqlc (`CreatePatient`).
+**Exemplo (curl):**
+```bash
+curl -i -X POST http://localhost:8080/api/v1/patients \
+  -H "Authorization: Bearer <id_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "cpf": "12345678901",
+    "full_name": "Joana Silva",
+    "birth_date": "1990-05-12",
+    "gender": "FEMALE",
+    "race": "WHITE",
+    "phone": "+55 11 99999-0000",
+    "avatar_url": "https://example.com/avatar.png"
+  }'
+```
 
-Erros principais (contrato HTTP):
-- `VALIDATION_FAILED` (400): payload invalido / dados invalidos
-- `RESOURCE_ALREADY_EXISTS` (409): CPF ja cadastrado
-- `INFRA_DATABASE_ERROR` (5xx): falha tecnica (banco)
+**Resposta (201 Created):**
+```json
+{
+  "id": "018f3a2a-4c1a-7c5a-9d9e-2b7d8d9c3f11"
+}
+```
 
-## Buscar paciente por ID (GET /api/v1/patients/:id)
+**Erros comuns:**
+- `VALIDATION_FAILED` (400)
+- `RESOURCE_ALREADY_EXISTS` (409) — CPF duplicado
+- `INFRA_DATABASE_ERROR` (5xx)
 
-Arquivos-chave:
-- Handler: `internal/http/api/handlers/patient/patient_handler.go` (GetByID)
-- Service: `internal/app/services/patient/service_impl.go` (GetByID)
-- Repository: `internal/infrastructure/persistence/repository/patient/patient_repo.go` (FindByID)
+## Buscar paciente (GET /api/v1/patients/:id)
 
-Fluxo (alto nivel):
-1) Handler valida autenticacao/registro.
-2) Handler valida `:id` e faz `uuid.Parse`.
-3) Service aplica policy de acesso e busca no repo (`FindByID`).
-4) Se nao encontrar, retorna `NOT_FOUND` (404).
+**Resposta (200 OK):**
+```json
+{
+  "id": "018f3a2a-4c1a-7c5a-9d9e-2b7d8d9c3f11",
+  "owner_user_id": "018f39f2-0b1a-7c5a-9d9e-2b7d8d9c3f11",
+  "cpf": "12345678901",
+  "cns": null,
+  "full_name": "Joana Silva",
+  "birth_date": "1990-05-12T00:00:00Z",
+  "gender": "FEMALE",
+  "race": "WHITE",
+  "avatar_url": "https://example.com/avatar.png",
+  "phone": "+55 11 99999-0000",
+  "created_at": "2026-01-10T12:00:00Z",
+  "updated_at": "2026-01-10T12:00:00Z"
+}
+```
+
+**Exemplo (curl):**
+```bash
+curl -i http://localhost:8080/api/v1/patients/018f3a2a-4c1a-7c5a-9d9e-2b7d8d9c3f11 \
+  -H "Authorization: Bearer <id_token>"
+```
+
+**Erros comuns:**
+- `VALIDATION_FAILED` (400)
+- `NOT_FOUND` (404)
 
 ## Listar pacientes (GET /api/v1/patients)
 
-- Handler: `internal/http/api/handlers/patient/patient_handler.go` (List)
-- Service: `internal/app/services/patient/service_impl.go` (List)
+**Resposta (200 OK):**
+```json
+[
+  {
+    "id": "018f3a2a-4c1a-7c5a-9d9e-2b7d8d9c3f11",
+    "full_name": "Joana Silva",
+    "cpf": "12345678901"
+  }
+]
+```
 
-Notas:
-- Atualmente o handler usa `limit=100` e `offset=0` (sem paginacao via querystring).
+**Exemplo (curl):**
+```bash
+curl -i http://localhost:8080/api/v1/patients \
+  -H "Authorization: Bearer <id_token>"
+```
 
-## Atualizar paciente (PUT /api/v1/patients/:id)
-
-- Handler existe em `internal/http/api/handlers/patient/patient_handler.go` (UpdateByID).
-- Service existe em `internal/app/services/patient/service_impl.go` (UpdateByID).
-- A rota pode estar comentada em `internal/http/api/router.go`.
-
-## Soft delete de paciente
-
-- Service existe em `internal/app/services/patient/service_impl.go` (SoftDeleteByID).
-- A rota pode estar comentada em `internal/http/api/router.go`.
+**Notas:**
+- Paginação está fixa em `limit=100` e `offset=0` no handler atual.

@@ -1,0 +1,24 @@
+// internal/adapters/inbound/http/web/assets/templates/pages/home.templ
+package pages
+
+import (
+    "sonnda-api/internal/adapters/inbound/http/web/assets/templates/components"
+    "sonnda-api/internal/adapters/inbound/http/web/assets/templates/layouts"
+)
+
+type HomeViewModel struct {
+    UserName string
+    Role     string
+    Patients []components.PatientItem
+}
+
+templ Home(vm HomeViewModel) {
+    @layouts.App("Home") {
+        @components.Header(components.HeaderProps{
+            UserName: vm.UserName,
+            Role:     vm.Role,
+        })
+
+        @components.PatientList(vm.Patients)
+    }
+}

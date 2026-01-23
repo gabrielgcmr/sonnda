@@ -13,8 +13,8 @@ import (
 	labsvc "sonnda-api/internal/app/services/labs"
 	labsuc "sonnda-api/internal/app/usecase/labs"
 
-	"sonnda-api/internal/adapters/inbound/http/httperr"
-	"sonnda-api/internal/adapters/inbound/http/middleware"
+	"sonnda-api/internal/adapters/inbound/http/api/httperr"
+	"sonnda-api/internal/adapters/inbound/http/api/middleware"
 	"sonnda-api/internal/app/apperr"
 	external "sonnda-api/internal/domain/ports/integration"
 )

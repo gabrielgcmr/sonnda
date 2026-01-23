@@ -1,10 +1,11 @@
+// internal/adapters/inbound/http/api/routes.go
 package api
 
 import (
 	"sonnda-api/internal/adapters/inbound/http/api/handlers"
 	"sonnda-api/internal/adapters/inbound/http/api/handlers/patient"
 	"sonnda-api/internal/adapters/inbound/http/api/handlers/user"
-	"sonnda-api/internal/adapters/inbound/http/middleware"
+	"sonnda-api/internal/adapters/inbound/http/api/middleware"
 
 	"github.com/gin-gonic/gin"
 )
@@ -39,7 +40,7 @@ func SetupRoutes(
 	authenticated.Use(authMiddleware.Authenticate())
 	{
 		// Rota de Cadastro (Onboarding)
-		authenticated.POST("/api/v1/register",
+		authenticated.POST("/register",
 			userHandler.Register,
 		)
 	}

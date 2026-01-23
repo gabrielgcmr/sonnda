@@ -6,6 +6,8 @@ import (
 	"html/template"
 )
 
+// ATENÇÃO!!! REMOVER ESSE ARQUIVO DEPOIS DE MIGRAR PARA TEMPL
+
 // Embedding inbute os templates no binário final do Go.
 //
 //go:embed web/assets/templates/**/*.html

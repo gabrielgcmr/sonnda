@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	httperr "sonnda-api/internal/adapters/inbound/http/httperr"
+	httperr "sonnda-api/internal/adapters/inbound/http/api/httperr"
 	"sonnda-api/internal/app/apperr"
 	applog "sonnda-api/internal/app/observability"
 	"sonnda-api/internal/domain/model/identity"

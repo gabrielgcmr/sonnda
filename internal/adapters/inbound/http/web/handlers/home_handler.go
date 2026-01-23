@@ -1,25 +1,35 @@
+// internal/adapters/inbound/http/web/handlers/home_handler.go
 package handlers
 
 import (
 	"net/http"
+	"sonnda-api/internal/adapters/inbound/http/middleware"
+	"sonnda-api/internal/adapters/inbound/http/web/pages"
 
 	"github.com/gin-gonic/gin"
 )
 
-type HomeHandler struct{}
+func HomeHandler(c *gin.Context) {
+	// 1) Procura identity no contexto
+	id, ok := middleware.GetIdentity(c)
+	if !ok || id == nil {
+		c.Redirect(http.StatusFound, "/login")
+		return
+	}
 
-func NewHomeHandler() *HomeHandler {
-	return &HomeHandler{}
-}
+	//2)
+	vm := pages.HomeViewModel{
+		UserName: id.FullName,
+		Role:     id.Role.String(),
+		Patients: nil, //TODO: buscar pacientes
+	}
 
-func (h *HomeHandler) Home(c *gin.Context) {
-	c.HTML(http.StatusOK, "pages/home", gin.H{
-		"Title": "Sonnda",
-	})
-}
+	c.Status(http.StatusOK)
+	c.Header("Content-Type", "text/html; charset=utf-8")
 
-func (h *HomeHandler) CounterPartial(c *gin.Context) {
-	c.HTML(http.StatusOK, "partials/counter", gin.H{
-		"Count": 42,
-	})
+	// Render do templ no writer do Gin
+	if err := pages.Home(vm).Render(c.Request.Context(), c.Writer); err != nil {
+		// Aqui dá pra usar seu httperr/apperr se quiser, mas pra web geralmente:
+		c.Status(http.StatusInternalServerError)
+	}
 }

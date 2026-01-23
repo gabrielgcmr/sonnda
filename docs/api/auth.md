@@ -1,202 +1,138 @@
+<!-- docs/api/auth.md -->
 # Autenticação
 
-## Visão Geral
+## Visão geral
 
-A autenticação do Sonnda utiliza **Firebase Authentication**. O fluxo é:
+A Sonnda usa **Firebase Authentication**. O cliente autentica no Firebase, recebe um **ID Token** (JWT) e então:
 
-1. **Cliente** (mobile/web) autentica diretamente com Firebase
-2. Firebase retorna um **ID Token** (JWT)
-3. Cliente envia o token no header `Authorization: Bearer <token>` para a API
-4. **API** valida o token via middleware e extrai a identidade do usuário
+- **API REST (/api/v1)**: envia o token no header `Authorization: Bearer <id_token>`.
+- **Web (SSR/HTMX)**: cria uma sessão HTTP via `POST /auth/session` e recebe o cookie `__session`.
 
-```
-┌─────────────┐     ┌──────────────┐     ┌───────────────────┐
-│   Cliente   │────▶│   Firebase   │────▶│ Retorna ID Token  │
-│   (Mobile)  │     │  Auth API    │     │                   │
-└─────────────┘     └──────────────┘     └───────────────────┘
-       │                                           │
-       │         Authorization: Bearer <token>     │
-       ▼                                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│                      sonnda-api                             │
-│         AuthMiddleware → FirebaseAuthService                │
-│              (Valida token e extrai identity)               │
-└─────────────────────────────────────────────────────────────┘
-```
+## Arquivos-chave
 
----
+| Camada | Arquivo |
+|---|---|
+| Middleware | `internal/adapters/inbound/http/middleware/auth.go` |
+| Identidade (port) | `internal/domain/ports/integration/Identity_service.go` |
+| Integração Firebase | `internal/adapters/outbound/integrations/auth/firebase_auth_service.go` |
 
-## Arquivos-chave (API)
+## Sessão web (cookie)
 
-| Camada     | Arquivo                                                    |
-|------------|------------------------------------------------------------|
-| Middleware | `internal/adapters/inbound/http/middleware/auth.go`        |
-| Service    | `internal/adapters/outbound/integrations/firebase_auth.go` |
-| Port       | `internal/domain/ports/auth.go`                            |
-| Model      | `internal/domain/model/identity/identity.go`               |
+### POST /auth/session
 
----
+Cria o cookie `__session` a partir do `id_token` do Firebase.
 
-## Endpoints Firebase (Client-Side)
-
-> ⚠️ Esses endpoints são chamados **diretamente pelo cliente**, não pela API.
-
-Base URL: `https://identitytoolkit.googleapis.com/v1`
-
-### Criar Conta (Sign Up)
-
-```
-POST /accounts:signUp?key=<FIREBASE_API_KEY>
-```
-
-**Request Body:**
+**Request (JSON):**
 ```json
 {
-  "email": "usuario@exemplo.com",
-  "password": "senhaSegura123",
-  "returnSecureToken": true
+  "id_token": "eyJhbGciOi..."
 }
 ```
 
-**Response (200 OK):**
-```json
-{
-  "idToken": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "email": "usuario@exemplo.com",
-  "refreshToken": "AMf-vBw...",
-  "expiresIn": "3600",
-  "localId": "abc123xyz"
-}
+**Resposta:**
+- `204 No Content` + `Set-Cookie: __session=...`
+
+**Exemplo (curl):**
+```bash
+curl -i -X POST http://localhost:8080/auth/session \
+  -H "Content-Type: application/json" \
+  -d '{"id_token":"eyJhbGciOi..."}'
 ```
 
 **Erros comuns:**
-
-| Código Firebase         | Descrição                        |
-|-------------------------|----------------------------------|
-| EMAIL_EXISTS            | Email já cadastrado              |
-| WEAK_PASSWORD           | Senha com menos de 6 caracteres  |
-| INVALID_EMAIL           | Formato de email inválido        |
+- `VALIDATION_FAILED` (400) — body inválido
+- `AUTH_TOKEN_INVALID` (401) — token inválido/expirado
 
 ---
 
-### Login (Sign In with Password)
+### GET /auth/session
 
-```
-POST /accounts:signInWithPassword?key=<FIREBASE_API_KEY>
-```
-
-**Request Body:**
+**Resposta (200 OK):**
 ```json
 {
-  "email": "usuario@exemplo.com",
-  "password": "senhaSegura123",
-  "returnSecureToken": true
-}
-```
-
-**Response (200 OK):**
-```json
-{
-  "idToken": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "email": "usuario@exemplo.com",
-  "refreshToken": "AMf-vBw...",
-  "expiresIn": "3600",
-  "localId": "abc123xyz",
-  "registered": true
-}
-```
-
-**Erros comuns:**
-
-| Código Firebase          | Descrição                    |
-|--------------------------|------------------------------|
-| EMAIL_NOT_FOUND          | Usuário não existe           |
-| INVALID_PASSWORD         | Senha incorreta              |
-| USER_DISABLED            | Conta desativada             |
-| INVALID_LOGIN_CREDENTIALS| Email ou senha inválidos     |
-
----
-
-### Refresh Token
-
-```
-POST https://securetoken.googleapis.com/v1/token?key=<FIREBASE_API_KEY>
-```
-
-**Request Body (form-urlencoded ou JSON):**
-```json
-{
-  "grant_type": "refresh_token",
-  "refresh_token": "AMf-vBw..."
-}
-```
-
-**Response (200 OK):**
-```json
-{
-  "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "expires_in": "3600",
-  "token_type": "Bearer",
-  "refresh_token": "AMf-vBw...",
-  "id_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "user_id": "abc123xyz",
-  "project_id": "sonnda-project"
-}
-```
-
-**Erros comuns:**
-
-| Código Firebase   | Descrição                     |
-|-------------------|-------------------------------|
-| TOKEN_EXPIRED     | Refresh token expirado        |
-| USER_DISABLED     | Conta desativada              |
-| INVALID_REFRESH_TOKEN | Refresh token inválido    |
-
----
-
-## Validação na API (Server-Side)
-
-### Header de Autenticação
-
-Todas as rotas protegidas exigem:
-
-```
-Authorization: Bearer <idToken>
-```
-
-O `idToken` é o JWT retornado pelo Firebase nos endpoints acima.
-
-### Erros da API
-
-| Código AppError       | HTTP Status | Descrição                          |
-|-----------------------|-------------|------------------------------------|
-| `AUTH_REQUIRED`       | 401         | Header Authorization ausente       |
-| `AUTH_TOKEN_INVALID`  | 401         | Token inválido ou malformado       |
-| `AUTH_TOKEN_EXPIRED`  | 401         | Token expirado                     |
-| `ACCESS_DENIED`       | 403         | Usuário sem permissão para recurso |
-
-**Exemplo de resposta de erro:**
-```json
-{
-  "error": {
-    "code": "AUTH_TOKEN_INVALID",
-    "message": "Token de autenticação inválido"
+  "authenticated": true,
+  "user": {
+    "provider": "firebase",
+    "subject": "uid",
+    "email": "user@example.com"
   }
 }
 ```
 
+**Exemplo (curl):**
+```bash
+curl -i http://localhost:8080/auth/session
+```
+
+**Erros comuns:**
+- `AUTH_REQUIRED` (401) — cookie ausente
+- `AUTH_TOKEN_INVALID` (401) — cookie inválido/expirado
+
 ---
 
-## Fluxo Completo de Autenticação
+### POST /auth/logout
 
-1. **Novo usuário:**
-   - Cliente chama `signUp` → recebe `idToken`
-   - Cliente chama `POST /api/v1/register` com `Authorization: Bearer <idToken>` para completar onboarding
+Revoga a sessão e limpa o cookie.
 
-2. **Usuário existente:**
-   - Cliente chama `signInWithPassword` → recebe `idToken`
-   - Cliente usa `idToken` em todas as requisições protegidas
+- `204 No Content`
 
-3. **Token expirado:**
-   - Cliente chama `token` com `refresh_token` → recebe novo `idToken`
-   - Cliente continua usando a API normalmente
+---
+
+### DELETE /auth/session
+
+Alias de logout (idempotente).
+
+- `204 No Content`
+
+---
+
+### POST /auth/session/refresh
+
+Recria a sessão usando novo `id_token` (mesmo payload do `POST /auth/session`).
+
+## API REST (Bearer)
+
+Todas as rotas em `/api/v1` exigem:
+
+```
+Authorization: Bearer <id_token>
+```
+
+### Onboarding
+
+Endpoint de cadastro:
+
+```
+POST /api/v1/register
+```
+
+## Firebase (client-side)
+
+Base: `https://identitytoolkit.googleapis.com/v1`
+
+### Criar conta
+```
+POST /accounts:signUp?key=<FIREBASE_API_KEY>
+```
+
+### Login
+```
+POST /accounts:signInWithPassword?key=<FIREBASE_API_KEY>
+```
+
+### Refresh token
+```
+POST https://securetoken.googleapis.com/v1/token?key=<FIREBASE_API_KEY>
+```
+
+## Contrato de erro (AppError)
+
+Exemplo:
+```json
+{
+  "error": {
+    "code": "AUTH_TOKEN_INVALID",
+    "message": "token inválido ou expirado"
+  }
+}
+```

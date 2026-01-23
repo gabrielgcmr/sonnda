@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"sonnda-api/internal/adapters/inbound/http/httperr"
+	"sonnda-api/internal/adapters/inbound/http/api/httperr"
 	"sonnda-api/internal/app/apperr"
 	"sonnda-api/internal/domain/model/demographics"
 
@@ -47,4 +47,3 @@ func parsePatientIDParam(c *gin.Context, id string) (uuid.UUID, bool) {
 
 	return parsedID, true
 }
-

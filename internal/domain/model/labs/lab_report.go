@@ -1,3 +1,4 @@
+// internal/domain/model/labs/lab_report.go
 package labs
 
 import (
@@ -8,26 +9,26 @@ import (
 )
 
 type LabReport struct {
-	ID        uuid.UUID
-	PatientID uuid.UUID
+	ID        uuid.UUID `json:"id"`
+	PatientID uuid.UUID `json:"patient_id"`
 
-	PatientName       *string
-	PatientDOB        *time.Time
-	LabName           *string
-	LabPhone          *string
-	InsuranceProvider *string
-	RequestingDoctor  *string
-	TechnicalManager  *string
-	ReportDate        *time.Time
-	Fingerprint       *string
+	PatientName       *string    `json:"patient_name,omitempty"`
+	PatientDOB        *time.Time `json:"patient_dob,omitempty"`
+	LabName           *string    `json:"lab_name,omitempty"`
+	LabPhone          *string    `json:"lab_phone,omitempty"`
+	InsuranceProvider *string    `json:"insurance_provider,omitempty"`
+	RequestingDoctor  *string    `json:"requesting_doctor,omitempty"`
+	TechnicalManager  *string    `json:"technical_manager,omitempty"`
+	ReportDate        *time.Time `json:"report_date,omitempty"`
+	Fingerprint       *string    `json:"fingerprint,omitempty"`
 
-	RawText *string
+	RawText *string `json:"raw_text,omitempty"`
 
-	TestResults []LabResult
+	TestResults []LabResult `json:"test_results"`
 
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
-	UploadedBy uuid.UUID
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
+	UploadedBy uuid.UUID `json:"uploaded_by"`
 }
 
 // NewLabReport creates a report with generated IDs and UTC timestamps.
@@ -89,17 +90,17 @@ func (r *LabReport) Normalize() {
 }
 
 type LabResult struct {
-	ID          uuid.UUID
-	LabReportID uuid.UUID
+	ID          uuid.UUID `json:"id"`
+	LabReportID uuid.UUID `json:"lab_report_id"`
 
-	TestName string
-	Material *string
-	Method   *string
+	TestName string  `json:"test_name"`
+	Material *string `json:"material,omitempty"`
+	Method   *string `json:"method,omitempty"`
 
-	CollectedAt *time.Time
-	ReleaseAt   *time.Time
+	CollectedAt *time.Time `json:"collected_at,omitempty"`
+	ReleaseAt   *time.Time `json:"release_at,omitempty"`
 
-	Items []LabResultItem
+	Items []LabResultItem `json:"items"`
 }
 
 // NewLabResult creates a result with generated ID and required fields.
@@ -140,13 +141,13 @@ func (r *LabResult) Normalize() {
 }
 
 type LabResultItem struct {
-	ID          uuid.UUID
-	LabResultID uuid.UUID
+	ID          uuid.UUID `json:"id"`
+	LabResultID uuid.UUID `json:"lab_result_id"`
 
-	ParameterName string
-	ResultValue   *string
-	ResultUnit    *string
-	ReferenceText *string
+	ParameterName string  `json:"parameter_name"`
+	ResultValue   *string `json:"result_value,omitempty"`
+	ResultUnit    *string `json:"result_unit,omitempty"`
+	ReferenceText *string `json:"reference_text,omitempty"`
 }
 
 // NewLabResultItem creates an item with generated ID and required parameter name.
@@ -185,14 +186,14 @@ func (i *LabResultItem) Normalize() {
 }
 
 type LabResultItemTimeline struct {
-	ReportID      uuid.UUID
-	LabResultID   uuid.UUID
-	ItemID        uuid.UUID
-	ReportDate    *time.Time
-	TestName      string
-	ParameterName string
-	ResultValue   *string
-	ResultUnit    *string
+	ReportID      uuid.UUID `json:"report_id"`
+	LabResultID   uuid.UUID `json:"lab_result_id"`
+	ItemID        uuid.UUID `json:"item_id"`
+	ReportDate    *time.Time `json:"report_date,omitempty"`
+	TestName      string    `json:"test_name"`
+	ParameterName string    `json:"parameter_name"`
+	ResultValue   *string   `json:"result_value,omitempty"`
+	ResultUnit    *string   `json:"result_unit,omitempty"`
 }
 
 func trimToNil(s *string) *string {

@@ -36,9 +36,6 @@ func Recovery(l *slog.Logger) gin.HandlerFunc {
 				if route != "" {
 					attrs = append(attrs, slog.String("route", route))
 				}
-				if u, ok := GetCurrentUser(c); ok && u != nil {
-					attrs = append(attrs, slog.String("user_id", u.ID.String()))
-				}
 
 				// Se o AccessLog já injetou um logger no context, usamos ele; senão usamos o logger recebido.
 				reqLog := applog.FromContext(c.Request.Context())

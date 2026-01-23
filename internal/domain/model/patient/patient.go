@@ -1,3 +1,4 @@
+// internal/domain/model/patient/patient.go
 package patient
 
 import (
@@ -10,19 +11,19 @@ import (
 )
 
 type Patient struct {
-	ID          uuid.UUID
-	OwnerUserID *uuid.UUID
-	CPF         string
-	CNS         *string
-	FullName    string
-	BirthDate   time.Time
-	Gender      demographics.Gender
-	Race        demographics.Race
+	ID          uuid.UUID           `json:"id"`
+	OwnerUserID *uuid.UUID          `json:"owner_user_id,omitempty"`
+	CPF         string              `json:"cpf"`
+	CNS         *string             `json:"cns,omitempty"`
+	FullName    string              `json:"full_name"`
+	BirthDate   time.Time           `json:"birth_date"`
+	Gender      demographics.Gender `json:"gender"`
+	Race        demographics.Race   `json:"race"`
 
-	AvatarURL string
-	Phone     *string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	AvatarURL string     `json:"avatar_url"`
+	Phone     *string    `json:"phone,omitempty"`
+	CreatedAt time.Time  `json:"created_at"`
+	UpdatedAt time.Time  `json:"updated_at"`
 }
 
 type NewPatientParams struct {

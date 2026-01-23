@@ -1,0 +1,27 @@
+// internal/adapters/inbound/http/web/assets/templates/components/patient_list.templ
+package components
+
+type PatientItem struct {
+    ID   string
+    Name string
+}
+
+templ PatientList(patients []PatientItem) {
+    <section>
+        <h2>Pacientes</h2>
+
+        if len(patients) == 0 {
+            <p>Nenhum paciente encontrado.</p>
+        } else {
+            <ul>
+                for _, p := range patients {
+                    <li>
+                        <a href={"/patients/" + p.ID}>
+                            {p.Name}
+                        </a>
+                    </li>
+                }
+            </ul>
+        }
+    </section>
+}

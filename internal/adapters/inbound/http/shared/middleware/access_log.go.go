@@ -4,34 +4,12 @@ package middleware
 import (
 	"log/slog"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 
 	applog "sonnda-api/internal/app/observability"
 )
-
-const requestIDHeader = "X-Request-ID"
-
-// RequestID garante que cada request tenha um request_id e propaga em header.
-func RequestID() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		rid, _ := c.Get("request_id")
-		requestID := strings.TrimSpace(toString(rid))
-		if requestID == "" {
-			requestID = strings.TrimSpace(c.GetHeader(requestIDHeader))
-		}
-		if requestID == "" {
-			requestID = uuid.NewString()
-		}
-
-		c.Writer.Header().Set(requestIDHeader, requestID)
-		c.Set("request_id", requestID)
-		c.Next()
-	}
-}
 
 // AccessLog loga uma linha por request (estilo access log).
 func AccessLog(l *slog.Logger) gin.HandlerFunc {
@@ -73,10 +51,6 @@ func AccessLog(l *slog.Logger) gin.HandlerFunc {
 
 		if userAgent := c.Request.UserAgent(); userAgent != "" {
 			attrs = append(attrs, slog.String("user_agent", userAgent))
-		}
-
-		if u, ok := GetCurrentUser(c); ok && u != nil {
-			attrs = append(attrs, slog.String("user_id", u.ID.String()))
 		}
 
 		// NOVO: respeita o nível decidido pelo erro (se existir)

@@ -6,10 +6,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"sonnda-api/internal/adapters/inbound/http/api/binder"
 	"sonnda-api/internal/adapters/inbound/http/api/handlers"
-	"sonnda-api/internal/adapters/inbound/http/binder"
-	"sonnda-api/internal/adapters/inbound/http/httperr"
-	"sonnda-api/internal/adapters/inbound/http/middleware"
+	"sonnda-api/internal/adapters/inbound/http/api/httperr"
+	"sonnda-api/internal/adapters/inbound/http/api/middleware"
 	"sonnda-api/internal/app/apperr"
 	usersvc "sonnda-api/internal/app/services/user"
 	registrationuc "sonnda-api/internal/app/usecase/registration"
@@ -35,13 +35,13 @@ func NewHandler(
 
 func (h *Handler) Register(c *gin.Context) {
 	if h == nil || h.regUC == nil {
-		httperr.WriteError(c, apperr.Internal("serviÇõo indisponÇðvel", nil))
+		httperr.WriteError(c, apperr.Internal("serviço indisponível", nil))
 		return
 	}
 
 	identity, ok := middleware.GetIdentity(c)
 	if !ok {
-		httperr.WriteError(c, apperr.Unauthorized("autenticaÇõÇœo necessÇ­ria"))
+		httperr.WriteError(c, apperr.Unauthorized("autenticação necessária"))
 		return
 	}
 
@@ -55,7 +55,7 @@ func (h *Handler) Register(c *gin.Context) {
 
 	birthDate, err := handlers.ParseBirthDate(req.BirthDate)
 	if err != nil {
-		httperr.WriteError(c, apperr.Validation("data de nascimento invÇ­lida",
+		httperr.WriteError(c, apperr.Validation("data de nascimento inválida",
 			apperr.Violation{
 				Field:  "birth_date",
 				Reason: "invalid_format",

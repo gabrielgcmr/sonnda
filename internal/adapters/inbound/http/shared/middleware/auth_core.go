@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strings"
 
-	httperr "sonnda-api/internal/adapters/inbound/http/httperr"
+	httperr "sonnda-api/internal/adapters/inbound/http/api/httperr"
 	"sonnda-api/internal/app/apperr"
 	"sonnda-api/internal/domain/model/identity"
 	"sonnda-api/internal/domain/model/user"

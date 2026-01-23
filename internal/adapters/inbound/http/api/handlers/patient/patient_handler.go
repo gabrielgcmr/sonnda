@@ -10,10 +10,10 @@ import (
 	applog "sonnda-api/internal/app/observability"
 	patientsvc "sonnda-api/internal/app/services/patient"
 
+	"sonnda-api/internal/adapters/inbound/http/api/binder"
 	"sonnda-api/internal/adapters/inbound/http/api/handlers"
-	"sonnda-api/internal/adapters/inbound/http/binder"
-	"sonnda-api/internal/adapters/inbound/http/httperr"
-	"sonnda-api/internal/adapters/inbound/http/middleware"
+	"sonnda-api/internal/adapters/inbound/http/api/httperr"
+	"sonnda-api/internal/adapters/inbound/http/api/middleware"
 )
 
 type PatientHandler struct {

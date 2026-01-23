@@ -1,0 +1,16 @@
+// internal/adapters/inbound/http/web/assets/templates/components/header.templ
+package components
+
+type HeaderProps struct {
+    UserName string
+    Role     string
+}
+
+templ Header(p HeaderProps) {
+    <header class="app-header">
+        <div>
+            <strong>{p.UserName}</strong>
+            <span class="role">({p.Role})</span>
+        </div>
+    </header>
+}

@@ -1,3 +1,4 @@
+// internal/domain/model/user/user.go
 package user
 
 import (
@@ -11,17 +12,17 @@ import (
 )
 
 type User struct {
-	ID           uuid.UUID
-	AuthProvider string
-	AuthSubject  string
-	Email        string
-	FullName     string
-	AccountType  AccountType
-	BirthDate    time.Time
-	CPF          string
-	Phone        string
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	ID           uuid.UUID `json:"id"`
+	AuthProvider string    `json:"auth_provider"`
+	AuthSubject  string    `json:"auth_subject"`
+	Email        string    `json:"email"`
+	FullName     string    `json:"full_name"`
+	AccountType  AccountType `json:"account_type"`
+	BirthDate    time.Time `json:"birth_date"`
+	CPF          string    `json:"cpf"`
+	Phone        string    `json:"phone"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
 }
 
 type UpdateUserParams struct {

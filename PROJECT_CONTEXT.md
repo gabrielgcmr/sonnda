@@ -7,4 +7,4 @@
 - Mobile:
   - React Native + Expo
 - Web:
-  - Health workers: React + Tailwind + Vite
+  - Health workers: HTMX + Tailwind
