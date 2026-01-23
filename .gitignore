@@ -1,3 +1,4 @@
+# .gitignore
 # Go build
 bin/
 *.exe
@@ -7,6 +8,10 @@ bin/
 .env
 .env.docker
 postgres-data/
+
+# Local Go build artifacts (do not commit)
+.gocache/
+.gotmp/
 
 # IDEs
 .vscode/

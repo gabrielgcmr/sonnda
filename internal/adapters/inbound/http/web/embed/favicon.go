@@ -1,7 +1,7 @@
-// internal/adapters/inbound/http/favicon.go
-package httpserver
+// internal/adapters/inbound/http/web/embed/favicon.go
+package embed
 
 import _ "embed"
 
-//go:embed web/assets/static/images/favicon.ico
-var faviconBytes []byte
+//go:embed favicon.ico
+var FaviconBytes []byte

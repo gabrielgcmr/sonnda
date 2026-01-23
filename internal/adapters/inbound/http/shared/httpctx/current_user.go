@@ -1,4 +1,4 @@
-package reqctx
+package httpctx
 
 import (
 	"sonnda-api/internal/domain/model/user"
@@ -17,4 +17,12 @@ func GetCurrentUser(c *gin.Context) (*user.User, bool) {
 	}
 	u, ok := v.(*user.User)
 	return u, ok
+}
+
+func MustGetCurrentUser(c *gin.Context) *user.User {
+	u, ok := GetCurrentUser(c)
+	if !ok || u == nil {
+		panic("current user missing in context (middleware not applied?)")
+	}
+	return u
 }

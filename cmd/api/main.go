@@ -18,6 +18,7 @@ import (
 
 	httpserver "sonnda-api/internal/adapters/inbound/http"
 	"sonnda-api/internal/adapters/inbound/http/api/middleware"
+	sharedauth "sonnda-api/internal/adapters/inbound/http/shared/auth"
 	authinfra "sonnda-api/internal/adapters/outbound/integrations/auth"
 	"sonnda-api/internal/adapters/outbound/integrations/documentai"
 	"sonnda-api/internal/adapters/outbound/integrations/storage"
@@ -79,7 +80,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("falha ao criar auth do firebase: %v", err)
 	}
-	authMiddleware := middleware.NewAuthMiddleware(authService)
+	authCore := sharedauth.NewCore(authService)
+	authMiddleware := middleware.NewAuthMiddleware(authCore)
 
 	//7. Inicializa os repositórios
 	modules := bootstrap.NewModules(dbClient, authService, docExtractor, storageService)

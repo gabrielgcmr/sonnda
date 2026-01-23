@@ -3,8 +3,8 @@ package middleware
 
 import (
 	"sonnda-api/internal/adapters/inbound/http/api/httperr"
+	"sonnda-api/internal/adapters/inbound/http/shared/httpctx"
 	"sonnda-api/internal/adapters/inbound/http/shared/registration"
-	"sonnda-api/internal/adapters/inbound/http/shared/reqctx"
 	"sonnda-api/internal/app/apperr"
 
 	"github.com/gin-gonic/gin"
@@ -31,7 +31,7 @@ func NewRegistrationMiddleware(core *registration.Core) *RegistrationMiddleware 
 // 4) Se existir → coloca CurrentUser no contexto
 func (m *RegistrationMiddleware) RequireRegisteredUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		id, ok := reqctx.GetIdentity(c)
+		id, ok := httpctx.GetIdentity(c)
 		if !ok || id == nil {
 			// Situação anômala: auth não rodou antes
 			httperr.WriteError(c, &apperr.AppError{
@@ -56,7 +56,7 @@ func (m *RegistrationMiddleware) RequireRegisteredUser() gin.HandlerFunc {
 			return
 		}
 
-		reqctx.SetCurrentUser(c, u)
+		httpctx.SetCurrentUser(c, u)
 		c.Next()
 	}
 }
@@ -68,7 +68,7 @@ func (m *RegistrationMiddleware) RequireRegisteredUser() gin.HandlerFunc {
 // Útil para endpoints que aceitam usuário anônimo + autenticado
 func (m *RegistrationMiddleware) LoadCurrentUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		id, ok := reqctx.GetIdentity(c)
+		id, ok := httpctx.GetIdentity(c)
 		if !ok || id == nil {
 			c.Next()
 			return
@@ -76,7 +76,7 @@ func (m *RegistrationMiddleware) LoadCurrentUser() gin.HandlerFunc {
 
 		u, _ := m.core.ResolveCurrentUser(c.Request.Context(), id)
 		if u != nil {
-			reqctx.SetCurrentUser(c, u)
+			httpctx.SetCurrentUser(c, u)
 		}
 
 		c.Next()

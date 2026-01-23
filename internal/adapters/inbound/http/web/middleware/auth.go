@@ -4,8 +4,8 @@ package middleware
 import (
 	"net/http"
 
-	sharedauth "sonnda-api/internal/adapters/inbound/http/shared/auth"
-	"sonnda-api/internal/adapters/inbound/http/shared/reqctx"
+	"sonnda-api/internal/adapters/inbound/http/shared/auth"
+	"sonnda-api/internal/adapters/inbound/http/shared/httpctx"
 
 	"github.com/gin-gonic/gin"
 )
@@ -14,10 +14,10 @@ import (
 // - Resolve Identity via shared/auth Core (sem acoplamento ao Gin).
 // - Em caso de erro, faz redirect (comportamento de browser).
 type AuthMiddleware struct {
-	core *sharedauth.Core
+	core *auth.Core
 }
 
-func NewAuthMiddleware(core *sharedauth.Core) *AuthMiddleware {
+func NewAuthMiddleware(core *auth.Core) *AuthMiddleware {
 	return &AuthMiddleware{core: core}
 }
 
@@ -36,7 +36,7 @@ func (m *AuthMiddleware) RequireSession() gin.HandlerFunc {
 			return
 		}
 
-		reqctx.SetIdentity(c, id)
+		httpctx.SetIdentity(c, id)
 		c.Next()
 	}
 }

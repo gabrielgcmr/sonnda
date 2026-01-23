@@ -13,7 +13,7 @@ import (
 	"sonnda-api/internal/adapters/inbound/http/api/binder"
 	"sonnda-api/internal/adapters/inbound/http/api/handlers"
 	"sonnda-api/internal/adapters/inbound/http/api/httperr"
-	"sonnda-api/internal/adapters/inbound/http/api/middleware"
+	"sonnda-api/internal/adapters/inbound/http/shared/httpctx"
 )
 
 type PatientHandler struct {
@@ -29,7 +29,7 @@ func (h *PatientHandler) Create(c *gin.Context) {
 	log := applog.FromContext(ctx)
 	log.Info("patient_create")
 
-	user, ok := middleware.GetCurrentUser(c)
+	user, ok := httpctx.GetCurrentUser(c)
 	if !ok || user == nil {
 		httperr.WriteError(c, &apperr.AppError{
 			Code:    apperr.AUTH_REQUIRED,
@@ -101,15 +101,7 @@ func (h *PatientHandler) Create(c *gin.Context) {
 }
 
 func (h *PatientHandler) GetPatient(c *gin.Context) {
-
-	currentUser, ok := middleware.GetCurrentUser(c)
-	if !ok || currentUser == nil {
-		httperr.WriteError(c, &apperr.AppError{
-			Code:    apperr.AUTH_REQUIRED,
-			Message: "autenticação necessária",
-		})
-		return
-	}
+	currentUser := httpctx.MustGetCurrentUser(c)
 
 	id := c.Param("id")
 	if id == "" {
@@ -140,15 +132,7 @@ func (h *PatientHandler) GetPatient(c *gin.Context) {
 }
 
 func (h *PatientHandler) UpdatePatient(c *gin.Context) {
-
-	currentUser, ok := middleware.GetCurrentUser(c)
-	if !ok || currentUser == nil {
-		httperr.WriteError(c, &apperr.AppError{
-			Code:    apperr.AUTH_REQUIRED,
-			Message: "autenticação necessária",
-		})
-		return
-	}
+	currentUser := httpctx.MustGetCurrentUser(c)
 
 	id := c.Param("id")
 	if id == "" {
@@ -190,23 +174,13 @@ func (h *PatientHandler) UpdatePatient(c *gin.Context) {
 
 func (h *PatientHandler) ListPatients(c *gin.Context) {
 	if h == nil || h.svc == nil {
-		httperr.WriteError(c, &apperr.AppError{
-			Code:    apperr.INTERNAL_ERROR,
-			Message: "serviço indisponível",
-		})
+		httperr.WriteError(c, apperr.Internal("serviço indisponível", nil))
 		return
 	}
 
-	currentUser, ok := middleware.GetCurrentUser(c)
-	if !ok || currentUser == nil {
-		httperr.WriteError(c, &apperr.AppError{
-			Code:    apperr.AUTH_REQUIRED,
-			Message: "autenticação necessária",
-		})
-		return
-	}
+	currentUser := httpctx.MustGetCurrentUser(c)
 
-	list, err := h.svc.List(c.Request.Context(), currentUser, 100, 0)
+	list, err := h.svc.ListMyPatients(c.Request.Context(), currentUser, 100, 0)
 	if err != nil {
 		httperr.WriteError(c, err)
 		return
@@ -216,7 +190,7 @@ func (h *PatientHandler) ListPatients(c *gin.Context) {
 }
 
 func (h *PatientHandler) HardDeletePatient(c *gin.Context) {
-	currentUser := middleware.MustGetCurrentUser(c)
+	currentUser := httpctx.MustGetCurrentUser(c)
 
 	id := c.Param("id")
 	if id == "" {
@@ -227,12 +201,12 @@ func (h *PatientHandler) HardDeletePatient(c *gin.Context) {
 		return
 	}
 
-	parsedID, err := uuid.Parse(id)
-	if err != nil {
+	parsedID, parseErr := uuid.Parse(id)
+	if parseErr != nil {
 		httperr.WriteError(c, &apperr.AppError{
 			Code:    apperr.INVALID_FIELD_FORMAT,
 			Message: "patient_id inválido",
-			Cause:   err,
+			Cause:   parseErr,
 		})
 		return
 	}

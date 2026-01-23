@@ -3,7 +3,7 @@ package middleware
 import (
 	"sonnda-api/internal/adapters/inbound/http/api/httperr"
 	sharedauth "sonnda-api/internal/adapters/inbound/http/shared/auth"
-	"sonnda-api/internal/adapters/inbound/http/shared/reqctx"
+	"sonnda-api/internal/adapters/inbound/http/shared/httpctx"
 
 	"github.com/gin-gonic/gin"
 )
@@ -32,7 +32,7 @@ func (m *AuthMiddleware) RequireBearer() gin.HandlerFunc {
 			return
 		}
 
-		reqctx.SetIdentity(c, id)
+		httpctx.SetIdentity(c, id)
 		c.Next()
 	}
 }

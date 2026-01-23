@@ -3,24 +3,38 @@ package handlers
 
 import (
 	"net/http"
-	"sonnda-api/internal/adapters/inbound/http/middleware"
-	"sonnda-api/internal/adapters/inbound/http/web/pages"
+	"sync/atomic"
+	"sonnda-api/internal/adapters/inbound/http/shared/httpctx"
+	"sonnda-api/internal/adapters/inbound/http/web/assets/templates/pages"
 
 	"github.com/gin-gonic/gin"
 )
 
-func HomeHandler(c *gin.Context) {
+type HomeHandler struct {
+	counter atomic.Int64
+}
+
+func NewHomeHandler() *HomeHandler {
+	return &HomeHandler{}
+}
+
+func (h *HomeHandler) Home(c *gin.Context) {
+	renderHomePage(c)
+}
+
+func (h *HomeHandler) CounterPartial(c *gin.Context) {
+	count := h.counter.Add(1)
+	c.HTML(http.StatusOK, "partials/counter", gin.H{"Count": count})
+}
+
+func renderHomePage(c *gin.Context) {
 	// 1) Procura identity no contexto
-	id, ok := middleware.GetIdentity(c)
-	if !ok || id == nil {
-		c.Redirect(http.StatusFound, "/login")
-		return
-	}
+	currentUser := httpctx.MustGetCurrentUser(c)
 
 	//2)
 	vm := pages.HomeViewModel{
-		UserName: id.FullName,
-		Role:     id.Role.String(),
+		UserName: currentUser.FullName,
+		Role:     string(currentUser.AccountType),
 		Patients: nil, //TODO: buscar pacientes
 	}
 

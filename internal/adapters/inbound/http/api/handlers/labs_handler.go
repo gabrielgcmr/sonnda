@@ -14,7 +14,7 @@ import (
 	labsuc "sonnda-api/internal/app/usecase/labs"
 
 	"sonnda-api/internal/adapters/inbound/http/api/httperr"
-	"sonnda-api/internal/adapters/inbound/http/api/middleware"
+	httpctx "sonnda-api/internal/adapters/inbound/http/shared/httpctx"
 	"sonnda-api/internal/app/apperr"
 	external "sonnda-api/internal/domain/ports/integration"
 )
@@ -81,27 +81,27 @@ func (h *LabsHandler) ListFullLabs(c *gin.Context) {
 // POST /:patientID/labs/upload
 // field: file (PDF/JPEG/PNG)
 func (h *LabsHandler) UploadAndProcessLabs(c *gin.Context) {
-	user := middleware.MustGetCurrentUser(c)
+	currentUser := httpctx.MustGetCurrentUser(c)
 
 	patientID, ok := parsePatientIDParam(c, "id")
 	if !ok {
 		return
 	}
 
-	documentURI, mimeType, err := h.handleFileUpload(c, patientID)
-	if err != nil {
-		httperr.WriteError(c, err)
+	documentURI, mimeType, uploadErr := h.handleFileUpload(c, patientID)
+	if uploadErr != nil {
+		httperr.WriteError(c, uploadErr)
 		return
 	}
 
-	output, err := h.createUC.Execute(c.Request.Context(), labsuc.CreateLabReportFromDocumentInput{
+	output, uploadErr := h.createUC.Execute(c.Request.Context(), labsuc.CreateLabReportFromDocumentInput{
 		PatientID:        patientID,
 		DocumentURI:      documentURI,
 		MimeType:         mimeType,
-		UploadedByUserID: user.ID,
+		UploadedByUserID: currentUser.ID,
 	})
-	if err != nil {
-		httperr.WriteError(c, err)
+	if uploadErr != nil {
+		httperr.WriteError(c, uploadErr)
 		return
 	}
 

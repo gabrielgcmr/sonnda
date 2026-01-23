@@ -11,8 +11,10 @@ import (
 	"sonnda-api/internal/adapters/inbound/http/api/handlers"
 	"sonnda-api/internal/adapters/inbound/http/api/handlers/patient"
 	"sonnda-api/internal/adapters/inbound/http/api/handlers/user"
-	"sonnda-api/internal/adapters/inbound/http/middleware"
+	apimiddleware "sonnda-api/internal/adapters/inbound/http/api/middleware"
+	sharedmiddleware "sonnda-api/internal/adapters/inbound/http/shared/middleware"
 	"sonnda-api/internal/adapters/inbound/http/web"
+	"sonnda-api/internal/adapters/inbound/http/web/embed"
 	"sonnda-api/internal/app/config"
 	"sonnda-api/internal/domain/ports/integration"
 )
@@ -24,8 +26,8 @@ type Infra struct {
 }
 
 type Dependencies struct {
-	AuthMiddleware         *middleware.AuthMiddleware
-	RegistrationMiddleware *middleware.RegistrationMiddleware
+	AuthMiddleware         *apimiddleware.AuthMiddleware
+	RegistrationMiddleware *apimiddleware.RegistrationMiddleware
 	UserHandler            *user.Handler
 	PatientHandler         *patient.PatientHandler
 	LabsHandler            *handlers.LabsHandler
@@ -41,9 +43,9 @@ func NewRouter(infra Infra, deps Dependencies) *gin.Engine {
 
 	// Middlewares globais (infra)
 	r.Use(
-		middleware.RequestID(),
-		middleware.AccessLog(logger),
-		middleware.Recovery(logger),
+		sharedmiddleware.RequestID(),
+		sharedmiddleware.AccessLog(logger),
+		sharedmiddleware.Recovery(logger),
 	)
 
 	// Static assets (css, js, imagens)
@@ -52,11 +54,11 @@ func NewRouter(infra Infra, deps Dependencies) *gin.Engine {
 
 	// Favicon embutido no binário
 	r.GET("/favicon.ico", func(c *gin.Context) {
-		if len(faviconBytes) == 0 {
+		if len(embed.FaviconBytes) == 0 {
 			c.Status(http.StatusNotFound)
 			return
 		}
-		c.Data(http.StatusOK, "image/x-icon", faviconBytes)
+		c.Data(http.StatusOK, "image/x-icon", embed.FaviconBytes)
 	})
 
 	// Templates HTML (HTMX)

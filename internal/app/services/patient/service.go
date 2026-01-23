@@ -16,5 +16,5 @@ type Service interface {
 	Update(ctx context.Context, currentUser *user.User, id uuid.UUID, input UpdateInput) (*patient.Patient, error)
 	SoftDelete(ctx context.Context, currentUser *user.User, id uuid.UUID) error
 	HardDelete(ctx context.Context, currentUser *user.User, id uuid.UUID) error
-	List(ctx context.Context, currentUser *user.User, limit, offset int) ([]*patient.Patient, error)
+	ListMyPatients(ctx context.Context, currentUser *user.User, limit, offset int) ([]*patient.Patient, error)
 }

@@ -9,8 +9,7 @@ import (
 	"sonnda-api/internal/adapters/inbound/http/api/binder"
 	"sonnda-api/internal/adapters/inbound/http/api/handlers"
 	"sonnda-api/internal/adapters/inbound/http/api/httperr"
-	"sonnda-api/internal/adapters/inbound/http/api/middleware"
-	"sonnda-api/internal/adapters/inbound/http/shared/reqctx"
+	"sonnda-api/internal/adapters/inbound/http/shared/httpctx"
 	"sonnda-api/internal/app/apperr"
 	usersvc "sonnda-api/internal/app/services/user"
 	registrationuc "sonnda-api/internal/app/usecase/registration"
@@ -40,7 +39,7 @@ func (h *Handler) Register(c *gin.Context) {
 		return
 	}
 
-	identity, ok := reqctx.GetIdentity(c)
+	identity, ok := httpctx.GetIdentity(c)
 	if !ok {
 		httperr.WriteError(c, apperr.Unauthorized("autenticação necessária"))
 		return
@@ -95,12 +94,12 @@ func (h *Handler) Register(c *gin.Context) {
 }
 
 func (h *Handler) GetUser(c *gin.Context) {
-	currentUser := middleware.MustGetCurrentUser(c)
+	currentUser := httpctx.MustGetCurrentUser(c)
 	c.JSON(http.StatusOK, currentUser)
 }
 
 func (h *Handler) UpdateUser(c *gin.Context) {
-	currentUser := middleware.MustGetCurrentUser(c)
+	currentUser := httpctx.MustGetCurrentUser(c)
 
 	var req UpdateUserRequest
 	if err := binder.BindJSON(c, &req); err != nil {
@@ -132,7 +131,7 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 }
 
 func (h *Handler) HardDeleteUser(c *gin.Context) {
-	currentUser := middleware.MustGetCurrentUser(c)
+	currentUser := httpctx.MustGetCurrentUser(c)
 
 	if err := h.userSvc.Delete(c.Request.Context(), currentUser.ID); err != nil {
 		httperr.WriteError(c, err)
@@ -143,7 +142,7 @@ func (h *Handler) HardDeleteUser(c *gin.Context) {
 }
 
 func (h *Handler) ListMyPatients(c *gin.Context) {
-	currentUser := middleware.MustGetCurrentUser(c)
+	currentUser := httpctx.MustGetCurrentUser(c)
 
 	// Parse query params
 	limit := 20

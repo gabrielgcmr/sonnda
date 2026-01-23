@@ -8,7 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	httperr "sonnda-api/internal/adapters/inbound/http/httperr"
+	"sonnda-api/internal/adapters/inbound/http/api/httperr"
 	"sonnda-api/internal/app/apperr"
 	"sonnda-api/internal/app/observability"
 	"sonnda-api/internal/domain/ports/integration"

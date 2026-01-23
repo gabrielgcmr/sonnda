@@ -126,7 +126,7 @@ func (s *service) HardDelete(ctx context.Context, currentUser *user.User, id uui
 	return nil
 }
 
-func (s *service) List(ctx context.Context, currentUser *user.User, limit, offset int) ([]*patient.Patient, error) {
+func (s *service) ListMyPatients(ctx context.Context, currentUser *user.User, limit, offset int) ([]*patient.Patient, error) {
 	if err := s.auth.Require(ctx, currentUser, rbac.ActionListPatients, nil); err != nil {
 		return nil, err
 	}

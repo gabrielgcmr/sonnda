@@ -4,6 +4,7 @@ package bootstrap
 import (
 	"sonnda-api/internal/adapters/inbound/http/api/handlers/user"
 	"sonnda-api/internal/adapters/inbound/http/api/middleware"
+	sharedregistration "sonnda-api/internal/adapters/inbound/http/shared/registration"
 	professionalsvc "sonnda-api/internal/app/services/professional"
 	usersvc "sonnda-api/internal/app/services/user"
 	registrationuc "sonnda-api/internal/app/usecase/registration"
@@ -21,7 +22,6 @@ type UserModule struct {
 func NewUserModule(db *db.Client, identityService integration.IdentityService) *UserModule {
 	userRepo := repo.New(db)
 	profRepo := repo.NewProfessionalRepository(db)
-	patientRepo := repo.NewPatientRepository(db)
 	patientAccessRepo := repo.NewPatientAccessRepository(db)
 
 	userSvc := usersvc.New(userRepo, patientAccessRepo)
@@ -29,7 +29,8 @@ func NewUserModule(db *db.Client, identityService integration.IdentityService) *
 	regUC := registrationuc.New(userRepo, userSvc, profSvc, identityService)
 
 	handler := user.NewHandler(regUC, userSvc)
-	regMiddleware := middleware.NewRegistrationMiddleware(userRepo, patientRepo)
+	regCore := sharedregistration.NewCore(userRepo)
+	regMiddleware := middleware.NewRegistrationMiddleware(regCore)
 
 	return &UserModule{
 		Handler:                handler,
