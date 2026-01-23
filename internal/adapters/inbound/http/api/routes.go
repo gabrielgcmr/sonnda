@@ -12,8 +12,8 @@ import (
 
 func SetupRoutes(
 	r *gin.Engine,
-	authMiddleware *middleware.AuthMiddleware,
-	registrationMiddleware *middleware.RegistrationMiddleware,
+	apiAuth *middleware.AuthMiddleware,
+	apiRegistration *middleware.RegistrationMiddleware,
 	userHandler *user.Handler,
 	patientHandler *patient.PatientHandler,
 	labsHandler *handlers.LabsHandler,
@@ -36,13 +36,11 @@ func SetupRoutes(
 	// Aqui o cara provou que é dono do e-mail, mas talvez não tenha cadastro no banco.
 	// ---------------------------------------------------------------------
 
-	authenticated := api.Group("")
-	authenticated.Use(authMiddleware.Authenticate())
+	auth := api.Group("")
+	auth.Use(apiAuth.RequireBearer())
 	{
 		// Rota de Cadastro (Onboarding)
-		authenticated.POST("/register",
-			userHandler.Register,
-		)
+		auth.POST("/register", userHandler.Register)
 	}
 
 	// ---------------------------------------------------------------------
@@ -50,11 +48,13 @@ func SetupRoutes(
 	// Aqui é a área logada do app (Pacientes, Prontuários).
 	// ---------------------------------------------------------------------
 
-	protected := api.Group("")
-	protected.Use(authMiddleware.Authenticate(), registrationMiddleware.RequireRegisteredUser())
+	registered := api.Group("")
+	registered.Use(
+		apiAuth.RequireBearer(),
+		apiRegistration.RequireRegisteredUser())
 	{
 		//Perfil de usuário
-		me := protected.Group("/me")
+		me := registered.Group("/me")
 		{
 			me.GET("", userHandler.GetUser)
 			me.PUT("", userHandler.UpdateUser)
@@ -63,7 +63,7 @@ func SetupRoutes(
 		}
 
 		//Pacientes
-		patients := protected.Group("/patients")
+		patients := registered.Group("/patients")
 		{
 			//Cria paciente
 			patients.POST("", patientHandler.Create)
@@ -78,7 +78,6 @@ func SetupRoutes(
 			{
 				labs.GET("", labsHandler.ListLabs)
 				labs.POST("/upload", labsHandler.UploadAndProcessLabs)
-
 				labs.GET("/full", labsHandler.ListFullLabs)
 			}
 
