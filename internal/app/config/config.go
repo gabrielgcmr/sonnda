@@ -1,4 +1,4 @@
-// internal/config/config.go
+// internal/app/config/config.go
 package config
 
 import (
@@ -26,6 +26,9 @@ type Config struct {
 	FirebaseMessagingSenderID string
 	FirebaseAppID             string
 
+	AppHost string
+	APIHost string
+
 	Port string // porta HTTP (ex.: "8080")
 	Env  string // ex.: "dev", "prod"
 
@@ -52,6 +55,8 @@ func Load() (*Config, error) {
 		FirebaseStorageBucket:     gcsBucket,
 		FirebaseMessagingSenderID: projectNumber,
 		FirebaseAppID:             os.Getenv("FIREBASE_APP_ID"),
+		AppHost:                   normalizeHost(os.Getenv("APP_HOST")),
+		APIHost:                   normalizeHost(os.Getenv("API_HOST")),
 		Port:                      getEnvOrDefault("PORT", "8080"),
 		Env:                       getEnvOrDefault("APP_ENV", "dev"),
 		LogLevel:                  getEnvOrDefault("LOG_LEVEL", "info"),
@@ -92,6 +97,14 @@ func getEnvOrDefault(key, def string) string {
 		return v
 	}
 	return def
+}
+
+func normalizeHost(host string) string {
+	host = strings.TrimSpace(strings.ToLower(host))
+	if host == "" {
+		return ""
+	}
+	return strings.Split(host, ":")[0]
 }
 
 func SupabaseConfig(cfg Config) db.Config {

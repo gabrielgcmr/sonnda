@@ -3,7 +3,7 @@ package bootstrap
 
 import (
 	"sonnda-api/internal/adapters/inbound/http/api/handlers/user"
-	"sonnda-api/internal/adapters/inbound/http/middleware"
+	"sonnda-api/internal/adapters/inbound/http/api/middleware"
 	professionalsvc "sonnda-api/internal/app/services/professional"
 	usersvc "sonnda-api/internal/app/services/user"
 	registrationuc "sonnda-api/internal/app/usecase/registration"

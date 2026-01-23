@@ -15,8 +15,7 @@ import (
 )
 
 const (
-	identityKey       = "identity"
-	IdentityKey       = identityKey
+	IdentityKey       = "identity"
 	sessionCookieName = "__session"
 )
 
@@ -26,15 +25,15 @@ var (
 	errSessionCookieMissing       = errors.New("session cookie missing")
 )
 
-type AuthMiddleware struct {
+type AuthCore struct {
 	identityService external.IdentityService
 }
 
-func NewAuthMiddleware(identityService external.IdentityService) *AuthMiddleware {
-	return &AuthMiddleware{identityService: identityService}
+func NewAuthCore(identityService external.IdentityService) *AuthCore {
+	return &AuthCore{identityService: identityService}
 }
 
-func (m *AuthMiddleware) Authenticate() gin.HandlerFunc {
+func (m *AuthCore) Authenticate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		// Try to authenticate using a Firebase session cookie first (web UI flow).
 		if cookie, err := extractSessionCookieFromCookie(ctx); err == nil {
@@ -44,7 +43,7 @@ func (m *AuthMiddleware) Authenticate() gin.HandlerFunc {
 				return
 			}
 
-			ctx.Set(identityKey, id)
+			ctx.Set(IdentityKey, id)
 			ctx.Next()
 			return
 		}
@@ -67,7 +66,7 @@ func (m *AuthMiddleware) Authenticate() gin.HandlerFunc {
 			return
 		}
 
-		ctx.Set(identityKey, id)
+		ctx.Set(IdentityKey, id)
 		ctx.Next()
 	}
 }
@@ -91,7 +90,7 @@ func extractBearerToken(ctx *gin.Context) (string, error) {
 	return strings.TrimPrefix(authHeader, "Bearer "), nil
 }
 
-func (m *AuthMiddleware) abortUnauthorized(ctx *gin.Context, code apperr.ErrorCode, msg string, cause error) {
+func (m *AuthCore) abortUnauthorized(ctx *gin.Context, code apperr.ErrorCode, msg string, cause error) {
 	httperr.WriteError(ctx, &apperr.AppError{
 		Code:    code,
 		Message: msg,
@@ -101,7 +100,7 @@ func (m *AuthMiddleware) abortUnauthorized(ctx *gin.Context, code apperr.ErrorCo
 }
 
 func GetIdentity(c *gin.Context) (*identity.Identity, bool) {
-	val, ok := c.Get(identityKey)
+	val, ok := c.Get(IdentityKey)
 	if !ok {
 		return nil, false
 	}

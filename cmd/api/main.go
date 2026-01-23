@@ -1,10 +1,12 @@
-// File: cmd/api/main.go
+// cmd/api/main.go
 package main
 
 import (
 	"context"
+	"errors"
 	"log"
 	"log/slog"
+	"net/http"
 	"os"
 
 	"github.com/gin-gonic/gin"
@@ -15,7 +17,7 @@ import (
 	"sonnda-api/internal/app/observability"
 
 	httpserver "sonnda-api/internal/adapters/inbound/http"
-	"sonnda-api/internal/adapters/inbound/http/middleware"
+	"sonnda-api/internal/adapters/inbound/http/api/middleware"
 	authinfra "sonnda-api/internal/adapters/outbound/integrations/auth"
 	"sonnda-api/internal/adapters/outbound/integrations/documentai"
 	"sonnda-api/internal/adapters/outbound/integrations/storage"
@@ -85,7 +87,7 @@ func main() {
 
 	// 8. Configura o Gin
 	gin.SetMode(gin.ReleaseMode)
-	r := httpserver.NewRouter(
+	handler := httpserver.NewRouter(
 		httpserver.Infra{
 			Logger:          appLogger,
 			IdentityService: authService,
@@ -107,7 +109,11 @@ func main() {
 		slog.String("Api url", "http://localhost:"+cfg.Port+"/api/v1"),
 		slog.String("App url", "http://localhost:"+cfg.Port+"/"),
 	)
-	if err := r.Run(":" + cfg.Port); err != nil {
+	server := &http.Server{
+		Addr:    ":" + cfg.Port,
+		Handler: handler,
+	}
+	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		// 1. Loga o erro com nivel Error (estruturado)
 		slog.Error("failed to start server", "error", err)
 
