@@ -10,6 +10,7 @@ import (
 	"sonnda-api/internal/adapters/inbound/http/api/handlers"
 	"sonnda-api/internal/adapters/inbound/http/api/httperr"
 	"sonnda-api/internal/adapters/inbound/http/api/middleware"
+	"sonnda-api/internal/adapters/inbound/http/shared/reqctx"
 	"sonnda-api/internal/app/apperr"
 	usersvc "sonnda-api/internal/app/services/user"
 	registrationuc "sonnda-api/internal/app/usecase/registration"
@@ -39,7 +40,7 @@ func (h *Handler) Register(c *gin.Context) {
 		return
 	}
 
-	identity, ok := middleware.GetIdentity(c)
+	identity, ok := reqctx.GetIdentity(c)
 	if !ok {
 		httperr.WriteError(c, apperr.Unauthorized("autenticação necessária"))
 		return
