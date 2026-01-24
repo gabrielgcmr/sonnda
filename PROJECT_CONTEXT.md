@@ -1,3 +1,4 @@
+<!-- PROJECT_CONTEXT.md -->
 # Project Context
 
 ## Stack
@@ -7,4 +8,4 @@
 - Mobile:
   - React Native + Expo
 - Web:
-  - Health workers: HTMX + Tailwind
+  - Health workers: templ + Tailwind + HTMX (templates em `internal/adapters/inbound/http/web/assets/templates/`)

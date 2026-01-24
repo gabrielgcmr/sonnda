@@ -16,32 +16,39 @@ type HeaderProps struct {
 }
 
 templ Header(p HeaderProps) {
-	<header class="app-header">
-		<div class="app-header__left">
-			<a class="app-brand" href="/">
-				<span class="app-brand__name">{p.AppName}</span>
-			</a>
-
-			if p.Breadcrumb != "" {
-				<span class="app-breadcrumb" aria-label="Você está em">{p.Breadcrumb}</span>
-			}
-		</div>
-
-		<div class="app-header__right">
-			if p.ShowNewPatient {
-				<a class="btn btn--primary" href={p.NewPatientHref}>
-					+ Novo paciente
+	<header class="border-b border-outlineVariant bg-surface">
+		<div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
+			<div class="flex min-w-0 items-center gap-4">
+				<a class="flex items-center gap-2 font-semibold tracking-tight text-onSurface hover:text-primary" href="/">
+					<span class="inline-flex size-8 items-center justify-center rounded-lg bg-primary text-onPrimary">S</span>
+					<span class="text-base sm:text-lg">{p.AppName}</span>
 				</a>
-			}
 
-			<div class="app-user">
-				<div class="app-user__meta">
-					<span class="app-user__name">{p.UserName}</span>
-					<span class="app-user__role">{p.Role}</span>
+				if p.Breadcrumb != "" {
+					<div class="hidden min-w-0 items-center gap-2 text-sm text-onSurfaceVariant sm:flex" aria-label="Você está em">
+						<span class="text-outlineVariant">/</span>
+						<span class="truncate">{p.Breadcrumb}</span>
+					</div>
+				}
+			</div>
+
+			<div class="flex items-center gap-3">
+				if p.ShowNewPatient {
+					<a class="inline-flex items-center rounded-md bg-primary px-3 py-2 text-sm font-medium text-onPrimary hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background" href={p.NewPatientHref}>
+						+ Novo paciente
+					</a>
+				}
+
+				<div class="flex items-center gap-3 rounded-lg border border-outlineVariant bg-surfaceContainerLow px-3 py-2">
+					<div class="text-right leading-tight">
+						<div class="max-w-[16rem] truncate text-sm font-medium text-onSurface">{p.UserName}</div>
+						<div class="text-xs text-onSurfaceVariant">{p.Role}</div>
+					</div>
+
+					<a class="inline-flex items-center rounded-md border border-outlineVariant bg-surface px-2.5 py-1.5 text-sm text-onSurface hover:bg-surfaceContainerLow focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background" href="/logout">
+						Sair
+					</a>
 				</div>
-
-				<!-- depois você troca isso por menu dropdown -->
-				<a class="btn btn--ghost" href="/logout">Sair</a>
 			</div>
 		</div>
 	</header>

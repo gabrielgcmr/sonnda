@@ -3,8 +3,9 @@
 module.exports = {
   darkMode: "class",
   content: [
-    "./internal/adapters/inbound/http/web/assets/templates/**/*.{html,tmpl,gohtml}",
+    "./internal/adapters/inbound/http/web/assets/templates/**/*.{templ,html,tmpl,gohtml}",
     "./internal/adapters/inbound/http/web/handlers/**/*.go",
+    "./internal/adapters/inbound/http/web/assets/static/js/**/*.js",
   ],
   theme: {
     extend: {

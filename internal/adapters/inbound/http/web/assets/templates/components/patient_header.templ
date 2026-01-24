@@ -1,0 +1,25 @@
+// internal/adapters/inbound/http/web/assets/templates/components/patient_header.templ
+package components
+
+type PatientHeaderProps struct {
+	PatientID   string
+	PatientName string
+	Subtitle    string // ex: "49 anos • F • CPF: ***.***.***-**"
+}
+
+templ PatientHeader(p PatientHeaderProps) {
+	<section class="patient-header">
+		<div class="patient-header__main">
+			<h1 class="patient-header__title">{p.PatientName}</h1>
+			if p.Subtitle != "" {
+				<p class="patient-header__subtitle">{p.Subtitle}</p>
+			}
+		</div>
+
+		<div class="patient-header__actions">
+			<!-- ações rápidas (depois você personaliza) -->
+			<a class="btn btn--secondary" href={"/patients/" + p.PatientID + "/exams/new"}>+ Exame</a>
+			<a class="btn btn--secondary" href={"/patients/" + p.PatientID + "/meds/new"}>+ Medicação</a>
+		</div>
+	</section>
+}

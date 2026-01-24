@@ -1,0 +1,23 @@
+// internal/adapters/inbound/http/web/assets/templates/components/patient_nav.templ
+package components
+
+type PatientNavProps struct {
+	PatientID string
+	Active    string // "summary" | "exams" | "meds" | "visits"
+}
+
+templ PatientNav(p PatientNavProps) {
+	<nav class="patient-nav" aria-label="Seções do paciente">
+		<a class={ "patient-nav__item " + active(p.Active, "summary") } href={"/patients/" + p.PatientID}>Visão geral</a>
+		<a class={ "patient-nav__item " + active(p.Active, "exams") } href={"/patients/" + p.PatientID + "/exams"}>Exames</a>
+		<a class={ "patient-nav__item " + active(p.Active, "meds") } href={"/patients/" + p.PatientID + "/meds"}>Medicações</a>
+		<a class={ "patient-nav__item " + active(p.Active, "visits") } href={"/patients/" + p.PatientID + "/visits"}>Consultas</a>
+	</nav>
+}
+
+func active(current, value string) string {
+	if current == value {
+		return "is-active"
+	}
+	return ""
+}

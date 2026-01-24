@@ -1,3 +1,4 @@
+<!-- docs/dev/setup.md -->
 # Setup local (dev)
 
 Guia rapido para subir a API localmente.
@@ -7,6 +8,7 @@ Guia rapido para subir a API localmente.
 - Docker + Docker Compose (opcional, para rodar via container).
 - Air (hot reload): https://github.com/air-verse/air
 - sqlc (opcional, para gerar queries): https://sqlc.dev
+- templ (templates do WEB): `go install github.com/a-h/templ/cmd/templ@v0.3.977`
 
 ## 1) Variaveis de ambiente
 Copie o arquivo `.env.example` para `.env` e ajuste os valores:
@@ -38,11 +40,19 @@ Com hot reload (requer `air`):
 make dev
 ```
 
-Com hot reload + Tailwind (HTMX):
+Com hot reload + Tailwind + templ (WEB):
 
 ```bash
 make dev-web
 ```
+
+Observacoes (WEB):
+- Tailwind usa `tools/tailwindcss.exe` e gera `internal/adapters/inbound/http/web/assets/static/css/app.css` a partir de `internal/adapters/inbound/http/web/assets/static/css/input.css`.
+- `templ` usa os arquivos `.templ` em `internal/adapters/inbound/http/web/assets/templates/` e gera `*_templ.go` (arquivos gerados, nao editar).
+
+Alternativas (mais controle):
+- **Simple**: `templ generate` (uma vez) + `make dev`
+- **Correto (watchers)**: `templ generate --watch` em um terminal e `make tailwind-watch` em outro, junto com `make dev`.
 
 ## 3) Rodar via Docker
 

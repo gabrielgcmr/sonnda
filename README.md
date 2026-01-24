@@ -1,3 +1,4 @@
+<!-- README.md -->
 # Sonnda API
 
 API backend da plataforma Sonnda, voltada para atencao primaria a saude e para organizacao do historico clinico centrado no paciente.
@@ -63,6 +64,7 @@ O desenho de autorizacao (RBAC por acoes + ReBAC por relacionamento) fica docume
 - **Autenticacao:** Firebase Auth (idToken)
 - **Containerizacao:** Docker / docker-compose
 - **Arquitetura:** camadas simples (domain/app/adapters)
+- **Web (UI interna):** `templ` + Tailwind CSS + HTMX (arquivos em `internal/adapters/inbound/http/web`)
 
 ---
 
@@ -122,7 +124,6 @@ Resumo da estrutura:
 |-- cmd/
 |   `-- api/
 |       `-- main.go                 # Ponto de entrada da API
-|-- assets/                         # Assets embedados (ex.: favicon)
 |-- internal/
 |   |-- app/
 |   |   |-- apperr/                 # Contrato de erros da aplicacao
@@ -134,7 +135,12 @@ Resumo da estrutura:
 |   |   |-- model/                  # Modelos e regras de negocio
 |   |   `-- ports/                  # Interfaces do dominio (integration, repository)
 |   `-- adapters/
-|       |-- inbound/http/           # API HTTP (handlers, rotas, middlewares, presenter de erro)
+|       |-- inbound/http/           # Server HTTP (router + API + WEB)
+|       |   |-- api/                # API JSON (handlers, routes, middleware)
+|       |   `-- web/                # Web UI (templ + Tailwind + JS)
+|       |       |-- assets/static/  # CSS/JS/imagens servidos via /static
+|       |       |-- assets/templates/ # Templates .templ (source of truth)
+|       |       `-- embed/          # Assets embutidos (ex.: favicon)
 |       `-- outbound/               # Integrations e persistence
 |           |-- integrations/       # auth, documentai, storage
 |           `-- persistence/        # db, repository, sqlc
@@ -143,3 +149,9 @@ Resumo da estrutura:
 |-- Makefile
 `-- README.md
 ```
+
+### Tailwind e templ (WEB)
+
+- **Tailwind**: entrada em `internal/adapters/inbound/http/web/assets/static/css/input.css`, saida em `internal/adapters/inbound/http/web/assets/static/css/app.css` (veja `Makefile`).
+- **templ**: templates em `internal/adapters/inbound/http/web/assets/templates/**/*.templ` e arquivos gerados `*_templ.go` (nao edite os `*_templ.go`).
+- **Workflow rapido (Windows)**: `make dev-web` (Air + Tailwind watch + templ watch).

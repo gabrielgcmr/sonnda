@@ -6,10 +6,11 @@ templ App(title string) {
     <html lang="pt-BR">
     <head>
         <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>{title}</title>
-        <link rel="stylesheet" href="/internal/adapters/inbound/http/web/assets/static/css/app.css" />
+        <link rel="stylesheet" href="/static/css/app.css" />
     </head>
-    <body>
+    <body class="min-h-dvh bg-background text-onBackground antialiased">
         { children... }
     </body>
     </html>

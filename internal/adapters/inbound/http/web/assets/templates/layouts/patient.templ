@@ -1,0 +1,46 @@
+// internal/adapters/inbound/http/web/assets/templates/layouts/patient.templ
+package layouts
+
+import "sonnda-api/internal/adapters/inbound/http/web/assets/templates/components"
+
+type PatientLayoutProps struct {
+	Title string
+
+	UserName string
+	Role     string
+
+	PatientID   string
+	PatientName string
+	PatientMeta string // "49 anos • F • CPF: ***"
+
+	ActiveSection string
+}
+
+templ PatientWorkspace(p PatientLayoutProps) {
+	@App(p.Title) {
+		@components.Header(components.HeaderProps{
+			AppName:        "Sonnda",
+			UserName:       p.UserName,
+			Role:           p.Role,
+			Breadcrumb:     "Dashboard / Paciente",
+			ShowNewPatient: false,
+		})
+
+		<main class="app-main app-main--patient">
+			@components.PatientHeader(components.PatientHeaderProps{
+				PatientID:   p.PatientID,
+				PatientName: p.PatientName,
+				Subtitle:    p.PatientMeta,
+			})
+
+			@components.PatientNav(components.PatientNavProps{
+				PatientID: p.PatientID,
+				Active:    p.ActiveSection,
+			})
+
+			<section class="patient-content">
+				{ children... }
+			</section>
+		</main>
+	}
+}

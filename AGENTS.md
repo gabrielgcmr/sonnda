@@ -1,3 +1,4 @@
+<!-- AGENTS.md -->
 # AGENTS.md
 
 Simple instructions for coding agents working on this repo.
@@ -14,6 +15,20 @@ Simple instructions for coding agents working on this repo.
    - Example: // internal/app/services/patient/service.go. 
    - Skip only when the format does not support comments or the file is auto-generated.
 
+## Tailwind CSS (WEB) - v4 best practices (MANDATORY)
+- Use Tailwind CSS **v4 utilities-first** in `.templ` templates; only add custom CSS when Tailwind cannot express it cleanly.
+- **Do not edit generated CSS**: `internal/adapters/inbound/http/web/assets/static/css/app.css` is generated.
+- Edit Tailwind source files instead:
+  - `internal/adapters/inbound/http/web/assets/static/css/input.css` (Tailwind entrypoint, `@import "tailwindcss";`, `@theme` tokens)
+  - `internal/adapters/inbound/http/web/assets/static/css/theme.css` (design tokens / color system)
+- Prefer composing UI via reusable `templ` components over writing large custom CSS blocks.
+- Avoid `@apply` except for small, reusable abstractions that reduce repeated class strings.
+- Keep naming consistent and semantic: use the token system (e.g. colors from `@theme`) instead of hardcoded hex/rgb in templates.
+- Build/watch commands:
+  - `make tailwind` (build)
+  - `make tailwind-watch` (watch)
+  - `make dev-web` (Air + Tailwind watch + templ watch)
+
 ---
 
 ## Error Handling (MANDATORY)
@@ -28,9 +43,9 @@ This project uses a **centralized error contract** based on `AppError`.
 ### AppError
 - Application-level errors must be represented as `*apperr.AppError`.
 - `AppError` contains:
-  - `Code` (`ErrorCode`) — stable, machine-readable contract
-  - `Message` — safe, human-readable message
-  - `Cause` — optional internal error (wrapped with `%w`)
+  - `Code` (`ErrorCode`) - stable, machine-readable contract
+  - `Message` - safe, human-readable message
+  - `Cause` - optional internal error (wrapped with `%w`)
 - Services/use cases **must return `AppError` for known failures** (validation, conflicts, not found, infra errors).
 - Domain **never** imports HTTP, Gin, or `apperr`.
 - Handlers and middlewares **must call**: httperrors.WriteError(c,err)
