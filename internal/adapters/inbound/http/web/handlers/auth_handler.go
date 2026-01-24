@@ -4,7 +4,7 @@ package handlers
 import (
 	"net/http"
 
-	"sonnda-api/internal/adapters/inbound/http/web/assets/templates/pages/auth"
+	"sonnda-api/internal/adapters/inbound/http/web/templates/pages/auth"
 	"sonnda-api/internal/app/config"
 
 	"github.com/gin-gonic/gin"

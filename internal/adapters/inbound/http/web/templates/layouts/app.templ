@@ -1,0 +1,17 @@
+// internal/adapters/inbound/http/web/assets/templates/layouts/app.templ
+package layouts
+
+templ App(title string) {
+	<!DOCTYPE html>
+	<html lang="pt-BR">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1"/>
+			<title>{ title }</title>
+			<link rel="stylesheet" href="/assets/css/app.css"/>
+		</head>
+		<body class="min-h-dvh bg-background text-on-background antialiased">
+			{ children... }
+		</body>
+	</html>
+}

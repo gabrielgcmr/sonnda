@@ -1,24 +1,29 @@
 # Makefile
-.PHONY: run build dev dev-web tailwind tailwind-watch sqlc-check sqlc-generate docker-up docker-up-build docker-logs docker-down docker-restart clean db-migrate test help
+.PHONY: run build dev dev-web tailwind tailwind-watch sqlc-check sqlc docker-up docker-up-build docker-logs docker-down docker-restart clean db-migrate test help
 
-APP_NAME := sonnda-api
-MAIN     := ./cmd/api
+APP_NAME := sonnda-
+MAIN     := ./cmd/server
 TAILWIND_BIN   := tools/tailwindcss.exe
-TAILWIND_INPUT := internal/adapters/inbound/http/web/assets/static/css/input.css
-TAILWIND_OUTPUT := internal/adapters/inbound/http/web/assets/static/css/app.css
+TAILWIND_INPUT := internal/adapters/inbound/http/web/styles/css/input.css
+TAILWIND_OUTPUT := internal/adapters/inbound/http/web/public/css/app.css
 
 # Executar localmente
 run:
 	go run $(MAIN)
 
-# Build da aplicação
+# Build da aplicação (prod)
 build:
 	templ generate
-	go build -o bin/api $(MAIN)
+	$(TAILWIND_BIN) -c tailwind.config.js -i $(TAILWIND_INPUT) -o $(TAILWIND_OUTPUT)
+	go build -o bin/sonnda $(MAIN)
 
 # Executar com hot reload (air)
 dev:
 	air -c .air.toml
+
+# Templ
+templ:
+	templ generate --watch
 
 # Tailwind CSS
 tailwind:
@@ -26,10 +31,6 @@ tailwind:
 
 tailwind-watch:
 	$(TAILWIND_BIN) -c tailwind.config.js -i $(TAILWIND_INPUT) -o $(TAILWIND_OUTPUT) --watch
-
-# Templ
-templ:
-	templ generate --watch
 
 # Hot reload + Tailwind watch (Windows)
 dev-web:
@@ -57,9 +58,9 @@ docker-down:
 
 docker-restart: docker-down docker-up-build
 
-# Limpeza
+# Limpeza (Windows-friendly)
 clean:
-	rm -rf bin/
+	powershell -NoProfile -Command "if (Test-Path bin) { Remove-Item -Recurse -Force bin }"
 	docker system prune -f
 
 # Testes
@@ -71,16 +72,16 @@ help:
 	@echo "Comandos disponíveis:"
 	@echo "  run            - Executar aplicação local"
 	@echo "  dev            - Executar com hot reload (air)"
-	@echo "  dev-web        - Hot reload + Tailwind watch"
+	@echo "  dev-web        - Hot reload + Tailwind watch + templ watch"
 	@echo "  tailwind       - Build do CSS Tailwind"
 	@echo "  tailwind-watch - Watch do CSS Tailwind"
-	@echo "  build          - Build da aplicação"
+	@echo "  templ          - Watch do templ"
+	@echo "  build          - Build (templ + tailwind + go)"
 	@echo "  sqlc-check     - Validar queries SQLC"
-	@echo "  sqlc-generate  - Gerar código SQLC"
+	@echo "  sqlc           - Gerar código SQLC"
 	@echo "  docker-up      - Subir containers (background)"
 	@echo "  docker-up-build- Subir containers com rebuild"
 	@echo "  docker-logs    - Ver logs do container"
 	@echo "  docker-down    - Parar containers"
 	@echo "  docker-restart - Reiniciar containers (rebuild)"
-	@echo "  db-migrate     - Rodar migrations"
 	@echo "  test           - Executar testes"

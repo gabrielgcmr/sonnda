@@ -4,7 +4,7 @@ package handlers
 import (
 	"net/http"
 	"sonnda-api/internal/adapters/inbound/http/shared/httpctx"
-	"sonnda-api/internal/adapters/inbound/http/web/assets/templates/pages"
+	"sonnda-api/internal/adapters/inbound/http/web/templates/pages"
 	"sync/atomic"
 
 	"github.com/gin-gonic/gin"

@@ -2,16 +2,15 @@
 package httpserver
 
 import (
+	"io/fs"
 	"log/slog"
 	"net/http"
-	"path/filepath"
 
 	"github.com/gin-gonic/gin"
 
 	"sonnda-api/internal/adapters/inbound/http/api"
 	sharedmw "sonnda-api/internal/adapters/inbound/http/shared/middleware"
 	"sonnda-api/internal/adapters/inbound/http/web"
-	"sonnda-api/internal/adapters/inbound/http/web/embed"
 	"sonnda-api/internal/app/config"
 )
 
@@ -40,19 +39,21 @@ func NewRouter(infra Infra, deps Deps) *gin.Engine {
 		sharedmw.Recovery(logger),
 	)
 
-	// Static assets (css, js, imagens)
-	// Use relative path that works from project root (where air runs from)
-	r.Static("/static", filepath.Join(
-		"internal", "adapters", "inbound", "http", "web", "assets", "static",
-	))
+	// 1. Criando um sub-sistema de arquivos para a pasta 'public'
+	// Isso remove a necessidade de ter a pasta física no servidor de produção
+	publicFiles, err := fs.Sub(web.PublicFS, "public")
+	if err != nil {
+		panic("Falha ao carregar assets embutidos: " + err.Error())
+	}
 
-	// Favicon embutido no binário
+	// 2. Servindo os arquivos estáticos via rota /assets
+	// Agora ele lê do binário, não do disco
+	r.StaticFS("/assets", http.FS(publicFiles))
+
+	// 3. Favicon Simplificado
+	// Como o favicon está dentro de public/, você pode apenas redirecionar ou servir direto
 	r.GET("/favicon.ico", func(c *gin.Context) {
-		if len(embed.FaviconBytes) == 0 {
-			c.Status(http.StatusNotFound)
-			return
-		}
-		c.Data(http.StatusOK, "image/x-icon", embed.FaviconBytes)
+		c.FileFromFS("favicon.ico", http.FS(publicFiles))
 	})
 
 	// ---- Rotas ----

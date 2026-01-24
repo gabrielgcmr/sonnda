@@ -2,14 +2,14 @@
 package pages
 
 import (
-    "sonnda-api/internal/adapters/inbound/http/web/assets/templates/components"
-    "sonnda-api/internal/adapters/inbound/http/web/assets/templates/layouts"
+	"sonnda-api/internal/adapters/inbound/http/web/templates/components"
+	"sonnda-api/internal/adapters/inbound/http/web/templates/layouts"
 )
 
 type HomeViewModel struct {
-    UserName string
-    Role     string
-    Patients []components.PatientItem
+	UserName string
+	Role     string
+	Patients []components.PatientItem
 }
 
 templ Home(vm HomeViewModel) {

@@ -2,7 +2,7 @@ root = "."
 tmp_dir = "tmp"
 
 [build]
-  cmd = "go build -o ./tmp/main.exe ./cmd/api"
+  cmd = "go build -o ./tmp/main.exe ./cmd/server"
   entrypoint = ["./tmp/main.exe"]
   delay = 200
   include_ext = ["go"]

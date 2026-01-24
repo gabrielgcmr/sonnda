@@ -3,13 +3,13 @@
 module.exports = {
   darkMode: "class",
   content: [
-    "./internal/adapters/inbound/http/web/assets/templates/**/*.{templ,html,tmpl,gohtml}",
+    "./internal/adapters/inbound/http/web/templates/**/*.{templ,html,tmpl,gohtml}",
     "./internal/adapters/inbound/http/web/handlers/**/*.go",
-    "./internal/adapters/inbound/http/web/assets/static/js/**/*.js",
+    "./internal/adapters/inbound/http/web/public/js/**/*.js",
   ],
   theme: {
     extend: {
-      colors:{
+      colors: {
         primary: "var(--md-sys-color-primary)",
         surfaceTint: "var(--md-sys-color-surface-tint)",
         onPrimary: "var(--md-sys-color-on-primary)",
@@ -47,7 +47,8 @@ module.exports = {
         secondaryFixed: "var(--md-sys-color-secondary-fixed)",
         onSecondaryFixed: "var(--md-sys-color-on-secondary-fixed)",
         secondaryFixedDim: "var(--md-sys-color-secondary-fixed-dim)",
-        onSecondaryFixedVariant: "var(--md-sys-color-on-secondary-fixed-variant)",
+        onSecondaryFixedVariant:
+          "var(--md-sys-color-on-secondary-fixed-variant)",
         tertiaryFixed: "var(--md-sys-color-tertiary-fixed)",
         onTertiaryFixed: "var(--md-sys-color-on-tertiary-fixed)",
         tertiaryFixedDim: "var(--md-sys-color-tertiary-fixed-dim)",
@@ -58,10 +59,27 @@ module.exports = {
         surfaceContainerLow: "var(--md-sys-color-surface-container-low)",
         surfaceContainer: "var(--md-sys-color-surface-container)",
         surfaceContainerHigh: "var(--md-sys-color-surface-container-high)",
-        surfaceContainerHighest: "var(--md-sys-color-surface-container-highest)",
+        surfaceContainerHighest:
+          "var(--md-sys-color-surface-container-highest)",
       },
-      fontFamily:{
-        sans: ['var(--font-sans)', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'Noto Sans', 'sans-serif', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji'],
+      fontFamily: {
+        sans: [
+          "var(--font-sans)",
+          "ui-sans-serif",
+          "system-ui",
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "Segoe UI",
+          "Roboto",
+          "Helvetica Neue",
+          "Arial",
+          "Noto Sans",
+          "sans-serif",
+          "Apple Color Emoji",
+          "Segoe UI Emoji",
+          "Segoe UI Symbol",
+          "Noto Color Emoji",
+        ],
       },
     },
   },

@@ -1,7 +1,7 @@
 services:
   api:
     build: .
-    container_name: sonnda-api
+    container_name: sonnda
     restart: unless-stopped
     ports:
     - "${PORT:-8080}:8080"

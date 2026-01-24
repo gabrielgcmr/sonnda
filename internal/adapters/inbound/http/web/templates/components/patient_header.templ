@@ -1,0 +1,28 @@
+// internal/adapters/inbound/http/web/assets/templates/components/patient_header.templ
+package components
+
+type PatientHeaderProps struct {
+	PatientID   string
+	PatientName string
+	Subtitle    string // ex: "49 anos • F • CPF: ***.***.***-**"
+}
+
+templ PatientHeader(p PatientHeaderProps) {
+	<section class="flex flex-col gap-4 rounded-xl border border-outline bg-surface px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+		<div class="min-w-0">
+			<h1 class="truncate text-xl font-semibold tracking-tight text-on-surface sm:text-2xl">{p.PatientName}</h1>
+			if p.Subtitle != "" {
+				<p class="mt-1 text-sm text-on-surface-variant">{p.Subtitle}</p>
+			}
+		</div>
+
+		<div class="flex flex-wrap items-center gap-2">
+			<a class="inline-flex items-center rounded-md border border-outline bg-surface px-3 py-2 text-sm font-medium text-on-surface shadow-sm transition hover:bg-surface-container-low focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background" href={"/patients/" + p.PatientID + "/exams/new"}>
+				+ Exame
+			</a>
+			<a class="inline-flex items-center rounded-md border border-outline bg-surface px-3 py-2 text-sm font-medium text-on-surface shadow-sm transition hover:bg-surface-container-low focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background" href={"/patients/" + p.PatientID + "/meds/new"}>
+				+ Medicação
+			</a>
+		</div>
+	</section>
+}

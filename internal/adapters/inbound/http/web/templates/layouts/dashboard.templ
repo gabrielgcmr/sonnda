@@ -1,7 +1,7 @@
 // internal/adapters/inbound/http/web/assets/templates/layouts/dashboard.templ
 package layouts
 
-import "sonnda-api/internal/adapters/inbound/http/web/assets/templates/components"
+import "sonnda-api/internal/adapters/inbound/http/web/templates/components"
 
 type DashboardLayoutProps struct {
 	Title string
@@ -20,7 +20,6 @@ templ Dashboard(p DashboardLayoutProps) {
 			ShowNewPatient: true,
 			NewPatientHref: "/patients/new",
 		})
-
 		<main class="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
 			{ children... }
 		</main>

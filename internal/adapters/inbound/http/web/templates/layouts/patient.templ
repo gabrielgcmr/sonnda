@@ -1,7 +1,7 @@
 // internal/adapters/inbound/http/web/assets/templates/layouts/patient.templ
 package layouts
 
-import "sonnda-api/internal/adapters/inbound/http/web/assets/templates/components"
+import "sonnda-api/internal/adapters/inbound/http/web/templates/components"
 
 type PatientLayoutProps struct {
 	Title string
@@ -25,20 +25,17 @@ templ PatientWorkspace(p PatientLayoutProps) {
 			Breadcrumb:     "Dashboard / Paciente",
 			ShowNewPatient: false,
 		})
-
-		<main class="app-main app-main--patient">
+		<main class="mx-auto w-full max-w-6xl space-y-6 px-4 py-6 sm:px-6">
 			@components.PatientHeader(components.PatientHeaderProps{
 				PatientID:   p.PatientID,
 				PatientName: p.PatientName,
 				Subtitle:    p.PatientMeta,
 			})
-
 			@components.PatientNav(components.PatientNavProps{
 				PatientID: p.PatientID,
 				Active:    p.ActiveSection,
 			})
-
-			<section class="patient-content">
+			<section class="rounded-xl border border-outline bg-surface-container-lowest p-4 sm:p-6">
 				{ children... }
 			</section>
 		</main>
