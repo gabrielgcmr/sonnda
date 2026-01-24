@@ -10,6 +10,7 @@ import (
 )
 
 type PatientModule struct {
+	Service patientsvc.Service
 	Handler *patienthandler.PatientHandler
 }
 
@@ -22,6 +23,7 @@ func NewPatientModule(db *db.Client) *PatientModule {
 	svc := patientsvc.New(patientRepo, authz)
 
 	return &PatientModule{
+		Service: svc,
 		Handler: patienthandler.NewPatientHandler(svc),
 	}
 }

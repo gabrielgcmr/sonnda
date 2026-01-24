@@ -100,7 +100,7 @@ func main() {
 
 	// 9. Handlers WEB
 	//TODO: Fazer bootstrap dos handlers web
-	homeHandler := webhandlers.NewHomeHandler()
+	homeHandler := webhandlers.NewHomeHandler(modules.Patient.Service)
 	authHandler := webhandlers.NewAuthHandler(cfg)
 	sessionHandler := webhandlers.NewSessionHandler(authService)
 
