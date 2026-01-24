@@ -13,12 +13,11 @@ type HomeViewModel struct {
 }
 
 templ Home(vm HomeViewModel) {
-    @layouts.App("Home") {
-        @components.Header(components.HeaderProps{
-            UserName: vm.UserName,
-            Role:     vm.Role,
-        })
-
-        @components.PatientList(vm.Patients)
-    }
+	@layouts.Dashboard(layouts.DashboardLayoutProps{
+		Title:    "Dashboard",
+		UserName: vm.UserName,
+		Role:     vm.Role,
+	}) {
+		@components.PatientList(vm.Patients)
+	}
 }

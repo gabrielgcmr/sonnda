@@ -5,7 +5,7 @@ tmp_dir = "tmp"
   cmd = "go build -o ./tmp/main.exe ./cmd/api"
   entrypoint = ["./tmp/main.exe"]
   delay = 200
-  include_ext = ["go", "tpl", "tmpl", "html"]
+  include_ext = ["go"]
   exclude_dir = ["tmp", "vendor", "node_modules"]
 
 [log]

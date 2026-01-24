@@ -16,6 +16,7 @@ import (
 
 type UserModule struct {
 	Handler                *user.Handler
+	RegistrationCore       *sharedregistration.Core
 	RegistrationMiddleware *middleware.RegistrationMiddleware
 }
 
@@ -34,6 +35,7 @@ func NewUserModule(db *db.Client, identityService integration.IdentityService) *
 
 	return &UserModule{
 		Handler:                handler,
+		RegistrationCore:       regCore,
 		RegistrationMiddleware: regMiddleware,
 	}
 }

@@ -2,15 +2,47 @@
 package components
 
 type HeaderProps struct {
-    UserName string
-    Role     string
+	AppName string
+
+	UserName string
+	Role     string
+
+	// Breadcrumb simples (ex: "Dashboard" ou "Paciente / João Silva")
+	Breadcrumb string
+
+	// Se true, mostra CTA “Novo paciente”
+	ShowNewPatient bool
+	NewPatientHref  string
 }
 
 templ Header(p HeaderProps) {
-    <header class="app-header">
-        <div>
-            <strong>{p.UserName}</strong>
-            <span class="role">({p.Role})</span>
-        </div>
-    </header>
+	<header class="app-header">
+		<div class="app-header__left">
+			<a class="app-brand" href="/">
+				<span class="app-brand__name">{p.AppName}</span>
+			</a>
+
+			if p.Breadcrumb != "" {
+				<span class="app-breadcrumb" aria-label="Você está em">{p.Breadcrumb}</span>
+			}
+		</div>
+
+		<div class="app-header__right">
+			if p.ShowNewPatient {
+				<a class="btn btn--primary" href={p.NewPatientHref}>
+					+ Novo paciente
+				</a>
+			}
+
+			<div class="app-user">
+				<div class="app-user__meta">
+					<span class="app-user__name">{p.UserName}</span>
+					<span class="app-user__role">{p.Role}</span>
+				</div>
+
+				<!-- depois você troca isso por menu dropdown -->
+				<a class="btn btn--ghost" href="/logout">Sair</a>
+			</div>
+		</div>
+	</header>
 }

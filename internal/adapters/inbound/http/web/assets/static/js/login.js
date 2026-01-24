@@ -20,10 +20,12 @@
       if (result.success) {
         showAlert('Login realizado com sucesso! Redirecionando...', 'success');
         
+        // Create session on backend
+        await window.firebaseAuth.createSession(result.token);
         // Redirect to home or dashboard after short delay
         setTimeout(() => {
           window.location.href = '/';
-        }, 1000);
+        }, 300);
       } else {
         showAlert(result.error, 'error');
         button.disabled = false;

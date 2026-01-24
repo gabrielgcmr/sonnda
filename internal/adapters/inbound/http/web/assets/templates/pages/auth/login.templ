@@ -1,0 +1,97 @@
+// internal/adapters/inbound/http/web/assets/templates/pages/login.templ
+// internal/adapters/inbound/http/web/assets/templates/pages/login.templ
+package auth
+
+type LoginViewModel struct {
+	Title          string
+	FirebaseConfig FirebaseConfig
+}
+
+templ Login(vm LoginViewModel) {
+	<!doctype html>
+	<html lang="pt-br">
+	<head>
+		<meta charset="utf-8"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1"/>
+		<title>{vm.Title}</title>
+		<script src="https://unpkg.com/htmx.org@1.9.12"></script>
+		<link rel="stylesheet" href="/static/css/app.css"/>
+		@templ.JSONScript("firebase-config", vm.FirebaseConfig)
+		<script>
+			(function () {
+				const el = document.getElementById("firebase-config");
+				if (!el) return;
+				try {
+					window.firebaseConfig = JSON.parse(el.textContent || "{}");
+				} catch (e) {
+					console.error("Failed to parse firebase config JSON", e);
+				}
+			})();
+		</script>
+		<script type="module" src="/static/js/firebase-auth.js"></script>
+		<script src="/static/js/login.js" defer></script>
+	</head>
+	<body class="bg-gray-50">
+		<main class="container mx-auto max-w-6xl px-4 py-8">
+			<div class="min-h-screen flex items-center justify-center px-4 py-8 bg-gray-50">
+				<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-8 w-full max-w-sm">
+					<div class="text-center mb-8">
+						<h1 class="text-2xl font-bold text-gray-900 mb-2">Bem-vindo de volta</h1>
+						<p class="text-sm text-gray-600">Entre com sua conta para continuar</p>
+					</div>
+
+					<noscript>
+						<div class="bg-red-50 text-red-800 border border-red-200 p-3 rounded-lg">
+							Para fazer login, habilite JavaScript no navegador.
+						</div>
+					</noscript>
+
+					<div id="alert-container"></div>
+
+					<form id="loginForm" class="space-y-4" novalidate>
+						<div>
+							<label for="email" class="block text-sm font-medium text-gray-700 mb-2">E-mail</label>
+							<input
+								type="email"
+								id="email"
+								name="email"
+								class="block w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
+								placeholder="seuemail@email.com"
+								required
+								autocomplete="email"
+							/>
+							<span class="text-xs text-red-600 mt-1" id="email-error"></span>
+						</div>
+
+						<div>
+							<label for="password" class="block text-sm font-medium text-gray-700 mb-2">Senha</label>
+							<input
+								type="password"
+								id="password"
+								name="password"
+								class="block w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
+								placeholder="••••••••"
+								required
+								autocomplete="current-password"
+							/>
+							<span class="text-xs text-red-600 mt-1" id="password-error"></span>
+						</div>
+
+						<button
+							type="submit"
+							class="w-full inline-flex items-center justify-center px-5 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+							id="loginButton"
+						>
+							Entrar
+						</button>
+					</form>
+
+					<div class="text-center mt-6 text-sm text-gray-600">
+						Não tem uma conta? <a href="/register" class="text-blue-600 font-medium hover:underline">Cadastre-se</a>
+					</div>
+				</div>
+			</div>
+		</main>
+	</body>
+	</html>
+}

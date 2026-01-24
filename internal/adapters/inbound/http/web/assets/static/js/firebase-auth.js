@@ -36,17 +36,13 @@ class FirebaseAuthManager {
       this.auth = getAuth(this.app);
       this.initialized = true;
 
-      onAuthStateChanged(this.auth, async (user) => {
+      onAuthStateChanged(this.auth, (user) => {
         this.currentUser = user;
-
         if (user) {
-          const idToken = await user.getIdToken();
-          await this.createSession(idToken);
           console.log("User authenticated:", user.email);
-          return;
+        } else {
+          console.log("User signed out");
         }
-
-        console.log("User signed out");
       });
 
       console.log("Firebase initialized successfully");
@@ -93,8 +89,6 @@ class FirebaseAuthManager {
         password
       );
       const idToken = await userCredential.user.getIdToken();
-
-      await this.createSession(idToken);
 
       return {
         success: true,
@@ -237,6 +231,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
+
+
 async function authenticatedFetch(url, options = {}) {
   const headers = {
     "Content-Type": "application/json",
@@ -256,3 +252,5 @@ async function authenticatedFetch(url, options = {}) {
 
   return response;
 }
+
+window.authenticatedFetch = authenticatedFetch;

@@ -4,36 +4,28 @@ package httpserver
 import (
 	"log/slog"
 	"net/http"
+	"path/filepath"
 
 	"github.com/gin-gonic/gin"
 
 	"sonnda-api/internal/adapters/inbound/http/api"
-	"sonnda-api/internal/adapters/inbound/http/api/handlers"
-	"sonnda-api/internal/adapters/inbound/http/api/handlers/patient"
-	"sonnda-api/internal/adapters/inbound/http/api/handlers/user"
-	apimiddleware "sonnda-api/internal/adapters/inbound/http/api/middleware"
-	sharedmiddleware "sonnda-api/internal/adapters/inbound/http/shared/middleware"
+	sharedmw "sonnda-api/internal/adapters/inbound/http/shared/middleware"
 	"sonnda-api/internal/adapters/inbound/http/web"
 	"sonnda-api/internal/adapters/inbound/http/web/embed"
 	"sonnda-api/internal/app/config"
-	"sonnda-api/internal/domain/ports/integration"
 )
 
 type Infra struct {
-	Logger          *slog.Logger
-	IdentityService integration.IdentityService
-	Config          *config.Config
+	Logger *slog.Logger
+	Config *config.Config
 }
 
-type Dependencies struct {
-	AuthMiddleware         *apimiddleware.AuthMiddleware
-	RegistrationMiddleware *apimiddleware.RegistrationMiddleware
-	UserHandler            *user.Handler
-	PatientHandler         *patient.PatientHandler
-	LabsHandler            *handlers.LabsHandler
+type Deps struct {
+	API *api.APIDependencies
+	WEB web.WebDependencies
 }
 
-func NewRouter(infra Infra, deps Dependencies) *gin.Engine {
+func NewRouter(infra Infra, deps Deps) *gin.Engine {
 	r := gin.New()
 
 	logger := infra.Logger
@@ -43,14 +35,16 @@ func NewRouter(infra Infra, deps Dependencies) *gin.Engine {
 
 	// Middlewares globais (infra)
 	r.Use(
-		sharedmiddleware.RequestID(),
-		sharedmiddleware.AccessLog(logger),
-		sharedmiddleware.Recovery(logger),
+		sharedmw.RequestID(),
+		sharedmw.AccessLog(logger),
+		sharedmw.Recovery(logger),
 	)
 
 	// Static assets (css, js, imagens)
 	// Use relative path that works from project root (where air runs from)
-	r.Static("/static", "internal/adapters/inbound/http/web/assets/static")
+	r.Static("/static", filepath.Join(
+		"internal", "adapters", "inbound", "http", "web", "assets", "static",
+	))
 
 	// Favicon embutido no binário
 	r.GET("/favicon.ico", func(c *gin.Context) {
@@ -61,19 +55,10 @@ func NewRouter(infra Infra, deps Dependencies) *gin.Engine {
 		c.Data(http.StatusOK, "image/x-icon", embed.FaviconBytes)
 	})
 
-	// Templates HTML (HTMX)
-	r.SetHTMLTemplate(mustLoadTemplates())
-
 	// ---- Rotas ----
-	web.SetupRoutes(r, infra.Config, infra.IdentityService)
-	api.SetupRoutes(
-		r,
-		deps.AuthMiddleware,
-		deps.RegistrationMiddleware,
-		deps.UserHandler,
-		deps.PatientHandler,
-		deps.LabsHandler,
-	)
+	// Rotas
+	web.SetupRoutes(r, deps.WEB)
+	api.SetupRoutes(r, deps.API)
 
 	return r
 }

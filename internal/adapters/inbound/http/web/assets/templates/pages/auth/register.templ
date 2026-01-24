@@ -1,0 +1,239 @@
+// internal/adapters/inbound/http/web/assets/templates/pages/register.templ
+package auth
+
+type RegisterViewModel struct {
+	Title          string
+	FirebaseConfig FirebaseConfig
+}
+
+templ Register(vm RegisterViewModel) {
+	<!doctype html>
+	<html lang="pt-br">
+	<head>
+		<meta charset="utf-8"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1"/>
+		<title>{vm.Title}</title>
+		<script src="https://unpkg.com/htmx.org@1.9.12"></script>
+		<link rel="stylesheet" href="/static/css/app.css"/>
+		@templ.JSONScript("firebase-config", vm.FirebaseConfig)
+		<script>
+			(function () {
+				const el = document.getElementById("firebase-config");
+				if (!el) return;
+				try {
+					window.firebaseConfig = JSON.parse(el.textContent || "{}");
+				} catch (e) {
+					console.error("Failed to parse firebase config JSON", e);
+				}
+			})();
+		</script>
+		<script type="module" src="/static/js/firebase-auth.js"></script>
+	</head>
+	<body class="bg-gray-50">
+		<main class="container mx-auto max-w-6xl px-4 py-8">
+			<div class="min-h-screen flex items-center justify-center px-4 py-8 bg-gray-50">
+				<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-8 w-full max-w-sm">
+					<div class="text-center mb-8">
+						<h1 class="text-2xl font-bold text-gray-900 mb-2">Criar conta</h1>
+						<p class="text-sm text-gray-600">Preencha seus dados para começar</p>
+					</div>
+
+					<div id="alert-container"></div>
+
+					<div id="step-indicator" class="text-center mb-4">
+						<small class="text-gray-600">Passo <span id="current-step">1</span> de 2</small>
+					</div>
+
+					<form id="authForm" class="space-y-4">
+						<div>
+							<label for="email" class="block text-sm font-medium text-gray-700 mb-2">E-mail</label>
+							<input
+								type="email"
+								id="email"
+								name="email"
+								class="block w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
+								placeholder="seu@email.com"
+								required
+								autocomplete="email"
+							/>
+							<span class="text-xs text-red-600 mt-1" id="email-error"></span>
+						</div>
+
+						<div>
+							<label for="password" class="block text-sm font-medium text-gray-700 mb-2">Senha</label>
+							<input
+								type="password"
+								id="password"
+								name="password"
+								class="block w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
+								placeholder="Mínimo 6 caracteres"
+								required
+								minlength="6"
+								autocomplete="new-password"
+							/>
+							<span class="text-xs text-red-600 mt-1" id="password-error"></span>
+						</div>
+
+						<div>
+							<label for="confirmPassword" class="block text-sm font-medium text-gray-700 mb-2">Confirmar Senha</label>
+							<input
+								type="password"
+								id="confirmPassword"
+								name="confirmPassword"
+								class="block w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
+								placeholder="Digite a senha novamente"
+								required
+								minlength="6"
+								autocomplete="new-password"
+							/>
+							<span class="text-xs text-red-600 mt-1" id="confirmPassword-error"></span>
+						</div>
+
+						<button
+							type="submit"
+							class="w-full inline-flex items-center justify-center px-5 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+							id="authButton"
+						>
+							Continuar
+						</button>
+					</form>
+
+					<form id="registerForm" class="space-y-4 hidden">
+						<div>
+							<label for="fullName" class="block text-sm font-medium text-gray-700 mb-2">Nome Completo</label>
+							<input
+								type="text"
+								id="fullName"
+								name="fullName"
+								class="block w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
+								placeholder="Seu nome completo"
+								required
+							/>
+							<span class="text-xs text-red-600 mt-1" id="fullName-error"></span>
+						</div>
+
+						<div>
+							<label for="birthDate" class="block text-sm font-medium text-gray-700 mb-2">Data de Nascimento</label>
+							<input
+								type="date"
+								id="birthDate"
+								name="birthDate"
+								class="block w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
+								required
+							/>
+							<span class="text-xs text-red-600 mt-1" id="birthDate-error"></span>
+						</div>
+
+						<div>
+							<label for="cpf" class="block text-sm font-medium text-gray-700 mb-2">CPF</label>
+							<input
+								type="text"
+								id="cpf"
+								name="cpf"
+								class="block w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
+								placeholder="000.000.000-00"
+								required
+								maxlength="14"
+							/>
+							<span class="text-xs text-red-600 mt-1" id="cpf-error"></span>
+						</div>
+
+						<div>
+							<label for="phone" class="block text-sm font-medium text-gray-700 mb-2">Telefone</label>
+							<input
+								type="tel"
+								id="phone"
+								name="phone"
+								class="block w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
+								placeholder="(00) 00000-0000"
+								required
+								maxlength="15"
+							/>
+							<span class="text-xs text-red-600 mt-1" id="phone-error"></span>
+						</div>
+
+						<div>
+							<label for="accountType" class="block text-sm font-medium text-gray-700 mb-2">Tipo de Conta</label>
+							<select id="accountType" name="accountType" class="block w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors bg-white cursor-pointer" required>
+								<option value="">Selecione...</option>
+								<option value="basic_care">Cuidados Básicos</option>
+								<option value="professional">Profissional de Saúde</option>
+							</select>
+							<span class="text-xs text-red-600 mt-1" id="accountType-error"></span>
+						</div>
+
+						<div id="professionalFields" class="hidden space-y-4">
+							<div>
+								<label for="professionalKind" class="block text-sm font-medium text-gray-700 mb-2">Tipo de Profissional</label>
+								<select id="professionalKind" name="professionalKind" class="block w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors bg-white cursor-pointer">
+									<option value="">Selecione...</option>
+									<option value="physician">Médico</option>
+									<option value="nurse">Enfermeiro</option>
+									<option value="psychologist">Psicólogo</option>
+									<option value="nutritionist">Nutricionista</option>
+									<option value="physical_therapist">Fisioterapeuta</option>
+									<option value="other">Outro</option>
+								</select>
+								<span class="text-xs text-red-600 mt-1" id="professionalKind-error"></span>
+							</div>
+
+							<div>
+								<label for="registrationNumber" class="block text-sm font-medium text-gray-700 mb-2">Número de Registro</label>
+								<input
+									type="text"
+									id="registrationNumber"
+									name="registrationNumber"
+									class="block w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
+									placeholder="Ex: CRM 12345"
+								/>
+								<span class="text-xs text-red-600 mt-1" id="registrationNumber-error"></span>
+							</div>
+
+							<div>
+								<label for="registrationIssuer" class="block text-sm font-medium text-gray-700 mb-2">Órgão Emissor</label>
+								<input
+									type="text"
+									id="registrationIssuer"
+									name="registrationIssuer"
+									class="block w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
+									placeholder="Ex: CRM"
+								/>
+								<span class="text-xs text-red-600 mt-1" id="registrationIssuer-error"></span>
+							</div>
+
+							<div>
+								<label for="registrationState" class="block text-sm font-medium text-gray-700 mb-2">UF (opcional)</label>
+								<input
+									type="text"
+									id="registrationState"
+									name="registrationState"
+									class="block w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
+									placeholder="Ex: SP"
+									maxlength="2"
+								/>
+								<span class="text-xs text-red-600 mt-1" id="registrationState-error"></span>
+							</div>
+						</div>
+
+						<div class="flex gap-2">
+							<button type="button" class="flex-1 inline-flex items-center justify-center px-5 py-2.5 text-sm font-medium text-blue-600 bg-white border border-gray-200 hover:bg-gray-50 rounded-lg transition-colors" id="backButton">
+								Voltar
+							</button>
+							<button type="submit" class="flex-1 inline-flex items-center justify-center px-5 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed" id="registerButton">
+								Criar Conta
+							</button>
+						</div>
+					</form>
+
+					<div class="text-center mt-6 text-sm text-gray-600">
+						Já tem uma conta? <a href="/login" class="text-blue-600 font-medium hover:underline">Entrar</a>
+					</div>
+				</div>
+			</div>
+
+			<script src="/static/js/register.js" defer></script>
+		</main>
+	</body>
+	</html>
+}
+

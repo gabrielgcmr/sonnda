@@ -4,6 +4,7 @@ package handlers
 import (
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -61,9 +62,16 @@ func (h *SessionHandler) CreateSession(c *gin.Context) {
 
 	sessionCookie, err := h.identityService.CreateSessionCookie(c.Request.Context(), req.IDToken, sessionExpiresIn)
 	if err != nil {
+		code := apperr.AUTH_TOKEN_INVALID
+		msg := "token invalido ou expirado"
+		if isInsufficientPermissionError(err) {
+			code = apperr.INFRA_AUTHENTICATION_ERROR
+			msg = "falha ao criar sessao"
+		}
+
 		httperr.WriteError(c, &apperr.AppError{
-			Code:    apperr.AUTH_TOKEN_INVALID,
-			Message: "token invalido ou expirado",
+			Code:    code,
+			Message: msg,
 			Cause:   err,
 		})
 		return
@@ -81,6 +89,16 @@ func (h *SessionHandler) CreateSession(c *gin.Context) {
 	)
 
 	c.Status(http.StatusNoContent)
+}
+
+func isInsufficientPermissionError(err error) bool {
+	if err == nil {
+		return false
+	}
+	s := err.Error()
+	return strings.Contains(s, "INSUFFICIENT_PERMISSION") ||
+		strings.Contains(s, "insufficient_permission") ||
+		strings.Contains(s, "unexpected http response with status: 400")
 }
 
 func (h *SessionHandler) RefreshSession(c *gin.Context) {

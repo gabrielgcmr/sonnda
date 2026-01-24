@@ -13,6 +13,7 @@ run:
 
 # Build da aplicação
 build:
+	templ generate
 	go build -o bin/api $(MAIN)
 
 # Executar com hot reload (air)
@@ -26,10 +27,13 @@ tailwind:
 tailwind-watch:
 	$(TAILWIND_BIN) -c tailwind.config.js -i $(TAILWIND_INPUT) -o $(TAILWIND_OUTPUT) --watch
 
+# Templ
+templ:
+	templ generate --watch
+
 # Hot reload + Tailwind watch (Windows)
 dev-web:
-	powershell -NoProfile -Command "Start-Process -WindowStyle Hidden -FilePath '$(TAILWIND_BIN)' -ArgumentList '-c','tailwind.config.js','-i','$(TAILWIND_INPUT)','-o','$(TAILWIND_OUTPUT)','--watch'; & air -c .air.toml"
-
+	powershell -NoProfile -Command "Start-Process -WindowStyle Hidden -FilePath '$(TAILWIND_BIN)' -ArgumentList '-c','tailwind.config.js','-i','$(TAILWIND_INPUT)','-o','$(TAILWIND_OUTPUT)','--watch'; Start-Process -WindowStyle Hidden -FilePath 'templ' -ArgumentList 'generate','--watch'; air -c .air.toml"
 
 #sqlc
 sqlc-check:

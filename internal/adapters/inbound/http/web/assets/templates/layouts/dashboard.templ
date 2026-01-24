@@ -1,0 +1,28 @@
+// internal/adapters/inbound/http/web/assets/templates/layouts/dashboard.templ
+package layouts
+
+import "sonnda-api/internal/adapters/inbound/http/web/assets/templates/components"
+
+type DashboardLayoutProps struct {
+	Title string
+
+	UserName string
+	Role     string
+}
+
+templ Dashboard(p DashboardLayoutProps) {
+	@App(p.Title) {
+		@components.Header(components.HeaderProps{
+			AppName:        "Sonnda",
+			UserName:       p.UserName,
+			Role:           p.Role,
+			Breadcrumb:     "Dashboard",
+			ShowNewPatient: true,
+			NewPatientHref: "/patients/new",
+		})
+
+		<main class="app-main app-main--dashboard">
+			{ children... }
+		</main>
+	}
+}

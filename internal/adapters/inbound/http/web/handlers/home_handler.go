@@ -3,9 +3,9 @@ package handlers
 
 import (
 	"net/http"
-	"sync/atomic"
 	"sonnda-api/internal/adapters/inbound/http/shared/httpctx"
 	"sonnda-api/internal/adapters/inbound/http/web/assets/templates/pages"
+	"sync/atomic"
 
 	"github.com/gin-gonic/gin"
 )
@@ -20,11 +20,6 @@ func NewHomeHandler() *HomeHandler {
 
 func (h *HomeHandler) Home(c *gin.Context) {
 	renderHomePage(c)
-}
-
-func (h *HomeHandler) CounterPartial(c *gin.Context) {
-	count := h.counter.Add(1)
-	c.HTML(http.StatusOK, "partials/counter", gin.H{"Count": count})
 }
 
 func renderHomePage(c *gin.Context) {

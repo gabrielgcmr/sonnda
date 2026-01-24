@@ -17,8 +17,12 @@ import (
 	"sonnda-api/internal/app/observability"
 
 	httpserver "sonnda-api/internal/adapters/inbound/http"
-	"sonnda-api/internal/adapters/inbound/http/api/middleware"
+	"sonnda-api/internal/adapters/inbound/http/api"
+	apimw "sonnda-api/internal/adapters/inbound/http/api/middleware"
 	sharedauth "sonnda-api/internal/adapters/inbound/http/shared/auth"
+	"sonnda-api/internal/adapters/inbound/http/web"
+	webhandlers "sonnda-api/internal/adapters/inbound/http/web/handlers"
+	webmw "sonnda-api/internal/adapters/inbound/http/web/middleware"
 	authinfra "sonnda-api/internal/adapters/outbound/integrations/auth"
 	"sonnda-api/internal/adapters/outbound/integrations/documentai"
 	"sonnda-api/internal/adapters/outbound/integrations/storage"
@@ -81,26 +85,48 @@ func main() {
 		log.Fatalf("falha ao criar auth do firebase: %v", err)
 	}
 	authCore := sharedauth.NewCore(authService)
-	authMiddleware := middleware.NewAuthMiddleware(authCore)
 
-	//7. Inicializa os repositórios
+	//7. Módulos
 	modules := bootstrap.NewModules(dbClient, authService, docExtractor, storageService)
-	registrationMiddleware := modules.User.RegistrationMiddleware
 
-	// 8. Configura o Gin
+	//8 Middlewares
+	//8.1 API
+	apiAuthMW := apimw.NewAuthMiddleware(authCore)
+	apiRegMW := apimw.NewRegistrationMiddleware(modules.User.RegistrationCore)
+
+	//8.2 Web
+	webAuthMW := webmw.NewAuthMiddleware(authCore)
+	webRegMW := webmw.NewRegistrationMiddleware(modules.User.RegistrationCore)
+
+	// 9. Handlers WEB
+	//TODO: Fazer bootstrap dos handlers web
+	homeHandler := webhandlers.NewHomeHandler()
+	authHandler := webhandlers.NewAuthHandler(cfg)
+	sessionHandler := webhandlers.NewSessionHandler(authService)
+
+	//10. Cria o router HTTP
 	gin.SetMode(gin.ReleaseMode)
+
 	handler := httpserver.NewRouter(
 		httpserver.Infra{
-			Logger:          appLogger,
-			IdentityService: authService,
-			Config:          cfg,
+			Logger: appLogger,
+			Config: cfg,
 		},
-		httpserver.Dependencies{
-			AuthMiddleware:         authMiddleware,
-			RegistrationMiddleware: registrationMiddleware,
-			UserHandler:            modules.User.Handler,
-			PatientHandler:         modules.Patient.Handler,
-			LabsHandler:            modules.Labs.Handler,
+		httpserver.Deps{
+			API: &api.APIDependencies{
+				AuthMiddleware:         apiAuthMW,
+				RegistrationMiddleware: apiRegMW,
+				UserHandler:            modules.User.Handler,
+				PatientHandler:         modules.Patient.Handler,
+				LabsHandler:            modules.Labs.Handler,
+			},
+			WEB: web.WebDependencies{
+				HomeHandler:     homeHandler,
+				AuthHandler:     authHandler,
+				SessionHandler:  sessionHandler,
+				WebAuth:         webAuthMW,
+				WebRegistration: webRegMW,
+			},
 		},
 	)
 

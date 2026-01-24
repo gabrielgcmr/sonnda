@@ -18,43 +18,39 @@ import (
 )
 
 type FirebaseAuthService struct {
-	client *firebaseauth.Client
+	client    *firebaseauth.Client
+	projectID string
 }
 
 func NewFirebaseAuthService(ctx context.Context) (*FirebaseAuthService, error) {
-	var opts []option.ClientOption
-
-	credentialsJSON := strings.TrimSpace(os.Getenv("FIREBASE_CREDENTIALS_JSON"))
-	if credentialsJSON != "" {
-		opts = append(opts, option.WithCredentialsJSON([]byte(credentialsJSON)))
-	} else {
-		credentialsFile := strings.TrimSpace(os.Getenv("FIREBASE_CREDENTIALS_FILE"))
-		if credentialsFile != "" {
-			opts = append(opts, option.WithCredentialsFile(credentialsFile))
-		}
-	}
-
 	projectID := strings.TrimSpace(os.Getenv("FIREBASE_PROJECT_ID"))
 	if projectID == "" {
 		projectID = strings.TrimSpace(os.Getenv("GCP_PROJECT_ID"))
 	}
 
-	var fbConfig *firebase.Config
-	if projectID != "" {
-		fbConfig = &firebase.Config{ProjectID: projectID}
+	var opts []option.ClientOption
+	if credentialsJSON := strings.TrimSpace(os.Getenv("FIREBASE_CREDENTIALS_JSON")); credentialsJSON != "" {
+		opts = append(opts, option.WithCredentialsJSON([]byte(credentialsJSON)))
+	} else if credentialsFile := strings.TrimSpace(os.Getenv("FIREBASE_CREDENTIALS_FILE")); credentialsFile != "" {
+		opts = append(opts, option.WithCredentialsFile(credentialsFile))
 	}
 
-	app, err := firebase.NewApp(ctx, fbConfig, opts...)
+	// ADC:
+	// - Local: GOOGLE_APPLICATION_CREDENTIALS aponta para o arquivo JSON
+	// - Cloud Run: Service Account do serviço fornece credenciais via metadata server
+	app, err := firebase.NewApp(ctx, &firebase.Config{
+		ProjectID: projectID,
+	}, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("firebase init: %w", err)
 	}
 
-	client, err := app.Auth(ctx)
+	authClient, err := app.Auth(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("firebase auth: %w", err)
+		return nil, fmt.Errorf("app.auth: %w", err)
 	}
 
-	return &FirebaseAuthService{client: client}, nil
+	return &FirebaseAuthService{client: authClient, projectID: projectID}, nil
 }
 
 var _ integration.IdentityService = (*FirebaseAuthService)(nil)
@@ -70,7 +66,7 @@ func (s *FirebaseAuthService) VerifyToken(ctx context.Context, tokenStr string) 
 
 	token, err := s.client.VerifyIDToken(ctx, tokenStr)
 	if err != nil {
-		return nil, errors.New("invalid token")
+		return nil, errors.New("invalid bearer token")
 	}
 
 	email, _ := token.Claims["email"].(string)
@@ -108,7 +104,7 @@ func (s *FirebaseAuthService) CreateSessionCookie(ctx context.Context, idToken s
 
 	sessionCookie, err := s.client.SessionCookie(ctx, idToken, expiresIn)
 	if err != nil {
-		return "", errors.New("invalid token")
+		return "", fmt.Errorf("firebase session cookie: %w", err)
 	}
 
 	return sessionCookie, nil
