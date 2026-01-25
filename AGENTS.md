@@ -28,6 +28,19 @@ Simple instructions for coding agents working on this repo.
   - `make tailwind` (build)
   - `make tailwind-watch` (watch)
   - `make dev-web` (Air + Tailwind watch + templ watch)
+  - ## Static files and templates (MANDATORY)
+
+- **Do NOT create** a top-level `assets/` directory in this repository.
+- The project intentionally separates responsibilities:
+  - `templates/` → server-side rendered UI (`.templ`, layout, components, features)
+  - `public/` → static files served directly to the browser (CSS, JS, images, fonts)
+- Static files are exposed via the public URL prefix:
+  - `/static/*` → mapped to `public/*`
+- **Do NOT rewrite paths** in templates or scripts to `/assets/...`.
+  - If an automated suggestion mentions `/assets`, replace it with `/static`.
+- This decision is documented in:
+  **ADR-007 — Separação entre templates e arquivos estáticos (sem pasta /assets)**.
+
 
 ---
 

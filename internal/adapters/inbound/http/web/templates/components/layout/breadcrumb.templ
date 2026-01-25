@@ -2,9 +2,8 @@ package layoutcomponents
 
 templ Breadcrumb(breadcrumb string) {
 	if breadcrumb != "" {
-		<div class="hidden min-w-0 items-center gap-2 text-sm text-on-surface-variant sm:flex" aria-label="Você está em">
-			<span class="text-outline font-semibold">|</span>
-			<span class="truncate translate-y-0.5 text-outline">{ breadcrumb }</span>
+		<div class="hidden min-w-0 items-center gap-2 text-base text-on-surface sm:flex" aria-label="Você está em">
+			<span class="truncate font-semibold text-outline-variant">/ { breadcrumb }</span>
 		</div>
 	}
 }

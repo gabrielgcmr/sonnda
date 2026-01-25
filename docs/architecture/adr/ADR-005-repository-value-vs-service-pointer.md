@@ -1,7 +1,7 @@
 # ADR-005 — Retorno por valor no Repository e por ponteiro no Service
 
 **Status:** Aceito  
-**Data:** 2025-01  
+**Data:** 2025-08  
 **Contexto:** Sonnda API – módulo Patient (padrão aplicado aos demais módulos)
 
 ---

@@ -47,8 +47,7 @@ module.exports = {
         secondaryFixed: "var(--md-sys-color-secondary-fixed)",
         onSecondaryFixed: "var(--md-sys-color-on-secondary-fixed)",
         secondaryFixedDim: "var(--md-sys-color-secondary-fixed-dim)",
-        onSecondaryFixedVariant:
-          "var(--md-sys-color-on-secondary-fixed-variant)",
+        onSecondaryFixedVariant: "var(--md-sys-color-on-secondary-fixed-variant)",
         tertiaryFixed: "var(--md-sys-color-tertiary-fixed)",
         onTertiaryFixed: "var(--md-sys-color-on-tertiary-fixed)",
         tertiaryFixedDim: "var(--md-sys-color-tertiary-fixed-dim)",
@@ -59,12 +58,11 @@ module.exports = {
         surfaceContainerLow: "var(--md-sys-color-surface-container-low)",
         surfaceContainer: "var(--md-sys-color-surface-container)",
         surfaceContainerHigh: "var(--md-sys-color-surface-container-high)",
-        surfaceContainerHighest:
-          "var(--md-sys-color-surface-container-highest)",
+        surfaceContainerHighest: "var(--md-sys-color-surface-container-highest)",
       },
       fontFamily: {
         sans: [
-          "var(--font-sans)",
+          "Poppins",
           "ui-sans-serif",
           "system-ui",
           "-apple-system",

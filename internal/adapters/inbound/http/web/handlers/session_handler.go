@@ -109,7 +109,25 @@ func (h *SessionHandler) DeleteSession(c *gin.Context) {
 	h.Logout(c)
 }
 
+func wantsRedirectAfterLogout(r *http.Request) bool {
+	// Browser navigation (e.g. <form method="post">) should redirect to /login,
+	// otherwise the user may end up on a blank /auth/logout page.
+	if strings.EqualFold(r.Header.Get("Sec-Fetch-Mode"), "navigate") {
+		return true
+	}
+	return strings.Contains(r.Header.Get("Accept"), "text/html")
+}
+
 func (h *SessionHandler) Logout(c *gin.Context) {
+	wantsRedirect := wantsRedirectAfterLogout(c.Request)
+	finish := func() {
+		if wantsRedirect {
+			c.Redirect(http.StatusSeeOther, "/login")
+			return
+		}
+		c.Status(http.StatusNoContent)
+	}
+
 	cookie, err := c.Cookie(firebaseSessionCookieName)
 
 	// Always clear cookie (idempotent logout).
@@ -117,13 +135,13 @@ func (h *SessionHandler) Logout(c *gin.Context) {
 	c.SetCookie(firebaseSessionCookieName, "", -1, "/", "", c.Request.TLS != nil, true)
 
 	if err != nil || cookie == "" {
-		c.Status(http.StatusNoContent)
+		finish()
 		return
 	}
 
 	id, err := h.identityService.VerifySessionCookie(c.Request.Context(), cookie)
 	if err != nil || id == nil {
-		c.Status(http.StatusNoContent)
+		finish()
 		return
 	}
 
@@ -136,7 +154,7 @@ func (h *SessionHandler) Logout(c *gin.Context) {
 		return
 	}
 
-	c.Status(http.StatusNoContent)
+	finish()
 }
 
 func (h *SessionHandler) GetSession(c *gin.Context) {

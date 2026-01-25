@@ -28,6 +28,9 @@ A Sonnda resolve um problema recorrente na pratica clinica: pacientes precisam c
   - [Logging](#logging)
   - [Endpoints](#endpoints)
   - [Estrutura de Pastas](#estrutura-de-pastas)
+    - [Layers (Arquitetura em Camadas)](#layers-arquitetura-em-camadas)
+    - [Web (Templ + Tailwind CSS)](#web-templ--tailwind-css)
+    - [Fluxo de Build (Web)](#fluxo-de-build-web)
 
 ---
 
@@ -117,41 +120,120 @@ Documentacao complementar:
 
 ## Estrutura de Pastas
 
-Resumo da estrutura:
+Resumo da estrutura atual:
 
 ```text
 .
-|-- cmd/
-|   `-- api/
-|       `-- main.go                 # Ponto de entrada da API
-|-- internal/
-|   |-- app/
-|   |   |-- apperr/                 # Contrato de erros da aplicacao
-|   |   |-- bootstrap/              # Montagem de dependencias por modulo
-|   |   |-- config/                 # Config da aplicacao
-|   |   |-- observability/          # Log (slog) e helpers de observability
-|   |   `-- services/               # Services de aplicacao (ex.: user, professional, registration)
-|   |-- domain/
-|   |   |-- model/                  # Modelos e regras de negocio
-|   |   `-- ports/                  # Interfaces do dominio (integration, repository)
-|   `-- adapters/
-|       |-- inbound/http/           # Server HTTP (router + API + WEB)
-|       |   |-- api/                # API JSON (handlers, routes, middleware)
-|       |   `-- web/                # Web UI (templ + Tailwind + JS)
-|       |       |-- assets/static/  # CSS/JS/imagens servidos via /static
-|       |       |-- assets/templates/ # Templates .templ (source of truth)
-|       |       `-- embed/          # Assets embutidos (ex.: favicon)
-|       `-- outbound/               # Integrations e persistence
-|           |-- integrations/       # auth, documentai, storage
-|           `-- persistence/        # db, repository, sqlc
-|-- docker-compose.yml
-|-- Dockerfile
-|-- Makefile
-`-- README.md
+├── cmd/
+│   └── server/
+│       └── main.go                 # Ponto de entrada da aplicação
+├── docs/
+│   ├── README.md
+│   ├── api/                        # Documentação de endpoints
+│   │   ├── auth.md
+│   │   ├── patient.md
+│   │   ├── user.md
+│   │   └── labs.md
+│   ├── architecture/               # Arquitetura e decisões
+│   │   ├── README.md
+│   │   ├── access-control.md
+│   │   ├── error-handling.md
+│   │   ├── app-source-of-truth.md
+│   │   └── adr/                    # Architecture Decision Records
+│   └── dev/                        # Guias de desenvolvimento
+│       └── setup.md
+├── internal/
+│   ├── adapters/                   # Adaptadores (inbound/outbound)
+│   │   ├── inbound/
+│   │   │   ├── cli/                # CLI adapter (futuro)
+│   │   │   └── http/               # HTTP adapter (API + WEB)
+│   │   │       ├── api/            # API JSON
+│   │   │       │   ├── handlers/   # Handlers dos endpoints
+│   │   │       │   ├── binder/     # Request binding
+│   │   │       │   ├── httperr/    # Erro HTTP contract
+│   │   │       │   └── middleware/ # Middlewares
+│   │   │       ├── web/            # Web UI (Templ + Tailwind + HTMX)
+│   │   │       │   ├── handlers/   # Web handlers
+│   │   │       │   ├── middleware/ # Web middleware
+│   │   │       │   ├── public/     # Static assets (CSS, JS, images)
+│   │   │       │   ├── styles/     # Tailwind config e theme
+│   │   │       │   └── templates/  # Templ components e páginas
+│   │   │       │       ├── components/
+│   │   │       │       ├── layouts/
+│   │   │       │       ├── pages/
+│   │   │       │       └── partials/
+│   │   │       ├── router.go
+│   │   │       └── routes.go
+│   │   └── outbound/               # Integrações externas
+│   │       ├── integrations/       # Auth, DocumentAI, Storage
+│   │       └── persistence/        # Database e repositories
+│   │           ├── repository/     # Implementações de repository
+│   │           └── sqlc/           # Code-gen do SQL
+│   ├── app/                        # Camada de aplicação
+│   │   ├── apperr/                 # Contrato de erros
+│   │   ├── bootstrap/              # Injeção de dependências
+│   │   ├── config/                 # Configuração da aplicação
+│   │   ├── observability/          # Logging e observabilidade
+│   │   ├── services/               # Services de aplicação
+│   │   │   ├── user/
+│   │   │   ├── patient/
+│   │   │   ├── professional/
+│   │   │   ├── lab/
+│   │   │   └── authorization/
+│   │   └── usecase/                # Casos de uso
+│   │       ├── registration/
+│   │       ├── labs/
+│   │       └── (outros)
+│   └── domain/                     # Camada de domínio (core)
+│       ├── model/                  # Modelos e regras de negócio
+│       │   ├── user/
+│       │   ├── patient/
+│       │   ├── professional/
+│       │   ├── labs/
+│       │   ├── medicalrecord/
+│       │   ├── rbac/
+│       │   └── (outros)
+│       └── ports/                  # Interfaces do domínio
+│           ├── integration/
+│           └── repository/
+├── samples/                        # Exemplos e dados de teste
+├── secrets/                        # Configurações sensíveis (não versionado)
+│   └── sonnda-gcs.json/
+├── tools/                          # Ferramentas de build
+├── .env.example                    # Template de variáveis de ambiente
+├── docker-compose.yml              # Orquestração de containers
+├── Dockerfile                      # Build da imagem Docker
+├── Makefile                        # Comandos úteis
+├── tailwind.config.js              # Configuração do Tailwind CSS
+└── README.md                       # Este arquivo
 ```
 
-### Tailwind e templ (WEB)
+### Layers (Arquitetura em Camadas)
 
-- **Tailwind**: entrada em `internal/adapters/inbound/http/web/assets/static/css/input.css`, saida em `internal/adapters/inbound/http/web/assets/static/css/app.css` (veja `Makefile`).
-- **templ**: templates em `internal/adapters/inbound/http/web/assets/templates/**/*.templ` e arquivos gerados `*_templ.go` (nao edite os `*_templ.go`).
-- **Workflow rapido (Windows)**: `make dev-web` (Air + Tailwind watch + templ watch).
+A aplicação segue a separação clara de responsabilidades:
+
+1. **Domain (`internal/domain`)**: modelos puros e regras de negócio (independente de infraestrutura/HTTP)
+2. **App (`internal/app`)**: services de aplicação, orquestração e contrato de erros
+3. **Adapters (`internal/adapters`)**: integração com HTTP, banco de dados e serviços externos
+
+### Web (Templ + Tailwind CSS)
+
+- **Source of truth**: `internal/adapters/inbound/http/web/`
+- **Componentes**: `templates/components/` (UI reusáveis em `.templ`)
+- **Páginas**: `templates/pages/` (páginas completas)
+- **Styles**: 
+  - `styles/input.css` (entrypoint do Tailwind)
+  - `styles/theme.css` (design tokens e cores Material Design 3)
+  - `public/css/app.css` (output compilado, não editar)
+- **Assets estáticos**: `public/` (favicon, imagens, JS)
+
+### Fluxo de Build (Web)
+
+```bash
+# Watch mode (desenvolvimento rápido)
+make dev-web        # Tailwind + Templ + Air
+
+# Build one-time
+make tailwind       # Compila CSS
+make templ          # Gera Go code a partir dos .templ
+```

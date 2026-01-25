@@ -18,7 +18,7 @@ type PatientLayoutProps struct {
 }
 
 templ PatientWorkspace(p PatientLayoutProps) {
-	@App(p.Title) {
+	@Base(p.Title) {
 		@layoutcomponents.AppHeader(layoutcomponents.HeaderProps{
 			AppName:    "Sonnda",
 			UserName:   p.UserName,

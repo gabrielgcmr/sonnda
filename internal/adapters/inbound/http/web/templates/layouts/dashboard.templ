@@ -11,7 +11,7 @@ type DashboardLayoutProps struct {
 }
 
 templ Dashboard(p DashboardLayoutProps) {
-	@App(p.Title) {
+	@Base(p.Title) {
 		@layoutcomponents.AppHeader(layoutcomponents.HeaderProps{
 			AppName:    "Sonnda",
 			UserName:   p.UserName,

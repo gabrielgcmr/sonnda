@@ -69,3 +69,9 @@
   }
 
 }
+
+@media print {
+  body {
+    font-family: ui-serif, "Times New Roman", Times, serif !important;
+  }
+}

@@ -30,14 +30,14 @@ func Breadcrumb(breadcrumb string) templ.Component {
 		}
 		ctx = templ.ClearChildren(ctx)
 		if breadcrumb != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"hidden min-w-0 items-center gap-2 text-sm text-on-surface-variant sm:flex\" aria-label=\"Você está em\"><span class=\"text-outline font-semibold\">|</span> <span class=\"truncate translate-y-0.5 text-outline\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"hidden min-w-0 items-center gap-2 text-base text-on-surface sm:flex\" aria-label=\"Você está em\"><span class=\"truncate font-semibold text-outline-variant\">/ ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var2 string
 			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(breadcrumb)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/adapters/inbound/http/web/templates/components/layout/breadcrumb.templ`, Line: 7, Col: 67}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/adapters/inbound/http/web/templates/components/layout/breadcrumb.templ`, Line: 6, Col: 75}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 			if templ_7745c5c3_Err != nil {
