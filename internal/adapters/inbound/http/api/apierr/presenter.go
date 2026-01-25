@@ -1,32 +1,32 @@
 // internal/http/httperr/presenter.go
-package httperr
+package apierr
 
 import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"sonnda-api/internal/adapters/inbound/http/shared/httperr"
 	"sonnda-api/internal/app/apperr"
 	applog "sonnda-api/internal/app/observability"
 
 	"github.com/gin-gonic/gin"
 )
 
-func WriteError(c *gin.Context, err error) {
+func ErrorResponder(c *gin.Context, err error) {
 	if c.Writer.Written() {
 		c.Abort()
 		return
 	}
-
 	if err != nil {
 		_ = c.Error(err)
 	}
 
-	status, resp := ToHTTP(err)
+	status, resp := httperr.ToHTTP(err)
 	level := apperr.LogLevelOf(err)
 
 	c.Set("error_code", string(resp.Code))
 	c.Set("http_status", status)
-	c.Set("error_log_level", level) // slog.Level
+	c.Set("error_log_level", level)
 
 	log := applog.FromContext(c.Request.Context())
 
@@ -36,7 +36,6 @@ func WriteError(c *gin.Context, err error) {
 		slog.String("path", c.FullPath()),
 		slog.String("method", c.Request.Method),
 	}
-
 	if err != nil {
 		attrs = append(attrs, slog.Any("err", err))
 		if chain := errorChain(err); len(chain) > 0 {
@@ -44,7 +43,6 @@ func WriteError(c *gin.Context, err error) {
 		}
 	}
 
-	// Log quando level >= Warn (429, 413, etc.) OU status >= 500
 	if level >= slog.LevelWarn || status >= 500 {
 		log.Log(c.Request.Context(), level, "handler_error", attrs...)
 	}

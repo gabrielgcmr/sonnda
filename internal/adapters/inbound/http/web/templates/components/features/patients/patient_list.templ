@@ -12,7 +12,7 @@ templ PatientList(patients []PatientItem) {
 	<section class="space-y-4">
 		<div class="flex items-center justify-between gap-3">
 			<h2 class="text-lg font-semibold text-on-surface">Pacientes</h2>
-			@ui.Button(" Novo paciente ", ui.Default, false)
+			@ui.Button(" + Novo paciente ", ui.Default, false)
 		</div>
 		if len(patients) == 0 {
 			<div class="rounded-xl border border-outline bg-surface-container-lowest p-6 text-sm text-on-surface-variant">

@@ -50,35 +50,11 @@ Simple instructions for coding agents working on this repo.
 - **Adapters (`internal/adapters`)**: Concrete implementations and protocol adapters (inbound and outbound).
   - **Inbound (`internal/adapters/inbound/http`)**: HTTP protocol adapter.
     - **API (`internal/adapters/inbound/http/api`)**: RESTful routes, handlers, and middleware for API consumers.
+    - **Shared (`internal/adapters/inbound/http/shared`)**: Shared packages between api and web
     - **Web (`internal/adapters/inbound/http/web`)**: Server-rendered routes, handlers, and middleware for web UI (Templ + HTMX).
   - **Outbound (`internal/adapters/outbound`)**: Concrete implementations (database repositories, external integrations, cloud services).
 
-## Static files and templates (MANDATORY)
-- **Do NOT create** a top-level `assets/` directory in this repository.
-- The project intentionally separates responsibilities:
-  - `templates/` → server-side rendered UI (`.templ`, layout, components, features)
-  - `public/` → static files served directly to the browser (CSS, JS, images, fonts)
-- Static files are exposed via the public URL prefix:
-  - `/static/*` → mapped to `public/*`
-- **Do NOT rewrite paths** in templates or scripts to `/assets/...`.
-  - If an automated suggestion mentions `/assets`, replace it with `/static`.
-- This decision is documented in:
-  **ADR-007 — Separação entre templates e arquivos estáticos (sem pasta /assets)**.
 
-## Tailwind CSS (WEB) - v4 best practices
-- Use Tailwind CSS **v4 utilities-first** in `.templ` templates; only add custom CSS when Tailwind cannot express it cleanly.
-- **Do not edit generated CSS**: `internal/adapters/inbound/http/web/public/css/app.css` is generated.
-- Edit Tailwind source files instead:
-  - `internal/adapters/inbound/http/web/styles` (Tailwind entrypoint, `@import "tailwindcss";`, `@theme` tokens)
-- Prefer composing UI via reusable `templ` components over writing large custom CSS blocks.
-- Avoid `@apply` except for small, reusable abstractions that reduce repeated class strings.
-- Keep naming consistent and semantic: use the token system (e.g. colors from `@theme`) instead of hardcoded hex/rgb in templates.
-- Build/watch commands:
-  - `make dev-web` (Air + Tailwind watch + templ watch) - Preference
-  - `make tailwind` (build)
-  - `make tailwind-watch` (watch)
-
----
 
 ## Error Handling (MANDATORY)
 
@@ -99,32 +75,13 @@ This project uses a **centralized error contract** based on `AppError`.
 - Domain **never** imports HTTP, Gin, or `apperr`.
 - Handlers and middlewares **must call**: httperrors.WriteError(c,err)
 - Location: `internal/app/apperr/error.go`
-- HTTP error presentation id centralized in:`internal/http/errors/error.go`.
+- HTTP error presentation id centralized in:`internal/inbound/http/shared/httperr`.
  
  ---
 
 ## Logging
 - The app uses `log/slog` via `internal/app/config/observability` (request-scoped logger is injected by HTTP middleware).
 - Configure with `LOG_LEVEL` (`debug|info|warn|error`) and `LOG_FORMAT` (`text|json|pretty`).
-
-### Access Log
-- Exactly one access log entry per request.
-- Includes:
-  - request_id
-  - method, path/route
-  - status
-  - latency
-  - error_code (if present)
-
-### Error Log Policy
-- 4xx errors:
-  - No detailed error logging in handlers/middleware.
-  - AccessLog entry only.
-- 5xx errors:
-  - AccessLog entry
-  - One detailed log with full error chain (Cause) emitted by the HTTP error writer.
-- panic
-  - Handled by Recovery middleware with stacktrace.
 
 ## Test
 - Add or update tests when behavior changes.

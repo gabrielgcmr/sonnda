@@ -12,6 +12,7 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"sonnda-api/internal/adapters/inbound/http/web/templates/components/features/patients"
+	"sonnda-api/internal/adapters/inbound/http/web/templates/components/ui"
 	"sonnda-api/internal/adapters/inbound/http/web/templates/layouts"
 )
 
@@ -54,6 +55,90 @@ func Home(vm HomeViewModel) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"max-w-4xl mx-auto space-y-6\"><div class=\"grid grid-cols-1 md:grid-cols-2 gap-6\"><div class=\"space-y-2\"><h2 class=\"text-xs font-semibold text-gray-800\">Variante Solid</h2>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = ui.Alert(ui.AlertProps{
+				Type:        ui.AlertWarning,
+				Variant:     ui.AlertSolid,
+				Message:     "Alert message lorem ipsum consectetur adipiscing.",
+				Dismissible: false,
+			}).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = ui.Alert(ui.AlertProps{
+				Type:        ui.AlertError,
+				Variant:     ui.AlertSolid,
+				Message:     "Error message lorem ipsum consectetur adipiscing.",
+				Dismissible: false,
+			}).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = ui.Alert(ui.AlertProps{
+				Type:        ui.AlertSuccess,
+				Variant:     ui.AlertSolid,
+				Message:     "Success message lorem ipsum consectetur adipiscing.",
+				Dismissible: false,
+			}).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = ui.Alert(ui.AlertProps{
+				Type:        ui.AlertInfo,
+				Variant:     ui.AlertSolid,
+				Message:     "Info message lorem ipsum consectetur adipiscing.",
+				Dismissible: false,
+			}).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</div><div class=\"space-y-2\"><h2 class=\"text-xs font-semibold text-gray-800\">Solid com Fechar</h2>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = ui.Alert(ui.AlertProps{
+				Type:        ui.AlertWarning,
+				Variant:     ui.AlertSolid,
+				Message:     "Alert message lorem ipsum consectetur adipiscing.",
+				Dismissible: true,
+			}).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = ui.Alert(ui.AlertProps{
+				Type:        ui.AlertError,
+				Variant:     ui.AlertSolid,
+				Message:     "Error message lorem ipsum consectetur adipiscing.",
+				Dismissible: true,
+			}).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = ui.Alert(ui.AlertProps{
+				Type:        ui.AlertSuccess,
+				Variant:     ui.AlertSolid,
+				Message:     "Success message lorem ipsum consectetur adipiscing.",
+				Dismissible: true,
+			}).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = ui.Alert(ui.AlertProps{
+				Type:        ui.AlertInfo,
+				Variant:     ui.AlertSolid,
+				Message:     "Info message lorem ipsum consectetur adipiscing.",
+				Dismissible: true,
+			}).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</div></div></div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
 			templ_7745c5c3_Err = patientcomponents.PatientList(vm.Patients).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err

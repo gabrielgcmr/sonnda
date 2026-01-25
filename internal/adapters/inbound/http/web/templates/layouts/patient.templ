@@ -20,10 +20,9 @@ type PatientLayoutProps struct {
 templ PatientWorkspace(p PatientLayoutProps) {
 	@Base(p.Title) {
 		@layoutcomponents.AppHeader(layoutcomponents.HeaderProps{
-			AppName:    "Sonnda",
-			UserName:   p.UserName,
-			Role:       p.Role,
-			Breadcrumb: "Dashboard / Paciente",
+			AppName:  "Sonnda",
+			UserName: p.UserName,
+			Role:     p.Role,
 		})
 		<main class="mx-auto w-full max-w-6xl space-y-6 px-4 py-6 sm:px-6">
 			@patientcomponents.PatientHeader(patientcomponents.PatientHeaderProps{

@@ -2,7 +2,7 @@
 package middleware
 
 import (
-	"sonnda-api/internal/adapters/inbound/http/api/httperr"
+	"sonnda-api/internal/adapters/inbound/http/api/apierr"
 	"sonnda-api/internal/adapters/inbound/http/shared/httpctx"
 	"sonnda-api/internal/adapters/inbound/http/shared/registration"
 	"sonnda-api/internal/app/apperr"
@@ -34,7 +34,7 @@ func (m *RegistrationMiddleware) RequireRegisteredUser() gin.HandlerFunc {
 		id, ok := httpctx.GetIdentity(c)
 		if !ok || id == nil {
 			// Situação anômala: auth não rodou antes
-			httperr.WriteError(c, &apperr.AppError{
+			apierr.ErrorResponder(c, &apperr.AppError{
 				Code:    apperr.AUTH_REQUIRED,
 				Message: "autenticação necessária",
 			})
@@ -43,13 +43,13 @@ func (m *RegistrationMiddleware) RequireRegisteredUser() gin.HandlerFunc {
 
 		u, appErr := m.core.ResolveCurrentUser(c.Request.Context(), id)
 		if appErr != nil {
-			httperr.WriteError(c, appErr)
+			apierr.ErrorResponder(c, appErr)
 			return
 		}
 
 		if u == nil {
 			// Autenticado no provider, mas sem cadastro local
-			httperr.WriteError(c, &apperr.AppError{
+			apierr.ErrorResponder(c, &apperr.AppError{
 				Code:    apperr.ACCESS_DENIED,
 				Message: "cadastro necessário",
 			})

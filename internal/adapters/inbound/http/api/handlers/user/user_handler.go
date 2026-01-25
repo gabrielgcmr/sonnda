@@ -6,9 +6,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"sonnda-api/internal/adapters/inbound/http/api/apierr"
 	"sonnda-api/internal/adapters/inbound/http/api/binder"
 	"sonnda-api/internal/adapters/inbound/http/api/handlers"
-	"sonnda-api/internal/adapters/inbound/http/api/httperr"
 	"sonnda-api/internal/adapters/inbound/http/shared/httpctx"
 	"sonnda-api/internal/app/apperr"
 	usersvc "sonnda-api/internal/app/services/user"
@@ -35,19 +35,19 @@ func NewHandler(
 
 func (h *Handler) Register(c *gin.Context) {
 	if h == nil || h.regUC == nil {
-		httperr.WriteError(c, apperr.Internal("serviço indisponível", nil))
+		apierr.ErrorResponder(c, apperr.Internal("serviço indisponível", nil))
 		return
 	}
 
 	identity, ok := httpctx.GetIdentity(c)
 	if !ok {
-		httperr.WriteError(c, apperr.Unauthorized("autenticação necessária"))
+		apierr.ErrorResponder(c, apperr.Unauthorized("autenticação necessária"))
 		return
 	}
 
 	var req RegisterRequest
 	if err := binder.BindJSON(c, &req); err != nil {
-		httperr.WriteError(c, err)
+		apierr.ErrorResponder(c, err)
 		return
 	}
 
@@ -55,7 +55,7 @@ func (h *Handler) Register(c *gin.Context) {
 
 	birthDate, err := handlers.ParseBirthDate(req.BirthDate)
 	if err != nil {
-		httperr.WriteError(c, apperr.Validation("data de nascimento inválida",
+		apierr.ErrorResponder(c, apperr.Validation("data de nascimento inválida",
 			apperr.Violation{
 				Field:  "birth_date",
 				Reason: "invalid_format",
@@ -86,7 +86,7 @@ func (h *Handler) Register(c *gin.Context) {
 
 	created, err := h.regUC.Register(c.Request.Context(), input)
 	if err != nil {
-		httperr.WriteError(c, err)
+		apierr.ErrorResponder(c, err)
 		return
 	}
 
@@ -103,7 +103,7 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 
 	var req UpdateUserRequest
 	if err := binder.BindJSON(c, &req); err != nil {
-		httperr.WriteError(c, err)
+		apierr.ErrorResponder(c, err)
 		return
 	}
 
@@ -123,7 +123,7 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 
 	updated, err := h.userSvc.Update(c.Request.Context(), input)
 	if err != nil {
-		httperr.WriteError(c, err)
+		apierr.ErrorResponder(c, err)
 		return
 	}
 
@@ -134,7 +134,7 @@ func (h *Handler) HardDeleteUser(c *gin.Context) {
 	currentUser := httpctx.MustGetCurrentUser(c)
 
 	if err := h.userSvc.Delete(c.Request.Context(), currentUser.ID); err != nil {
-		httperr.WriteError(c, err)
+		apierr.ErrorResponder(c, err)
 		return
 	}
 
@@ -160,7 +160,7 @@ func (h *Handler) ListMyPatients(c *gin.Context) {
 
 	result, err := h.userSvc.ListMyPatients(c.Request.Context(), currentUser.ID, limit, offset)
 	if err != nil {
-		httperr.WriteError(c, err)
+		apierr.ErrorResponder(c, err)
 		return
 	}
 

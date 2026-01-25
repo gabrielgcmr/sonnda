@@ -1,4 +1,4 @@
-package httperr
+package apierr
 
 import (
 	"encoding/json"
@@ -18,7 +18,7 @@ func TestWriteError_IncludesViolations(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Request = httptest.NewRequest(http.MethodPost, "/api/v1/register", nil)
 
-	WriteError(c, &apperr.AppError{
+	ErrorResponder(c, &apperr.AppError{
 		Code:    apperr.VALIDATION_FAILED,
 		Message: "validacao falhou",
 		Violations: []apperr.Violation{
@@ -72,7 +72,7 @@ func TestWriteError_OmitsViolationsWhenEmpty(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Request = httptest.NewRequest(http.MethodPost, "/api/v1/register", nil)
 
-	WriteError(c, &apperr.AppError{
+	ErrorResponder(c, &apperr.AppError{
 		Code:    apperr.VALIDATION_FAILED,
 		Message: "payload invalido",
 	})

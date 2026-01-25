@@ -3,6 +3,7 @@ package pages
 
 import (
 	"sonnda-api/internal/adapters/inbound/http/web/templates/components/features/patients"
+	"sonnda-api/internal/adapters/inbound/http/web/templates/components/ui"
 	"sonnda-api/internal/adapters/inbound/http/web/templates/layouts"
 )
 
@@ -18,6 +19,66 @@ templ Home(vm HomeViewModel) {
 		UserName: vm.UserName,
 		Role:     vm.Role,
 	}) {
+		<div class="max-w-4xl mx-auto space-y-6">
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+				// Alertas sólidos
+				<div class="space-y-2">
+					<h2 class="text-xs font-semibold text-gray-800">Variante Solid</h2>
+					@ui.Alert(ui.AlertProps{
+						Type:        ui.AlertWarning,
+						Variant:     ui.AlertSolid,
+						Message:     "Alert message lorem ipsum consectetur adipiscing.",
+						Dismissible: false,
+					})
+					@ui.Alert(ui.AlertProps{
+						Type:        ui.AlertError,
+						Variant:     ui.AlertSolid,
+						Message:     "Error message lorem ipsum consectetur adipiscing.",
+						Dismissible: false,
+					})
+					@ui.Alert(ui.AlertProps{
+						Type:        ui.AlertSuccess,
+						Variant:     ui.AlertSolid,
+						Message:     "Success message lorem ipsum consectetur adipiscing.",
+						Dismissible: false,
+					})
+					@ui.Alert(ui.AlertProps{
+						Type:        ui.AlertInfo,
+						Variant:     ui.AlertSolid,
+						Message:     "Info message lorem ipsum consectetur adipiscing.",
+						Dismissible: false,
+					})
+				</div>
+				// Alertas com botão de fechar (solid)
+				<div class="space-y-2">
+					<h2 class="text-xs font-semibold text-gray-800">Solid com Fechar</h2>
+					@ui.Alert(ui.AlertProps{
+						Type:        ui.AlertWarning,
+						Variant:     ui.AlertSolid,
+						Message:     "Alert message lorem ipsum consectetur adipiscing.",
+						Dismissible: true,
+					})
+					@ui.Alert(ui.AlertProps{
+						Type:        ui.AlertError,
+						Variant:     ui.AlertSolid,
+						Message:     "Error message lorem ipsum consectetur adipiscing.",
+						Dismissible: true,
+					})
+					@ui.Alert(ui.AlertProps{
+						Type:        ui.AlertSuccess,
+						Variant:     ui.AlertSolid,
+						Message:     "Success message lorem ipsum consectetur adipiscing.",
+						Dismissible: true,
+					})
+					@ui.Alert(ui.AlertProps{
+						Type:        ui.AlertInfo,
+						Variant:     ui.AlertSolid,
+						Message:     "Info message lorem ipsum consectetur adipiscing.",
+						Dismissible: true,
+					})
+				</div>
+			</div>
+		</div>
 		@patientcomponents.PatientList(vm.Patients)
 	}
 }

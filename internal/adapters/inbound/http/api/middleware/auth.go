@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"sonnda-api/internal/adapters/inbound/http/api/httperr"
+	"sonnda-api/internal/adapters/inbound/http/api/apierr"
 	sharedauth "sonnda-api/internal/adapters/inbound/http/shared/auth"
 	"sonnda-api/internal/adapters/inbound/http/shared/httpctx"
 
@@ -28,7 +28,7 @@ func (m *AuthMiddleware) RequireBearer() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, appErr := m.core.AuthenticateFromBearerToken(c.Request.Context(), c.Request)
 		if appErr != nil {
-			httperr.WriteError(c, appErr)
+			apierr.ErrorResponder(c, appErr)
 			return
 		}
 

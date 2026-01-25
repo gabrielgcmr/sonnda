@@ -13,10 +13,9 @@ type DashboardLayoutProps struct {
 templ Dashboard(p DashboardLayoutProps) {
 	@Base(p.Title) {
 		@layoutcomponents.AppHeader(layoutcomponents.HeaderProps{
-			AppName:    "Sonnda",
-			UserName:   p.UserName,
-			Role:       p.Role,
-			Breadcrumb: "Dashboard",
+			AppName:  "Sonnda",
+			UserName: p.UserName,
+			Role:     p.Role,
 		})
 		<main class="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
 			{ children... }

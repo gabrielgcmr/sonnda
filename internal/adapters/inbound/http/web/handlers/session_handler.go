@@ -9,7 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"sonnda-api/internal/adapters/inbound/http/api/httperr"
+	"sonnda-api/internal/adapters/inbound/http/web/weberr"
 	"sonnda-api/internal/app/apperr"
 	"sonnda-api/internal/app/observability"
 	"sonnda-api/internal/domain/ports/integration"
@@ -41,7 +41,7 @@ func (h *SessionHandler) CreateSession(c *gin.Context) {
 		logger.Error("failed to bind session request",
 			slog.String("error", err.Error()),
 		)
-		httperr.WriteError(c, &apperr.AppError{
+		weberr.ErrorResponder(c, &apperr.AppError{
 			Code:    apperr.VALIDATION_FAILED,
 			Message: "corpo da requisição inválido, esperado: {\"id_token\": \"...\"}",
 			Cause:   err,
@@ -52,7 +52,7 @@ func (h *SessionHandler) CreateSession(c *gin.Context) {
 	if req.IDToken == "" {
 		logger := observability.FromContext(c.Request.Context())
 		logger.Error("id_token is empty")
-		httperr.WriteError(c, &apperr.AppError{
+		weberr.ErrorResponder(c, &apperr.AppError{
 			Code:    apperr.VALIDATION_FAILED,
 			Message: "id_token não pode estar vazio",
 			Cause:   nil,
@@ -69,7 +69,7 @@ func (h *SessionHandler) CreateSession(c *gin.Context) {
 			msg = "falha ao criar sessao"
 		}
 
-		httperr.WriteError(c, &apperr.AppError{
+		weberr.ErrorResponder(c, &apperr.AppError{
 			Code:    code,
 			Message: msg,
 			Cause:   err,
@@ -146,7 +146,7 @@ func (h *SessionHandler) Logout(c *gin.Context) {
 	}
 
 	if err := h.identityService.RevokeSessions(c.Request.Context(), id.Subject); err != nil {
-		httperr.WriteError(c, &apperr.AppError{
+		weberr.ErrorResponder(c, &apperr.AppError{
 			Code:    apperr.INFRA_EXTERNAL_SERVICE_ERROR,
 			Message: "nao foi possivel encerrar sessao",
 			Cause:   err,
@@ -160,7 +160,7 @@ func (h *SessionHandler) Logout(c *gin.Context) {
 func (h *SessionHandler) GetSession(c *gin.Context) {
 	cookie, err := c.Cookie(firebaseSessionCookieName)
 	if err != nil || cookie == "" {
-		httperr.WriteError(c, &apperr.AppError{
+		weberr.ErrorResponder(c, &apperr.AppError{
 			Code:    apperr.AUTH_REQUIRED,
 			Message: "nenhuma sessao ativa",
 			Cause:   err,
@@ -174,7 +174,7 @@ func (h *SessionHandler) GetSession(c *gin.Context) {
 		c.SetSameSite(http.SameSiteLaxMode)
 		c.SetCookie(firebaseSessionCookieName, "", -1, "/", "", c.Request.TLS != nil, true)
 
-		httperr.WriteError(c, &apperr.AppError{
+		weberr.ErrorResponder(c, &apperr.AppError{
 			Code:    apperr.AUTH_TOKEN_INVALID,
 			Message: "sessao expirada",
 			Cause:   err,

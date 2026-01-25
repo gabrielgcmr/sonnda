@@ -13,7 +13,7 @@ import (
 	labsvc "sonnda-api/internal/app/services/labs"
 	labsuc "sonnda-api/internal/app/usecase/labs"
 
-	"sonnda-api/internal/adapters/inbound/http/api/httperr"
+	"sonnda-api/internal/adapters/inbound/http/api/apierr"
 	httpctx "sonnda-api/internal/adapters/inbound/http/shared/httpctx"
 	"sonnda-api/internal/app/apperr"
 	external "sonnda-api/internal/domain/ports/integration"
@@ -50,7 +50,7 @@ func (h *LabsHandler) ListLabs(c *gin.Context) {
 
 	list, err := h.svc.List(c.Request.Context(), patientID, limit, offset)
 	if err != nil {
-		httperr.WriteError(c, err)
+		apierr.ErrorResponder(c, err)
 		return
 	}
 
@@ -70,7 +70,7 @@ func (h *LabsHandler) ListFullLabs(c *gin.Context) {
 
 	list, err := h.svc.ListFull(c.Request.Context(), patientID, limit, offset)
 	if err != nil {
-		httperr.WriteError(c, err)
+		apierr.ErrorResponder(c, err)
 		return
 	}
 
@@ -90,7 +90,7 @@ func (h *LabsHandler) UploadAndProcessLabs(c *gin.Context) {
 
 	documentURI, mimeType, uploadErr := h.handleFileUpload(c, patientID)
 	if uploadErr != nil {
-		httperr.WriteError(c, uploadErr)
+		apierr.ErrorResponder(c, uploadErr)
 		return
 	}
 
@@ -101,7 +101,7 @@ func (h *LabsHandler) UploadAndProcessLabs(c *gin.Context) {
 		UploadedByUserID: currentUser.ID,
 	})
 	if uploadErr != nil {
-		httperr.WriteError(c, uploadErr)
+		apierr.ErrorResponder(c, uploadErr)
 		return
 	}
 
@@ -201,7 +201,7 @@ func parsePagination(c *gin.Context, defaultLimit, defaultOffset int) (limit, of
 	if limitStr := c.Query("limit"); limitStr != "" {
 		l, err := strconv.Atoi(limitStr)
 		if err != nil || l <= 0 {
-			httperr.WriteError(c, &apperr.AppError{
+			apierr.ErrorResponder(c, &apperr.AppError{
 				Code:    apperr.VALIDATION_FAILED,
 				Message: "limit deve ser > 0",
 				Cause:   err,
@@ -214,7 +214,7 @@ func parsePagination(c *gin.Context, defaultLimit, defaultOffset int) (limit, of
 	if offsetStr := c.Query("offset"); offsetStr != "" {
 		o, err := strconv.Atoi(offsetStr)
 		if err != nil || o < 0 {
-			httperr.WriteError(c, &apperr.AppError{
+			apierr.ErrorResponder(c, &apperr.AppError{
 				Code:    apperr.VALIDATION_FAILED,
 				Message: "offset deve ser >= 0",
 				Cause:   err,

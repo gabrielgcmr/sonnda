@@ -17,6 +17,18 @@
   --color-on-tertiary-container: var(--md-sys-color-on-tertiary-container);
   --color-error: var(--md-sys-color-error);
   --color-on-error: var(--md-sys-color-on-error);
+  --color-warning: var(--md-sys-color-warning);
+  --color-on-warning: var(--md-sys-color-on-warning);
+  --color-warning-container: var(--md-sys-color-warning-container);
+  --color-on-warning-container: var(--md-sys-color-on-warning-container);
+  --color-success: var(--md-sys-color-success);
+  --color-on-success: var(--md-sys-color-on-success);
+  --color-success-container: var(--md-sys-color-success-container);
+  --color-on-success-container: var(--md-sys-color-on-success-container);
+  --color-info: var(--md-sys-color-info);
+  --color-on-info: var(--md-sys-color-on-info);
+  --color-info-container: var(--md-sys-color-info-container);
+  --color-on-info-container: var(--md-sys-color-on-info-container);
   --color-surface: var(--md-sys-color-surface);
   --color-on-surface: var(--md-sys-color-on-surface);
   --color-surface-variant: var(--md-sys-color-surface-variant);

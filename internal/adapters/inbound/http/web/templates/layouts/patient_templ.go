@@ -60,10 +60,9 @@ func PatientWorkspace(p PatientLayoutProps) templ.Component {
 			}
 			ctx = templ.InitializeContext(ctx)
 			templ_7745c5c3_Err = layoutcomponents.AppHeader(layoutcomponents.HeaderProps{
-				AppName:    "Sonnda",
-				UserName:   p.UserName,
-				Role:       p.Role,
-				Breadcrumb: "Dashboard / Paciente",
+				AppName:  "Sonnda",
+				UserName: p.UserName,
+				Role:     p.Role,
 			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err

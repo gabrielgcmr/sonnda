@@ -15,9 +15,6 @@ type HeaderProps struct {
 
 	UserName string
 	Role     string
-
-	// Breadcrumb simples (ex: "Dashboard" ou "Paciente / João Silva")
-	Breadcrumb string
 }
 
 func AppHeader(p HeaderProps) templ.Component {
@@ -46,10 +43,6 @@ func AppHeader(p HeaderProps) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = AppBrand().Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = Breadcrumb(p.Breadcrumb).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
