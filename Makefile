@@ -4,7 +4,7 @@
 APP_NAME := sonnda-
 MAIN     := ./cmd/server
 TAILWIND_BIN   := tools/tailwindcss.exe
-TAILWIND_INPUT := internal/adapters/inbound/http/web/styles/css/input.css
+TAILWIND_INPUT := internal/adapters/inbound/http/web/styles/input.css
 TAILWIND_OUTPUT := internal/adapters/inbound/http/web/public/css/app.css
 
 # Executar localmente

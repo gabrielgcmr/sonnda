@@ -2,7 +2,6 @@
 package httpserver
 
 import (
-	"io/fs"
 	"log/slog"
 	"net/http"
 
@@ -39,21 +38,26 @@ func NewRouter(infra Infra, deps Deps) *gin.Engine {
 		sharedmw.Recovery(logger),
 	)
 
+	env := "dev"
+	if infra.Config != nil && infra.Config.Env != "" {
+		env = infra.Config.Env
+	}
+
 	// 1. Criando um sub-sistema de arquivos para a pasta 'public'
 	// Isso remove a necessidade de ter a pasta física no servidor de produção
-	publicFiles, err := fs.Sub(web.PublicFS, "public")
+	bundle, err := web.LoadFS(env)
 	if err != nil {
-		panic("Falha ao carregar assets embutidos: " + err.Error())
+		panic("erro ao carregar filesystem: " + err.Error())
 	}
 
 	// 2. Servindo os arquivos estáticos via rota /assets
 	// Agora ele lê do binário, não do disco
-	r.StaticFS("/assets", http.FS(publicFiles))
+	r.StaticFS("/assets", http.FS(bundle.Public))
 
 	// 3. Favicon Simplificado
 	// Como o favicon está dentro de public/, você pode apenas redirecionar ou servir direto
 	r.GET("/favicon.ico", func(c *gin.Context) {
-		c.FileFromFS("favicon.ico", http.FS(publicFiles))
+		c.FileFromFS("favicon.ico", http.FS(bundle.Public))
 	})
 
 	// ---- Rotas ----

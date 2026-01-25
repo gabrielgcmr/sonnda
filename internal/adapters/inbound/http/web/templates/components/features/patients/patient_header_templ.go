@@ -3,7 +3,7 @@
 // templ: version: v0.3.977
 // internal/adapters/inbound/http/web/assets/templates/components/patient_header.templ
 
-package components
+package patientcomponents
 
 //lint:file-ignore SA4006 This context is only used if a nested component is present.
 
@@ -44,7 +44,7 @@ func PatientHeader(p PatientHeaderProps) templ.Component {
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(p.PatientName)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/adapters/inbound/http/web/templates/components/patient_header.templ`, Line: 13, Col: 103}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/adapters/inbound/http/web/templates/components/features/patients/patient_header.templ`, Line: 13, Col: 104}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
@@ -62,7 +62,7 @@ func PatientHeader(p PatientHeaderProps) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.Subtitle)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/adapters/inbound/http/web/templates/components/patient_header.templ`, Line: 15, Col: 63}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/adapters/inbound/http/web/templates/components/features/patients/patient_header.templ`, Line: 15, Col: 64}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -80,7 +80,7 @@ func PatientHeader(p PatientHeaderProps) templ.Component {
 		var templ_7745c5c3_Var4 templ.SafeURL
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinURLErrs("/patients/" + p.PatientID + "/exams/new")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/adapters/inbound/http/web/templates/components/patient_header.templ`, Line: 20, Col: 328}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/adapters/inbound/http/web/templates/components/features/patients/patient_header.templ`, Line: 19, Col: 329}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -93,7 +93,7 @@ func PatientHeader(p PatientHeaderProps) templ.Component {
 		var templ_7745c5c3_Var5 templ.SafeURL
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinURLErrs("/patients/" + p.PatientID + "/meds/new")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/adapters/inbound/http/web/templates/components/patient_header.templ`, Line: 23, Col: 327}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/adapters/inbound/http/web/templates/components/features/patients/patient_header.templ`, Line: 22, Col: 328}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {

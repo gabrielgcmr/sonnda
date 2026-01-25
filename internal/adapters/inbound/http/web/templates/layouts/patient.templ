@@ -1,7 +1,8 @@
 // internal/adapters/inbound/http/web/assets/templates/layouts/patient.templ
 package layouts
 
-import "sonnda-api/internal/adapters/inbound/http/web/templates/components"
+import "sonnda-api/internal/adapters/inbound/http/web/templates/components/features/patients"
+import "sonnda-api/internal/adapters/inbound/http/web/templates/components/layout"
 
 type PatientLayoutProps struct {
 	Title string
@@ -18,20 +19,19 @@ type PatientLayoutProps struct {
 
 templ PatientWorkspace(p PatientLayoutProps) {
 	@App(p.Title) {
-		@components.Header(components.HeaderProps{
-			AppName:        "Sonnda",
-			UserName:       p.UserName,
-			Role:           p.Role,
-			Breadcrumb:     "Dashboard / Paciente",
-			ShowNewPatient: false,
+		@layoutcomponents.AppHeader(layoutcomponents.HeaderProps{
+			AppName:    "Sonnda",
+			UserName:   p.UserName,
+			Role:       p.Role,
+			Breadcrumb: "Dashboard / Paciente",
 		})
 		<main class="mx-auto w-full max-w-6xl space-y-6 px-4 py-6 sm:px-6">
-			@components.PatientHeader(components.PatientHeaderProps{
+			@patientcomponents.PatientHeader(patientcomponents.PatientHeaderProps{
 				PatientID:   p.PatientID,
 				PatientName: p.PatientName,
 				Subtitle:    p.PatientMeta,
 			})
-			@components.PatientNav(components.PatientNavProps{
+			@patientcomponents.PatientNav(patientcomponents.PatientNavProps{
 				PatientID: p.PatientID,
 				Active:    p.ActiveSection,
 			})

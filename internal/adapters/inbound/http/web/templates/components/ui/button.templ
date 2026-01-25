@@ -1,0 +1,30 @@
+package ui
+
+type ButtonVariant string
+
+const (
+	Default  ButtonVariant = "default"
+	Outlined ButtonVariant = "outlined"
+	Text     ButtonVariant = "text"
+)
+
+templ Button(label string, variant ButtonVariant, disabled bool) {
+	<button
+		type="button"
+		class={ "btn " + buttonVariantClass(variant) }
+		disabled?={ disabled }
+	>
+		{ label }
+	</button>
+}
+
+func buttonVariantClass(v ButtonVariant) string {
+	switch v {
+	case Outlined:
+		return "btn--outline"
+	case Text:
+		return "btn--text"
+	default:
+		return "btn--default"
+	}
+}

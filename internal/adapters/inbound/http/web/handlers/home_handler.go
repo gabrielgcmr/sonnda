@@ -4,7 +4,8 @@ package handlers
 import (
 	"net/http"
 	"sonnda-api/internal/adapters/inbound/http/shared/httpctx"
-	"sonnda-api/internal/adapters/inbound/http/web/templates/components"
+
+	patientcomponents "sonnda-api/internal/adapters/inbound/http/web/templates/components/features/patients"
 	"sonnda-api/internal/adapters/inbound/http/web/templates/pages"
 	patientsvc "sonnda-api/internal/app/services/patient"
 	"sync/atomic"
@@ -42,11 +43,11 @@ func (h *HomeHandler) renderHomePage(c *gin.Context) {
 	}
 
 	// 3) Converte para ViewModel
-	var patientItems []components.PatientItem
+	var patientItems []patientcomponents.PatientItem
 	for _, p := range patients {
-		patientItems = append(patientItems, components.PatientItem{
+		patientItems = append(patientItems, patientcomponents.PatientItem{
 			ID:   p.ID.String(),
-			Name: p.Name,
+			Name: p.FullName,
 		})
 	}
 

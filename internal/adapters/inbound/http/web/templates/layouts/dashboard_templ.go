@@ -10,7 +10,7 @@ package layouts
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import "sonnda-api/internal/adapters/inbound/http/web/templates/components"
+import "sonnda-api/internal/adapters/inbound/http/web/templates/components/layout"
 
 type DashboardLayoutProps struct {
 	Title string
@@ -52,13 +52,11 @@ func Dashboard(p DashboardLayoutProps) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = components.Header(components.HeaderProps{
-				AppName:        "Sonnda",
-				UserName:       p.UserName,
-				Role:           p.Role,
-				Breadcrumb:     "Dashboard",
-				ShowNewPatient: true,
-				NewPatientHref: "/patients/new",
+			templ_7745c5c3_Err = layoutcomponents.AppHeader(layoutcomponents.HeaderProps{
+				AppName:    "Sonnda",
+				UserName:   p.UserName,
+				Role:       p.Role,
+				Breadcrumb: "Dashboard",
 			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err

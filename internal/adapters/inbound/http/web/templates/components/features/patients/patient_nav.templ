@@ -1,5 +1,5 @@
 // internal/adapters/inbound/http/web/assets/templates/components/patient_nav.templ
-package components
+package patientcomponents
 
 type PatientNavProps struct {
 	PatientID string
@@ -9,10 +9,10 @@ type PatientNavProps struct {
 templ PatientNav(p PatientNavProps) {
 	<nav class="flex flex-wrap items-center gap-2" aria-label="Seções do paciente">
 		<div class="inline-flex flex-wrap gap-1 rounded-xl border border-outline bg-surface-container-low p-1">
-			<a class={ navItemClass(p.Active, "summary") } href={"/patients/" + p.PatientID}>Visão geral</a>
-			<a class={ navItemClass(p.Active, "exams") } href={"/patients/" + p.PatientID + "/exams"}>Exames</a>
-			<a class={ navItemClass(p.Active, "meds") } href={"/patients/" + p.PatientID + "/meds"}>Medicações</a>
-			<a class={ navItemClass(p.Active, "visits") } href={"/patients/" + p.PatientID + "/visits"}>Consultas</a>
+			<a class={ navItemClass(p.Active, "summary") } href={ "/patients/" + p.PatientID }>Visão geral</a>
+			<a class={ navItemClass(p.Active, "exams") } href={ "/patients/" + p.PatientID + "/exams" }>Exames</a>
+			<a class={ navItemClass(p.Active, "meds") } href={ "/patients/" + p.PatientID + "/meds" }>Medicações</a>
+			<a class={ navItemClass(p.Active, "visits") } href={ "/patients/" + p.PatientID + "/visits" }>Consultas</a>
 		</div>
 	</nav>
 }

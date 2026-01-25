@@ -1,7 +1,7 @@
 // internal/adapters/inbound/http/web/assets/templates/layouts/dashboard.templ
 package layouts
 
-import "sonnda-api/internal/adapters/inbound/http/web/templates/components"
+import "sonnda-api/internal/adapters/inbound/http/web/templates/components/layout"
 
 type DashboardLayoutProps struct {
 	Title string
@@ -12,13 +12,11 @@ type DashboardLayoutProps struct {
 
 templ Dashboard(p DashboardLayoutProps) {
 	@App(p.Title) {
-		@components.Header(components.HeaderProps{
-			AppName:        "Sonnda",
-			UserName:       p.UserName,
-			Role:           p.Role,
-			Breadcrumb:     "Dashboard",
-			ShowNewPatient: true,
-			NewPatientHref: "/patients/new",
+		@layoutcomponents.AppHeader(layoutcomponents.HeaderProps{
+			AppName:    "Sonnda",
+			UserName:   p.UserName,
+			Role:       p.Role,
+			Breadcrumb: "Dashboard",
 		})
 		<main class="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
 			{ children... }

@@ -2,14 +2,14 @@
 package pages
 
 import (
-	"sonnda-api/internal/adapters/inbound/http/web/templates/components"
+	"sonnda-api/internal/adapters/inbound/http/web/templates/components/features/patients"
 	"sonnda-api/internal/adapters/inbound/http/web/templates/layouts"
 )
 
 type HomeViewModel struct {
 	UserName string
 	Role     string
-	Patients []components.PatientItem
+	Patients []patientcomponents.PatientItem
 }
 
 templ Home(vm HomeViewModel) {
@@ -18,6 +18,6 @@ templ Home(vm HomeViewModel) {
 		UserName: vm.UserName,
 		Role:     vm.Role,
 	}) {
-		@components.PatientList(vm.Patients)
+		@patientcomponents.PatientList(vm.Patients)
 	}
 }

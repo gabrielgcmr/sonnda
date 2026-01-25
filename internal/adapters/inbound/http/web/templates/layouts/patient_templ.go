@@ -10,7 +10,8 @@ package layouts
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import "sonnda-api/internal/adapters/inbound/http/web/templates/components"
+import "sonnda-api/internal/adapters/inbound/http/web/templates/components/features/patients"
+import "sonnda-api/internal/adapters/inbound/http/web/templates/components/layout"
 
 type PatientLayoutProps struct {
 	Title string
@@ -58,12 +59,11 @@ func PatientWorkspace(p PatientLayoutProps) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = components.Header(components.HeaderProps{
-				AppName:        "Sonnda",
-				UserName:       p.UserName,
-				Role:           p.Role,
-				Breadcrumb:     "Dashboard / Paciente",
-				ShowNewPatient: false,
+			templ_7745c5c3_Err = layoutcomponents.AppHeader(layoutcomponents.HeaderProps{
+				AppName:    "Sonnda",
+				UserName:   p.UserName,
+				Role:       p.Role,
+				Breadcrumb: "Dashboard / Paciente",
 			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -72,7 +72,7 @@ func PatientWorkspace(p PatientLayoutProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = components.PatientHeader(components.PatientHeaderProps{
+			templ_7745c5c3_Err = patientcomponents.PatientHeader(patientcomponents.PatientHeaderProps{
 				PatientID:   p.PatientID,
 				PatientName: p.PatientName,
 				Subtitle:    p.PatientMeta,
@@ -80,7 +80,7 @@ func PatientWorkspace(p PatientLayoutProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = components.PatientNav(components.PatientNavProps{
+			templ_7745c5c3_Err = patientcomponents.PatientNav(patientcomponents.PatientNavProps{
 				PatientID: p.PatientID,
 				Active:    p.ActiveSection,
 			}).Render(ctx, templ_7745c5c3_Buffer)

@@ -11,14 +11,14 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
-	"sonnda-api/internal/adapters/inbound/http/web/templates/components"
+	"sonnda-api/internal/adapters/inbound/http/web/templates/components/features/patients"
 	"sonnda-api/internal/adapters/inbound/http/web/templates/layouts"
 )
 
 type HomeViewModel struct {
 	UserName string
 	Role     string
-	Patients []components.PatientItem
+	Patients []patientcomponents.PatientItem
 }
 
 func Home(vm HomeViewModel) templ.Component {
@@ -54,7 +54,7 @@ func Home(vm HomeViewModel) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = components.PatientList(vm.Patients).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = patientcomponents.PatientList(vm.Patients).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
