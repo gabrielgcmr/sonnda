@@ -1,7 +1,7 @@
 <!-- README.md -->
-# Sonnda API
+# Sonnda
 
-API backend da plataforma Sonnda, voltada para atencao primaria a saude e para organizacao do historico clinico centrado no paciente.
+Server da plataforma Sonnda, voltada para atencao primaria a saude e para organizacao do historico clinico centrado no paciente.
 
 A Sonnda resolve um problema recorrente na pratica clinica: pacientes precisam carregar pilhas de exames, perdem documentos e o cuidado fica fragmentado. A proposta e permitir que o paciente armazene e compartilhe seu historico (sem depender de papel/WhatsApp), e que profissionais de saude consigam visualizar e evoluir o paciente com base em um historico longitudinal acessivel via web.
 
@@ -19,11 +19,10 @@ A Sonnda resolve um problema recorrente na pratica clinica: pacientes precisam c
 
 ## Sumario
 
-- [Sonnda API](#sonnda-api)
+- [Sonnda](#sonnda)
   - [O que este repositorio entrega (MVP)](#o-que-este-repositorio-entrega-mvp)
   - [Sumario](#sumario)
   - [Arquitetura](#arquitetura)
-  - [Autorizacao (fora do MVP)](#autorizacao-fora-do-mvp)
   - [Stack Tecnologico](#stack-tecnologico)
   - [Logging](#logging)
   - [Endpoints](#endpoints)
@@ -40,21 +39,11 @@ A arquitetura foi simplificada em camadas diretas, com baixo acoplamento:
 
 - **Domain (`internal/domain`)**: modelos de dominio e regras de negocio (agnostico de infraestrutura e HTTP).
 - **App (`internal/app`)**: services de aplicacao (orquestracao) e contrato de erros via `internal/app/apperr`.
-- **Ports (`internal/domain/ports`)**: interfaces do dominio (integrations e repositories).
 - **Adapters (`internal/adapters`)**:
-  - **Inbound HTTP (`internal/adapters/inbound/http`)**: rotas, handlers e middlewares.
+  - **Inbound (`internal/adapters/inbound/http`)**: protocolo http
+    - **Api (`internal/adapters/inbound/http/api`)**: rotas, handlers e middlewares para API.
+    - **Web (`internal/adapters/inbound/http/web`)**: rotas, handlers e middlewares para WEB.
   - **Outbound (`internal/adapters/outbound`)**: implementacoes concretas (integrations e persistence).
-
----
-
-## Autorizacao (fora do MVP)
-
-RBAC e ReBAC **foram retirados do MVP**. Nesta fase, o foco e entregar o fluxo principal de cadastro, upload e extracao; a API aplica apenas:
-
-- autenticacao (token Firebase);
-- registro no banco (middleware de usuario registrado).
-
-O desenho de autorizacao (RBAC por acoes + ReBAC por relacionamento) fica documentado para uma fase posterior em: `docs/architecture/access-control.md`.
 
 ---
 
@@ -64,7 +53,7 @@ O desenho de autorizacao (RBAC por acoes + ReBAC por relacionamento) fica docume
 - **Banco de dados:** PostgreSQL (gerenciado via Supabase)
 - **ORM / Driver:** `pgx` / `pgxpool`
 - **Processamento de documentos:** Google Cloud Document AI
-- **Autenticacao:** Firebase Auth (idToken)
+- **Autenticacao:** Firebase Auth (idToken) cookie
 - **Containerizacao:** Docker / docker-compose
 - **Arquitetura:** camadas simples (domain/app/adapters)
 - **Web (UI interna):** `templ` + Tailwind CSS + HTMX (arquivos em `internal/adapters/inbound/http/web`)
@@ -86,7 +75,7 @@ make dev
 ```
 
 ---
-
+<!-- TODO: Remover ending points e usar openapi -->
 ## Endpoints
 
 Indice de rotas expostas em `internal/adapters/inbound/http/api/router.go`.
@@ -156,7 +145,7 @@ Resumo da estrutura atual:
 │   │   │       │   ├── handlers/   # Web handlers
 │   │   │       │   ├── middleware/ # Web middleware
 │   │   │       │   ├── public/     # Static assets (CSS, JS, images)
-│   │   │       │   ├── styles/     # Tailwind config e theme
+│   │   │       │   ├── styles/     # Tailwind config, theme, fonts
 │   │   │       │   └── templates/  # Templ components e páginas
 │   │   │       │       ├── components/
 │   │   │       │       ├── layouts/

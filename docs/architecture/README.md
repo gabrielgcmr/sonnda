@@ -1,3 +1,4 @@
+<!-- docs/architecture/README.md -->
 # Architecture
 
 Descrição da arquitetura da Sonnda API em camadas, fluxos principais e decisões relevantes.
@@ -9,22 +10,23 @@ As decisões não óbvias (o *porquê*) são registradas separadamente em ADRs.
 
 ## Visão geral
 
-O backend segue um modelo em camadas simples, com baixo acoplamento e separação clara de responsabilidades, inspirado em Clean Architecture, mas aplicado de forma pragmática e idiomática em Go.
+O backend segue um modelo em camadas simples, com baixo acoplamento e separação clara de responsabilidades, aplicado de forma pragmática em Go.
 
 - **Domain (`internal/domain`)**  
-  Modelos do domínio, regras de negócio e invariantes.
+  Modelos do domínio, regras de negócio e invariantes.  
+  - Models em `internal/domain/model`; ports em `internal/domain/ports`.
 
 - **App (`internal/app`)**  
-  Services de aplicação, políticas de acesso e orquestração de fluxos.  
-  As portas (interfaces) vivem em `internal/app/ports` (separadas em `inbound` e `outbound`).
-  Não há use cases individuais; os **Services representam o boundary da aplicação**.
+  Orquestração e cross-cutting concerns.  
+  - Use cases em `internal/app/usecase`; services em `internal/app/services`.  
+  - Erros centralizados em `internal/app/apperr`.  
+  - Config/bootstrapping em `internal/app/config` e `internal/app/bootstrap`.  
+  - Observabilidade em `internal/app/observability` (slog, logger por request).
 
-- **HTTP (`internal/http`)**  
-  Rotas, handlers e middlewares.  
-  Responsável por autenticação, validação de payloads e exposição controlada de dados.
-
-- **Infrastructure (`internal/infrastructure`)**  
-  Integrações externas (auth, persistence, storage, document AI, etc.).
+- **Adapters (`internal/adapters`)**  
+  Implementações concretas e adapters de protocolo.  
+  - **Inbound (`internal/adapters/inbound/http`)**: HTTP (API REST + Web Templ/HTMX), rotas, handlers e middlewares.  
+  - **Outbound (`internal/adapters/outbound`)**: persistência (sqlc/pgx), integrações externas (Firebase Auth, GCS, Document AI).
 
 Essas camadas representam **limites conceituais**, não apenas organização de pastas.
 
@@ -40,14 +42,14 @@ Essas camadas representam **limites conceituais**, não apenas organização de 
    - faz parsing de parâmetros  
    - monta o input do service  
 
-3) **Service (camada App)**  
-   - executa regras de negócio  
-   - aplica políticas de acesso  
-   - coordena chamadas a repositórios e serviços externos  
+3) **Service / Use case (camada App)**  
+  - executa regras de negócio  
+  - aplica políticas de acesso  
+  - coordena chamadas a repositórios e serviços externos  
 
-4) **Repository (Infrastructure)**  
-   - executa queries via sqlc/pgx  
-   - persiste ou consulta dados  
+4) **Repository (Outbound)**  
+  - executa queries via sqlc/pgx  
+  - persiste ou consulta dados  
 
 5) **Resposta HTTP**  
    - erros são normalizdos para um contrato estável via `internal/app/apperr`
@@ -57,17 +59,17 @@ Essas camadas representam **limites conceituais**, não apenas organização de 
 
 ## Persistência
 
-- SQL definido em `internal/infrastructure/persistence/sqlc/sql`.
-- O `sqlc` gera código em `internal/infrastructure/persistence/sqlc/generated`.
-- Repositórios em `internal/infrastructure/persistence/repository` encapsulam o acesso ao banco.
-- O banco principal é PostgreSQL (Supabase).
-- Soft delete utiliza o campo `deleted_at`; consultas filtram `deleted_at IS NULL`.
+- SQL definido em `internal/adapters/outbound/persistence/sqlc/sql`.
+- `sqlc` gera código em `internal/adapters/outbound/persistence/sqlc/generated`.
+- Repositórios em `internal/adapters/outbound/persistence/repository` encapsulam o acesso ao banco.
+- Banco principal: PostgreSQL (Supabase).
+- Soft delete usa `deleted_at`; consultas filtram `deleted_at IS NULL`.
 
 ---
 
 ## Observabilidade
 
-- Logger baseado em `log/slog` (`internal/app/config/observability`).
+- Logger baseado em `log/slog` (`internal/app/observability`).
 - Variáveis:
   - `LOG_LEVEL`
   - `LOG_FORMAT`
@@ -79,15 +81,15 @@ Essas camadas representam **limites conceituais**, não apenas organização de 
 
 - Variáveis de ambiente definidas em `.env` (ver `.env.example`).
 - `APP_ENV` define o ambiente (`dev | prod`).
-- Configurações são carregadas na inicialização da aplicação.
+- Configurações carregadas na inicialização da aplicação (`internal/app/config`).
 
 ---
 
 ## Bootstrap e rotas
 
-- O bootstrap faz o wiring (repos, services e handlers) em `internal/app/bootstrap`.
-- As rotas são definidas em `internal/http/api/router.go`.
-- Os níveis de acesso incluem:
+- Bootstrap faz o wiring (repos, services e handlers) em `internal/app/bootstrap`.
+- As rotas HTTP vivem em `internal/adapters/inbound/http/router.go` (API + Web).  
+- Níveis de acesso:
   - público
   - autenticado
   - registrado

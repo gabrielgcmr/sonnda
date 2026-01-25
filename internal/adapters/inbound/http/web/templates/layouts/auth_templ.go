@@ -51,7 +51,7 @@ func AuthPage(title string, firebaseConfig any) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " <script>\r\n\t\t\t(function () {\r\n\t\t\t\tconst el = document.getElementById(\"firebase-config\");\r\n\t\t\t\tif (!el) return;\r\n\t\t\t\ttry {\r\n\t\t\t\t\twindow.firebaseConfig = JSON.parse(el.textContent || \"{}\");\r\n\t\t\t\t} catch (e) {\r\n\t\t\t\t\tconsole.error(\"Failed to parse firebase config JSON\", e);\r\n\t\t\t\t}\r\n\t\t\t})();\r\n\t\t</script> <script type=\"module\" src=\"/assets/js/firebase-auth.js\"></script> <main class=\"min-h-dvh grid place-items-center p-6\"><div class=\"w-full max-w-md\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " <script>\r\n\t\t\t(function () {\r\n\t\t\t\tconst el = document.getElementById(\"firebase-config\");\r\n\t\t\t\tif (!el) return;\r\n\t\t\t\ttry {\r\n\t\t\t\t\twindow.firebaseConfig = JSON.parse(el.textContent || \"{}\");\r\n\t\t\t\t} catch (e) {\r\n\t\t\t\t\tconsole.error(\"Failed to parse firebase config JSON\", e);\r\n\t\t\t\t}\r\n\t\t\t})();\r\n\t\t</script> <script type=\"module\" src=\"/static/js/firebase-auth.js\"></script> <main class=\"min-h-dvh grid place-items-center p-6\"><div class=\"w-full max-w-md\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

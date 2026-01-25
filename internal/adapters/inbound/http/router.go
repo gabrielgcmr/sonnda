@@ -50,9 +50,9 @@ func NewRouter(infra Infra, deps Deps) *gin.Engine {
 		panic("erro ao carregar filesystem: " + err.Error())
 	}
 
-	// 2. Servindo os arquivos estáticos via rota /assets
+	// 2. Servindo os arquivos estáticos via rota /static
 	// Agora ele lê do binário, não do disco
-	r.StaticFS("/assets", http.FS(bundle.Public))
+	r.StaticFS("/static", http.FS(bundle.Public))
 
 	// 3. Favicon Simplificado
 	// Como o favicon está dentro de public/, você pode apenas redirecionar ou servir direto

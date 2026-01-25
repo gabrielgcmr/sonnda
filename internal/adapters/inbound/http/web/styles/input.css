@@ -32,6 +32,15 @@
   --color-surface-container-highest: var(--md-sys-color-surface-container-highest);
 }
 
+@layer properties;
+:root {
+  --gradient-brand-default: linear-gradient(
+    90deg,
+    var(--md-sys-color-primary) 0%,
+    var(--md-sys-color-tertiary) 100%
+  );
+}
+
 @layer components {
   .btn {
     @apply 

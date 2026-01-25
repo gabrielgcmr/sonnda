@@ -47,8 +47,8 @@ make dev-web
 ```
 
 Observacoes (WEB):
-- Tailwind usa `tools/tailwindcss.exe` e gera `internal/adapters/inbound/http/web/assets/static/css/app.css` a partir de `internal/adapters/inbound/http/web/assets/static/css/input.css`.
-- `templ` usa os arquivos `.templ` em `internal/adapters/inbound/http/web/assets/templates/` e gera `*_templ.go` (arquivos gerados, nao editar).
+- Tailwind usa `tools/tailwindcss.exe` e gera `internal/adapters/inbound/http/web/public/css/app.css` a partir de `internal/adapters/inbound/http/web/styles/input.css` (gerado, nao editar o output).
+- `templ` usa os arquivos `.templ` em `internal/adapters/inbound/http/web/templates/` e gera os `*_templ.go` (arquivos gerados, nao editar).
 
 Alternativas (mais controle):
 - **Simple**: `templ generate` (uma vez) + `make dev`
@@ -75,12 +75,12 @@ make sqlc-generate
 
 ## Migracoes
 
-As migracoes SQL vivem em `internal/infrastructure/persistence/sqlc/sql/migrations/`.
+As migracoes SQL vivem em `internal/adapters/outbound/persistence/sqlc/sql/migrations/`.
 
 Se voce ja tinha um banco criado antes da mudanca de `users.role` -> `users.account_type`
 e da adicao de `professionals.kind`, aplique a migracao:
 
-- `internal/infrastructure/persistence/sqlc/sql/migrations/0004_account_type_and_professional_kind.sql`
+- `internal/adapters/outbound/persistence/sqlc/sql/migrations/0004_account_type_and_professional_kind.sql`
 
 ## 5) Testes
 
