@@ -1,5 +1,5 @@
 // internal/adapters/inbound/http/shared/registration/core.go
-package registration
+package register
 
 import (
 	"context"

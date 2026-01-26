@@ -22,6 +22,8 @@ type FirebaseAuthService struct {
 	projectID string
 }
 
+var _ ports.IdentityService = (*FirebaseAuthService)(nil)
+
 func NewFirebaseAuthService(ctx context.Context) (*FirebaseAuthService, error) {
 	projectID := strings.TrimSpace(os.Getenv("FIREBASE_PROJECT_ID"))
 	if projectID == "" {
@@ -52,8 +54,6 @@ func NewFirebaseAuthService(ctx context.Context) (*FirebaseAuthService, error) {
 
 	return &FirebaseAuthService{client: authClient, projectID: projectID}, nil
 }
-
-var _ ports.IdentityService = (*FirebaseAuthService)(nil)
 
 func (s *FirebaseAuthService) ProviderName() string {
 	return "firebase"

@@ -4,7 +4,7 @@ package middleware
 import (
 	"sonnda-api/internal/adapters/inbound/http/api/apierr"
 	"sonnda-api/internal/adapters/inbound/http/shared/httpctx"
-	"sonnda-api/internal/adapters/inbound/http/shared/registration"
+	"sonnda-api/internal/adapters/inbound/http/shared/register"
 	"sonnda-api/internal/app/apperr"
 
 	"github.com/gin-gonic/gin"
@@ -15,10 +15,10 @@ import (
 // - garantir que exista um User local associado à Identity
 // - responder com JSON (contrato da API) quando não existir
 type RegistrationMiddleware struct {
-	core *registration.Core
+	core *register.Core
 }
 
-func NewRegistrationMiddleware(core *registration.Core) *RegistrationMiddleware {
+func NewRegistrationMiddleware(core *register.Core) *RegistrationMiddleware {
 	return &RegistrationMiddleware{core: core}
 }
 
