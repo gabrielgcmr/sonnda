@@ -53,14 +53,15 @@ func main() {
 	})
 	slog.SetDefault(appLogger)
 
-	// 5. Conectar db (Supabase via pgxpool)
+	// 5. Persistence
+	// 5.1 Conectar db (Supabase via pgxpool)
 	dbClient, err := db.NewClient(config.SupabaseConfig(*cfg))
 	if err != nil {
 		log.Fatalf("falha ao criar client do supabase: %v", err)
 	}
 	defer dbClient.Close()
 
-	//5.1 Redis Client (para sessões e cache)
+	//5.2 Redis Client (para sessões e cache)
 	redisClient, err := redisstore.NewClient()
 	if err != nil {
 		log.Fatalf("falha ao conectar ao Redis: %v", err)
