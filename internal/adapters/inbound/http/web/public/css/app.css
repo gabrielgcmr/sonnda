@@ -196,13 +196,6 @@
     --color-on-primary: var(--md-sys-color-on-primary);
     --color-secondary: var(--md-sys-color-secondary);
     --color-error: var(--md-sys-color-error);
-    --color-on-error: var(--md-sys-color-on-error);
-    --color-warning: var(--md-sys-color-warning);
-    --color-on-warning: var(--md-sys-color-on-warning);
-    --color-success: var(--md-sys-color-success);
-    --color-on-success: var(--md-sys-color-on-success);
-    --color-info: var(--md-sys-color-info);
-    --color-on-info: var(--md-sys-color-on-info);
     --color-surface: var(--md-sys-color-surface);
     --color-on-surface: var(--md-sys-color-on-surface);
     --color-surface-variant: var(--md-sys-color-surface-variant);
@@ -424,9 +417,6 @@
   }
   .mb-4 {
     margin-bottom: calc(var(--spacing) * 4);
-  }
-  .mb-8 {
-    margin-bottom: calc(var(--spacing) * 8);
   }
   .ml-auto {
     margin-left: auto;
@@ -767,10 +757,6 @@
   .text-2xl {
     font-size: var(--text-2xl);
     line-height: var(--tw-leading, var(--text-2xl--line-height));
-  }
-  .text-3xl {
-    font-size: var(--text-3xl);
-    line-height: var(--tw-leading, var(--text-3xl--line-height));
   }
   .text-base {
     font-size: var(--text-base);
