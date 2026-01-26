@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	repoerr "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/data/postgres/repository"
+	repoerr "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres/repository"
 	"github.com/gabrielgcmr/sonnda/internal/app/apperr"
 )
 

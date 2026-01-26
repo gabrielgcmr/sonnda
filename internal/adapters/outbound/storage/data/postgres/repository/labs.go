@@ -4,8 +4,8 @@ package repository
 import (
 	"context"
 
-	"github.com/gabrielgcmr/sonnda/internal/adapters/outbound/data/postgres/repository/db"
-	labsqlc "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/data/postgres/sqlc/generated/lab"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres/repository/db"
+	labsqlc "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres/sqlc/generated/lab"
 	"github.com/gabrielgcmr/sonnda/internal/domain/model/labs"
 	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
 

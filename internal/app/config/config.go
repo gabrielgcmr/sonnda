@@ -4,9 +4,10 @@ package config
 import (
 	"fmt"
 	"os"
-	"github.com/gabrielgcmr/sonnda/internal/adapters/outbound/data/postgres/repository/db"
 	"strings"
 	"time"
+
+	"github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres/repository/db"
 )
 
 type Config struct {

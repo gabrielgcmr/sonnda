@@ -1,9 +1,9 @@
 # Makefile
 .PHONY: run build dev dev-web tailwind tailwind-watch sqlc-check sqlc docker-up docker-up-build docker-logs docker-down docker-restart clean db-migrate test help
 
-APP_NAME := sonnda-
+APP_NAME := sonnda
 MAIN     := ./cmd/server
-TAILWIND_BIN   := tools/tailwindcss.exe
+TAILWIND_BIN   := tools/bin/tailwindcss
 TAILWIND_INPUT := internal/adapters/inbound/http/web/styles/input.css
 TAILWIND_OUTPUT := internal/adapters/inbound/http/web/public/css/app.css
 

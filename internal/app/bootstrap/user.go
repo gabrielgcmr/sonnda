@@ -9,8 +9,8 @@ import (
 	usersvc "github.com/gabrielgcmr/sonnda/internal/app/services/user"
 	registrationuc "github.com/gabrielgcmr/sonnda/internal/app/usecase/registration"
 
-	repo "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/data/postgres/repository"
-	"github.com/gabrielgcmr/sonnda/internal/adapters/outbound/data/postgres/repository/db"
+	repo "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres/repository"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres/repository/db"
 	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
 )
 

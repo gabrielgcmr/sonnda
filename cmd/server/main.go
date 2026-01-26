@@ -25,9 +25,9 @@ import (
 	webmw "github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/web/middleware"
 	"github.com/gabrielgcmr/sonnda/internal/adapters/outbound/ai"
 	authinfra "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/auth"
-	"github.com/gabrielgcmr/sonnda/internal/adapters/outbound/data/postgres/repository/db"
-	redisstore "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/data/redis"
-	storage "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/file"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres/repository/db"
+	redisstore "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/redis"
+	storage "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/file"
 )
 
 func main() {

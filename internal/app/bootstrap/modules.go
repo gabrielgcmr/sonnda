@@ -3,7 +3,7 @@
 package bootstrap
 
 import (
-	"github.com/gabrielgcmr/sonnda/internal/adapters/outbound/data/postgres/repository/db"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres/repository/db"
 	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
 )
 

@@ -1,12 +1,13 @@
+[tool.air]
 root = "."
 tmp_dir = "tmp"
 
-[build]
+[tool.air.build]
   cmd = "go build -o ./tmp/main.exe ./cmd/server"
   entrypoint = ["./tmp/main.exe"]
   delay = 200
   include_ext = ["go"]
   exclude_dir = ["tmp", "vendor", "node_modules"]
 
-[log]
+[tool.air.log]
   time = true

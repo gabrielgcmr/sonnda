@@ -9,7 +9,7 @@ import (
 	usersvc "github.com/gabrielgcmr/sonnda/internal/app/services/user"
 	"github.com/gabrielgcmr/sonnda/internal/domain/model/user"
 	auth "github.com/gabrielgcmr/sonnda/internal/domain/ports/auth"
-	"github.com/gabrielgcmr/sonnda/internal/domain/ports/data"
+	"github.com/gabrielgcmr/sonnda/internal/domain/ports/storage/data"
 )
 
 type UseCase interface {

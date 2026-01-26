@@ -1,4 +1,4 @@
-// internal/adapters/outbound/data/postgres/repository/user.go
+// internal/adapters/outbound/storage/data/postgres/repository/user.go
 package repository
 
 import (
@@ -7,8 +7,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/gabrielgcmr/sonnda/internal/adapters/outbound/data/postgres/repository/db"
-	usersqlc "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/data/postgres/sqlc/generated/user"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres/repository/db"
+	usersqlc "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres/sqlc/generated/user"
 	"github.com/gabrielgcmr/sonnda/internal/domain/model/user"
 	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
 )

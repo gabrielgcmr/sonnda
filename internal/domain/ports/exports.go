@@ -4,8 +4,8 @@ package ports
 import (
 	"github.com/gabrielgcmr/sonnda/internal/domain/ports/ai"
 	"github.com/gabrielgcmr/sonnda/internal/domain/ports/auth"
-	"github.com/gabrielgcmr/sonnda/internal/domain/ports/data"
-	"github.com/gabrielgcmr/sonnda/internal/domain/ports/file"
+	"github.com/gabrielgcmr/sonnda/internal/domain/ports/storage/data"
+	"github.com/gabrielgcmr/sonnda/internal/domain/ports/storage/file"
 )
 
 type (

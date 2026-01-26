@@ -5,8 +5,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/gabrielgcmr/sonnda/internal/adapters/outbound/data/postgres/repository/db"
-	patientaccesssqlc "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/data/postgres/sqlc/generated/patientaccess"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres/repository/db"
+	patientaccesssqlc "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres/sqlc/generated/patientaccess"
 	"github.com/gabrielgcmr/sonnda/internal/domain/model/patientaccess"
 	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
 

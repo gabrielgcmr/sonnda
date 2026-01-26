@@ -20,5 +20,6 @@ postgres-data/
 samples/
 secrets/
 tmp/
+tools/
 
 

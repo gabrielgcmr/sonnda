@@ -9,6 +9,7 @@ Guia rapido para subir a API localmente.
 - Air (hot reload): https://github.com/air-verse/air
 - sqlc (opcional, para gerar queries): https://sqlc.dev
 - templ (templates do WEB): `go install github.com/a-h/templ/cmd/templ@v0.3.977`
+- Tailwind standalone para seu sitema operacional
 
 ## 1) Variaveis de ambiente
 Copie o arquivo `.env.example` para `.env` e ajuste os valores:
@@ -47,7 +48,8 @@ make dev-web
 ```
 
 Observacoes (WEB):
-- Tailwind usa `tools/tailwindcss.exe` e gera `internal/adapters/inbound/http/web/public/css/app.css` a partir de `internal/adapters/inbound/http/web/styles/input.css` (gerado, nao editar o output).
+- Tailwind usa `tools/tailwindcss` 
+- Gera `internal/adapters/inbound/http/web/public/css/app.css` a partir de `internal/adapters/inbound/http/web/styles/input.css` (gerado, nao editar o output).
 - `templ` usa os arquivos `.templ` em `internal/adapters/inbound/http/web/templates/` e gera os `*_templ.go` (arquivos gerados, nao editar).
 
 Alternativas (mais controle):
@@ -80,7 +82,7 @@ As migracoes SQL vivem em `internal/adapters/outbound/persistence/postgres/sqlc/
 Se voce ja tinha um banco criado antes da mudanca de `users.role` -> `users.account_type`
 e da adicao de `professionals.kind`, aplique a migracao:
 
-- `internal/adapters/outbound/persistence/postgres/sqlc/sql/migrations/0004_account_type_and_professional_kind.sql`
+- `internal/adapters/outbound/data/postgres/sqlc/sql/migrations/0004_account_type_and_professional_kind.sql`
 
 ## 5) Testes
 
