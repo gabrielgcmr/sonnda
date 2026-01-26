@@ -26,7 +26,8 @@ import (
 	authinfra "sonnda-api/internal/adapters/outbound/integrations/auth"
 	"sonnda-api/internal/adapters/outbound/integrations/documentai"
 	"sonnda-api/internal/adapters/outbound/integrations/storage"
-	"sonnda-api/internal/adapters/outbound/persistence/repository/db"
+	"sonnda-api/internal/adapters/outbound/persistence/postgres/repository/db"
+	redisstore "sonnda-api/internal/adapters/outbound/persistence/redis"
 )
 
 func main() {
@@ -58,6 +59,14 @@ func main() {
 		log.Fatalf("falha ao criar client do supabase: %v", err)
 	}
 	defer dbClient.Close()
+
+	//5.1 Redis Client (para sessões e cache)
+	redisClient, err := redisstore.NewClient()
+	if err != nil {
+		log.Fatalf("falha ao conectar ao Redis: %v", err)
+	}
+	defer redisClient.Close()
+	slog.Info("Redis conectado com sucesso")
 
 	//6. Conectando outros servicos
 	//6.1 Storage Service (GCS)
