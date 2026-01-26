@@ -23,18 +23,18 @@ Nesse modelo, existem dois tipos de artefatos fundamentalmente diferentes:
 
 ```
 /templates   → templates SSR (.templ), componentes de layout e features
-/public      → arquivos estáticos (css, js, images, fonts)
+/static      → arquivos estáticos (css, js, images, fonts)
 ```
 
 * Arquivos em `/templates` **não devem** ser servidos diretamente ao browser.
-* Arquivos em `/public` **devem** ser servidos diretamente.
+* Arquivos em `/static` **devem** ser servidos diretamente.
 
 ### Rota pública padronizada
 
 Os arquivos estáticos serão expostos via URL:
 
 ```
-/static/*  → mapeado para /public/*
+/static/*  → mapeado para /static/*
 ```
 
 O nome da rota (`/static`) é uma decisão de infraestrutura e **não implica** na existência de uma pasta `assets/` no código.

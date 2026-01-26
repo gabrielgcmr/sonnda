@@ -44,7 +44,7 @@ make dev-web
 
 Observacoes (WEB):
 - Tailwind usa `tools/tailwindcss` 
-- Gera `internal/adapters/inbound/http/web/public/css/app.css` a partir de `internal/adapters/inbound/http/web/styles/input.css` (gerado, nao editar o output).
+- Gera `internal/adapters/inbound/http/web/static/css/app.css` a partir de `internal/adapters/inbound/http/web/styles/input.css` (gerado, nao editar o output).
 - `templ` usa os arquivos `.templ` em `internal/adapters/inbound/http/web/templates/` e gera os `*_templ.go` (arquivos gerados, nao editar).
 
 Alternativas (mais controle):

@@ -17,7 +17,7 @@ TEMPL        := $(TOOLS_DIR)/templ
 
 # Caminhos do Projeto (Preservados do arquivo original)
 TAILWIND_INPUT  := internal/adapters/inbound/http/web/styles/input.css
-TAILWIND_OUTPUT := internal/adapters/inbound/http/web/public/css/app.css
+TAILWIND_OUTPUT := internal/adapters/inbound/http/web/static/css/app.css
 SQLC_CONF       := internal/adapters/outbound/storage/postgres/sqlc/sqlc.yaml
 
 # Detecção de OS/Arch para download dos binários

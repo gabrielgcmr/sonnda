@@ -27,8 +27,8 @@ Simple instructions for coding agents working on this repo.
 - Web:
   - templ + Tailwind CSS v4 + HTMX 
     - templates em `internal/adapters/inbound/http/web/templates/`
-    - statics em `internal/adapters/inbound/http/web/public/`
-    - **CSS generation**: Tailwind v4 (source: `internal/adapters/inbound/http/web/styles/`, output: `public/css/app.css`)
+    - statics em `internal/adapters/inbound/http/web/static/`
+    - **CSS generation**: Tailwind v4 (source: `internal/adapters/inbound/http/web/styles/`, output: `static/css/app.css`)
 - Mobile (Not in this repo):
   - React Native + Expo
   - 
