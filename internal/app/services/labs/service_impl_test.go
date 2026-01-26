@@ -6,7 +6,7 @@ import (
 	"errors"
 	"testing"
 
-	repoerr "sonnda-api/internal/adapters/outbound/persistence/postgres/repository"
+	repoerr "sonnda-api/internal/adapters/outbound/data/postgres/repository"
 	"sonnda-api/internal/app/apperr"
 	"sonnda-api/internal/domain/model/labs"
 	"sonnda-api/internal/domain/model/patient"
@@ -21,8 +21,8 @@ type fakePatientRepo struct {
 
 func (r *fakePatientRepo) Create(ctx context.Context, p *patient.Patient) error { panic("unused") }
 func (r *fakePatientRepo) Update(ctx context.Context, p *patient.Patient) error { panic("unused") }
-func (r *fakePatientRepo) SoftDelete(ctx context.Context, id uuid.UUID) error  { panic("unused") }
-func (r *fakePatientRepo) HardDelete(ctx context.Context, id uuid.UUID) error  { panic("unused") }
+func (r *fakePatientRepo) SoftDelete(ctx context.Context, id uuid.UUID) error   { panic("unused") }
+func (r *fakePatientRepo) HardDelete(ctx context.Context, id uuid.UUID) error   { panic("unused") }
 func (r *fakePatientRepo) FindByCPF(ctx context.Context, cpf string) (*patient.Patient, error) {
 	panic("unused")
 }
@@ -123,4 +123,3 @@ func TestList_LabsRepoError_ReturnsInfraDatabaseError(t *testing.T) {
 		t.Fatalf("expected INFRA_DATABASE_ERROR, got %s", appErr.Code)
 	}
 }
-

@@ -4,12 +4,11 @@ package bootstrap
 
 import (
 	labshandler "sonnda-api/internal/adapters/inbound/http/api/handlers"
-	repo "sonnda-api/internal/adapters/outbound/persistence/postgres/repository"
-	"sonnda-api/internal/adapters/outbound/persistence/postgres/repository/db"
+	repo "sonnda-api/internal/adapters/outbound/data/postgres/repository"
+	"sonnda-api/internal/adapters/outbound/data/postgres/repository/db"
 	labsvc "sonnda-api/internal/app/services/labs"
 	labsuc "sonnda-api/internal/app/usecase/labs"
-	"sonnda-api/internal/domain/ports/integration"
-	"sonnda-api/internal/domain/ports/integration/documentai"
+	"sonnda-api/internal/domain/ports"
 )
 
 type LabsModule struct {
@@ -18,8 +17,8 @@ type LabsModule struct {
 
 func NewLabsModule(
 	dbClient *db.Client,
-	docExtractor documentai.DocumentExtractor,
-	storage integration.StorageService,
+	docExtractor ports.DocumentExtractorService,
+	storage ports.FileStorageService,
 ) *LabsModule {
 	patientRepo := repo.NewPatientRepository(dbClient)
 	labsRepo := repo.NewLabsRepository(dbClient)

@@ -9,7 +9,7 @@ import (
 
 	"sonnda-api/internal/app/apperr"
 	"sonnda-api/internal/domain/model/identity"
-	external "sonnda-api/internal/domain/ports/integration"
+	"sonnda-api/internal/domain/ports"
 )
 
 // Cookie de sessão do browser (seu nome atual).
@@ -27,10 +27,10 @@ var (
 // Não escreve resposta.
 // Não aborta request.
 type Core struct {
-	identityService external.IdentityService
+	identityService ports.IdentityService
 }
 
-func NewCore(identityService external.IdentityService) *Core {
+func NewCore(identityService ports.IdentityService) *Core {
 	return &Core{identityService: identityService}
 }
 

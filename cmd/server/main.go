@@ -23,11 +23,11 @@ import (
 	"sonnda-api/internal/adapters/inbound/http/web"
 	webhandlers "sonnda-api/internal/adapters/inbound/http/web/handlers"
 	webmw "sonnda-api/internal/adapters/inbound/http/web/middleware"
-	authinfra "sonnda-api/internal/adapters/outbound/integrations/auth"
-	"sonnda-api/internal/adapters/outbound/integrations/documentai"
-	"sonnda-api/internal/adapters/outbound/integrations/storage"
-	"sonnda-api/internal/adapters/outbound/persistence/postgres/repository/db"
-	redisstore "sonnda-api/internal/adapters/outbound/persistence/redis"
+	"sonnda-api/internal/adapters/outbound/ai"
+	authinfra "sonnda-api/internal/adapters/outbound/auth"
+	"sonnda-api/internal/adapters/outbound/data/postgres/repository/db"
+	redisstore "sonnda-api/internal/adapters/outbound/data/redis"
+	storage "sonnda-api/internal/adapters/outbound/file"
 )
 
 func main() {
@@ -71,20 +71,20 @@ func main() {
 
 	//6. Conectando outros servicos
 	//6.1 Storage Service (GCS)
-	storageService, err := storage.NewStorageAdapter(ctx, cfg.GCSBucket, cfg.GCPProjectID)
+	storageService, err := storage.NewGCSObjectStorage(ctx, cfg.GCSBucket, cfg.GCPProjectID)
 	if err != nil {
 		log.Fatalf("falha ao criar storage do GCS: %v", err)
 	}
 	defer storageService.Close()
 
 	//6.2 Document AI Service
-	docAIClient, err := documentai.NewClient(ctx, cfg.GCPProjectID, cfg.GCPLocation)
+	docAIClient, err := ai.NewClient(ctx, cfg.GCPProjectID, cfg.GCPLocation)
 	if err != nil {
 		log.Fatalf("falha ao criar DocAI client: %v", err)
 	}
 	defer docAIClient.Close()
 
-	docExtractor := documentai.NewDocumentAIAdapter(
+	docExtractor := ai.NewDocumentAIAdapter(
 		*docAIClient,
 		cfg.LabsProcessorID,
 	)

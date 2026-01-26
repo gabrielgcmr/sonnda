@@ -12,7 +12,7 @@ import (
 	"sonnda-api/internal/adapters/inbound/http/web/weberr"
 	"sonnda-api/internal/app/apperr"
 	"sonnda-api/internal/app/observability"
-	"sonnda-api/internal/domain/ports/integration"
+	"sonnda-api/internal/domain/ports"
 )
 
 const (
@@ -21,10 +21,10 @@ const (
 )
 
 type SessionHandler struct {
-	identityService integration.IdentityService
+	identityService ports.IdentityService
 }
 
-func NewSessionHandler(identityService integration.IdentityService) *SessionHandler {
+func NewSessionHandler(identityService ports.IdentityService) *SessionHandler {
 	return &SessionHandler{
 		identityService: identityService,
 	}

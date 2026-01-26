@@ -4,8 +4,8 @@ package bootstrap
 
 import (
 	patienthandler "sonnda-api/internal/adapters/inbound/http/api/handlers/patient"
-	repo "sonnda-api/internal/adapters/outbound/persistence/postgres/repository"
-	"sonnda-api/internal/adapters/outbound/persistence/postgres/repository/db"
+	repo "sonnda-api/internal/adapters/outbound/data/postgres/repository"
+	"sonnda-api/internal/adapters/outbound/data/postgres/repository/db"
 	authorization "sonnda-api/internal/app/services/authorization"
 	patientsvc "sonnda-api/internal/app/services/patient"
 )

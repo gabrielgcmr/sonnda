@@ -3,9 +3,8 @@
 package bootstrap
 
 import (
-	"sonnda-api/internal/adapters/outbound/persistence/postgres/repository/db"
-	"sonnda-api/internal/domain/ports/integration"
-	"sonnda-api/internal/domain/ports/integration/documentai"
+	"sonnda-api/internal/adapters/outbound/data/postgres/repository/db"
+	"sonnda-api/internal/domain/ports"
 )
 
 type Modules struct {
@@ -16,9 +15,9 @@ type Modules struct {
 
 func NewModules(
 	dbClient *db.Client,
-	identityService integration.IdentityService,
-	docExtractor documentai.DocumentExtractor,
-	storage integration.StorageService,
+	identityService ports.IdentityService,
+	docExtractor ports.DocumentExtractorService,
+	storage ports.FileStorageService,
 ) *Modules {
 	return &Modules{
 		User:    NewUserModule(dbClient, identityService),

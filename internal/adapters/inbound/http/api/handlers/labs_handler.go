@@ -16,19 +16,19 @@ import (
 	"sonnda-api/internal/adapters/inbound/http/api/apierr"
 	httpctx "sonnda-api/internal/adapters/inbound/http/shared/httpctx"
 	"sonnda-api/internal/app/apperr"
-	external "sonnda-api/internal/domain/ports/integration"
+	"sonnda-api/internal/domain/ports"
 )
 
 type LabsHandler struct {
 	svc      labsvc.Service
 	createUC labsuc.CreateLabReportFromDocumentUseCase
-	storage  external.StorageService
+	storage  ports.FileStorageService
 }
 
 func NewLabsHandler(
 	svc labsvc.Service,
 	createUC labsuc.CreateLabReportFromDocumentUseCase,
-	storageClient external.StorageService,
+	storageClient ports.FileStorageService,
 ) *LabsHandler {
 	return &LabsHandler{
 		svc:      svc,

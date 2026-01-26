@@ -9,9 +9,9 @@ import (
 	usersvc "sonnda-api/internal/app/services/user"
 	registrationuc "sonnda-api/internal/app/usecase/registration"
 
-	repo "sonnda-api/internal/adapters/outbound/persistence/postgres/repository"
-	"sonnda-api/internal/adapters/outbound/persistence/postgres/repository/db"
-	"sonnda-api/internal/domain/ports/integration"
+	repo "sonnda-api/internal/adapters/outbound/data/postgres/repository"
+	"sonnda-api/internal/adapters/outbound/data/postgres/repository/db"
+	"sonnda-api/internal/domain/ports"
 )
 
 type UserModule struct {
@@ -20,7 +20,7 @@ type UserModule struct {
 	RegistrationMiddleware *middleware.RegistrationMiddleware
 }
 
-func NewUserModule(db *db.Client, identityService integration.IdentityService) *UserModule {
+func NewUserModule(db *db.Client, identityService ports.IdentityService) *UserModule {
 	userRepo := repo.New(db)
 	profRepo := repo.NewProfessionalRepository(db)
 	patientAccessRepo := repo.NewPatientAccessRepository(db)

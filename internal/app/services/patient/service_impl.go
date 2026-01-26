@@ -8,19 +8,19 @@ import (
 	"sonnda-api/internal/domain/model/patient"
 	"sonnda-api/internal/domain/model/rbac"
 	"sonnda-api/internal/domain/model/user"
-	"sonnda-api/internal/domain/ports/repository"
+	"sonnda-api/internal/domain/ports"
 
 	"github.com/google/uuid"
 )
 
 type service struct {
-	repo repository.Patient
+	repo ports.PatientRepo
 	auth authorization.Authorizer
 }
 
 var _ Service = (*service)(nil)
 
-func New(repo repository.Patient, auth authorization.Authorizer) Service {
+func New(repo ports.PatientRepo, auth authorization.Authorizer) Service {
 	return &service{
 		repo: repo,
 		auth: auth,

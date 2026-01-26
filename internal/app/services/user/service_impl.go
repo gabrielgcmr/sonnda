@@ -6,19 +6,19 @@ import (
 
 	"sonnda-api/internal/app/apperr"
 	"sonnda-api/internal/domain/model/user"
-	"sonnda-api/internal/domain/ports/repository"
+	"sonnda-api/internal/domain/ports"
 
 	"github.com/google/uuid"
 )
 
 type service struct {
-	userRepo          repository.User
-	patientAccessRepo repository.PatientAccess
+	userRepo          ports.UserRepo
+	patientAccessRepo ports.PatientAccessRepo
 }
 
 var _ Service = (*service)(nil)
 
-func New(userRepo repository.User, patientAccessRepo repository.PatientAccess) Service {
+func New(userRepo ports.UserRepo, patientAccessRepo ports.PatientAccessRepo) Service {
 	return &service{
 		userRepo:          userRepo,
 		patientAccessRepo: patientAccessRepo,

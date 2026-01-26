@@ -13,8 +13,7 @@ import (
 	"sonnda-api/internal/app/apperr"
 	labsvc "sonnda-api/internal/app/services/labs"
 	"sonnda-api/internal/domain/model/labs"
-	"sonnda-api/internal/domain/ports/integration/documentai"
-	"sonnda-api/internal/domain/ports/repository"
+	"sonnda-api/internal/domain/ports"
 
 	"github.com/google/uuid"
 )
@@ -24,17 +23,17 @@ type CreateLabReportFromDocumentUseCase interface {
 }
 
 type createLabReportFromDocumentUseCase struct {
-	patientRepo repository.Patient
-	labsRepo    repository.LabsRepository
-	extractor   documentai.DocumentExtractor
+	patientRepo ports.PatientRepo
+	labsRepo    ports.LabsRepo
+	extractor   ports.DocumentExtractorService
 }
 
 var _ CreateLabReportFromDocumentUseCase = (*createLabReportFromDocumentUseCase)(nil)
 
 func NewCreateLabReportFromDocument(
-	patientRepo repository.Patient,
-	labsRepo repository.LabsRepository,
-	extractor documentai.DocumentExtractor,
+	patientRepo ports.PatientRepo,
+	labsRepo ports.LabsRepo,
+	extractor ports.DocumentExtractorService,
 ) CreateLabReportFromDocumentUseCase {
 	return &createLabReportFromDocumentUseCase{
 		patientRepo: patientRepo,
@@ -140,7 +139,7 @@ func (u *createLabReportFromDocumentUseCase) validateInput(input CreateLabReport
 func (u *createLabReportFromDocumentUseCase) mapExtractedToDomain(
 	patientID uuid.UUID,
 	uploadedByUserID uuid.UUID,
-	extracted *documentai.ExtractedLabReport,
+	extracted *ports.ExtractedLabReport,
 ) (*labs.LabReport, error) {
 	if extracted == nil {
 		return nil, labs.ErrInvalidInput

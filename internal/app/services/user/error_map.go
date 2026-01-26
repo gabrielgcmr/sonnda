@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	userrepo "sonnda-api/internal/adapters/outbound/persistence/postgres/repository"
+	userrepo "sonnda-api/internal/adapters/outbound/data/postgres/repository"
 	"sonnda-api/internal/app/apperr"
 	"sonnda-api/internal/domain/model/user"
 )
