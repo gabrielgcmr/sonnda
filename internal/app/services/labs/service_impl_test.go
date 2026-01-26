@@ -1,3 +1,4 @@
+// internal/app/services/labs/service_impl_test.go
 package labsvc
 
 import (
@@ -5,7 +6,7 @@ import (
 	"errors"
 	"testing"
 
-	repoerr "sonnda-api/internal/adapters/outbound/persistence/repository"
+	repoerr "sonnda-api/internal/adapters/outbound/persistence/postgres/repository"
 	"sonnda-api/internal/app/apperr"
 	"sonnda-api/internal/domain/model/labs"
 	"sonnda-api/internal/domain/model/patient"

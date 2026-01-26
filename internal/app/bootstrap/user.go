@@ -9,8 +9,8 @@ import (
 	usersvc "sonnda-api/internal/app/services/user"
 	registrationuc "sonnda-api/internal/app/usecase/registration"
 
-	repo "sonnda-api/internal/adapters/outbound/persistence/repository"
-	"sonnda-api/internal/adapters/outbound/persistence/repository/db"
+	repo "sonnda-api/internal/adapters/outbound/persistence/postgres/repository"
+	"sonnda-api/internal/adapters/outbound/persistence/postgres/repository/db"
 	"sonnda-api/internal/domain/ports/integration"
 )
 

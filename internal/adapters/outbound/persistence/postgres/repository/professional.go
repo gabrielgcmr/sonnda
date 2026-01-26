@@ -1,3 +1,4 @@
+// internal/adapters/outbound/persistence/postgres/repository/professional.go
 package repository
 
 import (
@@ -6,9 +7,9 @@ import (
 
 	"github.com/google/uuid"
 
-	"sonnda-api/internal/adapters/outbound/persistence/repository/db"
+	"sonnda-api/internal/adapters/outbound/persistence/postgres/repository/db"
 
-	professionalsqlc "sonnda-api/internal/adapters/outbound/persistence/sqlc/generated/professional"
+	professionalsqlc "sonnda-api/internal/adapters/outbound/persistence/postgres/sqlc/generated/professional"
 	"sonnda-api/internal/domain/model/professional"
 	"sonnda-api/internal/domain/ports/repository"
 )

@@ -1,10 +1,11 @@
+// internal/app/services/user/error_map.go
 package usersvc
 
 import (
 	"errors"
 	"fmt"
 
-	userrepo "sonnda-api/internal/adapters/outbound/persistence/repository"
+	userrepo "sonnda-api/internal/adapters/outbound/persistence/postgres/repository"
 	"sonnda-api/internal/app/apperr"
 	"sonnda-api/internal/domain/model/user"
 )

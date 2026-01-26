@@ -1,11 +1,12 @@
+// internal/adapters/outbound/persistence/postgres/repository/patient_access.go
 package repository
 
 import (
 	"context"
 	"fmt"
 
-	"sonnda-api/internal/adapters/outbound/persistence/repository/db"
-	patientaccesssqlc "sonnda-api/internal/adapters/outbound/persistence/sqlc/generated/patientaccess"
+	"sonnda-api/internal/adapters/outbound/persistence/postgres/repository/db"
+	patientaccesssqlc "sonnda-api/internal/adapters/outbound/persistence/postgres/sqlc/generated/patientaccess"
 	"sonnda-api/internal/domain/model/patientaccess"
 	"sonnda-api/internal/domain/ports/repository"
 

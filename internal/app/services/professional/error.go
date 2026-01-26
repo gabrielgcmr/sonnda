@@ -1,10 +1,11 @@
+// internal/app/services/professional/error.go
 package professionalsvc
 
 import (
 	"errors"
 	"fmt"
 
-	repoerr "sonnda-api/internal/adapters/outbound/persistence/repository"
+	repoerr "sonnda-api/internal/adapters/outbound/persistence/postgres/repository"
 	"sonnda-api/internal/app/apperr"
 	"sonnda-api/internal/domain/model/professional"
 )

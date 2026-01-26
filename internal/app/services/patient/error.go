@@ -1,10 +1,11 @@
+// internal/app/services/patient/error.go
 package patientsvc
 
 import (
 	"errors"
 	"fmt"
 
-	repoerr "sonnda-api/internal/adapters/outbound/persistence/repository"
+	repoerr "sonnda-api/internal/adapters/outbound/persistence/postgres/repository"
 	"sonnda-api/internal/app/apperr"
 	"sonnda-api/internal/domain/model/demographics"
 	"sonnda-api/internal/domain/model/patient"

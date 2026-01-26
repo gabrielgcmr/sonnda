@@ -1,10 +1,11 @@
+// internal/app/bootstrap/labs.go
 // File: internal/app/bootstrap/labs.go
 package bootstrap
 
 import (
 	labshandler "sonnda-api/internal/adapters/inbound/http/api/handlers"
-	repo "sonnda-api/internal/adapters/outbound/persistence/repository"
-	"sonnda-api/internal/adapters/outbound/persistence/repository/db"
+	repo "sonnda-api/internal/adapters/outbound/persistence/postgres/repository"
+	"sonnda-api/internal/adapters/outbound/persistence/postgres/repository/db"
 	labsvc "sonnda-api/internal/app/services/labs"
 	labsuc "sonnda-api/internal/app/usecase/labs"
 	"sonnda-api/internal/domain/ports/integration"

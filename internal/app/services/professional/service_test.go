@@ -1,3 +1,4 @@
+// internal/app/services/professional/service_test.go
 package professionalsvc
 
 import (
@@ -5,7 +6,7 @@ import (
 	"errors"
 	"testing"
 
-	repoerr "sonnda-api/internal/adapters/outbound/persistence/repository"
+	repoerr "sonnda-api/internal/adapters/outbound/persistence/postgres/repository"
 	"sonnda-api/internal/app/apperr"
 	"sonnda-api/internal/domain/model/professional"
 

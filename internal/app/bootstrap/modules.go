@@ -1,8 +1,9 @@
+// internal/app/bootstrap/modules.go
 // File: internal/app/bootstrap/modules.go
 package bootstrap
 
 import (
-	"sonnda-api/internal/adapters/outbound/persistence/repository/db"
+	"sonnda-api/internal/adapters/outbound/persistence/postgres/repository/db"
 	"sonnda-api/internal/domain/ports/integration"
 	"sonnda-api/internal/domain/ports/integration/documentai"
 )

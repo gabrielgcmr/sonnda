@@ -75,12 +75,12 @@ make sqlc-generate
 
 ## Migracoes
 
-As migracoes SQL vivem em `internal/adapters/outbound/persistence/sqlc/sql/migrations/`.
+As migracoes SQL vivem em `internal/adapters/outbound/persistence/postgres/sqlc/sql/migrations/`.
 
 Se voce ja tinha um banco criado antes da mudanca de `users.role` -> `users.account_type`
 e da adicao de `professionals.kind`, aplique a migracao:
 
-- `internal/adapters/outbound/persistence/sqlc/sql/migrations/0004_account_type_and_professional_kind.sql`
+- `internal/adapters/outbound/persistence/postgres/sqlc/sql/migrations/0004_account_type_and_professional_kind.sql`
 
 ## 5) Testes
 

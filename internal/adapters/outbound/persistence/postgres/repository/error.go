@@ -1,3 +1,4 @@
+// internal/adapters/outbound/persistence/postgres/repository/error.go
 package repository
 
 import (

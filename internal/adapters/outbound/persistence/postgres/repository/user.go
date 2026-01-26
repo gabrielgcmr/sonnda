@@ -1,4 +1,4 @@
-// internal/adapters/outbound/persistence/repository/user/user_repository.go
+// internal/adapters/outbound/persistence/postgres/repository/user.go
 package repository
 
 import (
@@ -7,8 +7,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"sonnda-api/internal/adapters/outbound/persistence/repository/db"
-	usersqlc "sonnda-api/internal/adapters/outbound/persistence/sqlc/generated/user"
+	"sonnda-api/internal/adapters/outbound/persistence/postgres/repository/db"
+	usersqlc "sonnda-api/internal/adapters/outbound/persistence/postgres/sqlc/generated/user"
 	"sonnda-api/internal/domain/model/user"
 	"sonnda-api/internal/domain/ports/repository"
 )

@@ -1,10 +1,11 @@
+// internal/adapters/outbound/persistence/postgres/repository/labs.go
 package repository
 
 import (
 	"context"
 
-	"sonnda-api/internal/adapters/outbound/persistence/repository/db"
-	labsqlc "sonnda-api/internal/adapters/outbound/persistence/sqlc/generated/lab"
+	"sonnda-api/internal/adapters/outbound/persistence/postgres/repository/db"
+	labsqlc "sonnda-api/internal/adapters/outbound/persistence/postgres/sqlc/generated/lab"
 	"sonnda-api/internal/domain/model/labs"
 	"sonnda-api/internal/domain/ports/repository"
 

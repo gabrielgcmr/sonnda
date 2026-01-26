@@ -59,9 +59,9 @@ Essas camadas representam **limites conceituais**, não apenas organização de 
 
 ## Persistência
 
-- SQL definido em `internal/adapters/outbound/persistence/sqlc/sql`.
-- `sqlc` gera código em `internal/adapters/outbound/persistence/sqlc/generated`.
-- Repositórios em `internal/adapters/outbound/persistence/repository` encapsulam o acesso ao banco.
+- SQL definido em `internal/adapters/outbound/persistence/postgres/sqlc/sql`.
+- `sqlc` gera código em `internal/adapters/outbound/persistence/postgres/sqlc/generated`.
+- Repositórios em `internal/adapters/outbound/persistence/postgres/repository` encapsulam o acesso ao banco.
 - Banco principal: PostgreSQL (Supabase).
 - Soft delete usa `deleted_at`; consultas filtram `deleted_at IS NULL`.
 
