@@ -23,10 +23,6 @@ RUN apk add --no-cache ca-certificates tzdata
 
 COPY --from=build /bin/sonnda /app/sonnda
 
-# Assets
-COPY --from=build /app/internal/adapters/inbound/http/web/assets /app/internal/adapters/inbound/http/web/assets
-
-
 # Expõe a porta
 ENV PORT=8080
 EXPOSE 8080
