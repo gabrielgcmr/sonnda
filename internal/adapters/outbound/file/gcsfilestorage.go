@@ -9,7 +9,7 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"sonnda-api/internal/domain/ports"
+	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
 	"time"
 
 	"cloud.google.com/go/storage"

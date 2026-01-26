@@ -7,11 +7,11 @@ import (
 
 	"github.com/google/uuid"
 
-	"sonnda-api/internal/adapters/outbound/data/postgres/repository/db"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/outbound/data/postgres/repository/db"
 
-	professionalsqlc "sonnda-api/internal/adapters/outbound/data/postgres/sqlc/generated/professional"
-	"sonnda-api/internal/domain/model/professional"
-	"sonnda-api/internal/domain/ports"
+	professionalsqlc "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/data/postgres/sqlc/generated/professional"
+	"github.com/gabrielgcmr/sonnda/internal/domain/model/professional"
+	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
 )
 
 type Professional struct {

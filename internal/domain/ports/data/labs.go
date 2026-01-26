@@ -3,7 +3,7 @@
 import (
 	"context"
 
-	"sonnda-api/internal/domain/model/labs"
+	"github.com/gabrielgcmr/sonnda/internal/domain/model/labs"
 
 	"github.com/google/uuid"
 )

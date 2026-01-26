@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"sonnda-api/internal/adapters/inbound/http/api/apierr"
-	"sonnda-api/internal/app/apperr"
-	"sonnda-api/internal/domain/model/demographics"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/api/apierr"
+	"github.com/gabrielgcmr/sonnda/internal/app/apperr"
+	"github.com/gabrielgcmr/sonnda/internal/domain/model/demographics"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"

@@ -11,9 +11,9 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
-	"sonnda-api/internal/adapters/inbound/http/web/templates/components/features/patients"
-	"sonnda-api/internal/adapters/inbound/http/web/templates/components/ui"
-	"sonnda-api/internal/adapters/inbound/http/web/templates/layouts"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/web/templates/components/features/patients"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/web/templates/components/ui"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/web/templates/layouts"
 )
 
 type HomeViewModel struct {

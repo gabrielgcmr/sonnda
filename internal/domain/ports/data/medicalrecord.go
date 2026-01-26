@@ -3,7 +3,7 @@ package data
 import (
 	"context"
 
-	"sonnda-api/internal/domain/model/medicalrecord"
+	"github.com/gabrielgcmr/sonnda/internal/domain/model/medicalrecord"
 
 	"github.com/google/uuid"
 )

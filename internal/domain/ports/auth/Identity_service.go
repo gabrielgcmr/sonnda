@@ -5,7 +5,7 @@ import (
 	"context"
 	"time"
 
-	"sonnda-api/internal/domain/model/identity"
+	"github.com/gabrielgcmr/sonnda/internal/domain/model/identity"
 )
 
 type IdentityService interface {

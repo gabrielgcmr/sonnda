@@ -9,10 +9,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"sonnda-api/internal/adapters/inbound/http/web/weberr"
-	"sonnda-api/internal/app/apperr"
-	"sonnda-api/internal/app/observability"
-	"sonnda-api/internal/domain/ports"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/web/weberr"
+	"github.com/gabrielgcmr/sonnda/internal/app/apperr"
+	"github.com/gabrielgcmr/sonnda/internal/app/observability"
+	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
 )
 
 const (

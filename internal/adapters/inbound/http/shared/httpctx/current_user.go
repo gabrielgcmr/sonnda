@@ -1,7 +1,7 @@
 package httpctx
 
 import (
-	"sonnda-api/internal/domain/model/user"
+	"github.com/gabrielgcmr/sonnda/internal/domain/model/user"
 
 	"github.com/gin-gonic/gin"
 )

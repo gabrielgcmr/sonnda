@@ -5,12 +5,12 @@ import (
 	"context"
 	"errors"
 
-	"sonnda-api/internal/adapters/outbound/data/postgres/repository/db"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/outbound/data/postgres/repository/db"
 
-	patientsqlc "sonnda-api/internal/adapters/outbound/data/postgres/sqlc/generated/patient"
-	"sonnda-api/internal/domain/model/demographics"
-	"sonnda-api/internal/domain/model/patient"
-	"sonnda-api/internal/domain/ports"
+	patientsqlc "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/data/postgres/sqlc/generated/patient"
+	"github.com/gabrielgcmr/sonnda/internal/domain/model/demographics"
+	"github.com/gabrielgcmr/sonnda/internal/domain/model/patient"
+	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
 
 	"github.com/google/uuid"
 )

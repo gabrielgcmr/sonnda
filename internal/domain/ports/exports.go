@@ -2,10 +2,10 @@
 package ports
 
 import (
-	"sonnda-api/internal/domain/ports/ai"
-	"sonnda-api/internal/domain/ports/auth"
-	"sonnda-api/internal/domain/ports/data"
-	"sonnda-api/internal/domain/ports/file"
+	"github.com/gabrielgcmr/sonnda/internal/domain/ports/ai"
+	"github.com/gabrielgcmr/sonnda/internal/domain/ports/auth"
+	"github.com/gabrielgcmr/sonnda/internal/domain/ports/data"
+	"github.com/gabrielgcmr/sonnda/internal/domain/ports/file"
 )
 
 type (

@@ -10,8 +10,8 @@ package layouts
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import "sonnda-api/internal/adapters/inbound/http/web/templates/components/features/patients"
-import "sonnda-api/internal/adapters/inbound/http/web/templates/components/layout"
+import "github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/web/templates/components/features/patients"
+import "github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/web/templates/components/layout"
 
 type PatientLayoutProps struct {
 	Title string

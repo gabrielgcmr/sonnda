@@ -10,7 +10,7 @@ package layouts
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import "sonnda-api/internal/adapters/inbound/http/web/templates/components/layout"
+import "github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/web/templates/components/layout"
 
 type DashboardLayoutProps struct {
 	Title string

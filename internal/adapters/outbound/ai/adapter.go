@@ -3,7 +3,7 @@ package ai
 import (
 	"context"
 	"fmt"
-	"sonnda-api/internal/domain/ports"
+	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
 )
 
 // LabReportExtractor já está definido em labs/ai.go

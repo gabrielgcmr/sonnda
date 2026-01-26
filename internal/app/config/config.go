@@ -4,7 +4,7 @@ package config
 import (
 	"fmt"
 	"os"
-	"sonnda-api/internal/adapters/outbound/data/postgres/repository/db"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/outbound/data/postgres/repository/db"
 	"strings"
 	"time"
 )

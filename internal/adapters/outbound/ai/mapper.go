@@ -1,7 +1,7 @@
 package ai
 
 import (
-	"sonnda-api/internal/domain/ports"
+	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
 	"strings"
 
 	"cloud.google.com/go/documentai/apiv1/documentaipb"

@@ -4,8 +4,8 @@ package middleware
 import (
 	"net/http"
 
-	"sonnda-api/internal/adapters/inbound/http/shared/httpctx"
-	"sonnda-api/internal/adapters/inbound/http/shared/register"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/shared/httpctx"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/shared/register"
 
 	"github.com/gin-gonic/gin"
 )

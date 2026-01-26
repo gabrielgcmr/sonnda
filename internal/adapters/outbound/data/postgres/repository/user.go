@@ -7,10 +7,10 @@ import (
 
 	"github.com/google/uuid"
 
-	"sonnda-api/internal/adapters/outbound/data/postgres/repository/db"
-	usersqlc "sonnda-api/internal/adapters/outbound/data/postgres/sqlc/generated/user"
-	"sonnda-api/internal/domain/model/user"
-	"sonnda-api/internal/domain/ports"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/outbound/data/postgres/repository/db"
+	usersqlc "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/data/postgres/sqlc/generated/user"
+	"github.com/gabrielgcmr/sonnda/internal/domain/model/user"
+	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
 )
 
 var _ ports.UserRepo = (*UserRepository)(nil)

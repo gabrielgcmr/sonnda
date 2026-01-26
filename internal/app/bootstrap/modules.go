@@ -3,8 +3,8 @@
 package bootstrap
 
 import (
-	"sonnda-api/internal/adapters/outbound/data/postgres/repository/db"
-	"sonnda-api/internal/domain/ports"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/outbound/data/postgres/repository/db"
+	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
 )
 
 type Modules struct {

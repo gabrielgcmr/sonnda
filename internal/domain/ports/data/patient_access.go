@@ -3,7 +3,7 @@
 import (
 	"context"
 
-	"sonnda-api/internal/domain/model/patientaccess"
+	"github.com/gabrielgcmr/sonnda/internal/domain/model/patientaccess"
 
 	"github.com/google/uuid"
 )

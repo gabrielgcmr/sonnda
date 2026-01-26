@@ -2,16 +2,16 @@
 package bootstrap
 
 import (
-	"sonnda-api/internal/adapters/inbound/http/api/handlers/user"
-	"sonnda-api/internal/adapters/inbound/http/api/middleware"
-	sharedregistration "sonnda-api/internal/adapters/inbound/http/shared/register"
-	professionalsvc "sonnda-api/internal/app/services/professional"
-	usersvc "sonnda-api/internal/app/services/user"
-	registrationuc "sonnda-api/internal/app/usecase/registration"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/api/handlers/user"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/api/middleware"
+	sharedregistration "github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/shared/register"
+	professionalsvc "github.com/gabrielgcmr/sonnda/internal/app/services/professional"
+	usersvc "github.com/gabrielgcmr/sonnda/internal/app/services/user"
+	registrationuc "github.com/gabrielgcmr/sonnda/internal/app/usecase/registration"
 
-	repo "sonnda-api/internal/adapters/outbound/data/postgres/repository"
-	"sonnda-api/internal/adapters/outbound/data/postgres/repository/db"
-	"sonnda-api/internal/domain/ports"
+	repo "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/data/postgres/repository"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/outbound/data/postgres/repository/db"
+	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
 )
 
 type UserModule struct {

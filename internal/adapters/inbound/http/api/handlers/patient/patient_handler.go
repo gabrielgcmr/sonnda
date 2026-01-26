@@ -6,14 +6,14 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	"sonnda-api/internal/app/apperr"
-	applog "sonnda-api/internal/app/observability"
-	patientsvc "sonnda-api/internal/app/services/patient"
+	"github.com/gabrielgcmr/sonnda/internal/app/apperr"
+	applog "github.com/gabrielgcmr/sonnda/internal/app/observability"
+	patientsvc "github.com/gabrielgcmr/sonnda/internal/app/services/patient"
 
-	"sonnda-api/internal/adapters/inbound/http/api/apierr"
-	"sonnda-api/internal/adapters/inbound/http/api/binder"
-	"sonnda-api/internal/adapters/inbound/http/api/handlers"
-	"sonnda-api/internal/adapters/inbound/http/shared/httpctx"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/api/apierr"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/api/binder"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/api/handlers"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/shared/httpctx"
 )
 
 type PatientHandler struct {

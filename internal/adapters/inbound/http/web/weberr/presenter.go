@@ -4,8 +4,8 @@ package weberr
 import (
 	"html"
 	"net/http"
-	"sonnda-api/internal/adapters/inbound/http/shared/httperr"
-	"sonnda-api/internal/app/apperr"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/shared/httperr"
+	"github.com/gabrielgcmr/sonnda/internal/app/apperr"
 	"strconv"
 	"strings"
 

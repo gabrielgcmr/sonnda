@@ -5,10 +5,10 @@ import (
 	"context"
 	"fmt"
 
-	"sonnda-api/internal/adapters/outbound/data/postgres/repository/db"
-	patientaccesssqlc "sonnda-api/internal/adapters/outbound/data/postgres/sqlc/generated/patientaccess"
-	"sonnda-api/internal/domain/model/patientaccess"
-	"sonnda-api/internal/domain/ports"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/outbound/data/postgres/repository/db"
+	patientaccesssqlc "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/data/postgres/sqlc/generated/patientaccess"
+	"github.com/gabrielgcmr/sonnda/internal/domain/model/patientaccess"
+	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"

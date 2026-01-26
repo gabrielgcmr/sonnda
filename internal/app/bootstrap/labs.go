@@ -3,12 +3,12 @@
 package bootstrap
 
 import (
-	labshandler "sonnda-api/internal/adapters/inbound/http/api/handlers"
-	repo "sonnda-api/internal/adapters/outbound/data/postgres/repository"
-	"sonnda-api/internal/adapters/outbound/data/postgres/repository/db"
-	labsvc "sonnda-api/internal/app/services/labs"
-	labsuc "sonnda-api/internal/app/usecase/labs"
-	"sonnda-api/internal/domain/ports"
+	labshandler "github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/api/handlers"
+	repo "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/data/postgres/repository"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/outbound/data/postgres/repository/db"
+	labsvc "github.com/gabrielgcmr/sonnda/internal/app/services/labs"
+	labsuc "github.com/gabrielgcmr/sonnda/internal/app/usecase/labs"
+	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
 )
 
 type LabsModule struct {

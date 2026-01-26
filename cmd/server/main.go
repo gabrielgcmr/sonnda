@@ -12,22 +12,22 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 
-	"sonnda-api/internal/app/bootstrap"
-	"sonnda-api/internal/app/config"
-	"sonnda-api/internal/app/observability"
+	"github.com/gabrielgcmr/sonnda/internal/app/bootstrap"
+	"github.com/gabrielgcmr/sonnda/internal/app/config"
+	"github.com/gabrielgcmr/sonnda/internal/app/observability"
 
-	httpserver "sonnda-api/internal/adapters/inbound/http"
-	"sonnda-api/internal/adapters/inbound/http/api"
-	apimw "sonnda-api/internal/adapters/inbound/http/api/middleware"
-	sharedauth "sonnda-api/internal/adapters/inbound/http/shared/auth"
-	"sonnda-api/internal/adapters/inbound/http/web"
-	webhandlers "sonnda-api/internal/adapters/inbound/http/web/handlers"
-	webmw "sonnda-api/internal/adapters/inbound/http/web/middleware"
-	"sonnda-api/internal/adapters/outbound/ai"
-	authinfra "sonnda-api/internal/adapters/outbound/auth"
-	"sonnda-api/internal/adapters/outbound/data/postgres/repository/db"
-	redisstore "sonnda-api/internal/adapters/outbound/data/redis"
-	storage "sonnda-api/internal/adapters/outbound/file"
+	httpserver "github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/api"
+	apimw "github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/api/middleware"
+	sharedauth "github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/shared/auth"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/web"
+	webhandlers "github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/web/handlers"
+	webmw "github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/web/middleware"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/outbound/ai"
+	authinfra "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/auth"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/outbound/data/postgres/repository/db"
+	redisstore "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/data/redis"
+	storage "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/file"
 )
 
 func main() {
@@ -48,7 +48,7 @@ func main() {
 		Env:       cfg.Env,
 		Level:     cfg.LogLevel,
 		Format:    cfg.LogFormat,
-		AppName:   "sonnda-api",
+		AppName:   "github.com/gabrielgcmr/sonnda",
 		AddSource: cfg.Env == "dev",
 	})
 	slog.SetDefault(appLogger)

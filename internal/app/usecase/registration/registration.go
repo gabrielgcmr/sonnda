@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 
-	"sonnda-api/internal/app/apperr"
-	professionalsvc "sonnda-api/internal/app/services/professional"
-	usersvc "sonnda-api/internal/app/services/user"
-	"sonnda-api/internal/domain/model/user"
-	auth "sonnda-api/internal/domain/ports/auth"
-	"sonnda-api/internal/domain/ports/data"
+	"github.com/gabrielgcmr/sonnda/internal/app/apperr"
+	professionalsvc "github.com/gabrielgcmr/sonnda/internal/app/services/professional"
+	usersvc "github.com/gabrielgcmr/sonnda/internal/app/services/user"
+	"github.com/gabrielgcmr/sonnda/internal/domain/model/user"
+	auth "github.com/gabrielgcmr/sonnda/internal/domain/ports/auth"
+	"github.com/gabrielgcmr/sonnda/internal/domain/ports/data"
 )
 
 type UseCase interface {

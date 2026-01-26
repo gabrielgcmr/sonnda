@@ -10,13 +10,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	labsvc "sonnda-api/internal/app/services/labs"
-	labsuc "sonnda-api/internal/app/usecase/labs"
+	labsvc "github.com/gabrielgcmr/sonnda/internal/app/services/labs"
+	labsuc "github.com/gabrielgcmr/sonnda/internal/app/usecase/labs"
 
-	"sonnda-api/internal/adapters/inbound/http/api/apierr"
-	httpctx "sonnda-api/internal/adapters/inbound/http/shared/httpctx"
-	"sonnda-api/internal/app/apperr"
-	"sonnda-api/internal/domain/ports"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/api/apierr"
+	httpctx "github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/shared/httpctx"
+	"github.com/gabrielgcmr/sonnda/internal/app/apperr"
+	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
 )
 
 type LabsHandler struct {

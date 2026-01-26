@@ -4,11 +4,11 @@ package patientsvc
 import (
 	"context"
 
-	"sonnda-api/internal/app/services/authorization"
-	"sonnda-api/internal/domain/model/patient"
-	"sonnda-api/internal/domain/model/rbac"
-	"sonnda-api/internal/domain/model/user"
-	"sonnda-api/internal/domain/ports"
+	"github.com/gabrielgcmr/sonnda/internal/app/services/authorization"
+	"github.com/gabrielgcmr/sonnda/internal/domain/model/patient"
+	"github.com/gabrielgcmr/sonnda/internal/domain/model/rbac"
+	"github.com/gabrielgcmr/sonnda/internal/domain/model/user"
+	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
 
 	"github.com/google/uuid"
 )

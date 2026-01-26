@@ -4,10 +4,10 @@ package repository
 import (
 	"context"
 
-	"sonnda-api/internal/adapters/outbound/data/postgres/repository/db"
-	labsqlc "sonnda-api/internal/adapters/outbound/data/postgres/sqlc/generated/lab"
-	"sonnda-api/internal/domain/model/labs"
-	"sonnda-api/internal/domain/ports"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/outbound/data/postgres/repository/db"
+	labsqlc "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/data/postgres/sqlc/generated/lab"
+	"github.com/gabrielgcmr/sonnda/internal/domain/model/labs"
+	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
 
 	"github.com/google/uuid"
 )

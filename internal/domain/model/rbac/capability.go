@@ -1,6 +1,6 @@
 package rbac
 
-import "sonnda-api/internal/domain/model/user"
+import "github.com/gabrielgcmr/sonnda/internal/domain/model/user"
 
 type CapabilityLevel string
 

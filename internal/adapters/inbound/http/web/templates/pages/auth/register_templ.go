@@ -10,7 +10,7 @@ package auth
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import "sonnda-api/internal/adapters/inbound/http/web/templates/layouts"
+import "github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/web/templates/layouts"
 
 type RegisterViewModel struct {
 	Title          string

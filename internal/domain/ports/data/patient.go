@@ -4,7 +4,7 @@ package data
 import (
 	"context"
 
-	"sonnda-api/internal/domain/model/patient"
+	"github.com/gabrielgcmr/sonnda/internal/domain/model/patient"
 
 	"github.com/google/uuid"
 )

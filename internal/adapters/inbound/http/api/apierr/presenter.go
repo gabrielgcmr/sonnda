@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"sonnda-api/internal/adapters/inbound/http/shared/httperr"
-	"sonnda-api/internal/app/apperr"
-	applog "sonnda-api/internal/app/observability"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/shared/httperr"
+	"github.com/gabrielgcmr/sonnda/internal/app/apperr"
+	applog "github.com/gabrielgcmr/sonnda/internal/app/observability"
 
 	"github.com/gin-gonic/gin"
 )

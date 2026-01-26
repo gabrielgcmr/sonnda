@@ -6,10 +6,10 @@ import (
 	"errors"
 	"testing"
 
-	repoerr "sonnda-api/internal/adapters/outbound/data/postgres/repository"
-	"sonnda-api/internal/app/apperr"
-	"sonnda-api/internal/domain/model/labs"
-	"sonnda-api/internal/domain/model/patient"
+	repoerr "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/data/postgres/repository"
+	"github.com/gabrielgcmr/sonnda/internal/app/apperr"
+	"github.com/gabrielgcmr/sonnda/internal/domain/model/labs"
+	"github.com/gabrielgcmr/sonnda/internal/domain/model/patient"
 
 	"github.com/google/uuid"
 )

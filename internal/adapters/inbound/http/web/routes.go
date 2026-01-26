@@ -4,8 +4,8 @@ package web
 import (
 	"github.com/gin-gonic/gin"
 
-	"sonnda-api/internal/adapters/inbound/http/web/handlers"
-	webmw "sonnda-api/internal/adapters/inbound/http/web/middleware"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/web/handlers"
+	webmw "github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/web/middleware"
 )
 
 type WebDependencies struct {

@@ -2,10 +2,10 @@
 package middleware
 
 import (
-	"sonnda-api/internal/adapters/inbound/http/api/apierr"
-	"sonnda-api/internal/adapters/inbound/http/shared/httpctx"
-	"sonnda-api/internal/adapters/inbound/http/shared/register"
-	"sonnda-api/internal/app/apperr"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/api/apierr"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/shared/httpctx"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/shared/register"
+	"github.com/gabrielgcmr/sonnda/internal/app/apperr"
 
 	"github.com/gin-gonic/gin"
 )
