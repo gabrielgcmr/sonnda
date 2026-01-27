@@ -141,23 +141,26 @@ func main() {
 	)
 
 	// 10. Inicia o servidor
-	scheme := "http"
-	appHost := cfg.AppHost
-	apiHost := cfg.APIHost
-	port := ":" + cfg.Port
+	localScheme := "http"
+	localAppHost := cfg.AppHost
+	localAPIHost := cfg.APIHost
+	localPort := ":" + cfg.Port
 	if cfg.Env == "prod" {
-		scheme = "https"
-		appHost = "app.sonnda.com.br"
-		apiHost = "api.sonnda.com.br"
-		port = ""
+		localScheme = "https"
+		localPort = ""
 	}
-	appURL := scheme + "://" + appHost + port + "/"
-	apiURL := scheme + "://" + apiHost + port + "/v1"
+	localAppURL := localScheme + "://" + localAppHost + localPort + "/"
+	localAPIURL := localScheme + "://" + localAPIHost + localPort + "/v1"
+	publicAppURL := "https://app.sonnda.com.br/"
+	publicAPIURL := "https://api.sonnda.com.br/v1"
 	slog.Info(
 		"Sonnda is running",
 		slog.String("mode", cfg.Env),
-		slog.String("api_url", apiURL),
-		slog.String("app_url", appURL),
+		slog.String("listen_addr", ":"+cfg.Port),
+		slog.String("local_app_url", localAppURL),
+		slog.String("local_api_url", localAPIURL),
+		slog.String("public_app_url", publicAppURL),
+		slog.String("public_api_url", publicAPIURL),
 	)
 	server := &http.Server{
 		Addr:    ":" + cfg.Port,

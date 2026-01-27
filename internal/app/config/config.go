@@ -6,9 +6,9 @@ import (
 	"net/url"
 	"os"
 	"strings"
-	"time"
 
-	postgress "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres"
+	"github.com/joho/godotenv"
+
 	"github.com/gabrielgcmr/sonnda/internal/app/apperr"
 )
 
@@ -20,12 +20,12 @@ const (
 	envGCPLocation                  = "GCP_LOCATION"
 	envGCPExtractLabsProcessorID    = "GCP_EXTRACT_LABS_PROCESSOR_ID"
 
-	envSupabaseURL = "SUPABASE_URL"
-	envRedisURL    = "REDIS_URL"
-
 	envFirebaseAPIKey     = "FIREBASE_API_KEY"
 	envFirebaseAuthDomain = "FIREBASE_AUTH_DOMAIN"
 	envFirebaseAppID      = "FIREBASE_APP_ID"
+
+	envSupabaseURL = "SUPABASE_URL"
+	envRedisURL    = "REDIS_URL"
 
 	envAppHost   = "APP_HOST"
 	envAPIHost   = "API_HOST"
@@ -68,6 +68,8 @@ type Config struct {
 }
 
 func Load() (*Config, error) {
+	// Carrega variáveis do arquivo .env
+	_ = godotenv.Load()
 
 	cfg := &Config{
 		DBURL:    getEnv(envSupabaseURL),
@@ -211,14 +213,4 @@ func normalizeHost(raw string) (string, error) {
 	}
 
 	return strings.ToLower(u.Hostname()), nil
-}
-
-func SupabaseConfig(cfg Config) postgress.Config {
-	return postgress.Config{
-		DatabaseURL:     cfg.DBURL,
-		MaxConns:        10,
-		MinConns:        2,
-		MaxConnLifetime: time.Hour,
-		MaxConnIdleTime: 30 * time.Minute,
-	}
 }
