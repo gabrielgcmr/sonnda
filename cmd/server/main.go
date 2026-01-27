@@ -31,6 +31,11 @@ import (
 	filestorage "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/file"
 )
 
+const (
+	envFileKey = "ENV_FILE"
+	appEnvKey  = "APP_ENV"
+)
+
 func buildURL(env, host, port, path string) string {
 	if host == "" {
 		host = "localhost"
@@ -52,14 +57,27 @@ func buildURL(env, host, port, path string) string {
 	return base + path
 }
 
+func loadEnvFile() {
+	envFile := strings.TrimSpace(os.Getenv(envFileKey))
+	if envFile == "" {
+		env := strings.ToLower(strings.TrimSpace(os.Getenv(appEnvKey)))
+		if env == "prod" {
+			envFile = ".env.prod"
+		} else {
+			envFile = ".env"
+		}
+	}
+	if err := godotenv.Load(envFile); err != nil {
+		log.Printf("Aviso: Arquivo %s nao encontrado, usando variaveis de ambiente do sistema", envFile)
+	}
+}
+
 func main() {
 	// 1. Carrega o contexto
 	ctx := context.Background()
 
 	// 3. Carrega variaveis de ambiente
-	if err := godotenv.Load(); err != nil {
-		log.Println("Aviso: Arquivo .env nao encontrado, usando variaveis de ambiente do sistema")
-	}
+	loadEnvFile()
 
 	// 4. Carrega configuracao
 	cfg, err := config.Load()

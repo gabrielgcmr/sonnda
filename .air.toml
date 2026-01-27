@@ -1,3 +1,4 @@
+# .air.toml
 #:schema https://json.schemastore.org/any.json
 
 env_files = []
@@ -16,7 +17,7 @@ exclude_file = []
 exclude_regex = ["_test.go"]
 exclude_unchanged = false
 follow_symlink = false
-full_bin = ""
+full_bin = "ENV_FILE=.env.dev ./tmp/main"
 ignore_dangerous_root_dir = false
 include_dir = []
 include_ext = ["go", "tpl", "tmpl", "html"]

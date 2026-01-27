@@ -48,16 +48,14 @@ type Config struct {
 	RedisURL string
 
 	GoogleApplicationCredentials string
-
-	GCPProjectID              string
-	GCPProjectNumber          string
-	GCSBucket                 string
-	GCPLocation               string
-	GCPExtractLabsProcessorID string
-
-	FirebaseAPIKey     string
-	FirebaseAuthDomain string
-	FirebaseAppID      string
+	GCPProjectID                 string
+	GCPProjectNumber             string
+	GCSBucket                    string
+	GCPLocation                  string
+	GCPExtractLabsProcessorID    string
+	FirebaseAPIKey               string
+	FirebaseAuthDomain           string
+	FirebaseAppID                string
 
 	AppHost string
 	APIHost string
@@ -84,10 +82,11 @@ func Load() (*Config, error) {
 		FirebaseAPIKey:               getEnv(envFirebaseAPIKey),
 		FirebaseAuthDomain:           getEnv(envFirebaseAuthDomain),
 		FirebaseAppID:                getEnv(envFirebaseAppID),
-		Port:                         getEnvOrDefault(envPort, "8080"),
-		Env:                          strings.ToLower(getEnvOrDefault(envAppEnv, "dev")),
-		LogLevel:                     strings.ToLower(getEnvOrDefault(envLogLevel, "info")),
-		LogFormat:                    strings.ToLower(getEnvOrDefault(envLogFormat, "text")),
+
+		Port:      getEnvOrDefault(envPort, "8080"),
+		Env:       strings.ToLower(getEnvOrDefault(envAppEnv, "dev")),
+		LogLevel:  strings.ToLower(getEnvOrDefault(envLogLevel, "info")),
+		LogFormat: strings.ToLower(getEnvOrDefault(envLogFormat, "text")),
 	}
 
 	rawAppHost := getEnv(envAppHost)

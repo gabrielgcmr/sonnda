@@ -66,12 +66,21 @@ A arquitetura foi simplificada em camadas diretas, com baixo acoplamento:
 - Config por env: `LOG_LEVEL` (`debug|info|warn|error`) e `LOG_FORMAT` (`text|json|pretty`).
 - Por request, o middleware injeta um logger no `context.Context` (inclui `request_id`, método, path e rota quando disponível).
 
+## Configuracao de ambiente (dev/prod)
+
+- Use arquivos separados para evitar hosts errados:
+  - `cp .env.dev.example .env.dev`
+  - `cp .env.prod.example .env.prod`
+- O app carrega o arquivo via `ENV_FILE` (ex.: `ENV_FILE=.env.dev`).
+- Com `air`, o env dev ja vem configurado (usa `.env.dev`).
+- A aplicacao roteia por host: em dev use `app.localhost` e `api.localhost` (caso nao resolva, adicione no `/etc/hosts`).
+
 ---
 
 Comandos:
 
 ```bash
-make dev
+make dev-api
 ```
 
 ---
