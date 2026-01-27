@@ -42,7 +42,7 @@ export PATH := $(PWD)/$(TOOLS_DIR):$(PATH)
 # ==============================================================================
 # 🎯 TARGETS PRINCIPAIS
 # ==============================================================================
-.PHONY: all dev dev-web build clean test help
+.PHONY: all dev-api dev-web dev-web-watch build clean test help
 
 all: build
 
@@ -50,12 +50,19 @@ all: build
 tools: $(AIR) $(TAILWIND) $(TEMPL)
 
 # Roda apenas o backend (Go + Air)
-dev: tools
+dev-api: tools
 	$(AIR) -c .air.toml
 
 # 🚀 Roda o ambiente COMPLETO (Templ + Tailwind + Air) em paralelo
 dev-web: tools
-	@echo "🚀 Iniciando ambiente de desenvolvimento..."
+	@echo "🏗️  Gerando assets primeiro..."
+	@$(MAKE) templ tailwind 
+	@echo "🚀 Subindo servidor..."
+	@$(MAKE) air-run     
+
+# 🚀 Roda o ambiente COMPLETO (Templ + Tailwind + Air) em modo -watch
+dev-web-watch: tools
+	@echo "🔥 Iniciando modo Watch Paralelo... Pode gerar erros de compilação devido a race conditions. Use com sabedoria."
 	@$(MAKE) -j3 templ-watch tailwind-watch air-run
 
 # Limpeza (Compatível com Linux/WSL)
@@ -89,13 +96,19 @@ $(TEMPL):
 # ==============================================================================
 # 🔄 WATCHERS E PROCESSOS INTERNOS
 # ==============================================================================
-.PHONY: templ-watch tailwind-watch air-run
+.PHONY: templ templ-watch tailwind-watch air-run
 
 air-run:
 	$(AIR) -c .air.toml
 
+templ:
+	$(TEMPL) generate
+
 templ-watch:
 	$(TEMPL) generate --watch
+
+tailwind:
+	$(TAILWIND) -i $(TAILWIND_INPUT) -o $(TAILWIND_OUTPUT) 
 
 tailwind-watch:
 	$(TAILWIND) -i $(TAILWIND_INPUT) -o $(TAILWIND_OUTPUT) --watch
@@ -122,8 +135,9 @@ docker-down:
 # ==============================================================================
 help:
 	@echo "Comandos disponíveis:"
+	@echo "  dev-api     - Inicia apenas o Backend (Air)"
 	@echo "  dev-web     - Inicia Backend + Frontend (Templ/Tailwind) em paralelo"
-	@echo "  dev         - Inicia apenas o Air (Backend)"
+	@echo "  dev-web-watch - Inicia Backend + Frontend (Templ/Tailwind) em modo watch"
 	@echo "  build       - Gera o binário de produção"
 	@echo "  tools       - Baixa as ferramentas necessárias (localmente)"
 	@echo "  clean       - Limpa pastas geradas"
