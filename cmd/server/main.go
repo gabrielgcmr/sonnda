@@ -33,11 +33,18 @@ import (
 func main() {
 	// 1. Carrega o contexto
 	ctx := context.Background()
-	// 2. Carrega variaveis de ambiente
+
+	// 2. Setup Google Cloud credentials
+	if err := config.SetupGoogleCredentials(); err != nil {
+		log.Printf("Aviso: Não foi possível configurar credenciais do Google Cloud: %v", err)
+	}
+
+	// 3. Carrega variaveis de ambiente
 	if err := godotenv.Load(); err != nil {
 		log.Println("Aviso: Arquivo .env nao encontrado, usando variaveis de ambiente do sistema")
 	}
-	// 3. Carrega configuracao
+
+	// 4. Carrega configuracao
 	cfg, err := config.Load()
 	if err != nil {
 		log.Fatal("Erro ao carregar configuracao: ", err)

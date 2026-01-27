@@ -2,8 +2,11 @@
 package config
 
 import (
+	"encoding/base64"
+	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -20,7 +23,6 @@ type Config struct {
 	LabsProcessorID  string
 
 	FirebaseProjectID         string
-	FirebaseCredentialsFile   string
 	FirebaseAPIKey            string
 	FirebaseAuthDomain        string
 	FirebaseStorageBucket     string
@@ -43,14 +45,14 @@ func Load() (*Config, error) {
 	gcsBucket := os.Getenv("GCS_BUCKET")
 
 	cfg := &Config{
-		DBURL:                     os.Getenv("SUPABASE_URL"),
-		GCPProjectID:              projectID,
-		GCPProjectNumber:          projectNumber,
-		GCSBucket:                 gcsBucket,
-		GCPLocation:               os.Getenv("GCP_LOCATION"),
-		LabsProcessorID:           os.Getenv("DOCAI_LABS_PROCESSOR_ID"),
-		FirebaseProjectID:         projectID,
-		FirebaseCredentialsFile:   os.Getenv("FIREBASE_CREDENTIALS_FILE"),
+		DBURL:             os.Getenv("SUPABASE_URL"),
+		GCPProjectID:      projectID,
+		GCPProjectNumber:  projectNumber,
+		GCSBucket:         gcsBucket,
+		GCPLocation:       os.Getenv("GCP_LOCATION"),
+		LabsProcessorID:   os.Getenv("DOCAI_LABS_PROCESSOR_ID"),
+		FirebaseProjectID: projectID,
+
 		FirebaseAPIKey:            os.Getenv("FIREBASE_API_KEY"),
 		FirebaseAuthDomain:        os.Getenv("FIREBASE_AUTH_DOMAIN"),
 		FirebaseStorageBucket:     gcsBucket,
@@ -116,4 +118,44 @@ func SupabaseConfig(cfg Config) db.Config {
 		MaxConnLifetime: time.Hour,
 		MaxConnIdleTime: 30 * time.Minute,
 	}
+}
+
+// SetupGoogleCredentials configura GOOGLE_APPLICATION_CREDENTIALS
+// Tenta usar arquivo local em dev, ou decodifica base64 em produção
+func SetupGoogleCredentials() error {
+	// Se já está setado, valida se o arquivo existe
+	if credPath := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"); credPath != "" {
+		if _, err := os.Stat(credPath); err == nil {
+			return nil // Arquivo existe, tudo certo
+		}
+		// Arquivo não existe, continua para tentar base64
+	}
+
+	// Tenta usar arquivo local primeiro (desenvolvimento)
+	localPath := "secrets/sonnda-gcs.json"
+	if _, err := os.Stat(localPath); err == nil {
+		return os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", localPath)
+	}
+
+	// Em produção, tenta decodificar base64
+	credB64 := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS_B64")
+	if credB64 == "" {
+		return errors.New("GOOGLE_APPLICATION_CREDENTIALS_B64 não definido em produção")
+	}
+
+	// Decodifica o base64
+	credJSON, err := base64.StdEncoding.DecodeString(credB64)
+	if err != nil {
+		return errors.New("erro ao decodificar GOOGLE_APPLICATION_CREDENTIALS_B64: " + err.Error())
+	}
+
+	// Escreve em arquivo temporário
+	tmpDir := os.TempDir()
+	credPath := filepath.Join(tmpDir, "gcp-credentials.json")
+	if err := os.WriteFile(credPath, credJSON, 0600); err != nil {
+		return errors.New("erro ao escrever credencial temporária: " + err.Error())
+	}
+
+	// Seta a variável de ambiente
+	return os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", credPath)
 }
