@@ -13,14 +13,14 @@ Guia rapido para subir a API localmente.
 - templ (templates do WEB): `go install github.com/a-h/templ/cmd/templ@v0.3.977`
 
 ## 1) Variaveis de ambiente
-Use arquivos separados para dev/prod:
+Copie o exemplo para `.env`:
 
 ```bash
-cp .env.dev.example .env.dev
-cp .env.prod.example .env.prod
+cp .env.example .env
 ```
 
 Observacao:
+- O app nao carrega `.env` automaticamente. Exporte as variaveis no shell (ou use `direnv`).
 - O `docker-compose.yml` monta `./secrets/sonnda-gcs.json` em `/secrets/sonnda-gcs.json`.
   Se for usar Docker, garanta que o arquivo exista nesse caminho local.
 - A aplicacao roteia por host. Em dev use `app.localhost` e `api.localhost` (adicione no `/etc/hosts` se necessario).
@@ -29,7 +29,8 @@ Observacao:
 Opcao simples:
 
 ```bash
-ENV_FILE=.env.dev go run ./cmd/server
+set -a && source .env && set +a
+go run ./cmd/server
 ```
 
 Com hot reload (requer `air`):
@@ -37,9 +38,6 @@ Com hot reload (requer `air`):
 ```bash
 make dev-api
 ```
-
-Observacao:
-- O `air` ja inicia com `ENV_FILE=.env.dev` via `.air.toml`.
 
 Com hot reload + Tailwind + templ (WEB):
 

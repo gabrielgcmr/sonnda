@@ -8,10 +8,8 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 
 	"github.com/gabrielgcmr/sonnda/internal/app/bootstrap"
 	"github.com/gabrielgcmr/sonnda/internal/app/config"
@@ -31,53 +29,9 @@ import (
 	filestorage "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/file"
 )
 
-const (
-	envFileKey = "ENV_FILE"
-	appEnvKey  = "APP_ENV"
-)
-
-func buildURL(env, host, port, path string) string {
-	if host == "" {
-		host = "localhost"
-	}
-	scheme := "http"
-	if env == "prod" {
-		scheme = "https"
-	}
-	base := scheme + "://" + host
-	if port != "" && port != "80" && port != "443" {
-		base += ":" + port
-	}
-	if path == "" || path == "/" {
-		return base + "/"
-	}
-	if !strings.HasPrefix(path, "/") {
-		path = "/" + path
-	}
-	return base + path
-}
-
-func loadEnvFile() {
-	envFile := strings.TrimSpace(os.Getenv(envFileKey))
-	if envFile == "" {
-		env := strings.ToLower(strings.TrimSpace(os.Getenv(appEnvKey)))
-		if env == "prod" {
-			envFile = ".env.prod"
-		} else {
-			envFile = ".env"
-		}
-	}
-	if err := godotenv.Load(envFile); err != nil {
-		log.Printf("Aviso: Arquivo %s nao encontrado, usando variaveis de ambiente do sistema", envFile)
-	}
-}
-
 func main() {
 	// 1. Carrega o contexto
 	ctx := context.Background()
-
-	// 3. Carrega variaveis de ambiente
-	loadEnvFile()
 
 	// 4. Carrega configuracao
 	cfg, err := config.Load()
@@ -157,7 +111,11 @@ func main() {
 	sessionHandler := webhandlers.NewSessionHandler(authService)
 
 	//10. Cria o router HTTP
-	gin.SetMode(gin.ReleaseMode)
+	ginMode := gin.DebugMode
+	if cfg.Env == "prod" {
+		ginMode = gin.ReleaseMode
+	}
+	gin.SetMode(ginMode)
 
 	handler := httpserver.NewRouter(
 		httpserver.Infra{
@@ -183,11 +141,23 @@ func main() {
 	)
 
 	// 10. Inicia o servidor
+	scheme := "http"
+	appHost := cfg.AppHost
+	apiHost := cfg.APIHost
+	port := ":" + cfg.Port
+	if cfg.Env == "prod" {
+		scheme = "https"
+		appHost = "app.sonnda.com.br"
+		apiHost = "api.sonnda.com.br"
+		port = ""
+	}
+	appURL := scheme + "://" + appHost + port + "/"
+	apiURL := scheme + "://" + apiHost + port + "/v1"
 	slog.Info(
 		"Sonnda is running",
-		slog.String("Mode: env", cfg.Env),
-		slog.String("Api url", buildURL(cfg.Env, cfg.APIHost, cfg.Port, "/api/v1")),
-		slog.String("App url", buildURL(cfg.Env, cfg.AppHost, cfg.Port, "/")),
+		slog.String("mode", cfg.Env),
+		slog.String("api_url", apiURL),
+		slog.String("app_url", appURL),
 	)
 	server := &http.Server{
 		Addr:    ":" + cfg.Port,

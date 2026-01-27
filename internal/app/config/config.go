@@ -91,12 +91,22 @@ func Load() (*Config, error) {
 
 	rawAppHost := getEnv(envAppHost)
 	rawAPIHost := getEnv(envAPIHost)
-	if cfg.Env == "dev" {
-		if rawAppHost == "" {
-			rawAppHost = "app.localhost"
-		}
-		if rawAPIHost == "" {
-			rawAPIHost = "api.localhost"
+	if rawAppHost == "" || rawAPIHost == "" {
+		switch cfg.Env {
+		case "dev":
+			if rawAppHost == "" {
+				rawAppHost = "app.localhost"
+			}
+			if rawAPIHost == "" {
+				rawAPIHost = "api.localhost"
+			}
+		case "prod":
+			if rawAppHost == "" {
+				rawAppHost = "app.sonnda.com.br"
+			}
+			if rawAPIHost == "" {
+				rawAPIHost = "api.sonnda.com.br"
+			}
 		}
 	}
 
@@ -126,9 +136,6 @@ func Load() (*Config, error) {
 	appendRequired(&violations, envGCPExtractLabsProcessorID, cfg.GCPExtractLabsProcessorID)
 	appendRequired(&violations, envRedisURL, cfg.RedisURL)
 	appendRequired(&violations, envGoogleApplicationCredentials, cfg.GoogleApplicationCredentials)
-	appendRequired(&violations, envAppHost, rawAppHost)
-	appendRequired(&violations, envAPIHost, rawAPIHost)
-
 	validateEnum(&violations, envAppEnv, cfg.Env, allowedEnvs)
 	validateEnum(&violations, envLogLevel, cfg.LogLevel, allowedLogLevels)
 	validateEnum(&violations, envLogFormat, cfg.LogFormat, allowedLogFormats)

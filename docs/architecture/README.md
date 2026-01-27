@@ -79,7 +79,7 @@ Essas camadas representam **limites conceituais**, não apenas organização de 
 
 ## Configuração
 
-- Variáveis de ambiente definidas em `.env` (ver `.env.example`).
+- Variáveis de ambiente definidas no ambiente (veja `.env.example` para referência).
 - `APP_ENV` define o ambiente (`dev | prod`).
 - Configurações carregadas na inicialização da aplicação (`internal/app/config`).
 

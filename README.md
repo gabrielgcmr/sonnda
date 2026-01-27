@@ -68,11 +68,8 @@ A arquitetura foi simplificada em camadas diretas, com baixo acoplamento:
 
 ## Configuracao de ambiente (dev/prod)
 
-- Use arquivos separados para evitar hosts errados:
-  - `cp .env.dev.example .env.dev`
-  - `cp .env.prod.example .env.prod`
-- O app carrega o arquivo via `ENV_FILE` (ex.: `ENV_FILE=.env.dev`).
-- Com `air`, o env dev ja vem configurado (usa `.env.dev`).
+- Para dev local, copie o exemplo: `cp .env.example .env`.
+- O app **nao** carrega `.env` automaticamente. Exporte as variaveis no shell (ou use `direnv`).
 - A aplicacao roteia por host: em dev use `app.localhost` e `api.localhost` (caso nao resolva, adicione no `/etc/hosts`).
 
 ---
