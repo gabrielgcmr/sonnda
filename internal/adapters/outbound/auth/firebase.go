@@ -1,4 +1,7 @@
-// internal/adapters/outbound/integrations/auth/firebase_auth_service.go
+//A AUTENTICAÇÃO DO FIREBASE FOI MOVIDA PARA O AUTH0, POIS O AUTH0 OFERECE UMA MELHOR EXPERIÊNCIA DE USUÁRIO E MAIS RECURSOS DE SEGURANÇA.
+// ESTE CÓDIGO FOI MANTIDO PARA REFERÊNCIA FUTURA, MAS NÃO É MAIS USADO NO PROJETO.
+
+// internal/adapters/outbound/auth/firebase.go
 package auth
 
 import (
@@ -17,14 +20,14 @@ import (
 	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
 )
 
-type FirebaseAuthService struct {
+type Config struct {
 	client    *firebaseauth.Client
 	projectID string
 }
 
-var _ ports.IdentityService = (*FirebaseAuthService)(nil)
+var _ ports.IdentityService = (*Config)(nil)
 
-func NewFirebaseAuthService(ctx context.Context) (*FirebaseAuthService, error) {
+func NewFirebaseAuthService(ctx context.Context) (*Config, error) {
 	projectID := strings.TrimSpace(os.Getenv("GCP_PROJECT_ID"))
 
 	var opts []option.ClientOption
@@ -49,14 +52,14 @@ func NewFirebaseAuthService(ctx context.Context) (*FirebaseAuthService, error) {
 		return nil, fmt.Errorf("app.auth: %w", err)
 	}
 
-	return &FirebaseAuthService{client: authClient, projectID: projectID}, nil
+	return &Config{client: authClient, projectID: projectID}, nil
 }
 
-func (s *FirebaseAuthService) ProviderName() string {
+func (s *Config) ProviderName() string {
 	return "firebase"
 }
 
-func (s *FirebaseAuthService) VerifyToken(ctx context.Context, tokenStr string) (*identity.Identity, error) {
+func (s *Config) VerifyToken(ctx context.Context, tokenStr string) (*identity.Identity, error) {
 	if s.client == nil {
 		return nil, errors.New("firebase client not configured")
 	}
@@ -75,7 +78,7 @@ func (s *FirebaseAuthService) VerifyToken(ctx context.Context, tokenStr string) 
 	}, nil
 }
 
-func (s *FirebaseAuthService) VerifySessionCookie(ctx context.Context, sessionCookie string) (*identity.Identity, error) {
+func (s *Config) VerifySessionCookie(ctx context.Context, sessionCookie string) (*identity.Identity, error) {
 	if s.client == nil {
 		return nil, errors.New("firebase client not configured")
 	}
@@ -94,7 +97,7 @@ func (s *FirebaseAuthService) VerifySessionCookie(ctx context.Context, sessionCo
 	}, nil
 }
 
-func (s *FirebaseAuthService) CreateSessionCookie(ctx context.Context, idToken string, expiresIn time.Duration) (string, error) {
+func (s *Config) CreateSessionCookie(ctx context.Context, idToken string, expiresIn time.Duration) (string, error) {
 	if s.client == nil {
 		return "", errors.New("firebase client not configured")
 	}
@@ -107,7 +110,7 @@ func (s *FirebaseAuthService) CreateSessionCookie(ctx context.Context, idToken s
 	return sessionCookie, nil
 }
 
-func (s *FirebaseAuthService) RevokeSessions(ctx context.Context, subject string) error {
+func (s *Config) RevokeSessions(ctx context.Context, subject string) error {
 	if s.client == nil {
 		return errors.New("firebase client not configured")
 	}
@@ -119,7 +122,7 @@ func (s *FirebaseAuthService) RevokeSessions(ctx context.Context, subject string
 	return nil
 }
 
-func (s *FirebaseAuthService) DisableUser(ctx context.Context, subject string) error {
+func (s *Config) DisableUser(ctx context.Context, subject string) error {
 	if s.client == nil {
 		return errors.New("firebase client not configured")
 	}

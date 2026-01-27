@@ -17,7 +17,10 @@ require (
 	google.golang.org/api v0.262.0
 )
 
-require github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
+require (
+	github.com/coreos/go-oidc/v3 v3.17.0 // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
+)
 
 require (
 	cel.dev/expr v0.25.1 // indirect

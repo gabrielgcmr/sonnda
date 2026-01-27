@@ -20,12 +20,12 @@ type usecase struct {
 	userRepo data.UserRepo
 	userSvc  usersvc.Service
 	profSvc  professionalsvc.Service
-	authSvc  auth.IdentityService
+	authSvc  auth.IdentityProvider
 }
 
 var _ UseCase = (*usecase)(nil)
 
-func New(userRepo data.UserRepo, userSvc usersvc.Service, profSvc professionalsvc.Service, authSvc auth.IdentityService) *usecase {
+func New(userRepo data.UserRepo, userSvc usersvc.Service, profSvc professionalsvc.Service, authSvc auth.IdentityProvider) *usecase {
 	return &usecase{
 		userRepo: userRepo,
 		userSvc:  userSvc,

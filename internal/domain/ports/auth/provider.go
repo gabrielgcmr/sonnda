@@ -8,7 +8,7 @@ import (
 	"github.com/gabrielgcmr/sonnda/internal/domain/model/identity"
 )
 
-type IdentityService interface {
+type IdentityProvider interface {
 	ProviderName() string
 	VerifyToken(ctx context.Context, tokenStr string) (*identity.Identity, error)
 	VerifySessionCookie(ctx context.Context, sessionCookie string) (*identity.Identity, error)

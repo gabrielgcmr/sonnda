@@ -2,6 +2,6 @@ package ai
 
 import "context"
 
-type DocumentExtractorService interface {
+type ExtractorProvider interface {
 	ExtractLabReport(ctx context.Context, documentURI, mimeType string) (*ExtractedLabReport, error)
 }

@@ -1,5 +1,5 @@
-// internal/adapters/outbound/persistence/postgres/repository/db/connection.go
-package postgress
+// internal/adapters/outbound/data/postgres/repository/db/connection.go
+package postgres
 
 import (
 	"context"

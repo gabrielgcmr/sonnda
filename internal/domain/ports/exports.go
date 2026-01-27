@@ -15,10 +15,10 @@ type (
 	ExtractedLabReport  = ai.ExtractedLabReport
 
 	// ai - Interfaces
-	DocumentExtractorService = ai.DocumentExtractorService
+	DocumentExtractorService = ai.ExtractorProvider
 
 	// auth
-	IdentityService = auth.IdentityService
+	IdentityService = auth.IdentityProvider
 
 	// data - Repositories
 	LabsRepo          = data.LabsRepo
@@ -32,5 +32,5 @@ type (
 	AccessiblePatient = data.AccessiblePatient
 
 	// file
-	FileStorageService = file.FileStorageService
+	FileStorageService = file.FileStorageProvider
 )
