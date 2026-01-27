@@ -10,7 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"sonnda-api/internal/domain/model/identity"
+	"github.com/gabrielgcmr/sonnda/internal/domain/model/identity"
 )
 
 type fakeIdentityService struct {

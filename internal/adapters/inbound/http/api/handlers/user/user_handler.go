@@ -6,15 +6,15 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"sonnda-api/internal/adapters/inbound/http/api/apierr"
-	"sonnda-api/internal/adapters/inbound/http/api/binder"
-	"sonnda-api/internal/adapters/inbound/http/api/handlers"
-	"sonnda-api/internal/adapters/inbound/http/shared/httpctx"
-	"sonnda-api/internal/app/apperr"
-	usersvc "sonnda-api/internal/app/services/user"
-	registrationuc "sonnda-api/internal/app/usecase/registration"
-	"sonnda-api/internal/domain/model/professional"
-	"sonnda-api/internal/domain/model/user"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/api/apierr"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/api/binder"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/api/handlers"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/shared/httpctx"
+	"github.com/gabrielgcmr/sonnda/internal/app/apperr"
+	usersvc "github.com/gabrielgcmr/sonnda/internal/app/services/user"
+	registrationuc "github.com/gabrielgcmr/sonnda/internal/app/usecase/registration"
+	"github.com/gabrielgcmr/sonnda/internal/domain/model/professional"
+	"github.com/gabrielgcmr/sonnda/internal/domain/model/user"
 )
 
 type Handler struct {

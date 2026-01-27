@@ -10,12 +10,12 @@ import (
 // Embeda TUDO que precisa em produção.
 // Ajuste os paths conforme seu repo.
 var (
-	//go:embed public/** templates/**
+	//go:embed static/** templates/**
 	embedded embed.FS
 )
 
 type FSBundle struct {
-	Public    fs.FS
+	Static    fs.FS
 	Templates fs.FS
 }
 
@@ -24,13 +24,13 @@ func LoadFS(env string) (FSBundle, error) {
 	if env == "dev" {
 		// assume que o working dir é a raiz do repo
 		return FSBundle{
-			Public:    os.DirFS("internal/adapters/inbound/http/web/public"),
+			Static:    os.DirFS("internal/adapters/inbound/http/web/static"),
 			Templates: os.DirFS("internal/adapters/inbound/http/web/templates"),
 		}, nil
 	}
 
 	// PROD: usa embed (binário self-contained)
-	pub, err := fs.Sub(embedded, "public")
+	static, err := fs.Sub(embedded, "static")
 	if err != nil {
 		return FSBundle{}, err
 	}
@@ -39,5 +39,5 @@ func LoadFS(env string) (FSBundle, error) {
 		return FSBundle{}, err
 	}
 
-	return FSBundle{Public: pub, Templates: tpl}, nil
+	return FSBundle{Static: static, Templates: tpl}, nil
 }

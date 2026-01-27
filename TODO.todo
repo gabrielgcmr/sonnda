@@ -1,0 +1,15 @@
+Fluxo “Authorization Code + PKCE” (o certo em 2026)
+
+1️⃣ Usuário acessa /login
+2️⃣ Seu backend redireciona para o IdP
+3️⃣ Usuário faz login no IdP (senha, MFA, Google, etc.)
+4️⃣ IdP redireciona de volta com um code
+5️⃣ Seu backend troca o code por tokens
+6️⃣ Seu backend cria sessão/cookie
+7️⃣ Usuário navega normalmente (SSR + HTMX)
+
+👉 Depois do login:
+
+você não usa token no frontend
+
+o site funciona como web clássico com cookie

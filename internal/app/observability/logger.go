@@ -30,7 +30,7 @@ var loggerKey ctxKey
 func New(cfg Config) *slog.Logger {
 	// Defaults
 	if cfg.AppName == "" {
-		cfg.AppName = "sonnda-api"
+		cfg.AppName = "github.com/gabrielgcmr/sonnda"
 	}
 
 	level := parseLevel(cfg.Level)

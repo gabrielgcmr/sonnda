@@ -5,7 +5,7 @@ module.exports = {
   content: [
     "./internal/adapters/inbound/http/web/templates/**/*.{templ,html,tmpl,gohtml}",
     "./internal/adapters/inbound/http/web/handlers/**/*.go",
-    "./internal/adapters/inbound/http/web/public/js/**/*.js",
+    "./internal/adapters/inbound/http/web/static/js/**/*.js",
   ],
   theme: {
     extend: {

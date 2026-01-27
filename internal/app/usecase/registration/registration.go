@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 
-	"sonnda-api/internal/app/apperr"
-	professionalsvc "sonnda-api/internal/app/services/professional"
-	usersvc "sonnda-api/internal/app/services/user"
-	"sonnda-api/internal/domain/model/user"
-	"sonnda-api/internal/domain/ports/integration"
-	"sonnda-api/internal/domain/ports/repository"
+	"github.com/gabrielgcmr/sonnda/internal/app/apperr"
+	professionalsvc "github.com/gabrielgcmr/sonnda/internal/app/services/professional"
+	usersvc "github.com/gabrielgcmr/sonnda/internal/app/services/user"
+	"github.com/gabrielgcmr/sonnda/internal/domain/model/user"
+	auth "github.com/gabrielgcmr/sonnda/internal/domain/ports/auth"
+	"github.com/gabrielgcmr/sonnda/internal/domain/ports/storage/data"
 )
 
 type UseCase interface {
@@ -17,15 +17,15 @@ type UseCase interface {
 }
 
 type usecase struct {
-	userRepo repository.User
+	userRepo data.UserRepo
 	userSvc  usersvc.Service
 	profSvc  professionalsvc.Service
-	authSvc  integration.IdentityService
+	authSvc  auth.IdentityService
 }
 
 var _ UseCase = (*usecase)(nil)
 
-func New(userRepo repository.User, userSvc usersvc.Service, profSvc professionalsvc.Service, authSvc integration.IdentityService) *usecase {
+func New(userRepo data.UserRepo, userSvc usersvc.Service, profSvc professionalsvc.Service, authSvc auth.IdentityService) *usecase {
 	return &usecase{
 		userRepo: userRepo,
 		userSvc:  userSvc,

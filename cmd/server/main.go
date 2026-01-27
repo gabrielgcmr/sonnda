@@ -12,22 +12,22 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 
-	"sonnda-api/internal/app/bootstrap"
-	"sonnda-api/internal/app/config"
-	"sonnda-api/internal/app/observability"
+	"github.com/gabrielgcmr/sonnda/internal/app/bootstrap"
+	"github.com/gabrielgcmr/sonnda/internal/app/config"
+	"github.com/gabrielgcmr/sonnda/internal/app/observability"
 
-	httpserver "sonnda-api/internal/adapters/inbound/http"
-	"sonnda-api/internal/adapters/inbound/http/api"
-	apimw "sonnda-api/internal/adapters/inbound/http/api/middleware"
-	sharedauth "sonnda-api/internal/adapters/inbound/http/shared/auth"
-	"sonnda-api/internal/adapters/inbound/http/web"
-	webhandlers "sonnda-api/internal/adapters/inbound/http/web/handlers"
-	webmw "sonnda-api/internal/adapters/inbound/http/web/middleware"
-	authinfra "sonnda-api/internal/adapters/outbound/integrations/auth"
-	"sonnda-api/internal/adapters/outbound/integrations/documentai"
-	"sonnda-api/internal/adapters/outbound/integrations/storage"
-	"sonnda-api/internal/adapters/outbound/persistence/postgres/repository/db"
-	redisstore "sonnda-api/internal/adapters/outbound/persistence/redis"
+	httpserver "github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/api"
+	apimw "github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/api/middleware"
+	sharedauth "github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/shared/auth"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/web"
+	webhandlers "github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/web/handlers"
+	webmw "github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/web/middleware"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/outbound/ai"
+	authinfra "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/auth"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres/repository/db"
+	redisstore "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/redis"
+	storage "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/file"
 )
 
 func main() {
@@ -48,19 +48,20 @@ func main() {
 		Env:       cfg.Env,
 		Level:     cfg.LogLevel,
 		Format:    cfg.LogFormat,
-		AppName:   "sonnda-api",
+		AppName:   "github.com/gabrielgcmr/sonnda",
 		AddSource: cfg.Env == "dev",
 	})
 	slog.SetDefault(appLogger)
 
-	// 5. Conectar db (Supabase via pgxpool)
+	// 5. Persistence
+	// 5.1 Conectar db (Supabase via pgxpool)
 	dbClient, err := db.NewClient(config.SupabaseConfig(*cfg))
 	if err != nil {
 		log.Fatalf("falha ao criar client do supabase: %v", err)
 	}
 	defer dbClient.Close()
 
-	//5.1 Redis Client (para sessões e cache)
+	//5.2 Redis Client (para sessões e cache)
 	redisClient, err := redisstore.NewClient()
 	if err != nil {
 		log.Fatalf("falha ao conectar ao Redis: %v", err)
@@ -70,20 +71,20 @@ func main() {
 
 	//6. Conectando outros servicos
 	//6.1 Storage Service (GCS)
-	storageService, err := storage.NewStorageAdapter(ctx, cfg.GCSBucket, cfg.GCPProjectID)
+	storageService, err := storage.NewGCSObjectStorage(ctx, cfg.GCSBucket, cfg.GCPProjectID)
 	if err != nil {
 		log.Fatalf("falha ao criar storage do GCS: %v", err)
 	}
 	defer storageService.Close()
 
 	//6.2 Document AI Service
-	docAIClient, err := documentai.NewClient(ctx, cfg.GCPProjectID, cfg.GCPLocation)
+	docAIClient, err := ai.NewClient(ctx, cfg.GCPProjectID, cfg.GCPLocation)
 	if err != nil {
 		log.Fatalf("falha ao criar DocAI client: %v", err)
 	}
 	defer docAIClient.Close()
 
-	docExtractor := documentai.NewDocumentAIAdapter(
+	docExtractor := ai.NewDocumentAIAdapter(
 		*docAIClient,
 		cfg.LabsProcessorID,
 	)

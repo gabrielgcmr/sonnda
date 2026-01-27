@@ -7,9 +7,9 @@ Simple instructions for coding in web package
 - Do NOT create a top-level `assets/` directory in this repository.
 - The project intentionally separates responsibilities:
   - `templates/` -> server-side rendered UI (`.templ`, layout, components, features)
-  - `public/` -> static files served directly to the browser (CSS, JS, images, fonts)
-- Static files are exposed via the public URL prefix:
-  - `/static/*` -> mapped to `public/*`
+  - `static/` -> static files served directly to the browser (CSS, JS, images, fonts)
+- Static files are exposed via the static URL prefix:
+  - `/static/*` -> mapped to `static/*`
 - Do NOT rewrite paths in templates or scripts to `/assets/...`.
   - If an automated suggestion mentions `/assets`, replace it with `/static`.
 - This decision is documented in: ADR-007 - Separacao entre templates e arquivos estaticos (sem pasta /assets).
@@ -23,7 +23,7 @@ Simple instructions for coding in web package
 
 ## Tailwind CSS (WEB) - v4 best practices
 - Use Tailwind CSS v4 utilities-first in `.templ` templates; only add custom CSS when Tailwind cannot express it cleanly.
-- Do not edit generated CSS: `internal/adapters/inbound/http/web/public/css/app.css` is generated.
+- Do not edit generated CSS: `internal/adapters/inbound/http/web/static/css/app.css` is generated.
 - Edit Tailwind source files instead:
   - `internal/adapters/inbound/http/web/styles` (Tailwind entrypoint, `@import "tailwindcss";`, `@theme` tokens)
 - Prefer composing UI via reusable `templ` components over writing large custom CSS blocks.

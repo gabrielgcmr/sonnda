@@ -2,10 +2,10 @@
 package api
 
 import (
-	"sonnda-api/internal/adapters/inbound/http/api/handlers"
-	"sonnda-api/internal/adapters/inbound/http/api/handlers/patient"
-	"sonnda-api/internal/adapters/inbound/http/api/handlers/user"
-	"sonnda-api/internal/adapters/inbound/http/api/middleware"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/api/handlers"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/api/handlers/patient"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/api/handlers/user"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/api/middleware"
 
 	"github.com/gin-gonic/gin"
 )

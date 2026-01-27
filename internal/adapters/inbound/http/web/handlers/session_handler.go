@@ -9,10 +9,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"sonnda-api/internal/adapters/inbound/http/web/weberr"
-	"sonnda-api/internal/app/apperr"
-	"sonnda-api/internal/app/observability"
-	"sonnda-api/internal/domain/ports/integration"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/web/weberr"
+	"github.com/gabrielgcmr/sonnda/internal/app/apperr"
+	"github.com/gabrielgcmr/sonnda/internal/app/observability"
+	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
 )
 
 const (
@@ -21,10 +21,10 @@ const (
 )
 
 type SessionHandler struct {
-	identityService integration.IdentityService
+	identityService ports.IdentityService
 }
 
-func NewSessionHandler(identityService integration.IdentityService) *SessionHandler {
+func NewSessionHandler(identityService ports.IdentityService) *SessionHandler {
 	return &SessionHandler{
 		identityService: identityService,
 	}

@@ -1,7 +1,7 @@
 package binder
 
 import (
-	"sonnda-api/internal/app/apperr"
+	"github.com/gabrielgcmr/sonnda/internal/app/apperr"
 
 	"github.com/gin-gonic/gin"
 )

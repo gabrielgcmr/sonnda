@@ -4,7 +4,7 @@ package httperr
 import (
 	"errors"
 	"net/http"
-	"sonnda-api/internal/app/apperr"
+	"github.com/gabrielgcmr/sonnda/internal/app/apperr"
 )
 
 func StatusFromCode(code apperr.ErrorCode) int {

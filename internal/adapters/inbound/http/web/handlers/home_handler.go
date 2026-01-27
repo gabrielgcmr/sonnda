@@ -3,12 +3,13 @@ package handlers
 
 import (
 	"net/http"
-	"sonnda-api/internal/adapters/inbound/http/shared/httpctx"
-
-	patientcomponents "sonnda-api/internal/adapters/inbound/http/web/templates/components/features/patients"
-	"sonnda-api/internal/adapters/inbound/http/web/templates/pages"
-	patientsvc "sonnda-api/internal/app/services/patient"
 	"sync/atomic"
+
+	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/shared/httpctx"
+
+	patientcomponents "github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/web/templates/components/features/patients"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/web/templates/pages"
+	patientsvc "github.com/gabrielgcmr/sonnda/internal/app/services/patient"
 
 	"github.com/gin-gonic/gin"
 )

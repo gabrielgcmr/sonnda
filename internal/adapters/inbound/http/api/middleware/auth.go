@@ -1,9 +1,9 @@
 package middleware
 
 import (
-	"sonnda-api/internal/adapters/inbound/http/api/apierr"
-	sharedauth "sonnda-api/internal/adapters/inbound/http/shared/auth"
-	"sonnda-api/internal/adapters/inbound/http/shared/httpctx"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/api/apierr"
+	sharedauth "github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/shared/auth"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/shared/httpctx"
 
 	"github.com/gin-gonic/gin"
 )

@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"sonnda-api/internal/domain/model/demographics"
+	"github.com/gabrielgcmr/sonnda/internal/domain/model/demographics"
 
 	"github.com/google/uuid"
 )

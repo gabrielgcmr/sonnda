@@ -7,10 +7,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"sonnda-api/internal/adapters/inbound/http/api"
-	sharedmw "sonnda-api/internal/adapters/inbound/http/shared/middleware"
-	"sonnda-api/internal/adapters/inbound/http/web"
-	"sonnda-api/internal/app/config"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/api"
+	sharedmw "github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/shared/middleware"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/web"
+	"github.com/gabrielgcmr/sonnda/internal/app/config"
 )
 
 type Infra struct {
@@ -43,7 +43,7 @@ func NewRouter(infra Infra, deps Deps) *gin.Engine {
 		env = infra.Config.Env
 	}
 
-	// 1. Criando um sub-sistema de arquivos para a pasta 'public'
+	// 1. Criando um sub-sistema de arquivos para a pasta 'static'
 	// Isso remove a necessidade de ter a pasta física no servidor de produção
 	bundle, err := web.LoadFS(env)
 	if err != nil {
@@ -52,12 +52,12 @@ func NewRouter(infra Infra, deps Deps) *gin.Engine {
 
 	// 2. Servindo os arquivos estáticos via rota /static
 	// Agora ele lê do binário, não do disco
-	r.StaticFS("/static", http.FS(bundle.Public))
+	r.StaticFS("/static", http.FS(bundle.Static))
 
 	// 3. Favicon Simplificado
-	// Como o favicon está dentro de public/, você pode apenas redirecionar ou servir direto
+	// Como o favicon está dentro de static/, você pode apenas redirecionar ou servir direto
 	r.GET("/favicon.ico", func(c *gin.Context) {
-		c.FileFromFS("favicon.ico", http.FS(bundle.Public))
+		c.FileFromFS("favicon.ico", http.FS(bundle.Static))
 	})
 
 	// ---- Rotas ----

@@ -8,7 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"sonnda-api/internal/app/apperr"
+	"github.com/gabrielgcmr/sonnda/internal/app/apperr"
 )
 
 func TestWriteError_IncludesViolations(t *testing.T) {

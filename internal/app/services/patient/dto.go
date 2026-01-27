@@ -2,7 +2,7 @@
 package patientsvc
 
 import (
-	"sonnda-api/internal/domain/model/demographics"
+	"github.com/gabrielgcmr/sonnda/internal/domain/model/demographics"
 	"time"
 
 	"github.com/google/uuid"

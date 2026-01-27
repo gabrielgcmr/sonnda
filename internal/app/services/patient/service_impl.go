@@ -4,23 +4,23 @@ package patientsvc
 import (
 	"context"
 
-	"sonnda-api/internal/app/services/authorization"
-	"sonnda-api/internal/domain/model/patient"
-	"sonnda-api/internal/domain/model/rbac"
-	"sonnda-api/internal/domain/model/user"
-	"sonnda-api/internal/domain/ports/repository"
+	"github.com/gabrielgcmr/sonnda/internal/app/services/authorization"
+	"github.com/gabrielgcmr/sonnda/internal/domain/model/patient"
+	"github.com/gabrielgcmr/sonnda/internal/domain/model/rbac"
+	"github.com/gabrielgcmr/sonnda/internal/domain/model/user"
+	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
 
 	"github.com/google/uuid"
 )
 
 type service struct {
-	repo repository.Patient
+	repo ports.PatientRepo
 	auth authorization.Authorizer
 }
 
 var _ Service = (*service)(nil)
 
-func New(repo repository.Patient, auth authorization.Authorizer) Service {
+func New(repo ports.PatientRepo, auth authorization.Authorizer) Service {
 	return &service{
 		repo: repo,
 		auth: auth,

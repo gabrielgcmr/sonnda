@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 
-	repoerr "sonnda-api/internal/adapters/outbound/persistence/postgres/repository"
-	"sonnda-api/internal/app/apperr"
-	"sonnda-api/internal/domain/model/demographics"
-	"sonnda-api/internal/domain/model/patient"
+	repoerr "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres/repository"
+	"github.com/gabrielgcmr/sonnda/internal/app/apperr"
+	"github.com/gabrielgcmr/sonnda/internal/domain/model/demographics"
+	"github.com/gabrielgcmr/sonnda/internal/domain/model/patient"
 )
 
 func mapDomainError(err error) error {

@@ -1,8 +1,8 @@
 package rbac
 
 import (
-	"sonnda-api/internal/domain/model/professional"
-	"sonnda-api/internal/domain/model/user"
+	"github.com/gabrielgcmr/sonnda/internal/domain/model/professional"
+	"github.com/gabrielgcmr/sonnda/internal/domain/model/user"
 )
 
 type Subject struct {

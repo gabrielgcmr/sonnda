@@ -20,16 +20,18 @@ Simple instructions for coding agents working on this repo.
 - Backend: API Restful in Go
   - Gin + sqlc + Supabase
   - **Auth**: Firebase
-  - **Database**: PostgreSQL (Supabase managed)
+  - **Persistence**: PostgreSQL (Supabase managed) and Redis (Upstash).
   - **Code generation**: sqlc for type-safe SQL
   - **External integrations**: Google Cloud Document AI, Firebase Auth, Google Cloud Storage
+  - 
 - Web:
   - templ + Tailwind CSS v4 + HTMX 
     - templates em `internal/adapters/inbound/http/web/templates/`
-    - statics em `internal/adapters/inbound/http/web/public/`
-    - **CSS generation**: Tailwind v4 (source: `internal/adapters/inbound/http/web/styles/`, output: `public/css/app.css`)
+    - statics em `internal/adapters/inbound/http/web/static/`
+    - **CSS generation**: Tailwind v4 (source: `internal/adapters/inbound/http/web/styles/`, output: `static/css/app.css`)
 - Mobile (Not in this repo):
   - React Native + Expo
+  - 
 - **Development tools**:
   - Air (live reload)
   - Make (task automation)
@@ -53,8 +55,6 @@ Simple instructions for coding agents working on this repo.
     - **Shared (`internal/adapters/inbound/http/shared`)**: Shared packages between api and web
     - **Web (`internal/adapters/inbound/http/web`)**: Server-rendered routes, handlers, and middleware for web UI (Templ + HTMX).
   - **Outbound (`internal/adapters/outbound`)**: Concrete implementations (database repositories, external integrations, cloud services).
-
-
 
 ## Error Handling (MANDATORY)
 
