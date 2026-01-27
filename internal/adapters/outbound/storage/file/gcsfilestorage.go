@@ -3,14 +3,15 @@
 //2. ✅ Não vou trocar implementações internas do GCS
 //3. ✅ Seria over-engineering
 
-package storage
+package filestorage
 
 import (
 	"context"
 	"fmt"
 	"io"
-	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
 	"time"
+
+	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
 
 	"cloud.google.com/go/storage"
 	"google.golang.org/api/option"

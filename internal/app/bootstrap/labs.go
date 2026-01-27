@@ -4,8 +4,8 @@ package bootstrap
 
 import (
 	labshandler "github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/api/handlers"
+	postgress "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres"
 	repo "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres/repository"
-	"github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres/repository/db"
 	labsvc "github.com/gabrielgcmr/sonnda/internal/app/services/labs"
 	labsuc "github.com/gabrielgcmr/sonnda/internal/app/usecase/labs"
 	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
@@ -16,7 +16,7 @@ type LabsModule struct {
 }
 
 func NewLabsModule(
-	dbClient *db.Client,
+	dbClient *postgress.Client,
 	docExtractor ports.DocumentExtractorService,
 	storage ports.FileStorageService,
 ) *LabsModule {

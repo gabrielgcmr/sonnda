@@ -9,8 +9,8 @@ import (
 	usersvc "github.com/gabrielgcmr/sonnda/internal/app/services/user"
 	registrationuc "github.com/gabrielgcmr/sonnda/internal/app/usecase/registration"
 
+	postgress "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres"
 	repo "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres/repository"
-	"github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres/repository/db"
 	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
 )
 
@@ -20,7 +20,7 @@ type UserModule struct {
 	RegistrationMiddleware *middleware.RegistrationMiddleware
 }
 
-func NewUserModule(db *db.Client, identityService ports.IdentityService) *UserModule {
+func NewUserModule(db *postgress.Client, identityService ports.IdentityService) *UserModule {
 	userRepo := repo.New(db)
 	profRepo := repo.NewProfessionalRepository(db)
 	patientAccessRepo := repo.NewPatientAccessRepository(db)

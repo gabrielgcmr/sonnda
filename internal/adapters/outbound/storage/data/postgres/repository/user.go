@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres/repository/db"
+	postgress "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres"
 	usersqlc "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres/sqlc/generated/user"
 	"github.com/gabrielgcmr/sonnda/internal/domain/model/user"
 	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
@@ -16,11 +16,11 @@ import (
 var _ ports.UserRepo = (*UserRepository)(nil)
 
 type UserRepository struct {
-	client  *db.Client
+	client  *postgress.Client
 	queries *usersqlc.Queries
 }
 
-func New(client *db.Client) *UserRepository {
+func New(client *postgress.Client) *UserRepository {
 	return &UserRepository{
 		client:  client,
 		queries: usersqlc.New(client.Pool()),

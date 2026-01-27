@@ -5,7 +5,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres/repository/db"
+	postgress "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres"
 	patientaccesssqlc "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres/sqlc/generated/patientaccess"
 	"github.com/gabrielgcmr/sonnda/internal/domain/model/patientaccess"
 	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
@@ -15,13 +15,13 @@ import (
 )
 
 type PatientAccessRepository struct {
-	client  *db.Client
+	client  *postgress.Client
 	queries *patientaccesssqlc.Queries
 }
 
 var _ ports.PatientAccessRepo = (*PatientAccessRepository)(nil)
 
-func NewPatientAccessRepository(client *db.Client) ports.PatientAccessRepo {
+func NewPatientAccessRepository(client *postgress.Client) ports.PatientAccessRepo {
 	return &PatientAccessRepository{
 		client:  client,
 		queries: patientaccesssqlc.New(client.Pool()),

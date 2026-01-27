@@ -19,7 +19,7 @@ type APIDependencies struct {
 }
 
 func SetupRoutes(
-	r *gin.Engine,
+	r gin.IRouter,
 	deps *APIDependencies,
 
 ) {

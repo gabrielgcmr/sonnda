@@ -25,10 +25,7 @@ type FirebaseAuthService struct {
 var _ ports.IdentityService = (*FirebaseAuthService)(nil)
 
 func NewFirebaseAuthService(ctx context.Context) (*FirebaseAuthService, error) {
-	projectID := strings.TrimSpace(os.Getenv("FIREBASE_PROJECT_ID"))
-	if projectID == "" {
-		projectID = strings.TrimSpace(os.Getenv("GCP_PROJECT_ID"))
-	}
+	projectID := strings.TrimSpace(os.Getenv("GCP_PROJECT_ID"))
 
 	var opts []option.ClientOption
 	if credentialsJSON := strings.TrimSpace(os.Getenv("FIREBASE_CREDENTIALS_JSON")); credentialsJSON != "" {

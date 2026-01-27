@@ -2,32 +2,62 @@
 package config
 
 import (
-	"encoding/base64"
 	"errors"
-	"fmt"
+	"net/url"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
-	"github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres/repository/db"
+	postgress "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres"
+	"github.com/gabrielgcmr/sonnda/internal/app/apperr"
+)
+
+const (
+	envGoogleApplicationCredentials = "GOOGLE_APPLICATION_CREDENTIALS"
+	envGCPProjectID                 = "GCP_PROJECT_ID"
+	envGCPProjectNumber             = "GCP_PROJECT_NUMBER"
+	envGCSBucket                    = "GCS_BUCKET"
+	envGCPLocation                  = "GCP_LOCATION"
+	envGCPExtractLabsProcessorID    = "GCP_EXTRACT_LABS_PROCESSOR_ID"
+
+	envSupabaseURL = "SUPABASE_URL"
+	envRedisURL    = "REDIS_URL"
+
+	envFirebaseAPIKey     = "FIREBASE_API_KEY"
+	envFirebaseAuthDomain = "FIREBASE_AUTH_DOMAIN"
+	envFirebaseAppID      = "FIREBASE_APP_ID"
+
+	envAppHost   = "APP_HOST"
+	envAPIHost   = "API_HOST"
+	envPort      = "PORT"
+	envAppEnv    = "APP_ENV"
+	envLogLevel  = "LOG_LEVEL"
+	envLogFormat = "LOG_FORMAT"
+)
+
+var (
+	allowedEnvs       = map[string]struct{}{"dev": {}, "prod": {}}
+	allowedLogLevels  = map[string]struct{}{"debug": {}, "info": {}, "warn": {}, "warning": {}, "error": {}}
+	allowedLogFormats = map[string]struct{}{"text": {}, "json": {}, "pretty": {}}
+
+	errInvalidHost = errors.New("invalid host")
 )
 
 type Config struct {
-	DBURL string
+	DBURL    string
+	RedisURL string
 
-	GCPProjectID     string
-	GCPProjectNumber string
-	GCSBucket        string
-	GCPLocation      string
-	LabsProcessorID  string
+	GoogleApplicationCredentials string
 
-	FirebaseProjectID         string
-	FirebaseAPIKey            string
-	FirebaseAuthDomain        string
-	FirebaseStorageBucket     string
-	FirebaseMessagingSenderID string
-	FirebaseAppID             string
+	GCPProjectID              string
+	GCPProjectNumber          string
+	GCSBucket                 string
+	GCPLocation               string
+	GCPExtractLabsProcessorID string
+
+	FirebaseAPIKey     string
+	FirebaseAuthDomain string
+	FirebaseAppID      string
 
 	AppHost string
 	APIHost string
@@ -40,122 +70,149 @@ type Config struct {
 }
 
 func Load() (*Config, error) {
-	projectID := os.Getenv("GCP_PROJECT_ID")
-	projectNumber := os.Getenv("GCP_PROJECT_NUMBER")
-	gcsBucket := os.Getenv("GCS_BUCKET")
 
 	cfg := &Config{
-		DBURL:             os.Getenv("SUPABASE_URL"),
-		GCPProjectID:      projectID,
-		GCPProjectNumber:  projectNumber,
-		GCSBucket:         gcsBucket,
-		GCPLocation:       os.Getenv("GCP_LOCATION"),
-		LabsProcessorID:   os.Getenv("DOCAI_LABS_PROCESSOR_ID"),
-		FirebaseProjectID: projectID,
+		DBURL:    getEnv(envSupabaseURL),
+		RedisURL: getEnv(envRedisURL),
+		// Google
+		GoogleApplicationCredentials: getEnv(envGoogleApplicationCredentials),
+		GCPProjectID:                 getEnv(envGCPProjectID),
+		GCPProjectNumber:             getEnv(envGCPProjectNumber),
+		GCSBucket:                    getEnv(envGCSBucket),
+		GCPLocation:                  getEnv(envGCPLocation),
+		GCPExtractLabsProcessorID:    getEnv(envGCPExtractLabsProcessorID),
+		FirebaseAPIKey:               getEnv(envFirebaseAPIKey),
+		FirebaseAuthDomain:           getEnv(envFirebaseAuthDomain),
+		FirebaseAppID:                getEnv(envFirebaseAppID),
+		Port:                         getEnvOrDefault(envPort, "8080"),
+		Env:                          strings.ToLower(getEnvOrDefault(envAppEnv, "dev")),
+		LogLevel:                     strings.ToLower(getEnvOrDefault(envLogLevel, "info")),
+		LogFormat:                    strings.ToLower(getEnvOrDefault(envLogFormat, "text")),
+	}
 
-		FirebaseAPIKey:            os.Getenv("FIREBASE_API_KEY"),
-		FirebaseAuthDomain:        os.Getenv("FIREBASE_AUTH_DOMAIN"),
-		FirebaseStorageBucket:     gcsBucket,
-		FirebaseMessagingSenderID: projectNumber,
-		FirebaseAppID:             os.Getenv("FIREBASE_APP_ID"),
-		AppHost:                   normalizeHost(os.Getenv("APP_HOST")),
-		APIHost:                   normalizeHost(os.Getenv("API_HOST")),
-		Port:                      getEnvOrDefault("PORT", "8080"),
-		Env:                       getEnvOrDefault("APP_ENV", "dev"),
-		LogLevel:                  getEnvOrDefault("LOG_LEVEL", "info"),
-		LogFormat:                 getEnvOrDefault("LOG_FORMAT", "text"),
+	rawAppHost := getEnv(envAppHost)
+	rawAPIHost := getEnv(envAPIHost)
+	if cfg.Env == "dev" {
+		if rawAppHost == "" {
+			rawAppHost = "app.localhost"
+		}
+		if rawAPIHost == "" {
+			rawAPIHost = "api.localhost"
+		}
+	}
+
+	var violations []apperr.Violation
+
+	if host, err := normalizeHost(rawAppHost); err != nil {
+		violations = append(violations, apperr.Violation{
+			Field:  envAppHost,
+			Reason: "invalid_host",
+		})
+	} else {
+		cfg.AppHost = host
+	}
+	if host, err := normalizeHost(rawAPIHost); err != nil {
+		violations = append(violations, apperr.Violation{
+			Field:  envAPIHost,
+			Reason: "invalid_host",
+		})
+	} else {
+		cfg.APIHost = host
+	}
+
+	appendRequired(&violations, envSupabaseURL, cfg.DBURL)
+	appendRequired(&violations, envGCPProjectID, cfg.GCPProjectID)
+	appendRequired(&violations, envGCSBucket, cfg.GCSBucket)
+	appendRequired(&violations, envGCPLocation, cfg.GCPLocation)
+	appendRequired(&violations, envGCPExtractLabsProcessorID, cfg.GCPExtractLabsProcessorID)
+	appendRequired(&violations, envRedisURL, cfg.RedisURL)
+	appendRequired(&violations, envGoogleApplicationCredentials, cfg.GoogleApplicationCredentials)
+	appendRequired(&violations, envAppHost, rawAppHost)
+	appendRequired(&violations, envAPIHost, rawAPIHost)
+
+	validateEnum(&violations, envAppEnv, cfg.Env, allowedEnvs)
+	validateEnum(&violations, envLogLevel, cfg.LogLevel, allowedLogLevels)
+	validateEnum(&violations, envLogFormat, cfg.LogFormat, allowedLogFormats)
+
+	if len(violations) > 0 {
+		return nil, apperr.Validation("invalid configuration", violations...)
 	}
 
 	if cfg.Env == "prod" && cfg.LogFormat == "text" {
 		cfg.LogFormat = "json"
 	}
 
-	// validação básica dos obrigatórios
-	var missing []string
-
-	if cfg.DBURL == "" {
-		missing = append(missing, "SUPABASE_URL")
-	}
-	if cfg.GCPProjectID == "" {
-		missing = append(missing, "GCP_PROJECT_ID")
-	}
-	if cfg.GCSBucket == "" {
-		missing = append(missing, "GCS_BUCKET")
-	}
-	if cfg.GCPLocation == "" {
-		missing = append(missing, "GCP_LOCATION")
-	}
-	if cfg.LabsProcessorID == "" {
-		missing = append(missing, "DOCAI_LABS_PROCESSOR_ID")
-	}
-	if len(missing) > 0 {
-		return nil, fmt.Errorf("missing required env vars: %s", strings.Join(missing, ", "))
-	}
-
 	return cfg, nil
 }
 
 func getEnvOrDefault(key, def string) string {
-	if v := os.Getenv(key); v != "" {
+	if v := strings.TrimSpace(os.Getenv(key)); v != "" {
 		return v
 	}
 	return def
 }
 
-func normalizeHost(host string) string {
-	host = strings.TrimSpace(strings.ToLower(host))
-	if host == "" {
-		return ""
-	}
-	return strings.Split(host, ":")[0]
+func getEnv(key string) string {
+	return strings.TrimSpace(os.Getenv(key))
 }
 
-func SupabaseConfig(cfg Config) db.Config {
-	return db.Config{
+func appendRequired(violations *[]apperr.Violation, field, value string) {
+	if strings.TrimSpace(value) == "" {
+		*violations = append(*violations, apperr.Violation{
+			Field:  field,
+			Reason: "required",
+		})
+	}
+}
+
+func validateEnum(violations *[]apperr.Violation, field, value string, allowed map[string]struct{}) {
+	if value == "" {
+		return
+	}
+	if _, ok := allowed[strings.ToLower(value)]; !ok {
+		*violations = append(*violations, apperr.Violation{
+			Field:  field,
+			Reason: "invalid_enum",
+		})
+	}
+}
+
+func normalizeHost(raw string) (string, error) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return "", nil
+	}
+
+	var u *url.URL
+	var err error
+	if strings.Contains(raw, "://") {
+		u, err = url.Parse(raw)
+	} else {
+		u, err = url.Parse("//" + raw)
+	}
+	if err != nil {
+		return "", errInvalidHost
+	}
+
+	if u.Hostname() == "" {
+		return "", errInvalidHost
+	}
+	if u.Path != "" && u.Path != "/" {
+		return "", errInvalidHost
+	}
+	if u.RawQuery != "" || u.Fragment != "" {
+		return "", errInvalidHost
+	}
+
+	return strings.ToLower(u.Hostname()), nil
+}
+
+func SupabaseConfig(cfg Config) postgress.Config {
+	return postgress.Config{
 		DatabaseURL:     cfg.DBURL,
 		MaxConns:        10,
 		MinConns:        2,
 		MaxConnLifetime: time.Hour,
 		MaxConnIdleTime: 30 * time.Minute,
 	}
-}
-
-// SetupGoogleCredentials configura GOOGLE_APPLICATION_CREDENTIALS
-// Tenta usar arquivo local em dev, ou decodifica base64 em produção
-func SetupGoogleCredentials() error {
-	// Se já está setado, valida se o arquivo existe
-	if credPath := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"); credPath != "" {
-		if _, err := os.Stat(credPath); err == nil {
-			return nil // Arquivo existe, tudo certo
-		}
-		// Arquivo não existe, continua para tentar base64
-	}
-
-	// Tenta usar arquivo local primeiro (desenvolvimento)
-	localPath := "secrets/sonnda-gcs.json"
-	if _, err := os.Stat(localPath); err == nil {
-		return os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", localPath)
-	}
-
-	// Em produção, tenta decodificar base64
-	credB64 := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS_B64")
-	if credB64 == "" {
-		return errors.New("GOOGLE_APPLICATION_CREDENTIALS_B64 não definido em produção")
-	}
-
-	// Decodifica o base64
-	credJSON, err := base64.StdEncoding.DecodeString(credB64)
-	if err != nil {
-		return errors.New("erro ao decodificar GOOGLE_APPLICATION_CREDENTIALS_B64: " + err.Error())
-	}
-
-	// Escreve em arquivo temporário
-	tmpDir := os.TempDir()
-	credPath := filepath.Join(tmpDir, "gcp-credentials.json")
-	if err := os.WriteFile(credPath, credJSON, 0600); err != nil {
-		return errors.New("erro ao escrever credencial temporária: " + err.Error())
-	}
-
-	// Seta a variável de ambiente
-	return os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", credPath)
 }

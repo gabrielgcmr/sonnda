@@ -4,7 +4,7 @@ package repository
 import (
 	"context"
 
-	"github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres/repository/db"
+	postgress "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres"
 	labsqlc "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres/sqlc/generated/lab"
 	"github.com/gabrielgcmr/sonnda/internal/domain/model/labs"
 	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
@@ -13,13 +13,13 @@ import (
 )
 
 type LabsRepository struct {
-	client  *db.Client
+	client  *postgress.Client
 	queries *labsqlc.Queries
 }
 
 var _ ports.LabsRepo = (*LabsRepository)(nil)
 
-func NewLabsRepository(client *db.Client) ports.LabsRepo {
+func NewLabsRepository(client *postgress.Client) ports.LabsRepo {
 	return &LabsRepository{
 		client:  client,
 		queries: labsqlc.New(client.Pool()),

@@ -7,21 +7,20 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres/repository/db"
-
+	postgress "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres"
 	professionalsqlc "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres/sqlc/generated/professional"
 	"github.com/gabrielgcmr/sonnda/internal/domain/model/professional"
 	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
 )
 
 type Professional struct {
-	client  *db.Client
+	client  *postgress.Client
 	queries *professionalsqlc.Queries
 }
 
 var _ ports.ProfessionalRepo = (*Professional)(nil)
 
-func NewProfessionalRepository(client *db.Client) ports.ProfessionalRepo {
+func NewProfessionalRepository(client *postgress.Client) ports.ProfessionalRepo {
 	return &Professional{
 		client:  client,
 		queries: professionalsqlc.New(client.Pool()),

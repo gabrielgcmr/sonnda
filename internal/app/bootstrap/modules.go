@@ -3,7 +3,7 @@
 package bootstrap
 
 import (
-	"github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres/repository/db"
+	postgress "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres"
 	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
 )
 
@@ -14,7 +14,7 @@ type Modules struct {
 }
 
 func NewModules(
-	dbClient *db.Client,
+	dbClient *postgress.Client,
 	identityService ports.IdentityService,
 	docExtractor ports.DocumentExtractorService,
 	storage ports.FileStorageService,

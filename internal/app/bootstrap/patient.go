@@ -4,8 +4,8 @@ package bootstrap
 
 import (
 	patienthandler "github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/api/handlers/patient"
+	postgress "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres"
 	repo "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres/repository"
-	"github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres/repository/db"
 	authorization "github.com/gabrielgcmr/sonnda/internal/app/services/authorization"
 	patientsvc "github.com/gabrielgcmr/sonnda/internal/app/services/patient"
 )
@@ -15,7 +15,7 @@ type PatientModule struct {
 	Handler *patienthandler.PatientHandler
 }
 
-func NewPatientModule(db *db.Client) *PatientModule {
+func NewPatientModule(db *postgress.Client) *PatientModule {
 	patientRepo := repo.NewPatientRepository(db)
 	accessRepo := repo.NewPatientAccessRepository(db)
 	profRepo := repo.NewProfessionalRepository(db)

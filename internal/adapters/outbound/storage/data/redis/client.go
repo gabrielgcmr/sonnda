@@ -1,16 +1,19 @@
+// internal/adapters/outbound/storage/data/redis/client.go
 package redisstore
 
 import (
 	"context"
-	"os"
+	"errors"
 	"time"
 
 	"github.com/redis/go-redis/v9"
 )
 
-func NewClient() (*redis.Client, error) {
-	url := os.Getenv("REDIS_URL")
-	opt, err := redis.ParseURL(url)
+func NewClient(redisURL string) (*redis.Client, error) {
+	if redisURL == "" {
+		return nil, errors.New("redis url is required")
+	}
+	opt, err := redis.ParseURL(redisURL)
 	if err != nil {
 		return nil, err
 	}

@@ -5,9 +5,9 @@ APP_NAME := sonnda
 MAIN     := ./cmd/server
 
 # Versões das Ferramentas
-AIR_VERSION      := v1.52.3
+AIR_VERSION      := latest
 TAILWIND_VERSION := v4.1.18
-TEMPL_VERSION    := v0.3.977
+TEMPL_VERSION    := latest
 
 # Diretórios e Binários
 TOOLS_DIR    := tools/bin
@@ -77,19 +77,19 @@ test:
 # 📦 INSTALAÇÃO DE FERRAMENTAS (Auto-Download)
 # ==============================================================================
 $(AIR):
-	@echo "☁️  Instalando air $(AIR_VERSION)..."
+	@echo "☁️  Instalando air versão: $(AIR_VERSION)..."
 	@mkdir -p $(TOOLS_DIR)
-	@curl -L -o $(AIR) https://github.com/air-verse/air/releases/download/$(AIR_VERSION)/air_$(OS)_$(ARCH)
-	@chmod +x $(AIR)
+	@GOBIN=$(PWD)/$(TOOLS_DIR) go install github.com/air-verse/air@$(AIR_VERSION)
+
 
 $(TAILWIND):
-	@echo "🎨 Instalando tailwindcss $(TAILWIND_VERSION)..."
+	@echo "🎨 Instalando tailwindcss versão: $(TAILWIND_VERSION)..."
 	@mkdir -p $(TOOLS_DIR)
 	@curl -L -o $(TAILWIND) https://github.com/tailwindlabs/tailwindcss/releases/download/$(TAILWIND_VERSION)/tailwindcss-$(OS)-$(TAILWIND_ARCH)
 	@chmod +x $(TAILWIND)
 
 $(TEMPL):
-	@echo "🔥 Instalando templ $(TEMPL_VERSION)..."
+	@echo "🔥 Instalando templ versão: $(TEMPL_VERSION)..."
 	@GOBIN=$(PWD)/$(TOOLS_DIR) go install github.com/a-h/templ/cmd/templ@$(TEMPL_VERSION)
 
 

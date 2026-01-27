@@ -17,7 +17,7 @@ type WebDependencies struct {
 }
 
 func SetupRoutes(
-	r *gin.Engine,
+	r gin.IRouter,
 	deps WebDependencies,
 ) {
 	// ---------------------------------------------------------------------

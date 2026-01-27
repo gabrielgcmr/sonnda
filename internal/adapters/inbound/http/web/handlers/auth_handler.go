@@ -27,9 +27,9 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		FirebaseConfig: auth.FirebaseConfig{
 			APIKey:            h.cfg.FirebaseAPIKey,
 			AuthDomain:        h.cfg.FirebaseAuthDomain,
-			ProjectID:         h.cfg.FirebaseProjectID,
-			StorageBucket:     h.cfg.FirebaseStorageBucket,
-			MessagingSenderID: h.cfg.FirebaseMessagingSenderID,
+			ProjectID:         h.cfg.GCPProjectID,
+			StorageBucket:     h.cfg.GCSBucket,
+			MessagingSenderID: h.cfg.GCPProjectNumber,
 			AppID:             h.cfg.FirebaseAppID,
 		},
 	}
@@ -48,9 +48,9 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		FirebaseConfig: auth.FirebaseConfig{
 			APIKey:            h.cfg.FirebaseAPIKey,
 			AuthDomain:        h.cfg.FirebaseAuthDomain,
-			ProjectID:         h.cfg.FirebaseProjectID,
-			StorageBucket:     h.cfg.FirebaseStorageBucket,
-			MessagingSenderID: h.cfg.FirebaseMessagingSenderID,
+			ProjectID:         h.cfg.GCPProjectID,
+			StorageBucket:     h.cfg.GCSBucket,
+			MessagingSenderID: h.cfg.GCPProjectNumber,
 			AppID:             h.cfg.FirebaseAppID,
 		},
 	}

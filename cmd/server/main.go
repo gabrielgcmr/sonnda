@@ -1,4 +1,4 @@
-// cmd/api/main.go
+// cmd/server/main.go
 package main
 
 import (
@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -25,19 +26,35 @@ import (
 	webmw "github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/web/middleware"
 	"github.com/gabrielgcmr/sonnda/internal/adapters/outbound/ai"
 	authinfra "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/auth"
-	"github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres/repository/db"
+	postgress "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres"
 	redisstore "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/redis"
-	storage "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/file"
+	filestorage "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/file"
 )
+
+func buildURL(env, host, port, path string) string {
+	if host == "" {
+		host = "localhost"
+	}
+	scheme := "http"
+	if env == "prod" {
+		scheme = "https"
+	}
+	base := scheme + "://" + host
+	if port != "" && port != "80" && port != "443" {
+		base += ":" + port
+	}
+	if path == "" || path == "/" {
+		return base + "/"
+	}
+	if !strings.HasPrefix(path, "/") {
+		path = "/" + path
+	}
+	return base + path
+}
 
 func main() {
 	// 1. Carrega o contexto
 	ctx := context.Background()
-
-	// 2. Setup Google Cloud credentials
-	if err := config.SetupGoogleCredentials(); err != nil {
-		log.Printf("Aviso: Não foi possível configurar credenciais do Google Cloud: %v", err)
-	}
 
 	// 3. Carrega variaveis de ambiente
 	if err := godotenv.Load(); err != nil {
@@ -62,14 +79,14 @@ func main() {
 
 	// 5. Persistence
 	// 5.1 Conectar db (Supabase via pgxpool)
-	dbClient, err := db.NewClient(config.SupabaseConfig(*cfg))
+	dbClient, err := postgress.NewClient(config.SupabaseConfig(*cfg))
 	if err != nil {
 		log.Fatalf("falha ao criar client do supabase: %v", err)
 	}
 	defer dbClient.Close()
 
 	//5.2 Redis Client (para sessões e cache)
-	redisClient, err := redisstore.NewClient()
+	redisClient, err := redisstore.NewClient(cfg.RedisURL)
 	if err != nil {
 		log.Fatalf("falha ao conectar ao Redis: %v", err)
 	}
@@ -78,7 +95,7 @@ func main() {
 
 	//6. Conectando outros servicos
 	//6.1 Storage Service (GCS)
-	storageService, err := storage.NewGCSObjectStorage(ctx, cfg.GCSBucket, cfg.GCPProjectID)
+	storageService, err := filestorage.NewGCSObjectStorage(ctx, cfg.GCSBucket, cfg.GCPProjectID)
 	if err != nil {
 		log.Fatalf("falha ao criar storage do GCS: %v", err)
 	}
@@ -93,7 +110,7 @@ func main() {
 
 	docExtractor := ai.NewDocumentAIAdapter(
 		*docAIClient,
-		cfg.LabsProcessorID,
+		cfg.GCPExtractLabsProcessorID,
 	)
 
 	//6.3 Auth (Firebase only)
@@ -151,8 +168,8 @@ func main() {
 	slog.Info(
 		"Sonnda is running",
 		slog.String("Mode: env", cfg.Env),
-		slog.String("Api url", "http://localhost:"+cfg.Port+"/api/v1"),
-		slog.String("App url", "http://localhost:"+cfg.Port+"/"),
+		slog.String("Api url", buildURL(cfg.Env, cfg.APIHost, cfg.Port, "/api/v1")),
+		slog.String("App url", buildURL(cfg.Env, cfg.AppHost, cfg.Port, "/")),
 	)
 	server := &http.Server{
 		Addr:    ":" + cfg.Port,

@@ -36,6 +36,7 @@ func NewRouter(infra Infra, deps Deps) *gin.Engine {
 		sharedmw.RequestID(),
 		sharedmw.AccessLog(logger),
 		sharedmw.Recovery(logger),
+		sharedmw.HostRouting(infra.Config),
 	)
 
 	env := "dev"
@@ -61,9 +62,13 @@ func NewRouter(infra Infra, deps Deps) *gin.Engine {
 	})
 
 	// ---- Rotas ----
-	// Rotas
-	web.SetupRoutes(r, deps.WEB)
-	api.SetupRoutes(r, deps.API)
+	appGroup := r.Group("/")
+	appGroup.Use(sharedmw.RequireEntry(sharedmw.EntryApp))
+	web.SetupRoutes(appGroup, deps.WEB)
+
+	apiGroup := r.Group("/")
+	apiGroup.Use(sharedmw.RequireEntry(sharedmw.EntryAPI))
+	api.SetupRoutes(apiGroup, deps.API)
 
 	return r
 }
