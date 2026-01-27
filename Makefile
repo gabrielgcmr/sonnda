@@ -6,7 +6,7 @@ MAIN     := ./cmd/server
 
 # Versões das Ferramentas
 AIR_VERSION      := v1.52.3
-TAILWIND_VERSION := v4.0.0
+TAILWIND_VERSION := v4.1.18
 TEMPL_VERSION    := v0.3.977
 
 # Diretórios e Binários
