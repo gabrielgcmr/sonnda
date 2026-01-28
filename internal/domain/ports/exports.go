@@ -3,7 +3,6 @@ package ports
 
 import (
 	"github.com/gabrielgcmr/sonnda/internal/domain/ports/ai"
-	"github.com/gabrielgcmr/sonnda/internal/domain/ports/auth"
 	"github.com/gabrielgcmr/sonnda/internal/domain/ports/storage/data"
 	"github.com/gabrielgcmr/sonnda/internal/domain/ports/storage/file"
 )
@@ -16,9 +15,6 @@ type (
 
 	// ai - Interfaces
 	DocumentExtractorService = ai.ExtractorProvider
-
-	// auth
-	IdentityService = auth.IdentityProvider
 
 	// data - Repositories
 	LabsRepo          = data.LabsRepo

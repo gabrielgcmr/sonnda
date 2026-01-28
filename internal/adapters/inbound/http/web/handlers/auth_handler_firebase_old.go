@@ -1,3 +1,4 @@
+// DEPRECATED:
 // internal/adapters/inbound/http/web/handlers/auth_handler.go
 package handlers
 

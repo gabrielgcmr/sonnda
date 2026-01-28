@@ -2,14 +2,13 @@ package registration
 
 import (
 	"context"
-	"errors"
 
 	professionalsvc "github.com/gabrielgcmr/sonnda/internal/app/services/professional"
 	usersvc "github.com/gabrielgcmr/sonnda/internal/app/services/user"
 	"github.com/gabrielgcmr/sonnda/internal/domain/model/user"
-	auth "github.com/gabrielgcmr/sonnda/internal/domain/ports/auth"
 	"github.com/gabrielgcmr/sonnda/internal/domain/ports/storage/data"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
+	"github.com/gabrielgcmr/sonnda/internal/kernel/security"
 )
 
 type UseCase interface {
@@ -17,20 +16,20 @@ type UseCase interface {
 }
 
 type usecase struct {
-	userRepo data.UserRepo
-	userSvc  usersvc.Service
-	profSvc  professionalsvc.Service
-	authSvc  auth.IdentityProvider
+	userRepo     data.UserRepo
+	userSvc      usersvc.Service
+	profSvc      professionalsvc.Service
+	authProvider security.IdentityProvider
 }
 
 var _ UseCase = (*usecase)(nil)
 
-func New(userRepo data.UserRepo, userSvc usersvc.Service, profSvc professionalsvc.Service, authSvc auth.IdentityProvider) *usecase {
+func New(userRepo data.UserRepo, userSvc usersvc.Service, profSvc professionalsvc.Service, authProvider security.IdentityProvider) *usecase {
 	return &usecase{
-		userRepo: userRepo,
-		userSvc:  userSvc,
-		profSvc:  profSvc,
-		authSvc:  authSvc,
+		userRepo:     userRepo,
+		userSvc:      userSvc,
+		profSvc:      profSvc,
+		authProvider: authProvider,
 	}
 }
 
@@ -80,28 +79,5 @@ func (u *usecase) Register(ctx context.Context, input RegisterInput) (*user.User
 		return createdUser, nil
 	}
 
-	rollbackErr := u.rollbackCreatedUser(ctx, createdUser)
-	if rollbackErr != nil {
-		return nil, &apperr.AppError{
-			Code:    apperr.INFRA_DATABASE_ERROR,
-			Message: "falha técnica",
-			Cause:   errors.Join(err, rollbackErr),
-		}
-	}
-
 	return nil, err
-}
-
-func (u *usecase) rollbackCreatedUser(ctx context.Context, createdUser *user.User) error {
-	if createdUser == nil {
-		return nil
-	}
-
-	var rollbackErr error
-
-	if createdUser.AuthIssuer == "firebase" && u.authSvc != nil {
-		rollbackErr = errors.Join(rollbackErr, u.authSvc.DisableUser(ctx, createdUser.AuthSubject))
-	}
-
-	return rollbackErr
 }

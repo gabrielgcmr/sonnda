@@ -24,8 +24,10 @@ func SetupRoutes(
 	// NÍVEL 1: Público
 	// ---------------------------------------------------------------------
 
-	r.GET("/login", deps.AuthHandler.Login)
-	r.GET("/register", deps.AuthHandler.Register)
+	r.GET("/auth/login", deps.AuthHandler.Login)
+	r.GET("/auth/callback", deps.AuthHandler.Callback)
+
+	r.GET("/auth/register", deps.AuthHandler.Register)
 
 	// Endpoints de sessão (fluxo de auth no browser)
 	r.POST("/auth/session", deps.SessionHandler.CreateSession)

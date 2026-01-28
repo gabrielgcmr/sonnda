@@ -4,7 +4,6 @@ package repository
 import (
 	"context"
 	"errors"
-	"strings"
 
 	"github.com/google/uuid"
 
@@ -80,16 +79,12 @@ func (r *UserRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-// FindByPrincipalID implements [ports.User].
-func (r *UserRepository) FindByPrincipalID(ctx context.Context, principalID string) (*user.User, error) {
-	issuer, subj, ok := strings.Cut(principalID, "|")
-	if !ok || issuer == "" || subj == "" {
-		return nil, errors.Join(ErrRepositoryFailure, errInvalidPrincipalID)
-	}
+// FindByAuthIdentity implements [ports.User].
+func (r *UserRepository) FindByAuthIdentity(ctx context.Context, issuer string, subject string) (*user.User, error) {
 
 	row, err := r.queries.FindUserByAuthIdentity(ctx, usersqlc.FindUserByAuthIdentityParams{
 		AuthIssuer:  issuer,
-		AuthSubject: subj,
+		AuthSubject: subject,
 	})
 	if err != nil {
 		if IsPgNotFound(err) {
