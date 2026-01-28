@@ -48,7 +48,7 @@ HTTP Handler (Gin)
   │    └─ cria *apperr.AppError { Code, Message, Cause }
   ├─ chama Service (internal/app/...)
   │    └─ Service converte erros esperados em *apperr.AppError
-  └─ escreve resposta (internal/http/errors)
+  └─ escreve resposta (internal/adapters/inbound/http/shared/httperr)
        ├─ ToHTTP(err) => (status, {code,message})
        └─ WriteError(c, err) => JSON + context keys + log (só 5xx)
 ```
