@@ -4,12 +4,12 @@ Este documento descreve a arquitetura de tratamento de erros da Sonnda API, insp
 
 **Referências**
 - ADR: `docs/architecture/adr/ADR-006-error-handling-contract.md`
-- Catálogo de códigos: `internal/app/apperr/catalog.go`
-- Política de log por erro: `internal/app/apperr/logging.go`
-- Presenter HTTP: `internal/http/errors/error_presenter.go`
-- Mapeamento HTTP: `internal/http/errors/http_mapper.go`
-- Middleware de AccessLog: `internal/http/middleware/logging.go`
-- Middleware de Recovery: `internal/http/middleware/recovery.go`
+- Catálogo de códigos: `internal/shared/apperr/catalog.go`
+- Política de log por erro: `internal/shared/apperr/logging.go`
+- Presenter HTTP: `internal/adapters/inbound/http/shared/httperr/base.go`
+- Mapeamento HTTP: `internal/adapters/inbound/http/shared/httperr/mapper.go`
+- Middleware de AccessLog: `internal/adapters/inbound/http/shared/middleware/access_log.go.go`
+- Middleware de Recovery: `internal/adapters/inbound/http/shared/middleware/recovery.go`
 
 ---
 
@@ -36,7 +36,7 @@ Formato padrão:
 - `code`: identificador estável (contrato com clientes).
 - `message`: mensagem segura (não expõe detalhes internos).
 
-Implementado por `internal/http/errors/ToHTTP` + `internal/http/errors/WriteError`.
+Implementado por `internal/adapters/inbound/http/shared/httperr/mapper.go` + `internal/adapters/inbound/http/shared/httperr/base.go`.
 
 ---
 
@@ -77,9 +77,9 @@ Responsável por transformar erros “relevantes” em um erro de contrato: `*ap
 - `Message` — seguro para o cliente
 - `Cause` — erro interno (opcional), preservado via `Unwrap()` (suporta `errors.Is/As`)
 
-Definição: `internal/app/apperr/error.go`
+Definição: `internal/shared/apperr/error.go`
 
-O catálogo de códigos fica em `internal/app/apperr/catalog.go`:
+O catálogo de códigos fica em `internal/shared/apperr/catalog.go`:
 - **AUTH**: `AUTH_REQUIRED`, `AUTH_TOKEN_INVALID`, `AUTH_TOKEN_EXPIRED`
 - **AUTHZ**: `ACCESS_DENIED`, `ACTION_NOT_ALLOWED`
 - **VALIDATION**: `VALIDATION_FAILED`, `REQUIRED_FIELD_MISSING`, `INVALID_FIELD_FORMAT`, `INVALID_ENUM_VALUE`, `INVALID_DATE`
@@ -90,14 +90,14 @@ O catálogo de códigos fica em `internal/app/apperr/catalog.go`:
 - **RATE**: `RATE_LIMIT_EXCEEDED`, `UPLOAD_SIZE_EXCEEDED`
 - **INTERNAL**: `INTERNAL_ERROR`
 
-### HTTP adapter (`internal/http/...`)
+### HTTP adapter (`internal/adapters/inbound/http/...`)
 
-Existe um pacote dedicado `internal/http/errors` (package name `errors`; normalmente importado como `httperrors` para evitar confusão com `errors` do stdlib).
+Existe um pacote dedicado `internal/adapters/inbound/http/shared/httperr` (package name `httperr`; normalmente importado como `httperr` para tratamento de erros HTTP).
 
 Ele contém:
 
-- `ToHTTP(err) (status int, body ErrorResponse)` em `internal/http/errors/http_response.go`
-- `WriteError(c *gin.Context, err error)` em `internal/http/errors/error_presenter.go`
+- `ToHTTP(err) (status int, body ErrorResponse)` em `internal/adapters/inbound/http/shared/httperr/mapper.go`
+- `WriteError(c *gin.Context, err error)` em `internal/adapters/inbound/http/shared/httperr/base.go`
 
 `WriteError`:
 - chama `c.Error(err)` (registra no Gin)
@@ -112,7 +112,7 @@ Ele contém:
 
 ## Mapeamento `code -> status`
 
-O mapeamento é centralizado em `internal/http/errors/http_mapper.go`:
+O mapeamento é centralizado em `internal/adapters/inbound/http/shared/httperr/mapper.go`:
 
 | Categoria | Codes | Status |
 |----------|-------|--------|
@@ -140,12 +140,12 @@ Exemplo (padrão):
 
 ```go
 import (
-  httperrors "sonnda-api/internal/http/errors"
-  "sonnda-api/internal/app/apperr"
+  httperr "sonnda-api/internal/adapters/inbound/http/shared/httperr"
+  "sonnda-api/internal/shared/apperr"
 )
 
 if err := c.ShouldBindJSON(&req); err != nil {
-  httperrors.WriteError(c, &apperr.AppError{
+  httperr.WriteError(c, &apperr.AppError{
     Code: apperr.VALIDATION_FAILED,
     Message: "payload inválido",
     Cause: err,
@@ -155,7 +155,7 @@ if err := c.ShouldBindJSON(&req); err != nil {
 
 out, err := h.svc.Register(c.Request.Context(), input)
 if err != nil {
-  httperrors.WriteError(c, err)
+  httperr.WriteError(c, err)
   return
 }
 ```
@@ -174,19 +174,19 @@ Exemplos reais:
 
 ## Logging policy (AccessLog vs Writer)
 
-### AccessLog (`internal/http/middleware/logging.go`)
+### AccessLog (`internal/adapters/inbound/http/shared/middleware/access_log.go.go`)
 
 Sempre gera 1 log por request com:
 - `request_id`, `status`, `latency_ms`, `method`, `path`, `route`, `client_ip`, `response_bytes`, `user_agent`
 - inclui `error_code` se existir
 - respeita `error_log_level` (se existir) para decidir nível em `request_invalid`
 
-### Writer (`internal/http/errors/error_presenter.go`)
+### Writer (`internal/adapters/inbound/http/shared/httperr/base.go`)
 
 - Para **4xx**: não loga detalhe (evita ruído); AccessLog já registra o request.
 - Para **5xx**: faz 1 log detalhado (`handler_error`) com `err` e contexto.
 
-### Recovery middleware (`internal/http/middleware/recovery.go`)
+### Recovery middleware (`internal/adapters/inbound/http/shared/middleware/recovery.go`)
 
 Captura `panic`, loga stacktrace e responde `500` com payload genérico (`internal_error`), usando o logger contextual quando disponível.
 
@@ -203,11 +203,11 @@ Captura `panic`, loga stacktrace e responde `500` com payload genérico (`intern
 
 ## Checklist (novo code / novo erro)
 
-1) Defina o `ErrorCode` em `internal/app/apperr/catalog.go`.
-2) Garanta o status em `internal/http/errors/http_mapper.go`.
-3) Defina o nível de log em `internal/app/apperr/logging.go` (se necessário).
+1) Defina o `ErrorCode` em `internal/shared/apperr/catalog.go`.
+2) Garanta o status em `internal/adapters/inbound/http/shared/httperr/mapper.go`.
+3) Defina o nível de log em `internal/shared/apperr/logging.go` (se necessário).
 4) No service, mapeie o erro do domínio para `*apperr.AppError` (ex.: `mapXDomainError`).
-5) No handler, use `httperrors.WriteError(c, err)` (sem conversão manual para status/JSON).
+5) No handler, use `httperr.WriteError(c, err)` (sem conversão manual para status/JSON).
 6) Adicione/ajuste testes no service e (se fizer sentido) no presenter HTTP.
 7) Atualize este documento e o ADR.
 
