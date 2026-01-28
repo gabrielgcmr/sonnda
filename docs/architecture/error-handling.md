@@ -4,12 +4,12 @@ Este documento descreve a arquitetura de tratamento de erros da Sonnda API, insp
 
 **Referências**
 - ADR: `docs/architecture/adr/ADR-006-error-handling-contract.md`
-- Catálogo de códigos: `internal/app/apperr/catalog.go`
-- Política de log por erro: `internal/app/apperr/logging.go`
-- Presenter HTTP: `internal/http/errors/error_presenter.go`
-- Mapeamento HTTP: `internal/http/errors/http_mapper.go`
-- Middleware de AccessLog: `internal/http/middleware/logging.go`
-- Middleware de Recovery: `internal/http/middleware/recovery.go`
+- Catálogo de códigos: `internal/shared/apperr/catalog.go`
+- Política de log por erro: `internal/shared/apperr/logging.go`
+- Presenter HTTP (canonical): `internal/adapters/inbound/http/shared/httperr` (veja `APIErrorResponder` e `WebErrorResponder`)
+- Nota: implementações legacy `internal/adapters/inbound/http/api/apierr` e `internal/adapters/inbound/http/web/weberr` estão deprecadas; usar `httperr` diretamente.
+- Middleware de AccessLog: `internal/adapters/inbound/http/middleware/logging.go`
+- Middleware de Recovery: `internal/adapters/inbound/http/middleware/recovery.go`
 
 ---
 
@@ -36,7 +36,7 @@ Formato padrão:
 - `code`: identificador estável (contrato com clientes).
 - `message`: mensagem segura (não expõe detalhes internos).
 
-Implementado por `internal/http/errors/ToHTTP` + `internal/http/errors/WriteError`.
+Implementado por `internal/adapters/inbound/http/shared/httperr.ToHTTP` + presenters `APIErrorResponder` / `WebErrorResponder` no mesmo package.
 
 ---
 
@@ -48,9 +48,9 @@ HTTP Handler (Gin)
   │    └─ cria *apperr.AppError { Code, Message, Cause }
   ├─ chama Service (internal/app/...)
   │    └─ Service converte erros esperados em *apperr.AppError
-  └─ escreve resposta (internal/http/errors)
+  └─ escreve resposta (internal/adapters/inbound/http/shared/httperr)
        ├─ ToHTTP(err) => (status, {code,message})
-       └─ WriteError(c, err) => JSON + context keys + log (só 5xx)
+       └─ APIErrorResponder(c, err) | WebErrorResponder(c, err) => resposta + context keys + logging (5xx)
 ```
 
 ---
@@ -60,12 +60,7 @@ HTTP Handler (Gin)
 ### Domain (`internal/domain/...`)
 
 - Retorna `error` (sentinelas/tipos) e valida invariantes.
-- Pode fazer wrapping com `%w` para preservar a causa semântica sem “quebrar” `errors.Is`, por exemplo:
-
-```go
-return "", fmt.Errorf("invalid race: %s: %w", input, shared.ErrInvalidRace)
-```
-
+- Pode fazer wrapping com `%w` para preservar a causa semântica sem “quebrar” `errors.Is`.
 - Nunca importa HTTP e não conhece status codes.
 
 ### Application (`internal/app/...`)
@@ -77,54 +72,24 @@ Responsável por transformar erros “relevantes” em um erro de contrato: `*ap
 - `Message` — seguro para o cliente
 - `Cause` — erro interno (opcional), preservado via `Unwrap()` (suporta `errors.Is/As`)
 
-Definição: `internal/app/apperr/error.go`
+Definição: `internal/shared/apperr/error.go`
 
-O catálogo de códigos fica em `internal/app/apperr/catalog.go`:
-- **AUTH**: `AUTH_REQUIRED`, `AUTH_TOKEN_INVALID`, `AUTH_TOKEN_EXPIRED`
-- **AUTHZ**: `ACCESS_DENIED`, `ACTION_NOT_ALLOWED`
-- **VALIDATION**: `VALIDATION_FAILED`, `REQUIRED_FIELD_MISSING`, `INVALID_FIELD_FORMAT`, `INVALID_ENUM_VALUE`, `INVALID_DATE`
-- **NOT_FOUND**: `NOT_FOUND`
-- **CONFLICT**: `RESOURCE_CONFLICT`, `RESOURCE_ALREADY_EXISTS`
-- **DOMAIN**: `DOMAIN_RULE_VIOLATION` (422)
-- **INFRA**: `INFRA_AUTHENTICATION_ERROR`, `INFRA_DATABASE_ERROR`, `INFRA_STORAGE_ERROR`, `INFRA_EXTERNAL_SERVICE_ERROR`, `INFRA_TIMEOUT`
-- **RATE**: `RATE_LIMIT_EXCEEDED`, `UPLOAD_SIZE_EXCEEDED`
-- **INTERNAL**: `INTERNAL_ERROR`
+O catálogo de códigos fica em `internal/shared/apperr/catalog.go`.
 
-### HTTP adapter (`internal/http/...`)
+### HTTP adapter (presenter canonical)
 
-Existe um pacote dedicado `internal/http/errors` (package name `errors`; normalmente importado como `httperrors` para evitar confusão com `errors` do stdlib).
+O presenter canonical é o package `internal/adapters/inbound/http/shared/httperr` que exporta:
+- `ToHTTP(err) (status int, body ErrorResponse)`
+- `APIErrorResponder(c *gin.Context, err error)` — presenter para endpoints JSON (API)
+- `WebErrorResponder(c *gin.Context, err error)` — presenter para endpoints Web/HTMX (HTML)
 
-Ele contém:
-
-- `ToHTTP(err) (status int, body ErrorResponse)` em `internal/http/errors/http_response.go`
-- `WriteError(c *gin.Context, err error)` em `internal/http/errors/error_presenter.go`
-
-`WriteError`:
-- chama `c.Error(err)` (registra no Gin)
-- seta no `gin.Context`:
-  - `error_code` (para AccessLog)
-  - `http_status`
-  - `error_log_level` (a partir de `apperr.LogLevelOf(err)`)
-- escreve o JSON `{ "error": { "code", "message" } }`
-- loga **detalhe do erro** (`slog.Any("err", err)`) **apenas em 5xx** (para reduzir ruído)
+Observação: antigas implementações em `internal/adapters/inbound/http/api/apierr` e `internal/adapters/inbound/http/web/weberr` foram depreciadas. Contribuições novas devem usar `httperr`.
 
 ---
 
 ## Mapeamento `code -> status`
 
-O mapeamento é centralizado em `internal/http/errors/http_mapper.go`:
-
-| Categoria | Codes | Status |
-|----------|-------|--------|
-| AUTH | `AUTH_*` | 401 |
-| AUTHZ | `ACCESS_DENIED`, `ACTION_NOT_ALLOWED` | 403 |
-| VALIDATION | `VALIDATION_FAILED`, `REQUIRED_FIELD_MISSING`, `INVALID_FIELD_FORMAT`, `INVALID_ENUM_VALUE`, `INVALID_DATE` | 400 |
-| NOT_FOUND | `NOT_FOUND` | 404 |
-| CONFLICT | `RESOURCE_CONFLICT`, `RESOURCE_ALREADY_EXISTS` | 409 |
-| DOMAIN | `DOMAIN_RULE_VIOLATION` | 422 |
-| RATE | `RATE_LIMIT_EXCEEDED` / `UPLOAD_SIZE_EXCEEDED` | 429 / 413 |
-| INFRA | `INFRA_*` | 5xx (500/502/504 conforme code) |
-| INTERNAL | `INTERNAL_ERROR` | 500 |
+O mapeamento é centralizado em `internal/adapters/inbound/http/shared/httperr/http_mapper.go` e segue as regras do catálogo `internal/shared/apperr`.
 
 ---
 
@@ -132,20 +97,20 @@ O mapeamento é centralizado em `internal/http/errors/http_mapper.go`:
 
 Regras:
 - Handler **não chama** `apperr.ToHTTP` diretamente.
-- Handler chama `httperrors.WriteError(c, err)` para qualquer erro a ser respondido.
-- Erros de fronteira (auth/bind/parse) são convertidos para `&apperr.AppError{Code, Message, Cause}` no handler e passados para `WriteError`.
+- Handler deve chamar `internal/adapters/inbound/http/shared/httperr.APIErrorResponder(c, err)` para APIs JSON, ou `WebErrorResponder` para rotas que servem HTML/HTMX.
+- Erros de fronteira (auth/bind/parse) são convertidos para `&apperr.AppError{Code, Message, Cause}` no handler e passados para o presenter.
 - Erros do service/usecase **já devem** voltar como `*apperr.AppError` quando forem esperados.
 
 Exemplo (padrão):
 
 ```go
 import (
-  httperrors "sonnda-api/internal/http/errors"
-  "sonnda-api/internal/app/apperr"
+  httperr "github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/shared/httperr"
+  "github.com/gabrielgcmr/sonnda/internal/shared/apperr"
 )
 
 if err := c.ShouldBindJSON(&req); err != nil {
-  httperrors.WriteError(c, &apperr.AppError{
+  httperr.APIErrorResponder(c, &apperr.AppError{
     Code: apperr.VALIDATION_FAILED,
     Message: "payload inválido",
     Cause: err,
@@ -155,59 +120,19 @@ if err := c.ShouldBindJSON(&req); err != nil {
 
 out, err := h.svc.Register(c.Request.Context(), input)
 if err != nil {
-  httperrors.WriteError(c, err)
+  httperr.APIErrorResponder(c, err)
   return
 }
 ```
 
 ---
 
-## Como criar `AppError` no service
-
-Padrão recomendado: mapear erros do domínio/infra para `*apperr.AppError` em funções auxiliares por service/feature (mantém o `service_impl.go` limpo).
-
-Exemplos reais:
-- `internal/app/services/user/error.go` (`mapUserDomainError`, `mapInfraError`)
-- `internal/app/services/patient/error.go` (`mapPatientDomainError`, `mapInfraError`)
-
----
-
-## Logging policy (AccessLog vs Writer)
-
-### AccessLog (`internal/http/middleware/logging.go`)
-
-Sempre gera 1 log por request com:
-- `request_id`, `status`, `latency_ms`, `method`, `path`, `route`, `client_ip`, `response_bytes`, `user_agent`
-- inclui `error_code` se existir
-- respeita `error_log_level` (se existir) para decidir nível em `request_invalid`
-
-### Writer (`internal/http/errors/error_presenter.go`)
-
-- Para **4xx**: não loga detalhe (evita ruído); AccessLog já registra o request.
-- Para **5xx**: faz 1 log detalhado (`handler_error`) com `err` e contexto.
-
-### Recovery middleware (`internal/http/middleware/recovery.go`)
-
-Captura `panic`, loga stacktrace e responde `500` com payload genérico (`internal_error`), usando o logger contextual quando disponível.
-
----
-
-## Anti‑padrões
-
-- Usar `err.Error()` como contrato público (quebra clientes e vaza detalhes).
-- Handlers mapeando dezenas de erros do domínio diretamente (espalha regra e gera inconsistência).
-- Logar o mesmo erro 2–3 vezes por request (sem agregar valor).
-- Domínio importando Gin/HTTP/status codes.
-
----
-
 ## Checklist (novo code / novo erro)
 
-1) Defina o `ErrorCode` em `internal/app/apperr/catalog.go`.
-2) Garanta o status em `internal/http/errors/http_mapper.go`.
-3) Defina o nível de log em `internal/app/apperr/logging.go` (se necessário).
+1) Defina o `ErrorCode` em `internal/shared/apperr/catalog.go`.
+2) Garanta o status em `internal/adapters/inbound/http/shared/httperr/http_mapper.go`.
+3) Defina o nível de log em `internal/shared/apperr/logging.go` (se necessário).
 4) No service, mapeie o erro do domínio para `*apperr.AppError` (ex.: `mapXDomainError`).
-5) No handler, use `httperrors.WriteError(c, err)` (sem conversão manual para status/JSON).
+5) No handler, use `httperr.APIErrorResponder` ou `httperr.WebErrorResponder` (sem conversão manual para status/JSON).
 6) Adicione/ajuste testes no service e (se fizer sentido) no presenter HTTP.
 7) Atualize este documento e o ADR.
-
