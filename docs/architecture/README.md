@@ -19,9 +19,9 @@ O backend segue um modelo em camadas simples, com baixo acoplamento e separaçã
 - **App (`internal/app`)**  
   Orquestração e cross-cutting concerns.  
   - Use cases em `internal/app/usecase`; services em `internal/app/services`.  
-  - Erros centralizados em `internal/app/apperr`.  
+  - Erros centralizados em `internal/shared/apperr`.  
   - Config/bootstrapping em `internal/app/config` e `internal/app/bootstrap`.  
-  - Observabilidade em `internal/app/observability` (slog, logger por request).
+  - Observabilidade em `internal/shared/observability` (slog, logger por request).
 
 - **Adapters (`internal/adapters`)**  
   Implementações concretas e adapters de protocolo.  
@@ -52,16 +52,16 @@ Essas camadas representam **limites conceituais**, não apenas organização de 
   - persiste ou consulta dados  
 
 5) **Resposta HTTP**  
-   - erros são normalizdos para um contrato estável via `internal/app/apperr`
+   - erros são normalizados para um contrato estável via `internal/shared/apperr`
       - Veja `docs/architecture/error-handling.md`
 
 ---
 
 ## Persistência
 
-- SQL definido em `internal/adapters/outbound/persistence/postgres/sqlc/sql`.
-- `sqlc` gera código em `internal/adapters/outbound/persistence/postgres/sqlc/generated`.
-- Repositórios em `internal/adapters/outbound/persistence/postgres/repository` encapsulam o acesso ao banco.
+- SQL definido em `internal/adapters/outbound/storage/data/postgres/sqlc/sql`.
+- `sqlc` gera código em `internal/adapters/outbound/storage/data/postgres/sqlc/generated`.
+- Repositórios em `internal/adapters/outbound/storage/data/postgres/repository` encapsulam o acesso ao banco.
 - Banco principal: PostgreSQL (Supabase).
 - Soft delete usa `deleted_at`; consultas filtram `deleted_at IS NULL`.
 
@@ -69,7 +69,7 @@ Essas camadas representam **limites conceituais**, não apenas organização de 
 
 ## Observabilidade
 
-- Logger baseado em `log/slog` (`internal/app/observability`).
+- Logger baseado em `log/slog` (`internal/shared/observability`).
 - Variáveis:
   - `LOG_LEVEL`
   - `LOG_FORMAT`

@@ -28,12 +28,12 @@ Além disso, existe infraestrutura de observabilidade já consolidada:
 
 Padronizar o tratamento de erros em três peças (por camada):
 
-1) **Contrato de erro da aplicação:** `internal/app/apperr`
+1) **Contrato de erro da aplicação:** `internal/shared/apperr`
    - `AppError{ Code, Message, Cause }` implementa `error` e suporta `Unwrap()` (para `errors.Is/As`).
-   - Catálogo de códigos em `internal/app/apperr/catalog.go` (`ErrorCode`).
-   - Política de log por erro em `internal/app/apperr/logging.go` (`ErrorCodeOf`, `LogLevelOf`).
+   - Catálogo de códigos em `internal/shared/apperr/catalog.go` (`ErrorCode`).
+   - Política de log por erro em `internal/shared/apperr/logging.go` (`ErrorCodeOf`, `LogLevelOf`).
 
-2) **Presenter HTTP (adaptador Gin):** `internal/http/errors`
+2) **Presenter HTTP (adaptador Gin):** `internal/adapters/inbound/http/shared/httperr`
    - `ToHTTP(err) -> (status, payload)` produz `{ "error": { "code", "message" } }`.
    - `WriteError(c *gin.Context, err error)` escreve a resposta e adiciona metadados no `gin.Context`:
      - `error_code`
@@ -41,7 +41,7 @@ Padronizar o tratamento de erros em três peças (por camada):
      - `error_log_level`
    - `WriteError` evita log detalhado em 4xx (deixa o AccessLog cobrir); em 5xx, registra log detalhado com a cadeia `%w`.
 
-3) **AccessLog como log principal por request:** `internal/http/middleware/logging.go`
+3) **AccessLog como log principal por request:** `internal/adapters/inbound/http/shared/middleware/access_log.go.go`
    - Sempre 1 log por request (status/latência/route/etc.).
    - Enriquecido com `error_code` e `error_log_level` quando presentes.
    - Mantém a linha de log mesmo em 5xx (métrica operacional de falha).

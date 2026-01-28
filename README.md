@@ -38,7 +38,7 @@ A Sonnda resolve um problema recorrente na pratica clinica: pacientes precisam c
 A arquitetura foi simplificada em camadas diretas, com baixo acoplamento:
 
 - **Domain (`internal/domain`)**: modelos de dominio e regras de negocio (agnostico de infraestrutura e HTTP).
-- **App (`internal/app`)**: services de aplicacao (orquestracao) e contrato de erros via `internal/app/apperr`.
+- **App (`internal/app`)**: services de aplicacao (orquestracao) e contrato de erros via `internal/shared/apperr`.
 - **Adapters (`internal/adapters`)**:
   - **Inbound (`internal/adapters/inbound/http`)**: protocolo http
     - **Api (`internal/adapters/inbound/http/api`)**: rotas, handlers e middlewares para API.
@@ -62,7 +62,7 @@ A arquitetura foi simplificada em camadas diretas, com baixo acoplamento:
 
 ## Logging
 
-- Logger baseado em `log/slog` (ver `internal/app/observability`).
+- Logger baseado em `log/slog` (ver `internal/shared/observability`).
 - Config por env: `LOG_LEVEL` (`debug|info|warn|error`) e `LOG_FORMAT` (`text|json|pretty`).
 - Por request, o middleware injeta um logger no `context.Context` (inclui `request_id`, método, path e rota quando disponível).
 

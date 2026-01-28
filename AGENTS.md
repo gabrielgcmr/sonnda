@@ -28,7 +28,7 @@ Simple instructions for coding agents working on this repo.
   - templ + Tailwind CSS v4 + HTMX 
     - templates em `internal/adapters/inbound/http/web/templates/`
     - statics em `internal/adapters/inbound/http/web/static/`
-    - **CSS generation**: Tailwind v4 (source: `internal/adapters/inbound/http/web/styles/`, output: `static/css/app.css`)
+    - **CSS generation**: Tailwind v4 (source: `internal/adapters/inbound/http/web/styles/`, output: `internal/adapters/inbound/http/web/static/css/app.css`)
 - Mobile (Not in this repo):
   - React Native + Expo
   - 
@@ -45,10 +45,10 @@ Simple instructions for coding agents working on this repo.
 - **App (`internal/app`)**: Where orchestration and cross-cutting concerns live.
   - **Use cases (`internal/app/usecase`)**: Business flows composed from domain models/ports.
   - **Services (`internal/app/services`)**: Application services that coordinate repositories/integrations.
-  - **Error contract (`internal/app/apperr`)**: Centralized `AppError` codes/messages; handlers must convert via HTTP layer helpers.
+  - **Error contract (`internal/shared/apperr`)**: Centralized `AppError` codes/messages; handlers must convert via HTTP layer helpers.
   - **Config (`internal/app/config`)**: Env config
   - **bootstrap (`internal/app/bootstrap`)**: Wiring of dependencies, env/config loading.
-  - **Observability (`internal/app/observability`)**: Logging setup (slog), request-scoped logger injection.
+  - **Observability (`internal/shared/observability`)**: Logging setup (slog), request-scoped logger injection.
 - **Adapters (`internal/adapters`)**: Concrete implementations and protocol adapters (inbound and outbound).
   - **Inbound (`internal/adapters/inbound/http`)**: HTTP protocol adapter.
     - **API (`internal/adapters/inbound/http/api`)**: RESTful routes, handlers, and middleware for API consumers.
@@ -74,13 +74,13 @@ This project uses a **centralized error contract** based on `AppError`.
 - Services/use cases **must return `AppError` for known failures** (validation, conflicts, not found, infra errors).
 - Domain **never** imports HTTP, Gin, or `apperr`.
 - Handlers and middlewares **must call**: httperrors.WriteError(c,err)
-- Location: `internal/app/apperr/error.go`
-- HTTP error presentation id centralized in:`internal/inbound/http/shared/httperr`.
+- Location: `internal/shared/apperr/error.go`
+- HTTP error presentation is centralized in:`internal/adapters/inbound/http/shared/httperr`.
  
  ---
 
 ## Logging
-- The app uses `log/slog` via `internal/app/config/observability` (request-scoped logger is injected by HTTP middleware).
+- The app uses `log/slog` via `internal/shared/observability` (request-scoped logger is injected by HTTP middleware).
 - Configure with `LOG_LEVEL` (`debug|info|warn|error`) and `LOG_FORMAT` (`text|json|pretty`).
 
 ## Test
