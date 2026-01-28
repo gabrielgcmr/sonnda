@@ -35,8 +35,8 @@ func New(userRepo data.UserRepo, userSvc usersvc.Service, profSvc professionalsv
 }
 
 func (u *usecase) Register(ctx context.Context, input RegisterInput) (*user.User, error) {
-	// Verificar se usuǭrio jǭ existe
-	existing, err := u.userRepo.FindByAuthIdentity(ctx, input.Provider, input.Subject)
+	// Verificar se usuário já existe
+	existing, err := u.userRepo.FindByPrincipalID(ctx, input.Issuer, input.Subject)
 	if err != nil {
 		return nil, &apperr.AppError{
 			Code:    apperr.INFRA_DATABASE_ERROR,
@@ -52,7 +52,7 @@ func (u *usecase) Register(ctx context.Context, input RegisterInput) (*user.User
 	}
 
 	createdUser, err := u.userSvc.Create(ctx, usersvc.UserCreateInput{
-		Provider:    input.Provider,
+		Issuer:      input.Issuer,
 		Subject:     input.Subject,
 		Email:       input.Email,
 		AccountType: input.AccountType,

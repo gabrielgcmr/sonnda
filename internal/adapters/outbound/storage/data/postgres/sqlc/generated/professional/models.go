@@ -23,16 +23,16 @@ type Professional struct {
 }
 
 type User struct {
-	ID           uuid.UUID          `json:"id"`
-	AuthProvider string             `json:"auth_provider"`
-	AuthSubject  string             `json:"auth_subject"`
-	Email        string             `json:"email"`
-	FullName     string             `json:"full_name"`
-	BirthDate    pgtype.Date        `json:"birth_date"`
-	Cpf          string             `json:"cpf"`
-	Phone        string             `json:"phone"`
-	AccountType  string             `json:"account_type"`
-	CreatedAt    pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
-	DeletedAt    pgtype.Timestamptz `json:"deleted_at"`
+	ID          uuid.UUID          `json:"id"`
+	AuthIssuer  string             `json:"auth_issuer"`
+	AuthSubject string             `json:"auth_subject"`
+	Email       string             `json:"email"`
+	FullName    string             `json:"full_name"`
+	BirthDate   pgtype.Date        `json:"birth_date"`
+	Cpf         string             `json:"cpf"`
+	Phone       string             `json:"phone"`
+	AccountType string             `json:"account_type"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+	DeletedAt   pgtype.Timestamptz `json:"deleted_at"`
 }

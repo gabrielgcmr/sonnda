@@ -9,7 +9,7 @@ import (
 )
 
 type UserCreateInput struct {
-	Provider    string
+	Issuer      string
 	Subject     string
 	Email       string
 	AccountType user.AccountType

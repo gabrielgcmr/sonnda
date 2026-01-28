@@ -27,7 +27,7 @@ func New(userRepo ports.UserRepo, patientAccessRepo ports.PatientAccessRepo) Ser
 
 func (s *service) Create(ctx context.Context, input UserCreateInput) (*user.User, error) {
 	newUser, err := user.NewUser(user.NewUserParams{
-		AuthIssuer:  input.Provider,
+		AuthIssuer:  input.Issuer,
 		AuthSubject: input.Subject,
 		Email:       input.Email,
 		AccountType: input.AccountType,

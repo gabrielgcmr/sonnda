@@ -64,6 +64,8 @@ func (h *Handler) Register(c *gin.Context) {
 	}
 
 	input := registrationuc.RegisterInput{
+		Issuer:      identity.Issuer,
+		Subject:     identity.Subject,
 		Email:       identity.Email,
 		FullName:    req.FullName,
 		AccountType: accountType,

@@ -34,10 +34,7 @@ func (m *RegistrationMiddleware) RequireRegisteredUser() gin.HandlerFunc {
 		id, ok := httpctx.GetIdentity(c)
 		if !ok || id == nil {
 			// Situação anômala: auth não rodou antes
-			apierr.ErrorResponder(c, &apperr.AppError{
-				Code:    apperr.AUTH_REQUIRED,
-				Message: "autenticação necessária",
-			})
+			apierr.ErrorResponder(c, apperr.Unauthorized("autenticação necessária"))
 			return
 		}
 
@@ -49,10 +46,7 @@ func (m *RegistrationMiddleware) RequireRegisteredUser() gin.HandlerFunc {
 
 		if u == nil {
 			// Autenticado no provider, mas sem cadastro local
-			apierr.ErrorResponder(c, &apperr.AppError{
-				Code:    apperr.ACCESS_DENIED,
-				Message: "cadastro necessário",
-			})
+			apierr.ErrorResponder(c, apperr.Forbidden("cadastro necessário"))
 			return
 		}
 

@@ -13,31 +13,42 @@ import (
 )
 
 const createUser = `-- name: CreateUser :exec
-INSERT INTO users (
-  id, auth_provider, auth_subject, email, full_name, birth_date, cpf, phone, account_type, created_at, updated_at
-) VALUES (
-  $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
-)
+INSERT INTO
+  users (
+    id,
+    auth_issuer,
+    auth_subject,
+    email,
+    full_name,
+    birth_date,
+    cpf,
+    phone,
+    account_type,
+    created_at,
+    updated_at
+  )
+VALUES
+  ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 `
 
 type CreateUserParams struct {
-	ID           uuid.UUID          `json:"id"`
-	AuthProvider string             `json:"auth_provider"`
-	AuthSubject  string             `json:"auth_subject"`
-	Email        string             `json:"email"`
-	FullName     string             `json:"full_name"`
-	BirthDate    pgtype.Date        `json:"birth_date"`
-	Cpf          string             `json:"cpf"`
-	Phone        string             `json:"phone"`
-	AccountType  string             `json:"account_type"`
-	CreatedAt    pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+	ID          uuid.UUID          `json:"id"`
+	AuthIssuer  string             `json:"auth_issuer"`
+	AuthSubject string             `json:"auth_subject"`
+	Email       string             `json:"email"`
+	FullName    string             `json:"full_name"`
+	BirthDate   pgtype.Date        `json:"birth_date"`
+	Cpf         string             `json:"cpf"`
+	Phone       string             `json:"phone"`
+	AccountType string             `json:"account_type"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 	_, err := q.db.Exec(ctx, createUser,
 		arg.ID,
-		arg.AuthProvider,
+		arg.AuthIssuer,
 		arg.AuthSubject,
 		arg.Email,
 		arg.FullName,
@@ -52,8 +63,10 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 }
 
 const deleteUser = `-- name: DeleteUser :execrows
-DELETE FROM users
-WHERE id = $1
+DELETE FROM
+  users
+WHERE
+  id = $1
 `
 
 func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) (int64, error) {
@@ -65,9 +78,12 @@ func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) (int64, error) {
 }
 
 const findUserByAuthIdentity = `-- name: FindUserByAuthIdentity :one
-SELECT id, auth_provider, auth_subject, email, full_name, birth_date, cpf, phone, account_type, created_at, updated_at, deleted_at
-FROM users
-WHERE auth_issuer = $1
+SELECT
+  id, auth_issuer, auth_subject, email, full_name, birth_date, cpf, phone, account_type, created_at, updated_at, deleted_at
+FROM
+  users
+WHERE
+  auth_issuer = $1
   AND auth_subject = $2
   AND deleted_at IS NULL
 `
@@ -98,11 +114,15 @@ func (q *Queries) FindUserByAuthIdentity(ctx context.Context, arg FindUserByAuth
 }
 
 const findUserByCPF = `-- name: FindUserByCPF :one
-SELECT id, auth_issuer, auth_subject, email, full_name, birth_date, cpf, phone, account_type, created_at, updated_at, deleted_at
-FROM users
-WHERE cpf = $1
+SELECT
+  id, auth_issuer, auth_subject, email, full_name, birth_date, cpf, phone, account_type, created_at, updated_at, deleted_at
+FROM
+  users
+WHERE
+  cpf = $1
   AND deleted_at IS NULL
-LIMIT 1
+LIMIT
+  1
 `
 
 func (q *Queries) FindUserByCPF(ctx context.Context, cpf string) (User, error) {
@@ -110,7 +130,7 @@ func (q *Queries) FindUserByCPF(ctx context.Context, cpf string) (User, error) {
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.AuthProvider,
+		&i.AuthIssuer,
 		&i.AuthSubject,
 		&i.Email,
 		&i.FullName,
@@ -126,11 +146,15 @@ func (q *Queries) FindUserByCPF(ctx context.Context, cpf string) (User, error) {
 }
 
 const findUserByEmail = `-- name: FindUserByEmail :one
-SELECT id, auth_provider, auth_subject, email, full_name, birth_date, cpf, phone, account_type, created_at, updated_at, deleted_at
-FROM users
-WHERE email = $1
+SELECT
+  id, auth_issuer, auth_subject, email, full_name, birth_date, cpf, phone, account_type, created_at, updated_at, deleted_at
+FROM
+  users
+WHERE
+  email = $1
   AND deleted_at IS NULL
-LIMIT 1
+LIMIT
+  1
 `
 
 func (q *Queries) FindUserByEmail(ctx context.Context, email string) (User, error) {
@@ -138,7 +162,7 @@ func (q *Queries) FindUserByEmail(ctx context.Context, email string) (User, erro
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.AuthProvider,
+		&i.AuthIssuer,
 		&i.AuthSubject,
 		&i.Email,
 		&i.FullName,
@@ -154,11 +178,15 @@ func (q *Queries) FindUserByEmail(ctx context.Context, email string) (User, erro
 }
 
 const findUserByID = `-- name: FindUserByID :one
-SELECT id, auth_provider, auth_subject, email, full_name, birth_date, cpf, phone, account_type, created_at, updated_at, deleted_at
-FROM users
-WHERE id = $1
+SELECT
+  id, auth_issuer, auth_subject, email, full_name, birth_date, cpf, phone, account_type, created_at, updated_at, deleted_at
+FROM
+  users
+WHERE
+  id = $1
   AND deleted_at IS NULL
-LIMIT 1
+LIMIT
+  1
 `
 
 func (q *Queries) FindUserByID(ctx context.Context, id uuid.UUID) (User, error) {
@@ -166,7 +194,7 @@ func (q *Queries) FindUserByID(ctx context.Context, id uuid.UUID) (User, error) 
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.AuthProvider,
+		&i.AuthIssuer,
 		&i.AuthSubject,
 		&i.Email,
 		&i.FullName,
@@ -182,10 +210,13 @@ func (q *Queries) FindUserByID(ctx context.Context, id uuid.UUID) (User, error) 
 }
 
 const softDeleteUser = `-- name: SoftDeleteUser :execrows
-UPDATE users
-SET deleted_at = now(),
-    updated_at = now()
-WHERE id = $1
+UPDATE
+  users
+SET
+  deleted_at = now(),
+  updated_at = now()
+WHERE
+  id = $1
   AND deleted_at IS NULL
 `
 
@@ -198,17 +229,18 @@ func (q *Queries) SoftDeleteUser(ctx context.Context, id uuid.UUID) (int64, erro
 }
 
 const updateUser = `-- name: UpdateUser :one
-UPDATE users
-SET 
+UPDATE
+  users
+SET
   email = $2,
   full_name = $3,
   birth_date = $4,
   cpf = $5,
   phone = $6,
   updated_at = $7
-WHERE id = $1
-  AND deleted_at IS NULL
-RETURNING id, auth_provider, auth_subject, email, full_name, birth_date, cpf, phone, account_type, created_at, updated_at, deleted_at
+WHERE
+  id = $1
+  AND deleted_at IS NULL RETURNING id, auth_issuer, auth_subject, email, full_name, birth_date, cpf, phone, account_type, created_at, updated_at, deleted_at
 `
 
 type UpdateUserParams struct {
@@ -234,7 +266,7 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.AuthProvider,
+		&i.AuthIssuer,
 		&i.AuthSubject,
 		&i.Email,
 		&i.FullName,

@@ -33,17 +33,17 @@ func New(client *postgress.Client) *UserRepository {
 // Create implements [ports.User].
 func (r *UserRepository) Create(ctx context.Context, u *user.User) error {
 	params := usersqlc.CreateUserParams{
-		ID:           u.ID,
-		AuthProvider: u.AuthIssuer,
-		AuthSubject:  u.AuthSubject,
-		Email:        u.Email,
-		FullName:     u.FullName,
-		BirthDate:    FromRequiredDateToPgDate(u.BirthDate),
-		Cpf:          u.CPF,
-		Phone:        u.Phone,
-		AccountType:  string(u.AccountType),
-		CreatedAt:    FromRequiredTimestamptzToPgTimestamptz(u.CreatedAt),
-		UpdatedAt:    FromRequiredTimestamptzToPgTimestamptz(u.UpdatedAt),
+		ID:          u.ID,
+		AuthIssuer:  u.AuthIssuer,
+		AuthSubject: u.AuthSubject,
+		Email:       u.Email,
+		FullName:    u.FullName,
+		BirthDate:   FromRequiredDateToPgDate(u.BirthDate),
+		Cpf:         u.CPF,
+		Phone:       u.Phone,
+		AccountType: string(u.AccountType),
+		CreatedAt:   FromRequiredTimestamptzToPgTimestamptz(u.CreatedAt),
+		UpdatedAt:   FromRequiredTimestamptzToPgTimestamptz(u.UpdatedAt),
 	}
 
 	if err := r.queries.CreateUser(ctx, params); err != nil {
@@ -100,7 +100,7 @@ func (r *UserRepository) FindByPrincipalID(ctx context.Context, principalID stri
 
 	return &user.User{
 		ID:          row.ID,
-		AuthIssuer:  row.AuthProvider,
+		AuthIssuer:  row.AuthIssuer,
 		AuthSubject: row.AuthSubject,
 		Email:       row.Email,
 		FullName:    row.FullName,
@@ -125,7 +125,7 @@ func (r *UserRepository) FindByCPF(ctx context.Context, cpf string) (*user.User,
 
 	return &user.User{
 		ID:          row.ID,
-		AuthIssuer:  row.AuthProvider,
+		AuthIssuer:  row.AuthIssuer,
 		AuthSubject: row.AuthSubject,
 		Email:       row.Email,
 		FullName:    row.FullName,
@@ -150,7 +150,7 @@ func (r *UserRepository) FindByID(ctx context.Context, id uuid.UUID) (*user.User
 
 	return &user.User{
 		ID:          row.ID,
-		AuthIssuer:  row.AuthProvider,
+		AuthIssuer:  row.AuthIssuer,
 		AuthSubject: row.AuthSubject,
 		Email:       row.Email,
 		FullName:    row.FullName,
@@ -207,7 +207,7 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*user.U
 
 	return &user.User{
 		ID:          row.ID,
-		AuthIssuer:  row.AuthProvider,
+		AuthIssuer:  row.AuthIssuer,
 		AuthSubject: row.AuthSubject,
 		Email:       row.Email,
 		FullName:    row.FullName,
