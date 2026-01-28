@@ -75,7 +75,7 @@ This project uses a **centralized error contract** based on `AppError`.
 - Domain **never** imports HTTP, Gin, or `apperr`.
 - Handlers and middlewares **must call**: httperrors.WriteError(c,err)
 - Location: `internal/shared/apperr/error.go`
-- HTTP error presentation id centralized in:`internal/adapters/inbound/http/shared/httperr`.
+- HTTP error presentation is centralized in:`internal/adapters/inbound/http/shared/httperr`.
  
  ---
 

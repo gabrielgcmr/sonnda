@@ -52,7 +52,7 @@ Essas camadas representam **limites conceituais**, não apenas organização de 
   - persiste ou consulta dados  
 
 5) **Resposta HTTP**  
-   - erros são normalizdos para um contrato estável via `internal/shared/apperr`
+   - erros são normalizados para um contrato estável via `internal/shared/apperr`
       - Veja `docs/architecture/error-handling.md`
 
 ---
