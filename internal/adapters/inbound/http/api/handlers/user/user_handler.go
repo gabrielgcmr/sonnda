@@ -10,11 +10,11 @@ import (
 	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/api/binder"
 	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/api/handlers"
 	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/shared/httpctx"
-	"github.com/gabrielgcmr/sonnda/internal/app/apperr"
 	usersvc "github.com/gabrielgcmr/sonnda/internal/app/services/user"
 	registrationuc "github.com/gabrielgcmr/sonnda/internal/app/usecase/registration"
 	"github.com/gabrielgcmr/sonnda/internal/domain/model/professional"
 	"github.com/gabrielgcmr/sonnda/internal/domain/model/user"
+	"github.com/gabrielgcmr/sonnda/internal/shared/apperr"
 )
 
 type Handler struct {

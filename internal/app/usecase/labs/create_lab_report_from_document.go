@@ -10,10 +10,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gabrielgcmr/sonnda/internal/app/apperr"
 	labsvc "github.com/gabrielgcmr/sonnda/internal/app/services/labs"
 	"github.com/gabrielgcmr/sonnda/internal/domain/model/labs"
 	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
+	"github.com/gabrielgcmr/sonnda/internal/shared/apperr"
 
 	"github.com/google/uuid"
 )

@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 
-	"github.com/gabrielgcmr/sonnda/internal/app/apperr"
 	professionalsvc "github.com/gabrielgcmr/sonnda/internal/app/services/professional"
 	usersvc "github.com/gabrielgcmr/sonnda/internal/app/services/user"
 	"github.com/gabrielgcmr/sonnda/internal/domain/model/user"
 	auth "github.com/gabrielgcmr/sonnda/internal/domain/ports/auth"
 	"github.com/gabrielgcmr/sonnda/internal/domain/ports/storage/data"
+	"github.com/gabrielgcmr/sonnda/internal/shared/apperr"
 )
 
 type UseCase interface {

@@ -7,7 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	applog "github.com/gabrielgcmr/sonnda/internal/app/observability"
+	applog "github.com/gabrielgcmr/sonnda/internal/shared/observability"
 )
 
 // Recovery captura panics, loga stacktrace estruturado e devolve 500 sem derrubar o servidor.

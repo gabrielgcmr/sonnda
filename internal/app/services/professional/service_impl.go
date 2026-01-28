@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/gabrielgcmr/sonnda/internal/app/apperr"
 	"github.com/gabrielgcmr/sonnda/internal/domain/model/professional"
 	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
+	"github.com/gabrielgcmr/sonnda/internal/shared/apperr"
 
 	"github.com/google/uuid"
 )

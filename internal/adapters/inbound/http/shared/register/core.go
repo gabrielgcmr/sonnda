@@ -4,9 +4,9 @@ package register
 import (
 	"context"
 
-	"github.com/gabrielgcmr/sonnda/internal/app/apperr"
 	"github.com/gabrielgcmr/sonnda/internal/domain/model/identity"
 	"github.com/gabrielgcmr/sonnda/internal/domain/model/user"
+	"github.com/gabrielgcmr/sonnda/internal/shared/apperr"
 )
 
 // UserResolver define a interface necessária para resolver Users a partir de Identity.

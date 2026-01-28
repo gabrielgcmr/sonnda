@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/gabrielgcmr/sonnda/internal/app/apperr"
 	"github.com/gabrielgcmr/sonnda/internal/domain/model/rbac"
 	"github.com/gabrielgcmr/sonnda/internal/domain/model/user"
 	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
+	"github.com/gabrielgcmr/sonnda/internal/shared/apperr"
 
 	"github.com/google/uuid"
 )

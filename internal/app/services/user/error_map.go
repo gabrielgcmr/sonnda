@@ -6,8 +6,8 @@ import (
 	"fmt"
 
 	userrepo "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres/repository"
-	"github.com/gabrielgcmr/sonnda/internal/app/apperr"
 	"github.com/gabrielgcmr/sonnda/internal/domain/model/user"
+	"github.com/gabrielgcmr/sonnda/internal/shared/apperr"
 )
 
 func mapDomainError(err error) error {

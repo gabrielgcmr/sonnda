@@ -1,14 +1,10 @@
-// internal/adapters/inbound/http/shared/auth/identity.go
-package auth
-
-import "time"
+// internal/shared/security/identity.go
+package security
 
 // Identity representa o usuário autenticado (OIDC-compatible).
 type Identity struct {
 	Issuer  string
 	Subject string
-
-	Provider *string
 
 	Email         *string
 	EmailVerified *bool
@@ -16,9 +12,7 @@ type Identity struct {
 	Name       *string
 	PictureURL *string
 
-	AuthTime *time.Time
-	Scopes   []string
-	Claims   map[string]any
+	Scopes []string
 }
 
 // PrincipalID retorna o identificador canônico do principal.

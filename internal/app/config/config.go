@@ -9,7 +9,7 @@ import (
 
 	"github.com/joho/godotenv"
 
-	"github.com/gabrielgcmr/sonnda/internal/app/apperr"
+	"github.com/gabrielgcmr/sonnda/internal/shared/apperr"
 )
 
 const (

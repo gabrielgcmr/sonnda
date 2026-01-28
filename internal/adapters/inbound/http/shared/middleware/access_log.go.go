@@ -8,7 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	applog "github.com/gabrielgcmr/sonnda/internal/app/observability"
+	applog "github.com/gabrielgcmr/sonnda/internal/shared/observability"
 )
 
 // AccessLog loga uma linha por request (estilo access log).

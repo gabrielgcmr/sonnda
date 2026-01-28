@@ -4,10 +4,11 @@ package weberr
 import (
 	"html"
 	"net/http"
-	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/shared/httperr"
-	"github.com/gabrielgcmr/sonnda/internal/app/apperr"
 	"strconv"
 	"strings"
+
+	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/shared/httperr"
+	"github.com/gabrielgcmr/sonnda/internal/shared/apperr"
 
 	"github.com/gin-gonic/gin"
 )

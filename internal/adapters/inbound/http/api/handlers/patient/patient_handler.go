@@ -6,9 +6,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	"github.com/gabrielgcmr/sonnda/internal/app/apperr"
-	applog "github.com/gabrielgcmr/sonnda/internal/app/observability"
 	patientsvc "github.com/gabrielgcmr/sonnda/internal/app/services/patient"
+	"github.com/gabrielgcmr/sonnda/internal/shared/apperr"
+	applog "github.com/gabrielgcmr/sonnda/internal/shared/observability"
 
 	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/api/apierr"
 	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/api/binder"

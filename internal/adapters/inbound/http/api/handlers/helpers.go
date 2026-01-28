@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/api/apierr"
-	"github.com/gabrielgcmr/sonnda/internal/app/apperr"
 	"github.com/gabrielgcmr/sonnda/internal/domain/model/demographics"
+	"github.com/gabrielgcmr/sonnda/internal/shared/apperr"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"

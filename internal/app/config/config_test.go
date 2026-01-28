@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/gabrielgcmr/sonnda/internal/app/apperr"
+	"github.com/gabrielgcmr/sonnda/internal/shared/apperr"
 )
 
 func setRequiredEnv(t *testing.T) {

@@ -2,9 +2,10 @@ package binder
 
 import (
 	"errors"
-	"github.com/gabrielgcmr/sonnda/internal/app/apperr"
 	"strings"
 	"unicode"
+
+	"github.com/gabrielgcmr/sonnda/internal/shared/apperr"
 
 	"github.com/go-playground/validator/v10"
 )

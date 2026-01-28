@@ -10,9 +10,9 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/web/weberr"
-	"github.com/gabrielgcmr/sonnda/internal/app/apperr"
-	"github.com/gabrielgcmr/sonnda/internal/app/observability"
 	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
+	"github.com/gabrielgcmr/sonnda/internal/shared/apperr"
+	"github.com/gabrielgcmr/sonnda/internal/shared/observability"
 )
 
 const (

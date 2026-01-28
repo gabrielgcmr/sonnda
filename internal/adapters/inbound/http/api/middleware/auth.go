@@ -1,9 +1,13 @@
 package middleware
 
 import (
-	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/api/apierr"
+	"strings"
+
 	sharedauth "github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/shared/auth"
 	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/shared/httpctx"
+	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/shared/httperr"
+	"github.com/gabrielgcmr/sonnda/internal/shared/apperr"
+	"github.com/gabrielgcmr/sonnda/internal/shared/security"
 
 	"github.com/gin-gonic/gin"
 )
@@ -26,13 +30,43 @@ func NewAuthMiddleware(core *sharedauth.Core) *AuthMiddleware {
 // - Caso falhe: responde JSON (httperr) e aborta.
 func (m *AuthMiddleware) RequireBearer() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		id, appErr := m.core.AuthenticateFromBearerToken(c.Request.Context(), c.Request)
-		if appErr != nil {
-			apierr.ErrorResponder(c, appErr)
+		// 1) Extrai Authorization
+		h := strings.TrimSpace(c.GetHeader("Authorization"))
+		if h == "" {
+			httperr.APIErrorResponder(c, apperr.Unauthorized("missing authorization header"))
+			c.Abort()
 			return
 		}
 
-		httpctx.SetIdentity(c, id)
+		// 2) Extrai token Bearer
+		parts := strings.SplitN(h, " ", 2)
+		if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
+			httperr.APIErrorResponder(c, apperr.Unauthorized("invalid authorization header"))
+			c.Abort()
+			return
+		}
+		token := strings.TrimSpace(parts[1])
+		if token == "" {
+			httperr.APIErrorResponder(c, apperr.Unauthorized("missing bearer token"))
+			c.Abort()
+			return
+		}
+
+		// 3) Autentica
+		id, err := m.core.AuthenticateFromBearerToken(c.Request.Context(), token)
+		if err != nil {
+			// 4) Responde no formato padrão
+			if ae, ok := err.(*apperr.AppError); ok {
+				httperr.APIErrorResponder(c, ae)
+			} else {
+				httperr.APIErrorResponder(c, apperr.Internal("internal auth error", err))
+			}
+			c.Abort()
+			return
+		}
+
+		// 5) Injeta Identity no contexto e segue
+		httpctx.SetIdentity(c, (*security.Identity)(id))
 		c.Next()
 	}
 }
