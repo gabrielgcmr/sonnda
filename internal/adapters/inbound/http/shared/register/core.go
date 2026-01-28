@@ -27,7 +27,7 @@ func (c *Core) ResolveCurrentUser(ctx context.Context, id *security.Identity) (*
 		return nil, apperr.Unauthorized("autenticação necessária")
 	}
 
-	u, err := c.userRepo.FindByPrincipalID(ctx, id.PrincipalID())
+	u, err := c.userRepo.FindByAuthIdentity(ctx, id.Issuer, id.Subject)
 	if err != nil {
 		return nil, apperr.Internal("falha ao buscar usuário", err)
 	}

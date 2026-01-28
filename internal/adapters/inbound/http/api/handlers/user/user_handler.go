@@ -3,6 +3,7 @@ package user
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 
@@ -63,10 +64,16 @@ func (h *Handler) Register(c *gin.Context) {
 		return
 	}
 
+	if identity.Email == nil || strings.TrimSpace(*identity.Email) == "" {
+		apierr.ErrorResponder(c, apperr.Validation("email é obrigatório"))
+		return
+	}
+	email := strings.TrimSpace(*identity.Email)
+
 	input := registrationuc.RegisterInput{
 		Issuer:      identity.Issuer,
 		Subject:     identity.Subject,
-		Email:       identity.Email,
+		Email:       email,
 		FullName:    req.FullName,
 		AccountType: accountType,
 		BirthDate:   birthDate,

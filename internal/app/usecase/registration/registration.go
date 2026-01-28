@@ -36,18 +36,14 @@ func New(userRepo data.UserRepo, userSvc usersvc.Service, profSvc professionalsv
 
 func (u *usecase) Register(ctx context.Context, input RegisterInput) (*user.User, error) {
 	// Verificar se usuário já existe
-	existing, err := u.userRepo.FindByPrincipalID(ctx, input.Issuer, input.Subject)
+	existing, err := u.userRepo.FindByAuthIdentity(ctx, input.Issuer, input.Subject)
 	if err != nil {
-		return nil, &apperr.AppError{
-			Code:    apperr.INFRA_DATABASE_ERROR,
-			Message: "falha ao verificar registro",
-			Cause:   err,
-		}
+		return nil, apperr.Internal("falha ao verificar registro", err)
 	}
 	if existing != nil {
 		return nil, &apperr.AppError{
 			Code:    apperr.RESOURCE_ALREADY_EXISTS,
-			Message: "usuǭrio jǭ cadastrado",
+			Message: "usuário já cadastrado",
 		}
 	}
 
@@ -62,7 +58,7 @@ func (u *usecase) Register(ctx context.Context, input RegisterInput) (*user.User
 		Phone:       input.Phone,
 	})
 	if err != nil {
-		return nil, err
+		return nil, apperr.Internal("falha ao criar usuário", err)
 	}
 
 	if input.AccountType != user.AccountTypeProfessional {
@@ -70,7 +66,7 @@ func (u *usecase) Register(ctx context.Context, input RegisterInput) (*user.User
 	}
 
 	if input.Professional == nil {
-		return nil, apperr.Validation("dados do profissional invǭlidos")
+		return nil, apperr.Validation("dados do profissional inválidos")
 	}
 
 	_, err = u.profSvc.Create(ctx, professionalsvc.CreateInput{
