@@ -7,7 +7,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	applog "github.com/gabrielgcmr/sonnda/internal/shared/observability"
+	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
+	applog "github.com/gabrielgcmr/sonnda/internal/kernel/observability"
 )
 
 // Recovery captura panics, loga stacktrace estruturado e devolve 500 sem derrubar o servidor.
@@ -19,7 +20,7 @@ func Recovery(l *slog.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		defer func() {
 			if rec := recover(); rec != nil {
-				c.Set("error_code", "panic")
+				c.Set("error_code", apperr.INTERNAL_ERROR)
 
 				rid, _ := c.Get("request_id")
 				route := c.FullPath()
@@ -45,7 +46,7 @@ func Recovery(l *slog.Logger) gin.HandlerFunc {
 				reqLog.Error("panic_recovered", attrs...)
 
 				if !c.Writer.Written() {
-					c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "internal_error"})
+					c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": apperr.INTERNAL_ERROR})
 					return
 				}
 				c.Abort()

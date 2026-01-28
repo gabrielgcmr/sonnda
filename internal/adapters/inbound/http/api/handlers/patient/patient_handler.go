@@ -7,8 +7,8 @@ import (
 	"github.com/google/uuid"
 
 	patientsvc "github.com/gabrielgcmr/sonnda/internal/app/services/patient"
-	"github.com/gabrielgcmr/sonnda/internal/shared/apperr"
-	applog "github.com/gabrielgcmr/sonnda/internal/shared/observability"
+	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
+	applog "github.com/gabrielgcmr/sonnda/internal/kernel/observability"
 
 	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/api/apierr"
 	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/api/binder"

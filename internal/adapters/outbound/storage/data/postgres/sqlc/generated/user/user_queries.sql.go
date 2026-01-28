@@ -67,22 +67,22 @@ func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) (int64, error) {
 const findUserByAuthIdentity = `-- name: FindUserByAuthIdentity :one
 SELECT id, auth_provider, auth_subject, email, full_name, birth_date, cpf, phone, account_type, created_at, updated_at, deleted_at
 FROM users
-WHERE auth_provider = $1
+WHERE auth_issuer = $1
   AND auth_subject = $2
   AND deleted_at IS NULL
 `
 
 type FindUserByAuthIdentityParams struct {
-	AuthProvider string `json:"auth_provider"`
-	AuthSubject  string `json:"auth_subject"`
+	AuthIssuer  string `json:"auth_issuer"`
+	AuthSubject string `json:"auth_subject"`
 }
 
 func (q *Queries) FindUserByAuthIdentity(ctx context.Context, arg FindUserByAuthIdentityParams) (User, error) {
-	row := q.db.QueryRow(ctx, findUserByAuthIdentity, arg.AuthProvider, arg.AuthSubject)
+	row := q.db.QueryRow(ctx, findUserByAuthIdentity, arg.AuthIssuer, arg.AuthSubject)
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.AuthProvider,
+		&i.AuthIssuer,
 		&i.AuthSubject,
 		&i.Email,
 		&i.FullName,
@@ -98,7 +98,7 @@ func (q *Queries) FindUserByAuthIdentity(ctx context.Context, arg FindUserByAuth
 }
 
 const findUserByCPF = `-- name: FindUserByCPF :one
-SELECT id, auth_provider, auth_subject, email, full_name, birth_date, cpf, phone, account_type, created_at, updated_at, deleted_at
+SELECT id, auth_issuer, auth_subject, email, full_name, birth_date, cpf, phone, account_type, created_at, updated_at, deleted_at
 FROM users
 WHERE cpf = $1
   AND deleted_at IS NULL

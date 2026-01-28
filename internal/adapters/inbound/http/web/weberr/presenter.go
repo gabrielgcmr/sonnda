@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/shared/httperr"
-	"github.com/gabrielgcmr/sonnda/internal/shared/apperr"
+	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 
 	"github.com/gin-gonic/gin"
 )
@@ -26,7 +26,7 @@ func ErrorResponder(c *gin.Context, err error) {
 
 	// Copiar política do API responder:
 	level := apperr.LogLevelOf(err)
-	c.Set("error_code", string(resp.Code))
+	c.Set("error_code", resp.Code)
 	c.Set("http_status", status)
 	c.Set("error_log_level", level)
 

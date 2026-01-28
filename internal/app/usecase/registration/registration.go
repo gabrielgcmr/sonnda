@@ -9,7 +9,7 @@ import (
 	"github.com/gabrielgcmr/sonnda/internal/domain/model/user"
 	auth "github.com/gabrielgcmr/sonnda/internal/domain/ports/auth"
 	"github.com/gabrielgcmr/sonnda/internal/domain/ports/storage/data"
-	"github.com/gabrielgcmr/sonnda/internal/shared/apperr"
+	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 )
 
 type UseCase interface {
@@ -88,7 +88,7 @@ func (u *usecase) Register(ctx context.Context, input RegisterInput) (*user.User
 	if rollbackErr != nil {
 		return nil, &apperr.AppError{
 			Code:    apperr.INFRA_DATABASE_ERROR,
-			Message: "falha tǸcnica",
+			Message: "falha técnica",
 			Cause:   errors.Join(err, rollbackErr),
 		}
 	}
@@ -103,7 +103,7 @@ func (u *usecase) rollbackCreatedUser(ctx context.Context, createdUser *user.Use
 
 	var rollbackErr error
 
-	if createdUser.AuthProvider == "firebase" && u.authSvc != nil {
+	if createdUser.AuthIssuer == "firebase" && u.authSvc != nil {
 		rollbackErr = errors.Join(rollbackErr, u.authSvc.DisableUser(ctx, createdUser.AuthSubject))
 	}
 

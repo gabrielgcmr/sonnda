@@ -11,8 +11,8 @@ import (
 
 	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/web/weberr"
 	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
-	"github.com/gabrielgcmr/sonnda/internal/shared/apperr"
-	"github.com/gabrielgcmr/sonnda/internal/shared/observability"
+	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
+	"github.com/gabrielgcmr/sonnda/internal/kernel/observability"
 )
 
 const (

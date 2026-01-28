@@ -7,12 +7,12 @@ import (
 
 	userrepo "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres/repository"
 	"github.com/gabrielgcmr/sonnda/internal/domain/model/user"
-	"github.com/gabrielgcmr/sonnda/internal/shared/apperr"
+	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 )
 
 func mapDomainError(err error) error {
 	switch {
-	case errors.Is(err, user.ErrInvalidAuthProvider),
+	case errors.Is(err, user.ErrInvalidAuthIssuer),
 		errors.Is(err, user.ErrInvalidAuthSubject),
 		errors.Is(err, user.ErrInvalidEmail),
 		errors.Is(err, user.ErrInvalidFullName),

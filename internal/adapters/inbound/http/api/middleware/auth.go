@@ -6,8 +6,8 @@ import (
 	sharedauth "github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/shared/auth"
 	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/shared/httpctx"
 	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/shared/httperr"
-	"github.com/gabrielgcmr/sonnda/internal/shared/apperr"
-	"github.com/gabrielgcmr/sonnda/internal/shared/security"
+	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
+	"github.com/gabrielgcmr/sonnda/internal/kernel/security"
 
 	"github.com/gin-gonic/gin"
 )

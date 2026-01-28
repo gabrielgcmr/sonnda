@@ -15,8 +15,6 @@ type ProfessionalInput struct {
 }
 
 type RegisterInput struct {
-	Provider    string
-	Subject     string
 	Email       string
 	AccountType user.AccountType
 	FullName    string

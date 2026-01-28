@@ -25,9 +25,8 @@ A Sonnda resolve um problema recorrente na pratica clinica: pacientes precisam c
   - [Arquitetura](#arquitetura)
   - [Stack Tecnologico](#stack-tecnologico)
   - [Logging](#logging)
-  - [Endpoints](#endpoints)
+  - [Configuracao de ambiente (dev/prod)](#configuracao-de-ambiente-devprod)
   - [Estrutura de Pastas](#estrutura-de-pastas)
-    - [Layers (Arquitetura em Camadas)](#layers-arquitetura-em-camadas)
     - [Web (HTMX + Templ + Tailwind CSS)](#web-htmx--templ--tailwind-css)
     - [Fluxo de Build (Web)](#fluxo-de-build-web)
 
@@ -38,12 +37,13 @@ A Sonnda resolve um problema recorrente na pratica clinica: pacientes precisam c
 A arquitetura foi simplificada em camadas diretas, com baixo acoplamento:
 
 - **Domain (`internal/domain`)**: modelos de dominio e regras de negocio (agnostico de infraestrutura e HTTP).
-- **App (`internal/app`)**: services de aplicacao (orquestracao) e contrato de erros via `internal/shared/apperr`.
+- **App (`internal/app`)**: services de aplicacao (orquestracao)
 - **Adapters (`internal/adapters`)**:
-  - **Inbound (`internal/adapters/inbound/http`)**: protocolo http
+  - **Inbound (`internal/adapters/inbound/http`)**: protocolo http (e grpc, cli no futuro)
     - **Api (`internal/adapters/inbound/http/api`)**: rotas, handlers e middlewares para API.
     - **Web (`internal/adapters/inbound/http/web`)**: rotas, handlers e middlewares para WEB.
   - **Outbound (`internal/adapters/outbound`)**: implementacoes concretas (integrations e persistence).
+- **Kernel (`internal/kernel`)**: Núcleo transversal do sistema. Com contrato de erros (apperr) e log (observability)
 
 ---
 
@@ -53,15 +53,13 @@ A arquitetura foi simplificada em camadas diretas, com baixo acoplamento:
 - **Banco de dados:** PostgreSQL (gerenciado via Supabase)
 - **ORM / Driver:** `pgx` / `pgxpool`
 - **Processamento de documentos:** Google Cloud Document AI
-- **Autenticacao:** Firebase Auth (idToken) cookie
+- **Autenticacao:** Auth0
 - **Containerizacao:** Docker / docker-compose
-- **Arquitetura:** camadas simples (domain/app/adapters)
 - **Web (UI interna):** `templ` + Tailwind CSS + HTMX (arquivos em `internal/adapters/inbound/http/web`)
 
 ---
 
 ## Logging
-
 - Logger baseado em `log/slog` (ver `internal/shared/observability`).
 - Config por env: `LOG_LEVEL` (`debug|info|warn|error`) e `LOG_FORMAT` (`text|json|pretty`).
 - Por request, o middleware injeta um logger no `context.Context` (inclui `request_id`, método, path e rota quando disponível).
@@ -79,39 +77,6 @@ Comandos:
 ```bash
 make dev-api
 ```
-
----
-<!-- TODO: Remover ending points e usar openapi -->
-## Endpoints
-
-Indice de rotas expostas em `internal/adapters/inbound/http/api/router.go`.
-
-Publico:
-- `GET /api/v1/health`
-- `GET /api/v1/docs`
-
-Autenticado (token Firebase):
-- `GET /api/v1/check-registration`
-- `POST /api/v1/register`
-
-Registrado (token + usuario no banco):
-- `GET /api/v1/me`
-- `PUT /api/v1/me`
-- `POST /api/v1/patients`
-- `GET /api/v1/patients`
-- `GET /api/v1/patients/:id`
-- `GET /api/v1/patients/:id/medical-records/labs`
-- `POST /api/v1/patients/:id/medical-records/labs/upload`
-- `GET /api/v1/patients/:id/medical-records/labs/summary`
-
-Documentacao complementar:
-- `docs/architecture/README.md`
-- `docs/architecture/access-control.md`
-- `docs/architecture/error-handling.md`
-- `docs/dev/setup.md`
-- `docs/api/patient.md`
-
----
 
 ## Estrutura de Pastas
 
@@ -136,11 +101,6 @@ Resumo da estrutura atual:
 │   │   │   └── http/               # HTTP adapter (API + WEB)
 │   │   │       ├── api/            # API JSON
 │   │   │       ├── web/            # Web UI (Templ + Tailwind + HTMX)
-│   │   │       │   ├── handlers/   # Web handlers
-│   │   │       │   ├── middleware/ # Web middleware
-│   │   │       │   ├── static/     # Static assets (CSS, JS, images)
-│   │   │       │   ├── styles/     # Tailwind config, theme, fonts
-│   │   │       │   └── templates/  # Templ components e páginas
 │   │   │       └── router.go
 │   │   └── outbound/               # Integrações externas
 │   ├── app/                        # Camada de aplicação
@@ -165,16 +125,7 @@ Resumo da estrutura atual:
 └── README.md                       # Este arquivo
 ```
 
-### Layers (Arquitetura em Camadas)
-
-A aplicação segue a separação clara de responsabilidades:
-
-1. **Domain (`internal/domain`)**: modelos puros e regras de negócio (independente de infraestrutura/HTTP)
-2. **App (`internal/app`)**: services de aplicação, orquestração e contrato de erros
-3. **Adapters (`internal/adapters`)**: integração com HTTP, banco de dados e serviços externos
-
 ### Web (HTMX + Templ + Tailwind CSS)
-
 - **Source of truth**: `internal/adapters/inbound/http/web/`
 - **Componentes**: `templates/components/` (UI reusáveis em `.templ`)
 - **Páginas**: `templates/pages/` (páginas completas)
@@ -187,7 +138,7 @@ A aplicação segue a separação clara de responsabilidades:
 ### Fluxo de Build (Web)
 
 ```bash
-# Watch mode (desenvolvimento rápido)
+# Desenvolvimento web
 make dev-web        # Tailwind + Templ + Air
 
 # Build one-time

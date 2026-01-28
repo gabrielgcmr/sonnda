@@ -7,7 +7,7 @@ import (
 
 	repoerr "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres/repository"
 	"github.com/gabrielgcmr/sonnda/internal/domain/model/professional"
-	"github.com/gabrielgcmr/sonnda/internal/shared/apperr"
+	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 )
 
 func mapDomainError(err error) error {

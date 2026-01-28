@@ -1,7 +1,7 @@
 package binder
 
 import (
-	"github.com/gabrielgcmr/sonnda/internal/shared/apperr"
+	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 
 	"github.com/gin-gonic/gin"
 )

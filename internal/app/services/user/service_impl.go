@@ -6,7 +6,7 @@ import (
 
 	"github.com/gabrielgcmr/sonnda/internal/domain/model/user"
 	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
-	"github.com/gabrielgcmr/sonnda/internal/shared/apperr"
+	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 
 	"github.com/google/uuid"
 )
@@ -27,14 +27,14 @@ func New(userRepo ports.UserRepo, patientAccessRepo ports.PatientAccessRepo) Ser
 
 func (s *service) Create(ctx context.Context, input UserCreateInput) (*user.User, error) {
 	newUser, err := user.NewUser(user.NewUserParams{
-		AuthProvider: input.Provider,
-		AuthSubject:  input.Subject,
-		Email:        input.Email,
-		AccountType:  input.AccountType,
-		FullName:     input.FullName,
-		BirthDate:    input.BirthDate,
-		CPF:          input.CPF,
-		Phone:        input.Phone,
+		AuthIssuer:  input.Provider,
+		AuthSubject: input.Subject,
+		Email:       input.Email,
+		AccountType: input.AccountType,
+		FullName:    input.FullName,
+		BirthDate:   input.BirthDate,
+		CPF:         input.CPF,
+		Phone:       input.Phone,
 	})
 	if err != nil {
 		return nil, mapDomainError(err)

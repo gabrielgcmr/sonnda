@@ -1,4 +1,4 @@
-// internal/adapters/inbound/http/shared/auth/core_v2.go
+// internal/adapters/inbound/http/shared/auth/core.go
 package auth
 
 import (
@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gabrielgcmr/sonnda/internal/shared/apperr"
-	"github.com/gabrielgcmr/sonnda/internal/shared/security"
+	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
+	"github.com/gabrielgcmr/sonnda/internal/kernel/security"
 )
 
 const (

@@ -8,7 +8,7 @@ import (
 	"github.com/gabrielgcmr/sonnda/internal/domain/model/rbac"
 	"github.com/gabrielgcmr/sonnda/internal/domain/model/user"
 	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
-	"github.com/gabrielgcmr/sonnda/internal/shared/apperr"
+	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 
 	"github.com/google/uuid"
 )

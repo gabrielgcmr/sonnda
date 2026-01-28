@@ -5,7 +5,7 @@ import (
 	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/api/apierr"
 	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/shared/httpctx"
 	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/shared/register"
-	"github.com/gabrielgcmr/sonnda/internal/shared/apperr"
+	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 
 	"github.com/gin-gonic/gin"
 )

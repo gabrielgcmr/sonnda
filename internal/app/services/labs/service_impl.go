@@ -5,7 +5,7 @@ import (
 
 	"github.com/gabrielgcmr/sonnda/internal/domain/model/labs"
 	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
-	"github.com/gabrielgcmr/sonnda/internal/shared/apperr"
+	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 
 	"github.com/google/uuid"
 )

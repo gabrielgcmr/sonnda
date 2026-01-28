@@ -10,14 +10,14 @@ func TestNewUser_Success_NormalizesAndSetsUTC(t *testing.T) {
 	birthDate := time.Now().Add(-24 * time.Hour)
 
 	u, err := NewUser(NewUserParams{
-		AuthProvider: " firebase ",
-		AuthSubject:  " sub-123 ",
-		Email:        " Person@Example.COM ",
-		AccountType:  AccountTypeProfessional,
-		FullName:     "  Pessoa Teste  ",
-		BirthDate:    birthDate,
-		CPF:          "529.982.247-25",
-		Phone:        "  11999999999  ",
+		AuthIssuer:  " firebase ",
+		AuthSubject: " sub-123 ",
+		Email:       " Person@Example.COM ",
+		AccountType: AccountTypeProfessional,
+		FullName:    "  Pessoa Teste  ",
+		BirthDate:   birthDate,
+		CPF:         "529.982.247-25",
+		Phone:       "  11999999999  ",
 	})
 
 	if err != nil {
@@ -27,8 +27,8 @@ func TestNewUser_Success_NormalizesAndSetsUTC(t *testing.T) {
 		t.Fatalf("expected user, got nil")
 	}
 
-	if u.AuthProvider != "firebase" {
-		t.Errorf("expected auth provider trimmed, got '%s'", u.AuthProvider)
+	if u.AuthIssuer != "firebase" {
+		t.Errorf("expected auth provider trimmed, got '%s'", u.AuthIssuer)
 	}
 	if u.AuthSubject != "sub-123" {
 		t.Errorf("expected auth subject trimmed, got '%s'", u.AuthSubject)
@@ -71,10 +71,10 @@ func TestNewUser_ValidationErrors(t *testing.T) {
 	}{
 		{
 			name: "missing authProvider",
-			err:  ErrInvalidAuthProvider,
+			err:  ErrInvalidAuthIssuer,
 			fn: func() NewUserParams {
 				params := validParams(validDate)
-				params.AuthProvider = "   "
+				params.AuthIssuer = "   "
 				return params
 			},
 		},
@@ -158,14 +158,14 @@ func TestNewUser_ValidationErrors(t *testing.T) {
 
 func validParams(birthDate time.Time) NewUserParams {
 	return NewUserParams{
-		AuthProvider: "firebase",
-		AuthSubject:  "sub",
-		Email:        "a@b.com",
-		FullName:     "User",
-		AccountType:  AccountTypeProfessional,
-		BirthDate:    birthDate,
-		CPF:          "12345678901",
-		Phone:        "11",
+		AuthIssuer:  "firebase",
+		AuthSubject: "sub",
+		Email:       "a@b.com",
+		FullName:    "User",
+		AccountType: AccountTypeProfessional,
+		BirthDate:   birthDate,
+		CPF:         "12345678901",
+		Phone:       "11",
 	}
 }
 
@@ -173,14 +173,14 @@ func TestUser_ApplyUpdate_Idempotent(t *testing.T) {
 	birthDate := time.Now().Add(-24 * time.Hour)
 
 	u, err := NewUser(NewUserParams{
-		AuthProvider: "firebase",
-		AuthSubject:  "sub-123",
-		Email:        "person@example.com",
-		AccountType:  AccountTypeProfessional,
-		FullName:     "Pessoa Teste",
-		BirthDate:    birthDate,
-		CPF:          "529.982.247-25",
-		Phone:        "  11999999999  ",
+		AuthIssuer:  "firebase",
+		AuthSubject: "sub-123",
+		Email:       "person@example.com",
+		AccountType: AccountTypeProfessional,
+		FullName:    "Pessoa Teste",
+		BirthDate:   birthDate,
+		CPF:         "529.982.247-25",
+		Phone:       "  11999999999  ",
 	})
 	if err != nil {
 		t.Fatalf("expected nil error, got %v", err)

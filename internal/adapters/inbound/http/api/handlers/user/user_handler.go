@@ -14,7 +14,7 @@ import (
 	registrationuc "github.com/gabrielgcmr/sonnda/internal/app/usecase/registration"
 	"github.com/gabrielgcmr/sonnda/internal/domain/model/professional"
 	"github.com/gabrielgcmr/sonnda/internal/domain/model/user"
-	"github.com/gabrielgcmr/sonnda/internal/shared/apperr"
+	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 )
 
 type Handler struct {
@@ -64,8 +64,6 @@ func (h *Handler) Register(c *gin.Context) {
 	}
 
 	input := registrationuc.RegisterInput{
-		Provider:    identity.Provider,
-		Subject:     identity.Subject,
 		Email:       identity.Email,
 		FullName:    req.FullName,
 		AccountType: accountType,

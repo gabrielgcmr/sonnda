@@ -13,7 +13,7 @@ import (
 
 	"github.com/gabrielgcmr/sonnda/internal/app/bootstrap"
 	"github.com/gabrielgcmr/sonnda/internal/app/config"
-	"github.com/gabrielgcmr/sonnda/internal/shared/observability"
+	"github.com/gabrielgcmr/sonnda/internal/kernel/observability"
 
 	httpserver "github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http"
 	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/api"

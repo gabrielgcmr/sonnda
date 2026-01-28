@@ -12,17 +12,17 @@ import (
 )
 
 type User struct {
-	ID           uuid.UUID `json:"id"`
-	AuthProvider string    `json:"auth_provider"`
-	AuthSubject  string    `json:"auth_subject"`
-	Email        string    `json:"email"`
-	FullName     string    `json:"full_name"`
-	AccountType  AccountType `json:"account_type"`
-	BirthDate    time.Time `json:"birth_date"`
-	CPF          string    `json:"cpf"`
-	Phone        string    `json:"phone"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+	ID          uuid.UUID   `json:"id"`
+	AuthIssuer  string      `json:"auth_issuer"`
+	AuthSubject string      `json:"auth_subject"`
+	Email       string      `json:"email"`
+	FullName    string      `json:"full_name"`
+	AccountType AccountType `json:"account_type"`
+	BirthDate   time.Time   `json:"birth_date"`
+	CPF         string      `json:"cpf"`
+	Phone       string      `json:"phone"`
+	CreatedAt   time.Time   `json:"created_at"`
+	UpdatedAt   time.Time   `json:"updated_at"`
 }
 
 type UpdateUserParams struct {
@@ -34,20 +34,20 @@ type UpdateUserParams struct {
 
 // 1. Crie uma struct para agrupar os parâmetros.
 type NewUserParams struct {
-	AuthProvider string
-	AuthSubject  string
-	Email        string
-	FullName     string
-	AccountType  AccountType
-	BirthDate    time.Time
-	CPF          string
-	Phone        string
+	AuthIssuer  string
+	AuthSubject string
+	Email       string
+	FullName    string
+	AccountType AccountType
+	BirthDate   time.Time
+	CPF         string
+	Phone       string
 }
 
 // 2. Crie um método que sabe se limpar.
 // Como é um ponteiro receiver (*NewUserParams), ele altera os dados originais.
 func (p *NewUserParams) Normalize() {
-	p.AuthProvider = strings.TrimSpace(p.AuthProvider)
+	p.AuthIssuer = strings.TrimSpace(p.AuthIssuer)
 	p.AuthSubject = strings.TrimSpace(p.AuthSubject)
 	p.Email = strings.ToLower(strings.TrimSpace(p.Email))
 	p.FullName = strings.TrimSpace(p.FullName)
@@ -67,17 +67,17 @@ func NewUser(params NewUserParams) (*User, error) {
 
 	now := time.Now().UTC()
 	u := &User{
-		ID:           id,
-		AuthProvider: params.AuthProvider,
-		AuthSubject:  params.AuthSubject,
-		Email:        params.Email,
-		FullName:     params.FullName,
-		AccountType:  params.AccountType,
-		BirthDate:    params.BirthDate.UTC(),
-		CPF:          params.CPF,
-		Phone:        params.Phone,
-		CreatedAt:    now,
-		UpdatedAt:    now,
+		ID:          id,
+		AuthIssuer:  params.AuthIssuer,
+		AuthSubject: params.AuthSubject,
+		Email:       params.Email,
+		FullName:    params.FullName,
+		AccountType: params.AccountType,
+		BirthDate:   params.BirthDate.UTC(),
+		CPF:         params.CPF,
+		Phone:       params.Phone,
+		CreatedAt:   now,
+		UpdatedAt:   now,
 	}
 
 	if err := u.Validate(); err != nil {
@@ -88,8 +88,8 @@ func NewUser(params NewUserParams) (*User, error) {
 }
 
 func (u *User) Validate() error {
-	if u.AuthProvider == "" {
-		return ErrInvalidAuthProvider
+	if u.AuthIssuer == "" {
+		return ErrInvalidAuthIssuer
 	}
 	if u.AuthSubject == "" {
 		return ErrInvalidAuthSubject
@@ -177,4 +177,8 @@ func (u *User) ApplyUpdate(params UpdateUserParams) (changed bool, err error) {
 	u.UpdatedAt = time.Now().UTC()
 
 	return true, nil
+}
+
+func (u *User) PrincipalID() string {
+	return u.AuthIssuer + "|" + u.AuthSubject
 }

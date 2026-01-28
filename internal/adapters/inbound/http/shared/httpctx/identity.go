@@ -1,7 +1,7 @@
 package httpctx
 
 import (
-	"github.com/gabrielgcmr/sonnda/internal/shared/security"
+	"github.com/gabrielgcmr/sonnda/internal/kernel/security"
 
 	"github.com/gin-gonic/gin"
 )

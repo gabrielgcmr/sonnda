@@ -5,8 +5,8 @@ import (
 	"errors"
 	"log/slog"
 
-	"github.com/gabrielgcmr/sonnda/internal/shared/apperr"
-	applog "github.com/gabrielgcmr/sonnda/internal/shared/observability"
+	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
+	applog "github.com/gabrielgcmr/sonnda/internal/kernel/observability"
 	"github.com/gin-gonic/gin"
 )
 

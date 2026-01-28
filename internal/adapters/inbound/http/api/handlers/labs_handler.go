@@ -16,7 +16,7 @@ import (
 	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/api/apierr"
 	httpctx "github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/shared/httpctx"
 	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
-	"github.com/gabrielgcmr/sonnda/internal/shared/apperr"
+	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 )
 
 type LabsHandler struct {

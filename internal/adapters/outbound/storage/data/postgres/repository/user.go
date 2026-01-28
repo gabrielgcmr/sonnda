@@ -4,6 +4,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/google/uuid"
 
@@ -14,6 +15,8 @@ import (
 )
 
 var _ ports.UserRepo = (*UserRepository)(nil)
+
+var errInvalidPrincipalID = errors.New("invalid principal id")
 
 type UserRepository struct {
 	client  *postgress.Client
@@ -31,7 +34,7 @@ func New(client *postgress.Client) *UserRepository {
 func (r *UserRepository) Create(ctx context.Context, u *user.User) error {
 	params := usersqlc.CreateUserParams{
 		ID:           u.ID,
-		AuthProvider: u.AuthProvider,
+		AuthProvider: u.AuthIssuer,
 		AuthSubject:  u.AuthSubject,
 		Email:        u.Email,
 		FullName:     u.FullName,
@@ -77,11 +80,16 @@ func (r *UserRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-// FindByAuthIdentity implements [ports.User].
-func (r *UserRepository) FindByAuthIdentity(ctx context.Context, provider string, subject string) (*user.User, error) {
+// FindByPrincipalID implements [ports.User].
+func (r *UserRepository) FindByPrincipalID(ctx context.Context, principalID string) (*user.User, error) {
+	issuer, subj, ok := strings.Cut(principalID, "|")
+	if !ok || issuer == "" || subj == "" {
+		return nil, errors.Join(ErrRepositoryFailure, errInvalidPrincipalID)
+	}
+
 	row, err := r.queries.FindUserByAuthIdentity(ctx, usersqlc.FindUserByAuthIdentityParams{
-		AuthProvider: provider,
-		AuthSubject:  subject,
+		AuthIssuer:  issuer,
+		AuthSubject: subj,
 	})
 	if err != nil {
 		if IsPgNotFound(err) {
@@ -91,17 +99,17 @@ func (r *UserRepository) FindByAuthIdentity(ctx context.Context, provider string
 	}
 
 	return &user.User{
-		ID:           row.ID,
-		AuthProvider: row.AuthProvider,
-		AuthSubject:  row.AuthSubject,
-		Email:        row.Email,
-		FullName:     row.FullName,
-		BirthDate:    row.BirthDate.Time,
-		CPF:          row.Cpf,
-		Phone:        row.Phone,
-		AccountType:  user.AccountType(row.AccountType),
-		CreatedAt:    row.CreatedAt.Time,
-		UpdatedAt:    row.UpdatedAt.Time,
+		ID:          row.ID,
+		AuthIssuer:  row.AuthProvider,
+		AuthSubject: row.AuthSubject,
+		Email:       row.Email,
+		FullName:    row.FullName,
+		BirthDate:   row.BirthDate.Time,
+		CPF:         row.Cpf,
+		Phone:       row.Phone,
+		AccountType: user.AccountType(row.AccountType),
+		CreatedAt:   row.CreatedAt.Time,
+		UpdatedAt:   row.UpdatedAt.Time,
 	}, nil
 }
 
@@ -116,17 +124,17 @@ func (r *UserRepository) FindByCPF(ctx context.Context, cpf string) (*user.User,
 	}
 
 	return &user.User{
-		ID:           row.ID,
-		AuthProvider: row.AuthProvider,
-		AuthSubject:  row.AuthSubject,
-		Email:        row.Email,
-		FullName:     row.FullName,
-		BirthDate:    row.BirthDate.Time,
-		CPF:          row.Cpf,
-		Phone:        row.Phone,
-		AccountType:  user.AccountType(row.AccountType),
-		CreatedAt:    row.CreatedAt.Time,
-		UpdatedAt:    row.UpdatedAt.Time,
+		ID:          row.ID,
+		AuthIssuer:  row.AuthProvider,
+		AuthSubject: row.AuthSubject,
+		Email:       row.Email,
+		FullName:    row.FullName,
+		BirthDate:   row.BirthDate.Time,
+		CPF:         row.Cpf,
+		Phone:       row.Phone,
+		AccountType: user.AccountType(row.AccountType),
+		CreatedAt:   row.CreatedAt.Time,
+		UpdatedAt:   row.UpdatedAt.Time,
 	}, nil
 }
 
@@ -141,17 +149,17 @@ func (r *UserRepository) FindByID(ctx context.Context, id uuid.UUID) (*user.User
 	}
 
 	return &user.User{
-		ID:           row.ID,
-		AuthProvider: row.AuthProvider,
-		AuthSubject:  row.AuthSubject,
-		Email:        row.Email,
-		FullName:     row.FullName,
-		BirthDate:    row.BirthDate.Time,
-		CPF:          row.Cpf,
-		Phone:        row.Phone,
-		AccountType:  user.AccountType(row.AccountType),
-		CreatedAt:    row.CreatedAt.Time,
-		UpdatedAt:    row.UpdatedAt.Time,
+		ID:          row.ID,
+		AuthIssuer:  row.AuthProvider,
+		AuthSubject: row.AuthSubject,
+		Email:       row.Email,
+		FullName:    row.FullName,
+		BirthDate:   row.BirthDate.Time,
+		CPF:         row.Cpf,
+		Phone:       row.Phone,
+		AccountType: user.AccountType(row.AccountType),
+		CreatedAt:   row.CreatedAt.Time,
+		UpdatedAt:   row.UpdatedAt.Time,
 	}, nil
 }
 
@@ -198,16 +206,16 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*user.U
 	}
 
 	return &user.User{
-		ID:           row.ID,
-		AuthProvider: row.AuthProvider,
-		AuthSubject:  row.AuthSubject,
-		Email:        row.Email,
-		FullName:     row.FullName,
-		BirthDate:    row.BirthDate.Time,
-		CPF:          row.Cpf,
-		Phone:        row.Phone,
-		AccountType:  user.AccountType(row.AccountType),
-		CreatedAt:    row.CreatedAt.Time,
-		UpdatedAt:    row.UpdatedAt.Time,
+		ID:          row.ID,
+		AuthIssuer:  row.AuthProvider,
+		AuthSubject: row.AuthSubject,
+		Email:       row.Email,
+		FullName:    row.FullName,
+		BirthDate:   row.BirthDate.Time,
+		CPF:         row.Cpf,
+		Phone:       row.Phone,
+		AccountType: user.AccountType(row.AccountType),
+		CreatedAt:   row.CreatedAt.Time,
+		UpdatedAt:   row.UpdatedAt.Time,
 	}, nil
 }
