@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -85,30 +86,64 @@ func main() {
 		cfg.GCPExtractLabsProcessorID,
 	)
 
-	//6.3 Auth (Firebase only)
-	authService, err := authinfra.NewFirebaseAuthService(ctx)
+	//6.3 Auth (Auth0)
+	webAuthClient, err := authinfra.NewWebClient()
 	if err != nil {
-		log.Fatalf("falha ao criar auth do firebase: %v", err)
+		log.Fatalf("falha ao criar auth0 web client: %v", err)
 	}
-	authCore := sharedauth.NewCore(authService)
+	apiAuthClient, err := authinfra.NewAPIClient()
+	if err != nil {
+		log.Fatalf("falha ao criar auth0 api client: %v", err)
+	}
+	apiAuthProvider, err := authinfra.NewBearerProvider(apiAuthClient)
+	if err != nil {
+		log.Fatalf("falha ao criar auth0 bearer provider: %v", err)
+	}
+
+	apiAuthCore := sharedauth.NewCore(apiAuthProvider)
+
+	sessionStore, err := redisstore.NewSessionStore(redisClient, "session:")
+	if err != nil {
+		log.Fatalf("falha ao criar session store: %v", err)
+	}
+	webSessionProvider := authinfra.NewSessionProvider(sessionStore)
+	webAuthCore := sharedauth.NewCore(
+		webSessionProvider,
+		sharedauth.WithSessionCookieName("__session"),
+	)
 
 	//7. Módulos
-	modules := bootstrap.NewModules(dbClient, authService, docExtractor, storageService)
+	modules := bootstrap.NewModules(dbClient, apiAuthProvider, docExtractor, storageService)
 
 	//8 Middlewares
 	//8.1 API
-	apiAuthMW := apimw.NewAuthMiddleware(authCore)
+	apiAuthMW := apimw.NewAuthMiddleware(apiAuthCore)
 	apiRegMW := apimw.NewRegistrationMiddleware(modules.User.RegistrationCore)
 
 	//8.2 Web
-	webAuthMW := webmw.NewAuthMiddleware(authCore)
+	webAuthMW := webmw.NewAuthMiddleware(webAuthCore)
 	webRegMW := webmw.NewRegistrationMiddleware(modules.User.RegistrationCore)
 
 	// 9. Handlers WEB
 	//TODO: Fazer bootstrap dos handlers web
 	homeHandler := webhandlers.NewHomeHandler(modules.Patient.Service)
-	authHandler := webhandlers.NewAuthHandler(cfg)
-	sessionHandler := webhandlers.NewSessionHandler(authService)
+	sessionHandler := webhandlers.NewSessionHandler(
+		sessionStore,
+		webAuthClient,
+		webhandlers.CookieConfig{
+			Name:     "__session",
+			Path:     "/",
+			SameSite: http.SameSiteLaxMode,
+			Secure:   cfg.Env == "prod",
+			TTL:      7 * 24 * time.Hour,
+		},
+		webhandlers.AuthFlowConfig{
+			StateCookieName:    "__auth0_state",
+			NonceCookieName:    "__auth0_nonce",
+			StateTTL:           10 * time.Minute,
+			AfterLoginRedirect: "/",
+		},
+	)
 
 	//10. Cria o router HTTP
 	ginMode := gin.DebugMode
@@ -132,7 +167,6 @@ func main() {
 			},
 			WEB: web.WebDependencies{
 				HomeHandler:     homeHandler,
-				AuthHandler:     authHandler,
 				SessionHandler:  sessionHandler,
 				WebAuth:         webAuthMW,
 				WebRegistration: webRegMW,

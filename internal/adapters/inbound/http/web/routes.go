@@ -10,7 +10,6 @@ import (
 
 type WebDependencies struct {
 	HomeHandler     *handlers.HomeHandler
-	AuthHandler     *handlers.AuthHandler
 	SessionHandler  *handlers.SessionHandler
 	WebAuth         *webmw.AuthMiddleware
 	WebRegistration *webmw.RegistrationMiddleware
@@ -24,17 +23,10 @@ func SetupRoutes(
 	// NÍVEL 1: Público
 	// ---------------------------------------------------------------------
 
-	r.GET("/auth/login", deps.AuthHandler.Login)
-	r.GET("/auth/callback", deps.AuthHandler.Callback)
-
-	r.GET("/auth/register", deps.AuthHandler.Register)
-
-	// Endpoints de sessão (fluxo de auth no browser)
-	r.POST("/auth/session", deps.SessionHandler.CreateSession)
-	r.DELETE("/auth/session", deps.SessionHandler.DeleteSession)
-	r.POST("/auth/logout", deps.SessionHandler.Logout)
-	r.GET("/auth/session", deps.SessionHandler.GetSession)
-	r.POST("/auth/session/refresh", deps.SessionHandler.RefreshSession)
+	r.GET("/login", deps.SessionHandler.Login)
+	r.GET("/callback", deps.SessionHandler.Callback)
+	r.GET("/logout", deps.SessionHandler.Logout)
+	r.GET("/session", deps.SessionHandler.GetSession) //Debug
 
 	// ---------------------------------------------------------------------
 	// NÍVEL 2: Autenticado (cookie válido)
