@@ -12,7 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/gabrielgcmr/sonnda/internal/app/bootstrap"
-	"github.com/gabrielgcmr/sonnda/internal/app/config"
+	"github.com/gabrielgcmr/sonnda/internal/config"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/observability"
 
 	httpserver "github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http"
@@ -47,7 +47,7 @@ func main() {
 
 	// 4. Persistence
 	// 4.1 Conectar db (Supabase via pgxpool)
-	dbClient, err := postgress.NewClient(postgress.SupabaseConfig(cfg.DBURL))
+	dbClient, err := postgress.NewClient(postgress.SupabaseConfig(cfg.DatabaseURL))
 	if err != nil {
 		log.Fatalf("falha ao criar client do supabase: %v", err)
 	}
@@ -97,7 +97,7 @@ func main() {
 	//8 Middlewares
 	//8.1 API
 	apiAuthMW := apimw.NewAuthMiddleware(apiAuthProvider.AuthenticateBearerToken)
-	apiRegMW := apimw.NewRegistrationMiddleware(modules.User.RegistrationCore)
+	apiRegMW := modules.User.RegistrationMiddleware
 
 	//10. Cria o router HTTP
 	ginMode := gin.DebugMode

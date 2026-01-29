@@ -5,7 +5,7 @@ Simple instructions for coding agents working on this repo.
 
 ## General
 - The project is being done by a solo developer.
-- When suggesting a solution to a problem, offer the correct way (even if it requires refactoring) and a simple way to solve it.
+- When suggesting a solution to a problem, try offer the correct way (even if it requires refactoring) and a simple way to solve it.
 - Prefer small, readable functions and clear naming.
 - Avoid editing generated files unless explicitly asked.
 - Call out any assumptions or open questions before finishing.
@@ -19,21 +19,13 @@ Simple instructions for coding agents working on this repo.
 ## Stack
 - Backend: API Restful in Go
   - Gin + sqlc + Supabase
-  - **Auth**: Firebase
-  - **Persistence**: PostgreSQL (Supabase managed) and Redis (Upstash).
-  - **Code generation**: sqlc for type-safe SQL
-  - **External integrations**: Google Cloud Document AI, Firebase Auth, Google Cloud Storage
-  - 
-- Web:
-  - templ + Tailwind CSS v4 + HTMX 
-    - templates em `internal/adapters/inbound/http/web/templates/`
-    - statics em `internal/adapters/inbound/http/web/static/`
-    - **CSS generation**: Tailwind v4 (source: `internal/adapters/inbound/http/web/styles/`, output: `internal/adapters/inbound/http/web/static/css/app.css`)
-- Mobile (Not in this repo):
-  - React Native + Expo
-  - 
+  - **Auth**: Supabase
+  - **Persistence**: Database: PostgreSQL (Supabase managed) and Redis (Upstash), File Storage: Supabase.
+  - **External integrations**: Google Cloud Document AI,
+
 - **Development tools**:
   - Air (live reload)
+  - SQLC (SQL code generation)
   - Make (task automation)
   - Docker + docker-compose (containerization)
 
@@ -67,15 +59,15 @@ This project uses a **centralized error contract** based on `AppError`.
 
 ### AppError
 - Application-level errors must be represented as `*apperr.AppError`.
+- Location: `internal/kernel/apperr`
 - `AppError` contains:
   - `Code` (`ErrorCode`) - stable, machine-readable contract
   - `Message` - safe, human-readable message
   - `Cause` - optional internal error (wrapped with `%w`)
-- Services/use cases **must return `AppError` for known failures** (validation, conflicts, not found, infra errors).
+- **Prefer using helper constructors** from `internal/kernel/apperr/factory.go` instead of manually constructing them.
+- Services/use cases **must return `AppError` for known failures** (validation, conflicts, not found, infra errors).- Function signatures **may return `error`** for clarity.
 - Domain **never** imports HTTP, Gin, or `apperr`.
-- Handlers and middlewares **must call**: httperrors.WriteError(c,err)
-- Location: `internal/shared/apperr/error.go`
-- HTTP error presentation is centralized in:`internal/adapters/inbound/http/shared/httperr`.
+
  
  ---
 
@@ -85,4 +77,3 @@ This project uses a **centralized error contract** based on `AppError`.
 
 ## Test
 - Add or update tests when behavior changes.
-

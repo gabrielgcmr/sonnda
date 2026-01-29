@@ -6,9 +6,9 @@ import (
 	"errors"
 	"testing"
 
-	repoerr "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres/repository"
 	"github.com/gabrielgcmr/sonnda/internal/domain/model/labs"
 	"github.com/gabrielgcmr/sonnda/internal/domain/model/patient"
+	repoerr "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/repository"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 
 	"github.com/google/uuid"

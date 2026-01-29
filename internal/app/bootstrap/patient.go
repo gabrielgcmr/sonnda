@@ -3,11 +3,11 @@
 package bootstrap
 
 import (
-	patienthandler "github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/api/handlers/patient"
-	postgress "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres"
-	repo "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres/repository"
+	patienthandler "github.com/gabrielgcmr/sonnda/internal/api/handlers/patient"
 	authorization "github.com/gabrielgcmr/sonnda/internal/app/services/authorization"
 	patientsvc "github.com/gabrielgcmr/sonnda/internal/app/services/patient"
+	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
+	repo "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/repository"
 )
 
 type PatientModule struct {

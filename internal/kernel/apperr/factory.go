@@ -1,7 +1,6 @@
 package apperr
 
 // Fábricas de Erro (Factories)
-
 // Validation retorna um erro deBadRequest (400)
 func Validation(msg string, violations ...Violation) *AppError {
 	return &AppError{

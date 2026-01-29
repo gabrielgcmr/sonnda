@@ -3,12 +3,12 @@
 package bootstrap
 
 import (
-	labshandler "github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/api/handlers"
-	postgress "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres"
-	repo "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres/repository"
+	labshandler "github.com/gabrielgcmr/sonnda/internal/api/handlers"
 	labsvc "github.com/gabrielgcmr/sonnda/internal/app/services/labs"
 	labsuc "github.com/gabrielgcmr/sonnda/internal/app/usecase/labs"
 	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
+	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
+	repo "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/repository"
 )
 
 type LabsModule struct {

@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	userrepo "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres/repository"
 	"github.com/gabrielgcmr/sonnda/internal/domain/model/user"
+	userrepo "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/repository"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 )
 
