@@ -1,3 +1,4 @@
+// internal/app/usecase/registration/registration.go
 package registration
 
 import (
@@ -8,7 +9,6 @@ import (
 	"github.com/gabrielgcmr/sonnda/internal/domain/model/user"
 	"github.com/gabrielgcmr/sonnda/internal/domain/ports/storage/data"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
-	"github.com/gabrielgcmr/sonnda/internal/kernel/security"
 )
 
 type UseCase interface {
@@ -16,20 +16,18 @@ type UseCase interface {
 }
 
 type usecase struct {
-	userRepo     data.UserRepo
-	userSvc      usersvc.Service
-	profSvc      professionalsvc.Service
-	authProvider security.IdentityProvider
+	userRepo data.UserRepo
+	userSvc  usersvc.Service
+	profSvc  professionalsvc.Service
 }
 
 var _ UseCase = (*usecase)(nil)
 
-func New(userRepo data.UserRepo, userSvc usersvc.Service, profSvc professionalsvc.Service, authProvider security.IdentityProvider) *usecase {
+func New(userRepo data.UserRepo, userSvc usersvc.Service, profSvc professionalsvc.Service) *usecase {
 	return &usecase{
-		userRepo:     userRepo,
-		userSvc:      userSvc,
-		profSvc:      profSvc,
-		authProvider: authProvider,
+		userRepo: userRepo,
+		userSvc:  userSvc,
+		profSvc:  profSvc,
 	}
 }
 

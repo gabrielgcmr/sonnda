@@ -1,31 +1,8 @@
 // internal/adapters/outbound/auth/helpers.go
 package auth
 
-import (
-	"os"
-	"strings"
-
-	"github.com/gabrielgcmr/sonnda/internal/kernel/security"
-)
-
 func stringPtr(v string) *string {
 	return &v
-}
-
-func methodPtr(v security.AuthMethod) *security.AuthMethod {
-	return &v
-}
-
-func envOrFallback(key string, fallbacks ...string) string {
-	if v := strings.TrimSpace(os.Getenv(key)); v != "" {
-		return v
-	}
-	for _, fb := range fallbacks {
-		if v := strings.TrimSpace(os.Getenv(fb)); v != "" {
-			return v
-		}
-	}
-	return ""
 }
 
 func containsAudience(raw any, audience string) bool {

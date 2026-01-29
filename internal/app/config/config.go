@@ -3,6 +3,7 @@ package config
 
 import (
 	"errors"
+	"net"
 	"net/url"
 	"os"
 	"strings"
@@ -21,6 +22,12 @@ const (
 	envGCPExtractLabsProcessorID    = "GCP_EXTRACT_LABS_PROCESSOR_ID"
 
 	envSupabaseURL        = "SUPABASE_URL"
+	envSupabaseHost       = "SUPABASE_HOST"
+	envSupabasePort       = "SUPABASE_PORT"
+	envSupabaseDB         = "SUPABASE_DB"
+	envSupabaseUser       = "SUPABASE_USER"
+	envSupabasePassword   = "SUPABASE_PASSWORD"
+	envSupabasePoolMode   = "SUPABASE_POOL_MODE"
 	envSupabaseProjectURL = "SUPABASE_PROJECT_URL"
 	envSupabaseJWTIssuer  = "SUPABASE_JWT_ISSUER"
 	envSupabaseJWTAud     = "SUPABASE_JWT_AUDIENCE"
@@ -37,6 +44,7 @@ var (
 	allowedEnvs       = map[string]struct{}{"dev": {}, "prod": {}}
 	allowedLogLevels  = map[string]struct{}{"debug": {}, "info": {}, "warn": {}, "warning": {}, "error": {}}
 	allowedLogFormats = map[string]struct{}{"text": {}, "json": {}, "pretty": {}}
+	allowedPoolModes  = map[string]struct{}{"transaction": {}, "session": {}}
 
 	errInvalidHost = errors.New("invalid host")
 )
@@ -68,8 +76,10 @@ func Load() (*Config, error) {
 	// Carrega variáveis do arquivo .env
 	_ = godotenv.Load()
 
+	dbURL, dbViolations := buildDatabaseURL()
+
 	cfg := &Config{
-		DBURL:    getEnv(envSupabaseURL),
+		DBURL:    dbURL,
 		RedisURL: getEnv(envRedisURL),
 		// Google
 		GoogleApplicationCredentials: getEnv(envGoogleApplicationCredentials),
@@ -99,6 +109,7 @@ func Load() (*Config, error) {
 	}
 
 	var violations []apperr.Violation
+	violations = append(violations, dbViolations...)
 
 	if host, err := normalizeHost(rawAPIHost); err != nil {
 		violations = append(violations, apperr.Violation{
@@ -109,7 +120,6 @@ func Load() (*Config, error) {
 		cfg.APIHost = host
 	}
 
-	appendRequired(&violations, envSupabaseURL, cfg.DBURL)
 	appendRequired(&violations, envSupabaseProjectURL, cfg.SupabaseProjectURL)
 	appendRequired(&violations, envGCPProjectID, cfg.GCPProjectID)
 	appendRequired(&violations, envGCSBucket, cfg.GCSBucket)
@@ -120,6 +130,7 @@ func Load() (*Config, error) {
 	validateEnum(&violations, envAppEnv, cfg.Env, allowedEnvs)
 	validateEnum(&violations, envLogLevel, cfg.LogLevel, allowedLogLevels)
 	validateEnum(&violations, envLogFormat, cfg.LogFormat, allowedLogFormats)
+	validateEnum(&violations, envSupabasePoolMode, getEnv(envSupabasePoolMode), allowedPoolModes)
 
 	if len(violations) > 0 {
 		return nil, apperr.Validation("invalid configuration", violations...)
@@ -130,6 +141,45 @@ func Load() (*Config, error) {
 	}
 
 	return cfg, nil
+}
+
+func buildDatabaseURL() (string, []apperr.Violation) {
+	if rawURL := getEnv(envSupabaseURL); rawURL != "" {
+		return rawURL, nil
+	}
+
+	host := getEnv(envSupabaseHost)
+	port := getEnv(envSupabasePort)
+	dbName := getEnv(envSupabaseDB)
+	user := getEnv(envSupabaseUser)
+	password := getEnv(envSupabasePassword)
+
+	var violations []apperr.Violation
+	appendRequired(&violations, envSupabaseHost, host)
+	appendRequired(&violations, envSupabasePort, port)
+	appendRequired(&violations, envSupabaseDB, dbName)
+	appendRequired(&violations, envSupabaseUser, user)
+	appendRequired(&violations, envSupabasePassword, password)
+
+	if len(violations) > 0 {
+		return "", violations
+	}
+
+	hostPort := net.JoinHostPort(host, port)
+	u := &url.URL{
+		Scheme: "postgresql",
+		User:   url.UserPassword(user, password),
+		Host:   hostPort,
+		Path:   "/" + dbName,
+	}
+
+	q := u.Query()
+	if q.Get("sslmode") == "" {
+		q.Set("sslmode", "require")
+	}
+	u.RawQuery = q.Encode()
+
+	return u.String(), nil
 }
 
 func getEnvOrDefault(key, def string) string {

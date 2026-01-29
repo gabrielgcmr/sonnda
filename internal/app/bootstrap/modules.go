@@ -5,7 +5,6 @@ package bootstrap
 import (
 	postgress "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres"
 	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
-	"github.com/gabrielgcmr/sonnda/internal/kernel/security"
 )
 
 type Modules struct {
@@ -16,12 +15,11 @@ type Modules struct {
 
 func NewModules(
 	dbClient *postgress.Client,
-	identityProvider security.IdentityProvider,
 	docExtractor ports.DocumentExtractorService,
 	storage ports.FileStorageService,
 ) *Modules {
 	return &Modules{
-		User:    NewUserModule(dbClient, identityProvider),
+		User:    NewUserModule(dbClient),
 		Patient: NewPatientModule(dbClient),
 		Labs:    NewLabsModule(dbClient, docExtractor, storage),
 	}

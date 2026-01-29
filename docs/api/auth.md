@@ -12,7 +12,6 @@ A Sonnda usa **Supabase Auth**. O cliente autentica no Supabase, recebe um **Acc
 | Camada | Arquivo |
 |---|---|
 | Middleware | `internal/adapters/inbound/http/api/middleware/auth.go` |
-| Core (Bearer) | `internal/adapters/inbound/http/shared/auth/core.go` |
 | Provider Supabase | `internal/adapters/outbound/auth/supabase_bearer_provider.go` |
 
 ## Configuração (env)

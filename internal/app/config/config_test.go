@@ -10,7 +10,12 @@ import (
 
 func setRequiredEnv(t *testing.T) {
 	t.Helper()
-	t.Setenv(envSupabaseURL, "postgres://user:pass@localhost:5432/db")
+	t.Setenv(envSupabaseHost, "aws-1-us-east-2.pooler.supabase.com")
+	t.Setenv(envSupabasePort, "6543")
+	t.Setenv(envSupabaseDB, "postgres")
+	t.Setenv(envSupabaseUser, "postgres.project-ref")
+	t.Setenv(envSupabasePassword, "pass")
+	t.Setenv(envSupabasePoolMode, "transaction")
 	t.Setenv(envSupabaseProjectURL, "https://project.supabase.co")
 	t.Setenv(envGCPProjectID, "sonnda")
 	t.Setenv(envGCPProjectNumber, "123456")
@@ -43,6 +48,9 @@ func TestLoadDefaults(t *testing.T) {
 	}
 	if cfg.APIHost != "api.localhost" {
 		t.Fatalf("expected APIHost=api.localhost, got %q", cfg.APIHost)
+	}
+	if cfg.DBURL == "" {
+		t.Fatal("expected DBURL to be set, got empty")
 	}
 }
 
@@ -79,6 +87,20 @@ func TestLoadInvalidLogLevel(t *testing.T) {
 	}
 	if !hasViolation(appErr, envLogLevel) {
 		t.Fatalf("expected violation for %s", envLogLevel)
+	}
+}
+
+func TestLoadUsesSupabaseURLWhenProvided(t *testing.T) {
+	setRequiredEnv(t)
+	expected := "postgres://user:pass@localhost:5432/db"
+	t.Setenv(envSupabaseURL, expected)
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if cfg.DBURL != expected {
+		t.Fatalf("expected DBURL=%q, got %q", expected, cfg.DBURL)
 	}
 }
 

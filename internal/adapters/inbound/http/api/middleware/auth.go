@@ -1,31 +1,32 @@
+// internal/adapters/inbound/http/api/middleware/auth.go
 package middleware
 
 import (
+	"context"
 	"strings"
 
-	sharedauth "github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/shared/auth"
 	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/shared/httpctx"
 	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/shared/httperr"
+	"github.com/gabrielgcmr/sonnda/internal/domain/model"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
-	"github.com/gabrielgcmr/sonnda/internal/kernel/security"
 
 	"github.com/gin-gonic/gin"
 )
 
 // AuthMiddleware (API) exige autenticação via Bearer token.
-// - Resolve Identity via shared/auth Core (sem acoplamento ao Gin).
+// - Resolve Identity via função de autenticação (sem acoplamento ao Gin).
 // - Em caso de erro, escreve JSON usando o contrato da API (httperr).
 type AuthMiddleware struct {
-	core *sharedauth.Core
+	authenticate func(context.Context, string) (*model.Identity, error)
 }
 
-func NewAuthMiddleware(core *sharedauth.Core) *AuthMiddleware {
-	return &AuthMiddleware{core: core}
+func NewAuthMiddleware(authenticate func(context.Context, string) (*model.Identity, error)) *AuthMiddleware {
+	return &AuthMiddleware{authenticate: authenticate}
 }
 
 // RequireBearer:
 // - Lê Authorization: Bearer <token>
-// - Verifica token no provider (IdentityService)
+// - Verifica token no provider
 // - Coloca Identity no contexto da requisição (reqctx)
 // - Caso falhe: responde JSON (httperr) e aborta.
 func (m *AuthMiddleware) RequireBearer() gin.HandlerFunc {
@@ -53,7 +54,7 @@ func (m *AuthMiddleware) RequireBearer() gin.HandlerFunc {
 		}
 
 		// 3) Autentica
-		id, err := m.core.AuthenticateFromBearerToken(c.Request.Context(), token)
+		id, err := m.authenticate(c.Request.Context(), token)
 		if err != nil {
 			// 4) Responde no formato padrão
 			if ae, ok := err.(*apperr.AppError); ok {
@@ -64,9 +65,14 @@ func (m *AuthMiddleware) RequireBearer() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
+		if id == nil {
+			httperr.APIErrorResponder(c, apperr.Unauthorized("token inválido ou expirado"))
+			c.Abort()
+			return
+		}
 
 		// 5) Injeta Identity no contexto e segue
-		httpctx.SetIdentity(c, (*security.Identity)(id))
+		httpctx.SetIdentity(c, id)
 		c.Next()
 	}
 }

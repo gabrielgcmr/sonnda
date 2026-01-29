@@ -8,7 +8,7 @@ import (
 
 	"github.com/coreos/go-oidc/v3/oidc"
 
-	"github.com/gabrielgcmr/sonnda/internal/kernel/security"
+	"github.com/gabrielgcmr/sonnda/internal/domain/model"
 )
 
 type SupabaseBearerConfig struct {
@@ -19,11 +19,8 @@ type SupabaseBearerConfig struct {
 
 type SupabaseBearerProvider struct {
 	verifier *oidc.IDTokenVerifier
-	issuer   string
 	audience string
 }
-
-var _ security.IdentityProvider = (*SupabaseBearerProvider)(nil)
 
 func NewSupabaseBearerProvider(cfg SupabaseBearerConfig) (*SupabaseBearerProvider, error) {
 	issuer := strings.TrimSpace(cfg.Issuer)
@@ -43,35 +40,30 @@ func NewSupabaseBearerProvider(cfg SupabaseBearerConfig) (*SupabaseBearerProvide
 
 	return &SupabaseBearerProvider{
 		verifier: verifier,
-		issuer:   issuer,
 		audience: strings.TrimSpace(cfg.Audience),
 	}, nil
 }
 
-func (p *SupabaseBearerProvider) Name() string {
-	return "supabase-bearer"
-}
-
-func (p *SupabaseBearerProvider) AuthenticateBearerToken(ctx context.Context, bearerToken string) (*security.AuthResult, error) {
+func (p *SupabaseBearerProvider) AuthenticateBearerToken(ctx context.Context, bearerToken string) (*model.Identity, error) {
 	if strings.TrimSpace(bearerToken) == "" {
-		return &security.AuthResult{Status: security.Unauthenticated, Method: methodPtr(security.AuthMethodBearer)}, nil
+		return nil, nil
 	}
 
 	idToken, err := p.verifier.Verify(ctx, bearerToken)
 	if err != nil {
-		return &security.AuthResult{Status: security.Unauthenticated, Method: methodPtr(security.AuthMethodBearer)}, nil
+		return nil, nil
 	}
 
 	var claims supabaseClaims
 	if err := idToken.Claims(&claims); err != nil {
-		return &security.AuthResult{Status: security.Error, Method: methodPtr(security.AuthMethodBearer)}, err
+		return nil, err
 	}
 
 	if p.audience != "" && !containsAudience(claims.Audience, p.audience) {
-		return &security.AuthResult{Status: security.Unauthenticated, Method: methodPtr(security.AuthMethodBearer)}, nil
+		return nil, nil
 	}
 
-	identity := security.Identity{
+	identity := model.Identity{
 		Issuer:  idToken.Issuer,
 		Subject: idToken.Subject,
 	}
@@ -88,16 +80,7 @@ func (p *SupabaseBearerProvider) AuthenticateBearerToken(ctx context.Context, be
 		identity.PictureURL = stringPtr(claims.Picture)
 	}
 
-	return &security.AuthResult{
-		Status:   security.Authenticated,
-		Identity: &identity,
-		Method:   methodPtr(security.AuthMethodBearer),
-		Claims:   claims.asMap(),
-	}, nil
-}
-
-func (p *SupabaseBearerProvider) AuthenticateCookie(ctx context.Context, cookieValue string) (*security.AuthResult, error) {
-	return &security.AuthResult{Status: security.Unauthenticated, Method: methodPtr(security.AuthMethodCookie)}, nil
+	return &identity, nil
 }
 
 type supabaseClaims struct {
@@ -107,29 +90,6 @@ type supabaseClaims struct {
 	Picture       string `json:"picture"`
 	Audience      any    `json:"aud"`
 	Role          string `json:"role"`
-}
-
-func (c supabaseClaims) asMap() map[string]any {
-	out := map[string]any{}
-	if c.Email != "" {
-		out["email"] = c.Email
-	}
-	if c.EmailVerified != nil {
-		out["email_verified"] = *c.EmailVerified
-	}
-	if c.Name != "" {
-		out["name"] = c.Name
-	}
-	if c.Picture != "" {
-		out["picture"] = c.Picture
-	}
-	if c.Audience != nil {
-		out["aud"] = c.Audience
-	}
-	if c.Role != "" {
-		out["role"] = c.Role
-	}
-	return out
 }
 
 func deriveSupabaseIssuer(rawURL string) string {

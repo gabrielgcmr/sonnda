@@ -1,13 +1,13 @@
-// internal/adapters/inbound/http/shared/registration/core.go
+// internal/adapters/inbound/http/shared/register/core.go
 package register
 
 import (
 	"context"
 
+	"github.com/gabrielgcmr/sonnda/internal/domain/model"
 	"github.com/gabrielgcmr/sonnda/internal/domain/model/user"
 	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
-	"github.com/gabrielgcmr/sonnda/internal/kernel/security"
 )
 
 // Core: resolve o User (se existir) mas NÃO responde HTTP.
@@ -22,7 +22,7 @@ func NewCore(userRepo ports.UserRepo) *Core {
 // ResolveCurrentUser tenta encontrar o usuário cadastrado no seu banco.
 // - Se não existir: retorna (nil, nil) para o adapter decidir (api=JSON, web=redirect).
 // - Se erro infra: retorna AppError internal/infra conforme você preferir.
-func (c *Core) ResolveCurrentUser(ctx context.Context, id *security.Identity) (*user.User, error) {
+func (c *Core) ResolveCurrentUser(ctx context.Context, id *model.Identity) (*user.User, error) {
 	if id == nil {
 		return nil, apperr.Unauthorized("autenticação necessária")
 	}

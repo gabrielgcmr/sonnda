@@ -18,7 +18,6 @@ import (
 	httpserver "github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http"
 	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/api"
 	apimw "github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/api/middleware"
-	sharedauth "github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/shared/auth"
 	"github.com/gabrielgcmr/sonnda/internal/adapters/outbound/ai"
 	authinfra "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/auth"
 	postgress "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres"
@@ -92,14 +91,12 @@ func main() {
 		log.Fatalf("falha ao criar supabase bearer provider: %v", err)
 	}
 
-	apiAuthCore := sharedauth.NewCore(apiAuthProvider)
-
 	//7. Módulos
-	modules := bootstrap.NewModules(dbClient, apiAuthProvider, docExtractor, storageService)
+	modules := bootstrap.NewModules(dbClient, docExtractor, storageService)
 
 	//8 Middlewares
 	//8.1 API
-	apiAuthMW := apimw.NewAuthMiddleware(apiAuthCore)
+	apiAuthMW := apimw.NewAuthMiddleware(apiAuthProvider.AuthenticateBearerToken)
 	apiRegMW := apimw.NewRegistrationMiddleware(modules.User.RegistrationCore)
 
 	//10. Cria o router HTTP

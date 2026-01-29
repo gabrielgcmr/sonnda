@@ -8,7 +8,6 @@ import (
 	professionalsvc "github.com/gabrielgcmr/sonnda/internal/app/services/professional"
 	usersvc "github.com/gabrielgcmr/sonnda/internal/app/services/user"
 	registrationuc "github.com/gabrielgcmr/sonnda/internal/app/usecase/registration"
-	"github.com/gabrielgcmr/sonnda/internal/kernel/security"
 
 	postgress "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres"
 	repo "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres/repository"
@@ -20,14 +19,14 @@ type UserModule struct {
 	RegistrationMiddleware *middleware.RegistrationMiddleware
 }
 
-func NewUserModule(db *postgress.Client, identityProvider security.IdentityProvider) *UserModule {
+func NewUserModule(db *postgress.Client) *UserModule {
 	userRepo := repo.New(db)
 	profRepo := repo.NewProfessionalRepository(db)
 	patientAccessRepo := repo.NewPatientAccessRepository(db)
 
 	userSvc := usersvc.New(userRepo, patientAccessRepo)
 	profSvc := professionalsvc.New(profRepo)
-	regUC := registrationuc.New(userRepo, userSvc, profSvc, identityProvider)
+	regUC := registrationuc.New(userRepo, userSvc, profSvc)
 
 	handler := user.NewHandler(regUC, userSvc)
 	regCore := sharedregistration.NewCore(userRepo)

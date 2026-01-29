@@ -1,5 +1,5 @@
-// internal/shared/security/identity.go
-package security
+// internal/domain/model/identity.go
+package model
 
 // Identity representa o usuário autenticado (OIDC-compatible).
 type Identity struct {
