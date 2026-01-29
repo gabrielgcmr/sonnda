@@ -29,13 +29,13 @@ func main() {
 	// 1. Carrega o contexto
 	ctx := context.Background()
 
-	// 4. Carrega configuracao
+	// 2. Carrega configuracao
 	cfg, err := config.Load()
 	if err != nil {
 		log.Fatal("Erro ao carregar configuracao: ", err)
 	}
 
-	//4. Carrega logger
+	// 3. Carrega logger
 	appLogger := observability.New(observability.Config{
 		Env:       cfg.Env,
 		Level:     cfg.LogLevel,
@@ -45,15 +45,15 @@ func main() {
 	})
 	slog.SetDefault(appLogger)
 
-	// 5. Persistence
-	// 5.1 Conectar db (Supabase via pgxpool)
-	dbClient, err := postgress.NewClient(config.SupabaseConfig(*cfg))
+	// 4. Persistence
+	// 4.1 Conectar db (Supabase via pgxpool)
+	dbClient, err := postgress.NewClient(postgress.SupabaseConfig(cfg.DBURL))
 	if err != nil {
 		log.Fatalf("falha ao criar client do supabase: %v", err)
 	}
 	defer dbClient.Close()
 
-	//5.2 Redis Client (para sessões e cache)
+	//4.2 Redis Client (para sessões e cache)
 	redisClient, err := redisstore.NewClient(cfg.RedisURL)
 	if err != nil {
 		log.Fatalf("falha ao conectar ao Redis: %v", err)
@@ -124,13 +124,12 @@ func main() {
 
 	// 10. Inicia o servidor
 	localScheme := "http"
-	localAPIHost := cfg.APIHost
 	localPort := ":" + cfg.Port
 	if cfg.Env == "prod" {
 		localScheme = "https"
 		localPort = ""
 	}
-	localAPIURL := localScheme + "://" + localAPIHost + localPort + "/v1"
+	localAPIURL := localScheme + "://localhost" + localPort + "/v1"
 	publicAPIURL := "https://api.sonnda.com.br/v1"
 	slog.Info(
 		"Sonnda is running",

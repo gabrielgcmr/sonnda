@@ -64,7 +64,6 @@ A arquitetura foi simplificada em camadas diretas, com baixo acoplamento:
 
 - Para dev local, copie o exemplo: `cp .env.example .env`.
 - O app **nao** carrega `.env` automaticamente. Exporte as variaveis no shell (ou use `direnv`).
-- A aplicacao usa `API_HOST` para definir o host da API em cada ambiente.
 
 ---
 
@@ -118,4 +117,3 @@ Resumo da estrutura atual:
 ├── Makefile                        # Comandos úteis
 └── README.md                       # Este arquivo
 ```
-

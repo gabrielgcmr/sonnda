@@ -5,7 +5,7 @@ Endpoints para criação e consulta de pacientes.
 
 ## Base URL
 
-`/api/v1`
+`/v1`
 
 ## Autenticação
 
@@ -32,12 +32,12 @@ Mesmo conjunto de campos, todos opcionais.
 
 ## Endpoints
 
-| Método | Rota | Status |
-|---|---|---|
-| POST | `/patients` | Ativo |
-| GET | `/patients` | Ativo |
-| GET | `/patients/:id` | Ativo |
-| PUT | `/patients/:id` | Handler existe, rota não registrada |
+| Método | Rota            | Status                              |
+| ------ | --------------- | ----------------------------------- |
+| POST   | `/patients`     | Ativo                               |
+| GET    | `/patients`     | Ativo                               |
+| GET    | `/patients/:id` | Ativo                               |
+| PUT    | `/patients/:id` | Handler existe, rota não registrada |
 | DELETE | `/patients/:id` | Handler existe, rota não registrada |
 
 ## Criar paciente (POST /api/v1/patients)

@@ -21,7 +21,6 @@ Observacao:
 - O app nao carrega `.env` automaticamente. Exporte as variaveis no shell (ou use `direnv`).
 - O `docker-compose.yml` monta `./secrets/sonnda-gcs.json` em `/secrets/sonnda-gcs.json`.
   Se for usar Docker, garanta que o arquivo exista nesse caminho local.
-- A aplicacao usa `API_HOST` para definir o host da API em cada ambiente.
 
 ## 2) Rodar localmente (sem Docker)
 Opcao simples:

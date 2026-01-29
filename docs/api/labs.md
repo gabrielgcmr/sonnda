@@ -5,7 +5,7 @@ Endpoints de laudos laboratoriais.
 
 ## Base URL
 
-`/api/v1`
+`/v1`
 
 ## Autenticação
 
@@ -13,11 +13,11 @@ Todas as rotas exigem `Authorization: Bearer <id_token>`.
 
 ## Endpoints
 
-| Método | Rota | Status |
-|---|---|---|
-| GET | `/patients/:id/labs` | Ativo |
-| GET | `/patients/:id/labs/full` | Ativo |
-| POST | `/patients/:id/labs/upload` | Ativo |
+| Método | Rota                        | Status |
+| ------ | --------------------------- | ------ |
+| GET    | `/patients/:id/labs`        | Ativo  |
+| GET    | `/patients/:id/labs/full`   | Ativo  |
+| POST   | `/patients/:id/labs/upload` | Ativo  |
 
 ## Listar labs (GET /api/v1/patients/:id/labs)
 

@@ -22,6 +22,16 @@ type Config struct {
 	MaxConnIdleTime time.Duration
 }
 
+func SupabaseConfig(databaseURL string) Config {
+	return Config{
+		DatabaseURL:     databaseURL,
+		MaxConns:        10,
+		MinConns:        2,
+		MaxConnLifetime: time.Hour,
+		MaxConnIdleTime: 30 * time.Minute,
+	}
+}
+
 func NewClient(cfg Config) (*Client, error) {
 	if cfg.DatabaseURL == "" {
 		return nil, fmt.Errorf("DATABASE_URL não pode estar vazia")

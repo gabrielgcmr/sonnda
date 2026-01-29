@@ -5,7 +5,7 @@ Endpoints de perfil e onboarding de usuário.
 
 ## Base URL
 
-`/api/v1`
+`/v1`
 
 ## Autenticação
 
@@ -13,15 +13,15 @@ Todas as rotas exigem `Authorization: Bearer <id_token>`.
 
 ## Endpoints
 
-| Método | Rota | Status |
-|---|---|---|
-| POST | `/register` | Ativo |
-| GET | `/me` | Ativo |
-| PUT | `/me` | Ativo |
-| DELETE | `/me` | Ativo |
-| GET | `/me/patients` | Ativo |
+| Método | Rota           | Status |
+| ------ | -------------- | ------ |
+| POST   | `/register`    | Ativo  |
+| GET    | `/me`          | Ativo  |
+| PUT    | `/me`          | Ativo  |
+| DELETE | `/me`          | Ativo  |
+| GET    | `/me/patients` | Ativo  |
 
-## Onboarding (POST /api/v1/register)
+## Onboarding (POST /v1/register)
 
 **Request (JSON):**
 ```json
@@ -42,7 +42,7 @@ Todas as rotas exigem `Authorization: Bearer <id_token>`.
 
 **Exemplo (curl):**
 ```bash
-curl -i -X POST http://localhost:8080/api/v1/register \
+curl -i -X POST http://localhost:8080/v1/register \
   -H "Authorization: Bearer <id_token>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -64,7 +64,7 @@ curl -i -X POST http://localhost:8080/api/v1/register \
 - `VALIDATION_FAILED` (400)
 - `RESOURCE_ALREADY_EXISTS` (409)
 
-## Perfil atual (GET /api/v1/me)
+## Perfil atual (GET /v1/me)
 
 **Resposta (200 OK):**
 ```json
@@ -89,7 +89,7 @@ curl -i http://localhost:8080/v1/me \
   -H "Authorization: Bearer <access_token>"
 ```
 
-## Atualizar perfil (PUT /api/v1/me)
+## Atualizar perfil (PUT /v1/me)
 
 **Request (JSON):**
 ```json
@@ -103,7 +103,7 @@ curl -i http://localhost:8080/v1/me \
 
 **Exemplo (curl):**
 ```bash
-curl -i -X PUT http://localhost:8080/api/v1/me \
+curl -i -X PUT http://localhost:8080/v1/me \
   -H "Authorization: Bearer <id_token>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -114,7 +114,7 @@ curl -i -X PUT http://localhost:8080/api/v1/me \
   }'
 ```
 
-## Deletar perfil (DELETE /api/v1/me)
+## Deletar perfil (DELETE /v1/me)
 
 **Exemplo (curl):**
 ```bash
@@ -122,7 +122,7 @@ curl -i -X DELETE http://localhost:8080/api/v1/me \
   -H "Authorization: Bearer <id_token>"
 ```
 
-## Listar pacientes do usuário (GET /api/v1/me/patients)
+## Listar pacientes do usuário (GET /v1/me/patients)
 
 Parâmetros opcionais: `limit`, `offset`.
 

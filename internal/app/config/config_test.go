@@ -10,12 +10,7 @@ import (
 
 func setRequiredEnv(t *testing.T) {
 	t.Helper()
-	t.Setenv(envSupabaseHost, "aws-1-us-east-2.pooler.supabase.com")
-	t.Setenv(envSupabasePort, "6543")
-	t.Setenv(envSupabaseDB, "postgres")
-	t.Setenv(envSupabaseUser, "postgres.project-ref")
-	t.Setenv(envSupabasePassword, "pass")
-	t.Setenv(envSupabasePoolMode, "transaction")
+	t.Setenv(envSupabaseURL, "postgres://user:pass@localhost:5432/db")
 	t.Setenv(envSupabaseProjectURL, "https://project.supabase.co")
 	t.Setenv(envGCPProjectID, "sonnda")
 	t.Setenv(envGCPProjectNumber, "123456")
@@ -46,29 +41,8 @@ func TestLoadDefaults(t *testing.T) {
 	if cfg.Port != "8080" {
 		t.Fatalf("expected Port=8080, got %q", cfg.Port)
 	}
-	if cfg.APIHost != "api.localhost" {
-		t.Fatalf("expected APIHost=api.localhost, got %q", cfg.APIHost)
-	}
 	if cfg.DBURL == "" {
 		t.Fatal("expected DBURL to be set, got empty")
-	}
-}
-
-func TestLoadInvalidHost(t *testing.T) {
-	setRequiredEnv(t)
-	t.Setenv(envAPIHost, "https://api.sonnda.com.br/path")
-
-	_, err := Load()
-	if err == nil {
-		t.Fatal("expected error, got nil")
-	}
-
-	var appErr *apperr.AppError
-	if !errors.As(err, &appErr) {
-		t.Fatalf("expected AppError, got %T", err)
-	}
-	if !hasViolation(appErr, envAPIHost) {
-		t.Fatalf("expected violation for %s", envAPIHost)
 	}
 }
 
