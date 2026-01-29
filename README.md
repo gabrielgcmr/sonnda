@@ -27,8 +27,6 @@ A Sonnda resolve um problema recorrente na pratica clinica: pacientes precisam c
   - [Logging](#logging)
   - [Configuracao de ambiente (dev/prod)](#configuracao-de-ambiente-devprod)
   - [Estrutura de Pastas](#estrutura-de-pastas)
-    - [Web (HTMX + Templ + Tailwind CSS)](#web-htmx--templ--tailwind-css)
-    - [Fluxo de Build (Web)](#fluxo-de-build-web)
 
 ---
 
@@ -41,7 +39,6 @@ A arquitetura foi simplificada em camadas diretas, com baixo acoplamento:
 - **Adapters (`internal/adapters`)**:
   - **Inbound (`internal/adapters/inbound/http`)**: protocolo http (e grpc, cli no futuro)
     - **Api (`internal/adapters/inbound/http/api`)**: rotas, handlers e middlewares para API.
-    - **Web (`internal/adapters/inbound/http/web`)**: rotas, handlers e middlewares para WEB.
   - **Outbound (`internal/adapters/outbound`)**: implementacoes concretas (integrations e persistence).
 - **Kernel (`internal/kernel`)**: Núcleo transversal do sistema. Com contrato de erros (apperr) e log (observability)
 
@@ -53,9 +50,8 @@ A arquitetura foi simplificada em camadas diretas, com baixo acoplamento:
 - **Banco de dados:** PostgreSQL (gerenciado via Supabase)
 - **ORM / Driver:** `pgx` / `pgxpool`
 - **Processamento de documentos:** Google Cloud Document AI
-- **Autenticacao:** Auth0
+- **Autenticacao:** Supabase Auth (JWT)
 - **Containerizacao:** Docker / docker-compose
-- **Web (UI interna):** `templ` + Tailwind CSS + HTMX (arquivos em `internal/adapters/inbound/http/web`)
 
 ---
 
@@ -68,7 +64,7 @@ A arquitetura foi simplificada em camadas diretas, com baixo acoplamento:
 
 - Para dev local, copie o exemplo: `cp .env.example .env`.
 - O app **nao** carrega `.env` automaticamente. Exporte as variaveis no shell (ou use `direnv`).
-- A aplicacao roteia por host: em dev use `app.localhost` e `api.localhost` (caso nao resolva, adicione no `/etc/hosts`).
+- A aplicacao usa `API_HOST` para definir o host da API em cada ambiente.
 
 ---
 
@@ -98,9 +94,8 @@ Resumo da estrutura atual:
 │   ├── adapters/                   # Adaptadores (inbound/outbound)
 │   │   ├── inbound/
 │   │   │   ├── cli/                # CLI adapter (futuro)
-│   │   │   └── http/               # HTTP adapter (API + WEB)
+│   │   │   └── http/               # HTTP adapter (API)
 │   │   │       ├── api/            # API JSON
-│   │   │       ├── web/            # Web UI (Templ + Tailwind + HTMX)
 │   │   │       └── router.go
 │   │   └── outbound/               # Integrações externas
 │   ├── app/                        # Camada de aplicação
@@ -121,27 +116,6 @@ Resumo da estrutura atual:
 ├── docker-compose.yml              # Orquestração de containers
 ├── Dockerfile                      # Build da imagem Docker
 ├── Makefile                        # Comandos úteis
-├── tailwind.config.js              # Configuração do Tailwind CSS
 └── README.md                       # Este arquivo
 ```
 
-### Web (HTMX + Templ + Tailwind CSS)
-- **Source of truth**: `internal/adapters/inbound/http/web/`
-- **Componentes**: `templates/components/` (UI reusáveis em `.templ`)
-- **Páginas**: `templates/pages/` (páginas completas)
-- **Styles**: 
-  - `styles/input.css` (entrypoint do Tailwind)
-  - `styles/theme.css` (design tokens e cores Material Design 3)
-  - `static/css/app.css` (output compilado, não editar)
-- **Assets estáticos**: `static/` (favicon, imagens, JS)
-
-### Fluxo de Build (Web)
-
-```bash
-# Desenvolvimento web
-make dev-web        # Tailwind + Templ + Air
-
-# Build one-time
-make tailwind       # Compila CSS
-make templ          # Gera Go code a partir dos .templ
-```

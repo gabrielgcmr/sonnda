@@ -20,14 +20,12 @@ const (
 	envGCPLocation                  = "GCP_LOCATION"
 	envGCPExtractLabsProcessorID    = "GCP_EXTRACT_LABS_PROCESSOR_ID"
 
-	envFirebaseAPIKey     = "FIREBASE_API_KEY"
-	envFirebaseAuthDomain = "FIREBASE_AUTH_DOMAIN"
-	envFirebaseAppID      = "FIREBASE_APP_ID"
+	envSupabaseURL        = "SUPABASE_URL"
+	envSupabaseProjectURL = "SUPABASE_PROJECT_URL"
+	envSupabaseJWTIssuer  = "SUPABASE_JWT_ISSUER"
+	envSupabaseJWTAud     = "SUPABASE_JWT_AUDIENCE"
+	envRedisURL           = "REDIS_URL"
 
-	envSupabaseURL = "SUPABASE_URL"
-	envRedisURL    = "REDIS_URL"
-
-	envAppHost   = "APP_HOST"
 	envAPIHost   = "API_HOST"
 	envPort      = "PORT"
 	envAppEnv    = "APP_ENV"
@@ -53,11 +51,10 @@ type Config struct {
 	GCSBucket                    string
 	GCPLocation                  string
 	GCPExtractLabsProcessorID    string
-	FirebaseAPIKey               string
-	FirebaseAuthDomain           string
-	FirebaseAppID                string
+	SupabaseProjectURL           string
+	SupabaseJWTIssuer            string
+	SupabaseJWTAudience          string
 
-	AppHost string
 	APIHost string
 
 	Port string // porta HTTP (ex.: "8080")
@@ -81,9 +78,9 @@ func Load() (*Config, error) {
 		GCSBucket:                    getEnv(envGCSBucket),
 		GCPLocation:                  getEnv(envGCPLocation),
 		GCPExtractLabsProcessorID:    getEnv(envGCPExtractLabsProcessorID),
-		FirebaseAPIKey:               getEnv(envFirebaseAPIKey),
-		FirebaseAuthDomain:           getEnv(envFirebaseAuthDomain),
-		FirebaseAppID:                getEnv(envFirebaseAppID),
+		SupabaseProjectURL:           getEnv(envSupabaseProjectURL),
+		SupabaseJWTIssuer:            getEnv(envSupabaseJWTIssuer),
+		SupabaseJWTAudience:          getEnv(envSupabaseJWTAud),
 
 		Port:      getEnvOrDefault(envPort, "8080"),
 		Env:       strings.ToLower(getEnvOrDefault(envAppEnv, "dev")),
@@ -91,37 +88,18 @@ func Load() (*Config, error) {
 		LogFormat: strings.ToLower(getEnvOrDefault(envLogFormat, "text")),
 	}
 
-	rawAppHost := getEnv(envAppHost)
 	rawAPIHost := getEnv(envAPIHost)
-	if rawAppHost == "" || rawAPIHost == "" {
+	if rawAPIHost == "" {
 		switch cfg.Env {
 		case "dev":
-			if rawAppHost == "" {
-				rawAppHost = "app.localhost"
-			}
-			if rawAPIHost == "" {
-				rawAPIHost = "api.localhost"
-			}
+			rawAPIHost = "api.localhost"
 		case "prod":
-			if rawAppHost == "" {
-				rawAppHost = "app.sonnda.com.br"
-			}
-			if rawAPIHost == "" {
-				rawAPIHost = "api.sonnda.com.br"
-			}
+			rawAPIHost = "api.sonnda.com.br"
 		}
 	}
 
 	var violations []apperr.Violation
 
-	if host, err := normalizeHost(rawAppHost); err != nil {
-		violations = append(violations, apperr.Violation{
-			Field:  envAppHost,
-			Reason: "invalid_host",
-		})
-	} else {
-		cfg.AppHost = host
-	}
 	if host, err := normalizeHost(rawAPIHost); err != nil {
 		violations = append(violations, apperr.Violation{
 			Field:  envAPIHost,
@@ -132,6 +110,7 @@ func Load() (*Config, error) {
 	}
 
 	appendRequired(&violations, envSupabaseURL, cfg.DBURL)
+	appendRequired(&violations, envSupabaseProjectURL, cfg.SupabaseProjectURL)
 	appendRequired(&violations, envGCPProjectID, cfg.GCPProjectID)
 	appendRequired(&violations, envGCSBucket, cfg.GCSBucket)
 	appendRequired(&violations, envGCPLocation, cfg.GCPLocation)

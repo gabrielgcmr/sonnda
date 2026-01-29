@@ -8,9 +8,7 @@ Guia rapido para subir a API localmente.
 - Instale make via:
   - sudo apt-get update
   - sudo apt-get install make
-- Rode o comando: make tools
-- OU baixe o standalone do Air e Tailwind para a pasta /tools/bin
-- templ (templates do WEB): `go install github.com/a-h/templ/cmd/templ@v0.3.977`
+- Rode o comando: `make tools`
 
 ## 1) Variaveis de ambiente
 Copie o exemplo para `.env`:
@@ -23,7 +21,7 @@ Observacao:
 - O app nao carrega `.env` automaticamente. Exporte as variaveis no shell (ou use `direnv`).
 - O `docker-compose.yml` monta `./secrets/sonnda-gcs.json` em `/secrets/sonnda-gcs.json`.
   Se for usar Docker, garanta que o arquivo exista nesse caminho local.
-- A aplicacao roteia por host. Em dev use `app.localhost` e `api.localhost` (adicione no `/etc/hosts` se necessario).
+- A aplicacao usa `API_HOST` para definir o host da API em cada ambiente.
 
 ## 2) Rodar localmente (sem Docker)
 Opcao simples:
@@ -38,21 +36,6 @@ Com hot reload (requer `air`):
 ```bash
 make dev-api
 ```
-
-Com hot reload + Tailwind + templ (WEB):
-
-```bash
-make dev-web
-```
-
-Observacoes (WEB):
-- Tailwind usa `tools/tailwindcss` 
-- Gera `internal/adapters/inbound/http/web/static/css/app.css` a partir de `internal/adapters/inbound/http/web/styles/input.css` (gerado, nao editar o output).
-- `templ` usa os arquivos `.templ` em `internal/adapters/inbound/http/web/templates/` e gera os `*_templ.go` (arquivos gerados, nao editar).
-
-Alternativas (mais controle):
-- **Simples**: `make dev-web`
-- **Correto (watchers)**: `templ generate --watch` em um terminal e `make tailwind-watch` em outro, junto com `make dev`.
 
 ## 3) Rodar via Docker
 
@@ -76,7 +59,6 @@ make sqlc-generate
 ## Migracoes
 
 As migracoes SQL vivem em `internal/adapters/outbound/storage/postgres/sqlc/sql/migrations/`.
-
 
 ## 5) Testes
 

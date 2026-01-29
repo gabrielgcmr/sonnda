@@ -70,7 +70,7 @@ curl -i -X POST http://localhost:8080/api/v1/register \
 ```json
 {
   "id": "018f39f2-0b1a-7c5a-9d9e-2b7d8d9c3f11",
-  "auth_provider": "firebase",
+  "auth_provider": "supabase",
   "auth_subject": "uid",
   "email": "user@example.com",
   "full_name": "Joana Silva",
@@ -85,8 +85,8 @@ curl -i -X POST http://localhost:8080/api/v1/register \
 
 **Exemplo (curl):**
 ```bash
-curl -i http://localhost:8080/api/v1/me \
-  -H "Authorization: Bearer <id_token>"
+curl -i http://localhost:8080/v1/me \
+  -H "Authorization: Bearer <access_token>"
 ```
 
 ## Atualizar perfil (PUT /api/v1/me)

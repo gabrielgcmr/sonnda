@@ -1,3 +1,4 @@
+<!-- docs/architecture/error-handling.md -->
 # Error Handling (Go + Gin)
 
 Este documento descreve a arquitetura de tratamento de erros da Sonnda API, inspirada em Hexagonal/Clean Architecture e aplicada de forma pragmática em Go.
@@ -6,8 +7,8 @@ Este documento descreve a arquitetura de tratamento de erros da Sonnda API, insp
 - ADR: `docs/architecture/adr/ADR-006-error-handling-contract.md`
 - Catálogo de códigos: `internal/shared/apperr/catalog.go`
 - Política de log por erro: `internal/shared/apperr/logging.go`
-- Presenter HTTP (canonical): `internal/adapters/inbound/http/shared/httperr` (veja `APIErrorResponder` e `WebErrorResponder`)
-- Nota: implementações legacy `internal/adapters/inbound/http/api/apierr` e `internal/adapters/inbound/http/web/weberr` estão deprecadas; usar `httperr` diretamente.
+- Presenter HTTP (canonical): `internal/adapters/inbound/http/shared/httperr` (veja `APIErrorResponder`)
+- Nota: implementação legacy `internal/adapters/inbound/http/api/apierr` está deprecada; usar `httperr` diretamente.
 - Middleware de AccessLog: `internal/adapters/inbound/http/middleware/logging.go`
 - Middleware de Recovery: `internal/adapters/inbound/http/middleware/recovery.go`
 
@@ -36,7 +37,7 @@ Formato padrão:
 - `code`: identificador estável (contrato com clientes).
 - `message`: mensagem segura (não expõe detalhes internos).
 
-Implementado por `internal/adapters/inbound/http/shared/httperr.ToHTTP` + presenters `APIErrorResponder` / `WebErrorResponder` no mesmo package.
+Implementado por `internal/adapters/inbound/http/shared/httperr.ToHTTP` + presenter `APIErrorResponder` no mesmo package.
 
 ---
 
@@ -81,9 +82,8 @@ O catálogo de códigos fica em `internal/shared/apperr/catalog.go`.
 O presenter canonical é o package `internal/adapters/inbound/http/shared/httperr` que exporta:
 - `ToHTTP(err) (status int, body ErrorResponse)`
 - `APIErrorResponder(c *gin.Context, err error)` — presenter para endpoints JSON (API)
-- `WebErrorResponder(c *gin.Context, err error)` — presenter para endpoints Web/HTMX (HTML)
 
-Observação: antigas implementações em `internal/adapters/inbound/http/api/apierr` e `internal/adapters/inbound/http/web/weberr` foram depreciadas. Contribuições novas devem usar `httperr`.
+Observação: implementação antiga em `internal/adapters/inbound/http/api/apierr` foi depreciada. Contribuições novas devem usar `httperr`.
 
 ---
 
@@ -97,7 +97,7 @@ O mapeamento é centralizado em `internal/adapters/inbound/http/shared/httperr/h
 
 Regras:
 - Handler **não chama** `apperr.ToHTTP` diretamente.
-- Handler deve chamar `internal/adapters/inbound/http/shared/httperr.APIErrorResponder(c, err)` para APIs JSON, ou `WebErrorResponder` para rotas que servem HTML/HTMX.
+- Handler deve chamar `internal/adapters/inbound/http/shared/httperr.APIErrorResponder(c, err)` para APIs JSON.
 - Erros de fronteira (auth/bind/parse) são convertidos para `&apperr.AppError{Code, Message, Cause}` no handler e passados para o presenter.
 - Erros do service/usecase **já devem** voltar como `*apperr.AppError` quando forem esperados.
 

@@ -25,8 +25,8 @@ O backend segue um modelo em camadas simples, com baixo acoplamento e separaçã
 
 - **Adapters (`internal/adapters`)**  
   Implementações concretas e adapters de protocolo.  
-  - **Inbound (`internal/adapters/inbound/http`)**: HTTP (API REST + Web Templ/HTMX), rotas, handlers e middlewares.  
-  - **Outbound (`internal/adapters/outbound`)**: persistência (sqlc/pgx), integrações externas (Firebase Auth, GCS, Document AI).
+  - **Inbound (`internal/adapters/inbound/http`)**: HTTP (API REST), rotas, handlers e middlewares.  
+- **Outbound (`internal/adapters/outbound`)**: persistência (sqlc/pgx), integrações externas (Supabase Auth, GCS, Document AI).
 
 Essas camadas representam **limites conceituais**, não apenas organização de pastas.
 
@@ -88,7 +88,7 @@ Essas camadas representam **limites conceituais**, não apenas organização de 
 ## Bootstrap e rotas
 
 - Bootstrap faz o wiring (repos, services e handlers) em `internal/app/bootstrap`.
-- As rotas HTTP vivem em `internal/adapters/inbound/http/router.go` (API + Web).  
+- As rotas HTTP vivem em `internal/adapters/inbound/http/router.go` (API).  
 - Níveis de acesso:
   - público
   - autenticado

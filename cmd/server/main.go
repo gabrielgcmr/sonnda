@@ -8,7 +8,6 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -20,9 +19,6 @@ import (
 	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/api"
 	apimw "github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/api/middleware"
 	sharedauth "github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/shared/auth"
-	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/web"
-	webhandlers "github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/web/handlers"
-	webmw "github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/web/middleware"
 	"github.com/gabrielgcmr/sonnda/internal/adapters/outbound/ai"
 	authinfra "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/auth"
 	postgress "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres"
@@ -86,31 +82,17 @@ func main() {
 		cfg.GCPExtractLabsProcessorID,
 	)
 
-	//6.3 Auth (Auth0)
-	webAuthClient, err := authinfra.NewWebClient()
+	//6.3 Auth (Supabase)
+	apiAuthProvider, err := authinfra.NewSupabaseBearerProvider(authinfra.SupabaseBearerConfig{
+		SupabaseURL: cfg.SupabaseProjectURL,
+		Issuer:      cfg.SupabaseJWTIssuer,
+		Audience:    cfg.SupabaseJWTAudience,
+	})
 	if err != nil {
-		log.Fatalf("falha ao criar auth0 web client: %v", err)
-	}
-	apiAuthClient, err := authinfra.NewAPIClient()
-	if err != nil {
-		log.Fatalf("falha ao criar auth0 api client: %v", err)
-	}
-	apiAuthProvider, err := authinfra.NewBearerProvider(apiAuthClient)
-	if err != nil {
-		log.Fatalf("falha ao criar auth0 bearer provider: %v", err)
+		log.Fatalf("falha ao criar supabase bearer provider: %v", err)
 	}
 
 	apiAuthCore := sharedauth.NewCore(apiAuthProvider)
-
-	sessionStore, err := redisstore.NewSessionStore(redisClient, "session:")
-	if err != nil {
-		log.Fatalf("falha ao criar session store: %v", err)
-	}
-	webSessionProvider := authinfra.NewSessionProvider(sessionStore)
-	webAuthCore := sharedauth.NewCore(
-		webSessionProvider,
-		sharedauth.WithSessionCookieName("__session"),
-	)
 
 	//7. Módulos
 	modules := bootstrap.NewModules(dbClient, apiAuthProvider, docExtractor, storageService)
@@ -119,31 +101,6 @@ func main() {
 	//8.1 API
 	apiAuthMW := apimw.NewAuthMiddleware(apiAuthCore)
 	apiRegMW := apimw.NewRegistrationMiddleware(modules.User.RegistrationCore)
-
-	//8.2 Web
-	webAuthMW := webmw.NewAuthMiddleware(webAuthCore)
-	webRegMW := webmw.NewRegistrationMiddleware(modules.User.RegistrationCore)
-
-	// 9. Handlers WEB
-	//TODO: Fazer bootstrap dos handlers web
-	homeHandler := webhandlers.NewHomeHandler(modules.Patient.Service)
-	sessionHandler := webhandlers.NewSessionHandler(
-		sessionStore,
-		webAuthClient,
-		webhandlers.CookieConfig{
-			Name:     "__session",
-			Path:     "/",
-			SameSite: http.SameSiteLaxMode,
-			Secure:   cfg.Env == "prod",
-			TTL:      7 * 24 * time.Hour,
-		},
-		webhandlers.AuthFlowConfig{
-			StateCookieName:    "__auth0_state",
-			NonceCookieName:    "__auth0_nonce",
-			StateTTL:           10 * time.Minute,
-			AfterLoginRedirect: "/",
-		},
-	)
 
 	//10. Cria o router HTTP
 	ginMode := gin.DebugMode
@@ -165,35 +122,24 @@ func main() {
 				PatientHandler:         modules.Patient.Handler,
 				LabsHandler:            modules.Labs.Handler,
 			},
-			WEB: web.WebDependencies{
-				HomeHandler:     homeHandler,
-				SessionHandler:  sessionHandler,
-				WebAuth:         webAuthMW,
-				WebRegistration: webRegMW,
-			},
 		},
 	)
 
 	// 10. Inicia o servidor
 	localScheme := "http"
-	localAppHost := cfg.AppHost
 	localAPIHost := cfg.APIHost
 	localPort := ":" + cfg.Port
 	if cfg.Env == "prod" {
 		localScheme = "https"
 		localPort = ""
 	}
-	localAppURL := localScheme + "://" + localAppHost + localPort + "/"
 	localAPIURL := localScheme + "://" + localAPIHost + localPort + "/v1"
-	publicAppURL := "https://app.sonnda.com.br/"
 	publicAPIURL := "https://api.sonnda.com.br/v1"
 	slog.Info(
 		"Sonnda is running",
 		slog.String("mode", cfg.Env),
 		slog.String("listen_addr", ":"+cfg.Port),
-		slog.String("local_app_url", localAppURL),
 		slog.String("local_api_url", localAPIURL),
-		slog.String("public_app_url", publicAppURL),
 		slog.String("public_api_url", publicAPIURL),
 	)
 	server := &http.Server{

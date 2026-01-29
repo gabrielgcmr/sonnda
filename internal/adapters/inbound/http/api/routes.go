@@ -35,7 +35,7 @@ func SetupRoutes(
 	})
 
 	// ---------------------------------------------------------------------
-	// NÍVEL 2: Autenticado (Tem Token do Firebase)
+	// NÍVEL 2: Autenticado (Tem Token do Supabase)
 	// Aqui o cara provou que é dono do e-mail, mas talvez não tenha cadastro no banco.
 	// ---------------------------------------------------------------------
 

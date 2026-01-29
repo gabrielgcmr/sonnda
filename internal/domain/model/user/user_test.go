@@ -1,3 +1,4 @@
+// internal/domain/model/user/user_test.go
 package user
 
 import (
@@ -10,7 +11,7 @@ func TestNewUser_Success_NormalizesAndSetsUTC(t *testing.T) {
 	birthDate := time.Now().Add(-24 * time.Hour)
 
 	u, err := NewUser(NewUserParams{
-		AuthIssuer:  " firebase ",
+		AuthIssuer:  " supabase ",
 		AuthSubject: " sub-123 ",
 		Email:       " Person@Example.COM ",
 		AccountType: AccountTypeProfessional,
@@ -27,7 +28,7 @@ func TestNewUser_Success_NormalizesAndSetsUTC(t *testing.T) {
 		t.Fatalf("expected user, got nil")
 	}
 
-	if u.AuthIssuer != "firebase" {
+	if u.AuthIssuer != "supabase" {
 		t.Errorf("expected auth provider trimmed, got '%s'", u.AuthIssuer)
 	}
 	if u.AuthSubject != "sub-123" {
@@ -158,7 +159,7 @@ func TestNewUser_ValidationErrors(t *testing.T) {
 
 func validParams(birthDate time.Time) NewUserParams {
 	return NewUserParams{
-		AuthIssuer:  "firebase",
+		AuthIssuer:  "supabase",
 		AuthSubject: "sub",
 		Email:       "a@b.com",
 		FullName:    "User",
@@ -173,7 +174,7 @@ func TestUser_ApplyUpdate_Idempotent(t *testing.T) {
 	birthDate := time.Now().Add(-24 * time.Hour)
 
 	u, err := NewUser(NewUserParams{
-		AuthIssuer:  "firebase",
+		AuthIssuer:  "supabase",
 		AuthSubject: "sub-123",
 		Email:       "person@example.com",
 		AccountType: AccountTypeProfessional,
