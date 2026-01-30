@@ -6,8 +6,8 @@ import (
 
 	helpers "github.com/gabrielgcmr/sonnda/internal/api/helpers"
 	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
+	"github.com/gabrielgcmr/sonnda/internal/domain/entity"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/user"
-	"github.com/gabrielgcmr/sonnda/internal/domain/model"
 	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 
@@ -29,7 +29,7 @@ func NewRegistrationMiddleware(userRepo repository.User) *RegistrationMiddleware
 // resolveCurrentUser tenta encontrar o usuário cadastrado no seu banco.
 // - Se não existir: retorna (nil, nil) para o adapter decidir (api=JSON).
 // - Se erro infra: retorna AppError internal/infra conforme você preferir.
-func (m *RegistrationMiddleware) resolveCurrentUser(ctx context.Context, id *model.Identity) (*user.User, error) {
+func (m *RegistrationMiddleware) resolveCurrentUser(ctx context.Context, id *entity.Identity) (*user.User, error) {
 	if id == nil {
 		return nil, apperr.Unauthorized("autenticação necessária")
 	}

@@ -35,12 +35,12 @@ A Sonnda resolve um problema recorrente na pratica clinica: pacientes precisam c
 A arquitetura foi simplificada em camadas diretas, com baixo acoplamento:
 
 - **Domain (`internal/domain`)**: modelos de dominio e regras de negocio (agnostico de infraestrutura e HTTP).
-- **App (`internal/app`)**: services de aplicacao (orquestracao)
-- **Adapters (`internal/adapters`)**:
+- **Application (`internal/application`)**: services de aplicacao (orquestracao e casos de uso).
+- **Adapters (`internal/adapters`)**: adaptadores inbound (HTTP/CLI).
   - **Inbound (`internal/adapters/inbound/http`)**: protocolo http (e grpc, cli no futuro)
     - **Api (`internal/adapters/inbound/http/api`)**: rotas, handlers e middlewares para API.
-  - **Outbound (`internal/adapters/outbound`)**: implementacoes concretas (integrations e persistence).
-- **Kernel (`internal/kernel`)**: Núcleo transversal do sistema. Com contrato de erros (apperr) e log (observability)
+- **Infrastructure (`internal/infrastructure`)**: implementacoes concretas (persistence, integracao externa).
+- **Kernel (`internal/kernel`)**: Núcleo transversal do sistema. Com contrato de erros (apperr) e log (observability).
 
 ---
 
@@ -56,7 +56,7 @@ A arquitetura foi simplificada em camadas diretas, com baixo acoplamento:
 ---
 
 ## Logging
-- Logger baseado em `log/slog` (ver `internal/shared/observability`).
+- Logger baseado em `log/slog` (ver `internal/kernel/observability`).
 - Config por env: `LOG_LEVEL` (`debug|info|warn|error`) e `LOG_FORMAT` (`text|json|pretty`).
 - Por request, o middleware injeta um logger no `context.Context` (inclui `request_id`, método, path e rota quando disponível).
 
@@ -90,23 +90,28 @@ Resumo da estrutura atual:
 │   └── dev/                        # Guias de desenvolvimento
 │       └── setup.md
 ├── internal/
-│   ├── adapters/                   # Adaptadores (inbound/outbound)
-│   │   ├── inbound/
-│   │   │   ├── cli/                # CLI adapter (futuro)
-│   │   │   └── http/               # HTTP adapter (API)
-│   │   │       ├── api/            # API JSON
-│   │   │       └── router.go
-│   │   └── outbound/               # Integrações externas
-│   ├── app/                        # Camada de aplicação
-│   │   ├── apperr/                 # Contrato de erros
+│   ├── adapters/                   # Adaptadores (inbound)
+│   │   └── inbound/
+│   │       ├── cli/                # CLI adapter (futuro)
+│   │       └── http/               # HTTP adapter (API)
+│   │           ├── api/            # API JSON
+│   │           └── router.go
+│   ├── application/                # Camada de aplicação
 │   │   ├── bootstrap/              # Injeção de dependências
 │   │   ├── config/                 # Configuração da aplicação
-│   │   ├── observability/          # Logging e observabilidade
 │   │   ├── services/               # Services de aplicação
 │   │   └── usecase/                # Casos de uso
-│   └── domain/                     # Camada de domínio (core)
-│       ├── model/                  # Modelos e regras de negócio
-│       └── ports/                  # Interfaces do domínio
+│   ├── domain/                     # Camada de domínio (core)
+│   │   ├── entity/                 # Entidades de domínio
+│   │   ├── model/                  # Modelos e regras de negócio
+│   │   ├── repository/             # Interfaces de repositório
+│   │   └── ports/                  # Interfaces do domínio
+│   ├── infrastructure/             # Implementações concretas
+│   │   ├── persistence/            # Persistência (PostgreSQL, Redis)
+│   │   └── auth/                   # Autenticação e autorização
+│   └── kernel/                     # Núcleo transversal
+│       ├── apperr/                 # Contrato de erros
+│       └── observability/          # Logging e observabilidade
 ├── samples/                        # Exemplos e dados de teste
 ├── secrets/                        # Configurações sensíveis (não versionado)
 │   └── sonnda-gcs.json/

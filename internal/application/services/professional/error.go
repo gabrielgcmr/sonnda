@@ -1,11 +1,12 @@
-// internal/app/services/professional/error.go
+// internal/application/services/professional/error.go
+// internal/application/services/professional/error.go
 package professionalsvc
 
 import (
 	"errors"
 	"fmt"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/model/professional"
+	"github.com/gabrielgcmr/sonnda/internal/domain/entity/professional"
 	"github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/repo"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 )

@@ -1,3 +1,4 @@
+// internal/infrastructure/persistence/postgres/repo/patient.go
 // internal/adapters/outbound/data/postgres/repository/patient.go
 package repo
 
@@ -5,9 +6,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/model/demographics"
-	"github.com/gabrielgcmr/sonnda/internal/domain/model/patient"
-	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
+	"github.com/gabrielgcmr/sonnda/internal/domain/entity/demographics"
+	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patient"
+	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
 	patientsqlc "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/sqlc/generated/patient"
 
@@ -19,41 +20,41 @@ type PatientRepository struct {
 	queries *patientsqlc.Queries
 }
 
-// FindByName implements [ports.Patient].
+// FindByName implements [repository.PatientRepo].
 func (r *PatientRepository) FindByName(ctx context.Context, name string) ([]patient.Patient, error) {
 	panic("unimplemented")
 }
 
-// SearchByName implements [ports.Patient].
+// SearchByName implements [repository.PatientRepo].
 func (r *PatientRepository) SearchByName(ctx context.Context, name string, limit int, offset int) ([]patient.Patient, error) {
 	panic("unimplemented")
 }
 
-// HardDelete implements [ports.Patient].
+// HardDelete implements [repository.PatientRepo].
 func (r *PatientRepository) HardDelete(ctx context.Context, id uuid.UUID) error {
 	panic("unimplemented")
 }
 
-// List implements [ports.Patient].
+// List implements [repository.PatientRepo].
 func (r *PatientRepository) List(ctx context.Context, limit int, offset int) ([]patient.Patient, error) {
 	panic("unimplemented")
 }
 
-// Update implements [ports.Patient].
+// Update implements [repository.PatientRepo].
 func (r *PatientRepository) Update(ctx context.Context, patient *patient.Patient) error {
 	panic("unimplemented")
 }
 
-var _ ports.PatientRepo = (*PatientRepository)(nil)
+var _ repository.PatientRepo = (*PatientRepository)(nil)
 
-func NewPatientRepository(client *postgress.Client) ports.PatientRepo {
+func NewPatientRepository(client *postgress.Client) repository.PatientRepo {
 	return &PatientRepository{
 		client:  client,
 		queries: patientsqlc.New(client.Pool()),
 	}
 }
 
-// Create implements [ports.Patient].
+// Create implements [repository.PatientRepo].
 func (r *PatientRepository) Create(ctx context.Context, p *patient.Patient) error {
 	params := patientsqlc.CreatePatientParams{
 		ID:          p.ID,
@@ -92,12 +93,12 @@ func (r *PatientRepository) Create(ctx context.Context, p *patient.Patient) erro
 	return nil
 }
 
-// SoftDelete implements [ports.Patient].
+// SoftDelete implements [repository.PatientRepo].
 func (p *PatientRepository) SoftDelete(ctx context.Context, id uuid.UUID) error {
 	panic("unimplemented")
 }
 
-// FindByCPF implements [ports.Patient].
+// FindByCPF implements [repository.PatientRepo].
 func (p *PatientRepository) FindByCPF(ctx context.Context, cpf string) (*patient.Patient, error) {
 	row, err := p.queries.GetPatientByCPF(ctx, cpf)
 	if err != nil {
@@ -123,7 +124,7 @@ func (p *PatientRepository) FindByCPF(ctx context.Context, cpf string) (*patient
 	}, nil
 }
 
-// FindByID implements [ports.Patient].
+// FindByID implements [repository.PatientRepo].
 func (p *PatientRepository) FindByID(ctx context.Context, id uuid.UUID) (*patient.Patient, error) {
 	row, err := p.queries.GetPatientByID(ctx, id)
 	if err != nil {

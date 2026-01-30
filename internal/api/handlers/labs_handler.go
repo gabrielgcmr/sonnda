@@ -1,3 +1,4 @@
+// internal/api/handlers/labs_handler.go
 package handlers
 
 import (
@@ -15,20 +16,20 @@ import (
 
 	helpers "github.com/gabrielgcmr/sonnda/internal/api/helpers"
 	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
-	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
+	domainstorage "github.com/gabrielgcmr/sonnda/internal/domain/storage"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 )
 
 type LabsHandler struct {
 	svc      labsvc.Service
 	createUC labsuc.CreateLabReportFromDocumentUseCase
-	storage  ports.FileStorageService
+	storage  domainstorage.FileStorageService
 }
 
 func NewLabsHandler(
 	svc labsvc.Service,
 	createUC labsuc.CreateLabReportFromDocumentUseCase,
-	storageClient ports.FileStorageService,
+	storageClient domainstorage.FileStorageService,
 ) *LabsHandler {
 	return &LabsHandler{
 		svc:      svc,

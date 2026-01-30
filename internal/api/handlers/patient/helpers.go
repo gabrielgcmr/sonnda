@@ -1,9 +1,10 @@
+// internal/api/handlers/patient/helpers.go
 package patient
 
 import (
 	"fmt"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/model/demographics"
+	"github.com/gabrielgcmr/sonnda/internal/domain/entity/demographics"
 )
 
 // ParseGender valida e converte o gênero para o tipo do domínio.

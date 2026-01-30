@@ -1,4 +1,5 @@
-// internal/app/services/professional/service_test.go
+// internal/application/services/professional/service_test.go
+// internal/application/services/professional/service_test.go
 package professionalsvc
 
 import (
@@ -6,7 +7,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/model/professional"
+	"github.com/gabrielgcmr/sonnda/internal/domain/entity/professional"
 	"github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/repo"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 

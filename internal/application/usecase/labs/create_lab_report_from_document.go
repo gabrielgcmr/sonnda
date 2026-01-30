@@ -1,3 +1,4 @@
+// internal/application/usecase/labs/create_lab_report_from_document.go
 package labsuc
 
 import (
@@ -11,8 +12,9 @@ import (
 	"time"
 
 	labsvc "github.com/gabrielgcmr/sonnda/internal/application/services/labs"
-	"github.com/gabrielgcmr/sonnda/internal/domain/model/labs"
-	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
+	domainai "github.com/gabrielgcmr/sonnda/internal/domain/ai"
+	"github.com/gabrielgcmr/sonnda/internal/domain/entity/labs"
+	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 
 	"github.com/google/uuid"
@@ -23,17 +25,17 @@ type CreateLabReportFromDocumentUseCase interface {
 }
 
 type createLabReportFromDocumentUseCase struct {
-	patientRepo ports.PatientRepo
-	labsRepo    ports.LabsRepo
-	extractor   ports.DocumentExtractorService
+	patientRepo repository.PatientRepo
+	labsRepo    repository.LabsRepo
+	extractor   domainai.DocumentExtractorService
 }
 
 var _ CreateLabReportFromDocumentUseCase = (*createLabReportFromDocumentUseCase)(nil)
 
 func NewCreateLabReportFromDocument(
-	patientRepo ports.PatientRepo,
-	labsRepo ports.LabsRepo,
-	extractor ports.DocumentExtractorService,
+	patientRepo repository.PatientRepo,
+	labsRepo repository.LabsRepo,
+	extractor domainai.DocumentExtractorService,
 ) CreateLabReportFromDocumentUseCase {
 	return &createLabReportFromDocumentUseCase{
 		patientRepo: patientRepo,
@@ -139,7 +141,7 @@ func (u *createLabReportFromDocumentUseCase) validateInput(input CreateLabReport
 func (u *createLabReportFromDocumentUseCase) mapExtractedToDomain(
 	patientID uuid.UUID,
 	uploadedByUserID uuid.UUID,
-	extracted *ports.ExtractedLabReport,
+	extracted *domainai.ExtractedLabReport,
 ) (*labs.LabReport, error) {
 	if extracted == nil {
 		return nil, labs.ErrInvalidInput

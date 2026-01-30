@@ -1,9 +1,10 @@
+// internal/application/services/professional/service.go
 package professionalsvc
 
 import (
 	"context"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/model/professional"
+	"github.com/gabrielgcmr/sonnda/internal/domain/entity/professional"
 
 	"github.com/google/uuid"
 )

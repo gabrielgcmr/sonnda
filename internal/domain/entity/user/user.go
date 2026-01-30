@@ -1,3 +1,4 @@
+// internal/domain/entity/user/user.go
 package user
 
 import (
@@ -6,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/model/demographics"
+	"github.com/gabrielgcmr/sonnda/internal/domain/entity/demographics"
 	"github.com/google/uuid"
 )
 

@@ -1,12 +1,13 @@
-// internal/app/services/patient/error.go
+// internal/application/services/patient/error.go
+// internal/application/services/patient/error.go
 package patientsvc
 
 import (
 	"errors"
 	"fmt"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/model/demographics"
-	"github.com/gabrielgcmr/sonnda/internal/domain/model/patient"
+	"github.com/gabrielgcmr/sonnda/internal/domain/entity/demographics"
+	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patient"
 	"github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/repo"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 )

@@ -1,11 +1,12 @@
+// internal/infrastructure/persistence/postgres/repo/labs.go
 // internal/adapters/outbound/data/postgres/labs.go
 package repo
 
 import (
 	"context"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/model/labs"
-	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
+	"github.com/gabrielgcmr/sonnda/internal/domain/entity/labs"
+	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
 	labsqlc "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/sqlc/generated/lab"
 
@@ -17,9 +18,9 @@ type LabsRepository struct {
 	queries *labsqlc.Queries
 }
 
-var _ ports.LabsRepo = (*LabsRepository)(nil)
+var _ repository.LabsRepo = (*LabsRepository)(nil)
 
-func NewLabsRepository(client *postgress.Client) ports.LabsRepo {
+func NewLabsRepository(client *postgress.Client) repository.LabsRepo {
 	return &LabsRepository{
 		client:  client,
 		queries: labsqlc.New(client.Pool()),

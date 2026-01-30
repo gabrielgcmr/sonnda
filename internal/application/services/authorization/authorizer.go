@@ -1,3 +1,4 @@
+// internal/application/services/authorization/authorizer.go
 package authorization
 
 import (
@@ -5,9 +6,9 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/gabrielgcmr/sonnda/internal/domain/entity/rbac"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/user"
-	"github.com/gabrielgcmr/sonnda/internal/domain/model/rbac"
-	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
+	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 
 	"github.com/google/uuid"
@@ -19,15 +20,15 @@ type Authorizer interface {
 
 type Service struct {
 	rbacPolicy        *rbac.RbacPolicy
-	patientRepo       ports.PatientRepo
-	patientAccessRepo ports.PatientAccessRepo
-	profRepo          ports.ProfessionalRepo
+	patientRepo       repository.PatientRepo
+	patientAccessRepo repository.PatientAccessRepo
+	profRepo          repository.ProfessionalRepo
 }
 
 func New(
-	patientRepo ports.PatientRepo,
-	patientAccessRepo ports.PatientAccessRepo,
-	profRepo ports.ProfessionalRepo,
+	patientRepo repository.PatientRepo,
+	patientAccessRepo repository.PatientAccessRepo,
+	profRepo repository.ProfessionalRepo,
 ) *Service {
 	return &Service{
 		rbacPolicy:        rbac.NewRbacPolicy(),

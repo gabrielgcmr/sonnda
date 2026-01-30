@@ -7,7 +7,7 @@ import (
 
 	"github.com/gabrielgcmr/sonnda/internal/api/helpers"
 	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
-	"github.com/gabrielgcmr/sonnda/internal/domain/model"
+	"github.com/gabrielgcmr/sonnda/internal/domain/entity"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 
 	"github.com/gin-gonic/gin"
@@ -17,10 +17,10 @@ import (
 // - Resolve Identity via função de autenticação (sem acoplamento ao Gin).
 // - Em caso de erro, escreve JSON usando o contrato da API (apierr).
 type AuthMiddleware struct {
-	authenticate func(context.Context, string) (*model.Identity, error)
+	authenticate func(context.Context, string) (*entity.Identity, error)
 }
 
-func NewAuthMiddleware(authenticate func(context.Context, string) (*model.Identity, error)) *AuthMiddleware {
+func NewAuthMiddleware(authenticate func(context.Context, string) (*entity.Identity, error)) *AuthMiddleware {
 	return &AuthMiddleware{authenticate: authenticate}
 }
 

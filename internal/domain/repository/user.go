@@ -1,3 +1,4 @@
+// internal/domain/repository/user.go
 // internal/domain/user_repository.go
 package repository
 

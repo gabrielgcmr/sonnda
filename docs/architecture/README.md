@@ -14,19 +14,26 @@ O backend segue um modelo em camadas simples, com baixo acoplamento e separaçã
 
 - **Domain (`internal/domain`)**  
   Modelos do domínio, regras de negócio e invariantes.  
-  - Models em `internal/domain/model`; ports em `internal/domain/ports`.
+  - Models em `internal/domain/model`; entities em `internal/domain/entity`; repositories em `internal/domain/repository`; ports em `internal/domain/ports`.
 
-- **App (`internal/app`)**  
+- **Application (`internal/application`)**  
   Orquestração e cross-cutting concerns.  
-  - Use cases em `internal/app/usecase`; services em `internal/app/services`.  
-  - Erros centralizados em `internal/shared/apperr`.  
-  - Config/bootstrapping em `internal/app/config` e `internal/app/bootstrap`.  
-  - Observabilidade em `internal/shared/observability` (slog, logger por request).
+  - Use cases em `internal/application/usecase`; services em `internal/application/services`.  
+  - Config/bootstrapping em `internal/application/config` e `internal/application/bootstrap`.
 
 - **Adapters (`internal/adapters`)**  
-  Implementações concretas e adapters de protocolo.  
-  - **Inbound (`internal/adapters/inbound/http`)**: HTTP (API REST), rotas, handlers e middlewares.  
-- **Outbound (`internal/adapters/outbound`)**: persistência (sqlc/pgx), integrações externas (Supabase Auth, GCS, Document AI).
+  Implementações de adapters de protocolo (inbound).  
+  - **Inbound (`internal/adapters/inbound/http`)**: HTTP (API REST), rotas, handlers e middlewares.
+
+- **Infrastructure (`internal/infrastructure`)**  
+  Implementações concretas de persistência e integrações externas.  
+  - **Persistence (`internal/infrastructure/persistence`)**: repositórios (sqlc/pgx), cache.
+  - **Auth (`internal/infrastructure/auth`)**: autenticação e autorização (Supabase Auth, etc).
+
+- **Kernel (`internal/kernel`)**  
+  Núcleo transversal do sistema.
+  - **Error contract (`internal/kernel/apperr`)**: contrato centralizado de erros.
+  - **Observability (`internal/kernel/observability`)**: logging baseado em slog, logger por request.
 
 Essas camadas representam **limites conceituais**, não apenas organização de pastas.
 
@@ -52,16 +59,16 @@ Essas camadas representam **limites conceituais**, não apenas organização de 
   - persiste ou consulta dados  
 
 5) **Resposta HTTP**  
-   - erros são normalizados para um contrato estável via `internal/shared/apperr`
+   - erros são normalizados para um contrato estável via `internal/kernel/apperr`
       - Veja `docs/architecture/error-handling.md`
 
 ---
 
 ## Persistência
 
-- SQL definido em `internal/adapters/outbound/storage/data/postgres/sqlc/sql`.
-- `sqlc` gera código em `internal/adapters/outbound/storage/data/postgres/sqlc/generated`.
-- Repositórios em `internal/adapters/outbound/storage/data/postgres/repository` encapsulam o acesso ao banco.
+- SQL definido em `internal/infrastructure/persistence/postgres/sqlc/sql`.
+- `sqlc` gera código em `internal/infrastructure/persistence/postgres/sqlc/generated`.
+- Repositórios em `internal/infrastructure/persistence/postgres/repo` encapsulam o acesso ao banco.
 - Banco principal: PostgreSQL (Supabase).
 - Soft delete usa `deleted_at`; consultas filtram `deleted_at IS NULL`.
 
@@ -69,7 +76,7 @@ Essas camadas representam **limites conceituais**, não apenas organização de 
 
 ## Observabilidade
 
-- Logger baseado em `log/slog` (`internal/shared/observability`).
+- Logger baseado em `log/slog` (`internal/kernel/observability`).
 - Variáveis:
   - `LOG_LEVEL`
   - `LOG_FORMAT`
@@ -81,13 +88,13 @@ Essas camadas representam **limites conceituais**, não apenas organização de 
 
 - Variáveis de ambiente definidas no ambiente (veja `.env.example` para referência).
 - `APP_ENV` define o ambiente (`dev | prod`).
-- Configurações carregadas na inicialização da aplicação (`internal/app/config`).
+- Configurações carregadas na inicialização da aplicação (`internal/application/config`).
 
 ---
 
 ## Bootstrap e rotas
 
-- Bootstrap faz o wiring (repos, services e handlers) em `internal/app/bootstrap`.
+- Bootstrap faz o wiring (repos, services e handlers) em `internal/application/bootstrap`.
 - As rotas HTTP vivem em `internal/adapters/inbound/http/router.go` (API).  
 - Níveis de acesso:
   - público

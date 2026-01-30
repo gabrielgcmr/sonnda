@@ -1,10 +1,11 @@
+// internal/application/usecase/registration/dto.go
 package registration
 
 import (
 	"time"
 
+	"github.com/gabrielgcmr/sonnda/internal/domain/entity/professional"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/user"
-	"github.com/gabrielgcmr/sonnda/internal/domain/model/professional"
 )
 
 type ProfessionalInput struct {

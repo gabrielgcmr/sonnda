@@ -1,9 +1,11 @@
-// internal/app/bootstrap/modules.go
+// internal/application/bootstrap/modules.go
+// internal/application/bootstrap/modules.go
 // File: internal/app/bootstrap/modules.go
 package bootstrap
 
 import (
-	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
+	domainai "github.com/gabrielgcmr/sonnda/internal/domain/ai"
+	domainstorage "github.com/gabrielgcmr/sonnda/internal/domain/storage"
 	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
 )
 
@@ -15,8 +17,8 @@ type Modules struct {
 
 func NewModules(
 	dbClient *postgress.Client,
-	docExtractor ports.DocumentExtractorService,
-	storage ports.FileStorageService,
+	docExtractor domainai.DocumentExtractorService,
+	storage domainstorage.FileStorageService,
 ) *Modules {
 	return &Modules{
 		User:    NewUserModule(dbClient),

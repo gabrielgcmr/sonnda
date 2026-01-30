@@ -1,26 +1,27 @@
-// internal/app/services/patient/service_impl.go
+// internal/application/services/patient/service_impl.go
+// internal/application/services/patient/service_impl.go
 package patientsvc
 
 import (
 	"context"
 
 	"github.com/gabrielgcmr/sonnda/internal/application/services/authorization"
+	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patient"
+	"github.com/gabrielgcmr/sonnda/internal/domain/entity/rbac"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/user"
-	"github.com/gabrielgcmr/sonnda/internal/domain/model/patient"
-	"github.com/gabrielgcmr/sonnda/internal/domain/model/rbac"
-	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
+	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
 
 	"github.com/google/uuid"
 )
 
 type service struct {
-	repo ports.PatientRepo
+	repo repository.PatientRepo
 	auth authorization.Authorizer
 }
 
 var _ Service = (*service)(nil)
 
-func New(repo ports.PatientRepo, auth authorization.Authorizer) Service {
+func New(repo repository.PatientRepo, auth authorization.Authorizer) Service {
 	return &service{
 		repo: repo,
 		auth: auth,

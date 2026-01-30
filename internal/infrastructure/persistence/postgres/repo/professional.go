@@ -1,3 +1,4 @@
+// internal/infrastructure/persistence/postgres/repo/professional.go
 // internal/adapters/outbound/storage/data/postgres/repository/professional.go
 package repo
 
@@ -7,8 +8,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/model/professional"
-	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
+	"github.com/gabrielgcmr/sonnda/internal/domain/entity/professional"
+	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
 	professionalsqlc "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/sqlc/generated/professional"
 )
@@ -18,16 +19,16 @@ type Professional struct {
 	queries *professionalsqlc.Queries
 }
 
-var _ ports.ProfessionalRepo = (*Professional)(nil)
+var _ repository.ProfessionalRepo = (*Professional)(nil)
 
-func NewProfessionalRepository(client *postgress.Client) ports.ProfessionalRepo {
+func NewProfessionalRepository(client *postgress.Client) repository.ProfessionalRepo {
 	return &Professional{
 		client:  client,
 		queries: professionalsqlc.New(client.Pool()),
 	}
 }
 
-// Create implements [ports.ProfessionalRepo].
+// Create implements [repository.ProfessionalRepo].
 func (p *Professional) Create(ctx context.Context, prof *professional.Professional) error {
 	if prof == nil {
 		return errors.New("profile is nil")
@@ -61,37 +62,37 @@ func (p *Professional) Create(ctx context.Context, prof *professional.Profession
 	return nil
 }
 
-// Update implements [ports.ProfessionalRepo].
+// Update implements [repository.ProfessionalRepo].
 func (p *Professional) Update(ctx context.Context, profile *professional.Professional) error {
 	panic("unimplemented")
 }
 
-// Delete implements [ports.ProfessionalRepo].
+// Delete implements [repository.ProfessionalRepo].
 func (p *Professional) Delete(ctx context.Context, id uuid.UUID) error {
 	panic("unimplemented")
 }
 
-// SoftDelete implements [ports.ProfessionalRepo].
+// SoftDelete implements [repository.ProfessionalRepo].
 func (p *Professional) SoftDelete(ctx context.Context, id uuid.UUID) error {
 	panic("unimplemented")
 }
 
-// FindByID implements [ports.ProfessionalRepo].
+// FindByID implements [repository.ProfessionalRepo].
 func (p *Professional) FindByID(ctx context.Context, id uuid.UUID) (*professional.Professional, error) {
 	panic("unimplemented")
 }
 
-// FindByUserID implements [ports.ProfessionalRepo].
+// FindByUserID implements [repository.ProfessionalRepo].
 func (p *Professional) FindByUserID(ctx context.Context, userID uuid.UUID) (*professional.Professional, error) {
 	panic("unimplemented")
 }
 
-// FindByRegistration implements [ports.ProfessionalRepo].
+// FindByRegistration implements [repository.ProfessionalRepo].
 func (p *Professional) FindByRegistration(ctx context.Context, registrationNumber string, registrationIssuer string) (*professional.Professional, error) {
 	panic("unimplemented")
 }
 
-// FindByName implements [ports.ProfessionalRepo].
+// FindByName implements [repository.ProfessionalRepo].
 func (p *Professional) FindByName(ctx context.Context, name string, limit int, offset int) ([]*professional.Professional, error) {
 	panic("unimplemented")
 }

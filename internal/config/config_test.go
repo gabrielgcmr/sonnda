@@ -1,4 +1,5 @@
-// internal/app/config/config_test.go
+// internal/config/config_test.go
+// internal/application/config/config_test.go
 package config
 
 import (
@@ -10,7 +11,7 @@ import (
 
 func setRequiredEnv(t *testing.T) {
 	t.Helper()
-	t.Setenv(envSupabaseURL, "postgres://user:pass@localhost:5432/db")
+	t.Setenv(envDatabaseURL, "postgres://user:pass@localhost:5432/db")
 	t.Setenv(envSupabaseProjectURL, "https://project.supabase.co")
 	t.Setenv(envGCPProjectID, "sonnda")
 	t.Setenv(envGCPProjectNumber, "123456")
@@ -67,7 +68,7 @@ func TestLoadInvalidLogLevel(t *testing.T) {
 func TestLoadUsesSupabaseURLWhenProvided(t *testing.T) {
 	setRequiredEnv(t)
 	expected := "postgres://user:pass@localhost:5432/db"
-	t.Setenv(envSupabaseURL, expected)
+	t.Setenv(envDatabaseURL, expected)
 
 	cfg, err := Load()
 	if err != nil {

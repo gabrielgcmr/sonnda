@@ -1,4 +1,4 @@
-// internal/app/services/labs/error.go
+// internal/application/services/labs/error.go
 package labsvc
 
 import (

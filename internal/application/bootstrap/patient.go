@@ -1,4 +1,4 @@
-// internal/app/bootstrap/patient.go
+// internal/application/bootstrap/patient.go
 // File: internal/app/bootstrap/patient.go
 package bootstrap
 

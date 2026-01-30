@@ -1,8 +1,9 @@
-// internal/app/services/patient/dto.go
+// internal/application/services/patient/dto.go
+// internal/application/services/patient/dto.go
 package patientsvc
 
 import (
-	"github.com/gabrielgcmr/sonnda/internal/domain/model/demographics"
+	"github.com/gabrielgcmr/sonnda/internal/domain/entity/demographics"
 	"time"
 
 	"github.com/google/uuid"

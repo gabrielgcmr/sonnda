@@ -1,25 +1,26 @@
+// internal/application/services/labs/service_impl.go
 package labsvc
 
 import (
 	"context"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/model/labs"
-	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
+	"github.com/gabrielgcmr/sonnda/internal/domain/entity/labs"
+	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 
 	"github.com/google/uuid"
 )
 
 type service struct {
-	patientRepo ports.PatientRepo
-	labsRepo    ports.LabsRepo
+	patientRepo repository.PatientRepo
+	labsRepo    repository.LabsRepo
 }
 
 var _ Service = (*service)(nil)
 
 func New(
-	patientRepo ports.PatientRepo,
-	labsRepo ports.LabsRepo,
+	patientRepo repository.PatientRepo,
+	labsRepo repository.LabsRepo,
 ) Service {
 	return &service{
 		patientRepo: patientRepo,

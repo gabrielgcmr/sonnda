@@ -1,9 +1,11 @@
+// internal/infrastructure/ai/adapter.go
 package ai
 
 import (
 	"context"
 	"fmt"
-	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
+
+	domainai "github.com/gabrielgcmr/sonnda/internal/domain/ai"
 )
 
 // LabReportExtractor já está definido em labs/ai.go
@@ -19,7 +21,7 @@ type DocumentAIAdapter struct {
 }
 
 // Garante que implementa a interface
-var _ ports.DocumentExtractorService = (*DocumentAIAdapter)(nil)
+var _ domainai.DocumentExtractorService = (*DocumentAIAdapter)(nil)
 
 // NewDocumentAIAdapter é o construtor que você vai usar no module.go.
 func NewDocumentAIAdapter(client Client, processorID string) *DocumentAIAdapter {
@@ -32,7 +34,7 @@ func NewDocumentAIAdapter(client Client, processorID string) *DocumentAIAdapter 
 func (a *DocumentAIAdapter) ExtractLabReport(
 	ctx context.Context,
 	documentURI, mimeType string,
-) (*ports.ExtractedLabReport, error) {
+) (*domainai.ExtractedLabReport, error) {
 	// 1. Processa documento via Google Document AI
 	doc, err := a.client.ProcessDocument(ctx, a.processorID, documentURI, mimeType)
 	if err != nil {
@@ -55,7 +57,7 @@ func (a *DocumentAIAdapter) ExtractLabReport(
 	return extracted, nil
 }
 
-func (a *DocumentAIAdapter) validateExtracted(extracted *ports.ExtractedLabReport) error {
+func (a *DocumentAIAdapter) validateExtracted(extracted *domainai.ExtractedLabReport) error {
 	// Você pode adicionar validações aqui se necessário
 	// Por exemplo: garantir que pelo menos um teste foi extraído
 	if len(extracted.Tests) == 0 {

@@ -1,4 +1,4 @@
-// internal/domain/model/user/user_test.go
+// internal/domain/entity/user/user_test.go
 package user
 
 import (

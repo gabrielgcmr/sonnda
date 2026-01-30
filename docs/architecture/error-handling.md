@@ -4,11 +4,10 @@
 Este documento descreve a arquitetura de tratamento de erros da Sonnda API, inspirada em Hexagonal/Clean Architecture e aplicada de forma pragmática em Go.
 
 **Referências**
-- ADR: `docs/architecture/adr/ADR-006-error-handling-contract.md`
-- Catálogo de códigos: `internal/shared/apperr/catalog.go`
-- Política de log por erro: `internal/shared/apperr/logging.go`
+- ADR: `docs/architecture/adr/ADR-002-error-handling-contrato.md`
+- Catálogo de códigos: `internal/kernel/apperr/catalog.go`
+- Política de log por erro: `internal/kernel/apperr/logging.go`
 - Presenter HTTP (canonical): `internal/adapters/inbound/http/shared/httperr` (veja `APIErrorResponder`)
-- Nota: implementação legacy `internal/adapters/inbound/http/api/apierr` está deprecada; usar `httperr` diretamente.
 - Middleware de AccessLog: `internal/adapters/inbound/http/middleware/logging.go`
 - Middleware de Recovery: `internal/adapters/inbound/http/middleware/recovery.go`
 
@@ -47,7 +46,7 @@ Implementado por `internal/adapters/inbound/http/shared/httperr.ToHTTP` + presen
 HTTP Handler (Gin)
   ├─ valida/bind/parse (erros de fronteira)
   │    └─ cria *apperr.AppError { Code, Message, Cause }
-  ├─ chama Service (internal/app/...)
+  ├─ chama Service (internal/application/...)
   │    └─ Service converte erros esperados em *apperr.AppError
   └─ escreve resposta (internal/adapters/inbound/http/shared/httperr)
        ├─ ToHTTP(err) => (status, {code,message})
@@ -64,7 +63,7 @@ HTTP Handler (Gin)
 - Pode fazer wrapping com `%w` para preservar a causa semântica sem “quebrar” `errors.Is`.
 - Nunca importa HTTP e não conhece status codes.
 
-### Application (`internal/app/...`)
+### Application (`internal/application/...`)
 
 Responsável por transformar erros “relevantes” em um erro de contrato: `*apperr.AppError`.
 
@@ -73,9 +72,9 @@ Responsável por transformar erros “relevantes” em um erro de contrato: `*ap
 - `Message` — seguro para o cliente
 - `Cause` — erro interno (opcional), preservado via `Unwrap()` (suporta `errors.Is/As`)
 
-Definição: `internal/shared/apperr/error.go`
+Definição: `internal/kernel/apperr/error.go`
 
-O catálogo de códigos fica em `internal/shared/apperr/catalog.go`.
+O catálogo de códigos fica em `internal/kernel/apperr/catalog.go`.
 
 ### HTTP adapter (presenter canonical)
 
@@ -89,7 +88,7 @@ Observação: implementação antiga em `internal/adapters/inbound/http/api/apie
 
 ## Mapeamento `code -> status`
 
-O mapeamento é centralizado em `internal/adapters/inbound/http/shared/httperr/http_mapper.go` e segue as regras do catálogo `internal/shared/apperr`.
+O mapeamento é centralizado em `internal/adapters/inbound/http/shared/httperr/http_mapper.go` e segue as regras do catálogo `internal/kernel/apperr`.
 
 ---
 
@@ -106,7 +105,7 @@ Exemplo (padrão):
 ```go
 import (
   httperr "github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/shared/httperr"
-  "github.com/gabrielgcmr/sonnda/internal/shared/apperr"
+  "github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 )
 
 if err := c.ShouldBindJSON(&req); err != nil {
@@ -129,9 +128,9 @@ if err != nil {
 
 ## Checklist (novo code / novo erro)
 
-1) Defina o `ErrorCode` em `internal/shared/apperr/catalog.go`.
+1) Defina o `ErrorCode` em `internal/kernel/apperr/catalog.go`.
 2) Garanta o status em `internal/adapters/inbound/http/shared/httperr/http_mapper.go`.
-3) Defina o nível de log em `internal/shared/apperr/logging.go` (se necessário).
+3) Defina o nível de log em `internal/kernel/apperr/logging.go` (se necessário).
 4) No service, mapeie o erro do domínio para `*apperr.AppError` (ex.: `mapXDomainError`).
 5) No handler, use `httperr.APIErrorResponder` ou `httperr.WebErrorResponder` (sem conversão manual para status/JSON).
 6) Adicione/ajuste testes no service e (se fizer sentido) no presenter HTTP.

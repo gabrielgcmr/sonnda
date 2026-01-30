@@ -1,23 +1,24 @@
+// internal/application/services/professional/service_impl.go
 package professionalsvc
 
 import (
 	"context"
 	"errors"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/model/professional"
-	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
+	"github.com/gabrielgcmr/sonnda/internal/domain/entity/professional"
+	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 
 	"github.com/google/uuid"
 )
 
 type service struct {
-	repo ports.ProfessionalRepo
+	repo repository.ProfessionalRepo
 }
 
 var _ Service = (*service)(nil)
 
-func New(repo ports.ProfessionalRepo) Service {
+func New(repo repository.ProfessionalRepo) Service {
 	return &service{repo: repo}
 }
 

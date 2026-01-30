@@ -1,4 +1,4 @@
-// internal/app/config/logger/pretty_handler.go
+// internal/kernel/observability/pretty_handler.go
 package observability
 
 import (

@@ -1,3 +1,4 @@
+// internal/api/handlers/user/user_handler.go
 package user
 
 import (
@@ -12,8 +13,8 @@ import (
 	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
 	usersvc "github.com/gabrielgcmr/sonnda/internal/application/services/user"
 	registrationuc "github.com/gabrielgcmr/sonnda/internal/application/usecase/registration"
+	"github.com/gabrielgcmr/sonnda/internal/domain/entity/professional"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/user"
-	"github.com/gabrielgcmr/sonnda/internal/domain/model/professional"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 )
 

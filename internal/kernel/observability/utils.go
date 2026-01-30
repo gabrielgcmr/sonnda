@@ -1,4 +1,4 @@
-// internal/app/observability/recovery.go
+// internal/kernel/observability/recovery.go
 package observability
 
 import (

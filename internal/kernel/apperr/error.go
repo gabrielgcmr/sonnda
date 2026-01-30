@@ -1,4 +1,4 @@
-// internal/app/apperr/error.go
+// internal/kernel/apperr/error.go
 package apperr
 
 type AppError struct {

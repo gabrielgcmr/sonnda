@@ -1,11 +1,12 @@
-// internal/app/services/patient/service.go
+// internal/application/services/patient/service.go
+// internal/application/services/patient/service.go
 package patientsvc
 
 import (
 	"context"
 
+	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patient"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/user"
-	"github.com/gabrielgcmr/sonnda/internal/domain/model/patient"
 
 	"github.com/google/uuid"
 )

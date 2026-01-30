@@ -1,3 +1,4 @@
+// internal/domain/entity/user/account.go
 // internal/domain/entity/account.go
 package user
 

@@ -1,3 +1,4 @@
+// internal/api/handlers/helpers.go
 package handlers
 
 import (
@@ -5,7 +6,7 @@ import (
 	"time"
 
 	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
-	"github.com/gabrielgcmr/sonnda/internal/domain/model/demographics"
+	"github.com/gabrielgcmr/sonnda/internal/domain/entity/demographics"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 
 	"github.com/gin-gonic/gin"

@@ -1,4 +1,5 @@
-// internal/app/services/labs/service_impl_test.go
+// internal/application/services/labs/service_impl_test.go
+// internal/application/services/labs/service_impl_test.go
 package labsvc
 
 import (
@@ -6,8 +7,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/model/labs"
-	"github.com/gabrielgcmr/sonnda/internal/domain/model/patient"
+	"github.com/gabrielgcmr/sonnda/internal/domain/entity/labs"
+	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patient"
 	"github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/repo"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 

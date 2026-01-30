@@ -1,4 +1,4 @@
-// internal/adapters/outbound/auth/supabase_bearer_provider.go
+// internal/infrastructure/auth/supabase_bearer_provider.go
 package auth
 
 import (
@@ -8,7 +8,7 @@ import (
 
 	"github.com/coreos/go-oidc/v3/oidc"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/model"
+	"github.com/gabrielgcmr/sonnda/internal/domain/entity/identity"
 )
 
 type SupabaseBearerConfig struct {
@@ -44,7 +44,7 @@ func NewSupabaseBearerProvider(cfg SupabaseBearerConfig) (*SupabaseBearerProvide
 	}, nil
 }
 
-func (p *SupabaseBearerProvider) AuthenticateBearerToken(ctx context.Context, bearerToken string) (*model.Identity, error) {
+func (p *SupabaseBearerProvider) AuthenticateBearerToken(ctx context.Context, bearerToken string) (*identity.Identity, error) {
 	if strings.TrimSpace(bearerToken) == "" {
 		return nil, nil
 	}
@@ -63,7 +63,7 @@ func (p *SupabaseBearerProvider) AuthenticateBearerToken(ctx context.Context, be
 		return nil, nil
 	}
 
-	identity := model.Identity{
+	identity := identity.Identity{
 		Issuer:  idToken.Issuer,
 		Subject: idToken.Subject,
 	}

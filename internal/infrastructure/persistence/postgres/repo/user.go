@@ -1,3 +1,4 @@
+// internal/infrastructure/persistence/postgres/repo/user.go
 // internal/adapters/outbound/storage/data/postgres/repository/user.go
 package repo
 
@@ -27,7 +28,7 @@ func New(client *postgress.Client) *User {
 	}
 }
 
-// Create implements [ports.User].
+// Create implements [repository.User].
 func (r *User) Create(ctx context.Context, u *user.User) error {
 	params := usersqlc.CreateUserParams{
 		ID:          u.ID,
@@ -54,7 +55,7 @@ func (r *User) Create(ctx context.Context, u *user.User) error {
 	return nil
 }
 
-// Delete implements [ports.User].
+// Delete implements [repository.User].
 func (r *User) SoftDelete(ctx context.Context, id uuid.UUID) error {
 	rows, err := r.queries.SoftDeleteUser(ctx, id)
 	if err != nil {
@@ -77,7 +78,7 @@ func (r *User) Delete(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-// FindByAuthIdentity implements [ports.User].
+// FindByAuthIdentity implements [repository.User].
 func (r *User) FindByAuthIdentity(ctx context.Context, issuer string, subject string) (*user.User, error) {
 
 	row, err := r.queries.FindUserByAuthIdentity(ctx, usersqlc.FindUserByAuthIdentityParams{
@@ -106,7 +107,7 @@ func (r *User) FindByAuthIdentity(ctx context.Context, issuer string, subject st
 	}, nil
 }
 
-// FindByCPF implements [ports.User].
+// FindByCPF implements [repository.User].
 func (r *User) FindByCPF(ctx context.Context, cpf string) (*user.User, error) {
 	row, err := r.queries.FindUserByCPF(ctx, cpf)
 	if err != nil {
@@ -131,7 +132,7 @@ func (r *User) FindByCPF(ctx context.Context, cpf string) (*user.User, error) {
 	}, nil
 }
 
-// FindByID implements [ports.User].
+// FindByID implements [repository.User].
 func (r *User) FindByID(ctx context.Context, id uuid.UUID) (*user.User, error) {
 	row, err := r.queries.FindUserByID(ctx, id)
 	if err != nil {
@@ -156,7 +157,7 @@ func (r *User) FindByID(ctx context.Context, id uuid.UUID) (*user.User, error) {
 	}, nil
 }
 
-// Update implements [ports.User].
+// Update implements [repository.User].
 func (r *User) Update(ctx context.Context, u *user.User) error {
 	birthDate := u.BirthDate
 	row, err := r.queries.UpdateUser(ctx, usersqlc.UpdateUserParams{

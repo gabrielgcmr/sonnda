@@ -1,4 +1,4 @@
-// internal/app/services/user/error_map.go
+// internal/application/services/user/error_map.go
 package usersvc
 
 import (

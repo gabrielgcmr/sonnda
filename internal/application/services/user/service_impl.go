@@ -1,3 +1,4 @@
+// internal/application/services/user/service_impl.go
 package usersvc
 
 import (
@@ -5,7 +6,6 @@ import (
 	"errors"
 
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/user"
-	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
 	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 
@@ -14,12 +14,12 @@ import (
 
 type service struct {
 	userRepo          repository.User
-	patientAccessRepo ports.PatientAccessRepo
+	patientAccessRepo repository.PatientAccessRepo
 }
 
 var _ Service = (*service)(nil)
 
-func New(userRepo repository.User, patientAccessRepo ports.PatientAccessRepo) Service {
+func New(userRepo repository.User, patientAccessRepo repository.PatientAccessRepo) Service {
 	return &service{
 		userRepo:          userRepo,
 		patientAccessRepo: patientAccessRepo,

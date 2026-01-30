@@ -1,4 +1,4 @@
-// internal/app/apperr/catalog.go
+// internal/kernel/apperr/catalog.go
 package apperr
 
 type ErrorCode string
