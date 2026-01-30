@@ -13,16 +13,17 @@ import (
 
 	"github.com/gabrielgcmr/sonnda/internal/app/bootstrap"
 	"github.com/gabrielgcmr/sonnda/internal/config"
+	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/observability"
 
-	httpserver "github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http"
-	"github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/api"
-	apimw "github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/api/middleware"
-	"github.com/gabrielgcmr/sonnda/internal/adapters/outbound/ai"
-	authinfra "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/auth"
-	postgress "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/postgres"
-	redisstore "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/data/redis"
-	filestorage "github.com/gabrielgcmr/sonnda/internal/adapters/outbound/storage/file"
+	"github.com/gabrielgcmr/sonnda/internal/api"
+	httpserver "github.com/gabrielgcmr/sonnda/internal/api"
+	apimw "github.com/gabrielgcmr/sonnda/internal/api/middleware"
+	"github.com/gabrielgcmr/sonnda/internal/infrastructure/ai"
+	authinfra "github.com/gabrielgcmr/sonnda/internal/infrastructure/auth"
+	filestorage "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/filestorage"
+	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
+	redisstore "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/redis"
 )
 
 func main() {
@@ -32,6 +33,14 @@ func main() {
 	// 2. Carrega configuracao
 	cfg, err := config.Load()
 	if err != nil {
+		var appErr *apperr.AppError
+		if errors.As(err, &appErr) && appErr != nil && len(appErr.Violations) > 0 {
+			log.Printf("Erro ao carregar configuracao: %s", appErr.Message)
+			for _, v := range appErr.Violations {
+				log.Printf(" - %s: %s", v.Field, v.Reason)
+			}
+			log.Fatal("configuração inválida")
+		}
 		log.Fatal("Erro ao carregar configuracao: ", err)
 	}
 

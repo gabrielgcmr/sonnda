@@ -1,5 +1,5 @@
 // internal/api/apierr/presenter.go
-package apierr
+package presenter
 
 import (
 	"log/slog"

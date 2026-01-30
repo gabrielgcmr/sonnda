@@ -5,7 +5,7 @@ Endpoints de perfil e onboarding de usuário.
 
 ## Base URL
 
-`/v1`
+`https://api.sonnda.com.br/v1`
 
 ## Autenticação
 
@@ -42,7 +42,7 @@ Todas as rotas exigem `Authorization: Bearer <id_token>`.
 
 **Exemplo (curl):**
 ```bash
-curl -i -X POST http://localhost:8080/v1/register \
+curl -i -X POST https://api.sonnda.com.br/v1/register \
   -H "Authorization: Bearer <id_token>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -85,7 +85,7 @@ curl -i -X POST http://localhost:8080/v1/register \
 
 **Exemplo (curl):**
 ```bash
-curl -i http://localhost:8080/v1/me \
+curl -i https://api.sonnda.com.br/v1/me \
   -H "Authorization: Bearer <access_token>"
 ```
 
@@ -103,7 +103,7 @@ curl -i http://localhost:8080/v1/me \
 
 **Exemplo (curl):**
 ```bash
-curl -i -X PUT http://localhost:8080/v1/me \
+curl -i -X PUT https://api.sonnda.com.br/v1/me \
   -H "Authorization: Bearer <id_token>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -118,7 +118,7 @@ curl -i -X PUT http://localhost:8080/v1/me \
 
 **Exemplo (curl):**
 ```bash
-curl -i -X DELETE http://localhost:8080/api/v1/me \
+curl -i -X DELETE https://api.sonnda.com.br/v1/me \
   -H "Authorization: Bearer <id_token>"
 ```
 
@@ -128,6 +128,6 @@ Parâmetros opcionais: `limit`, `offset`.
 
 **Exemplo (curl):**
 ```bash
-curl -i "http://localhost:8080/api/v1/me/patients?limit=20&offset=0" \
+curl -i "https://api.sonnda.com.br/v1/me/patients?limit=20&offset=0" \
   -H "Authorization: Bearer <id_token>"
 ```

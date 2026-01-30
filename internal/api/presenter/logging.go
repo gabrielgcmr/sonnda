@@ -1,5 +1,5 @@
 // internal/api/apierr/logging.go
-package apierr
+package presenter
 
 import (
 	"errors"

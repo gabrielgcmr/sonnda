@@ -13,8 +13,8 @@ import (
 	labsvc "github.com/gabrielgcmr/sonnda/internal/app/services/labs"
 	labsuc "github.com/gabrielgcmr/sonnda/internal/app/usecase/labs"
 
-	"github.com/gabrielgcmr/sonnda/internal/api/apictx"
-	"github.com/gabrielgcmr/sonnda/internal/api/apierr"
+	helpers "github.com/gabrielgcmr/sonnda/internal/api/helpers"
+	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
 	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 )
@@ -50,7 +50,7 @@ func (h *LabsHandler) ListLabs(c *gin.Context) {
 
 	list, err := h.svc.List(c.Request.Context(), patientID, limit, offset)
 	if err != nil {
-		apierr.ErrorResponder(c, err)
+		presenter.ErrorResponder(c, err)
 		return
 	}
 
@@ -70,7 +70,7 @@ func (h *LabsHandler) ListFullLabs(c *gin.Context) {
 
 	list, err := h.svc.ListFull(c.Request.Context(), patientID, limit, offset)
 	if err != nil {
-		apierr.ErrorResponder(c, err)
+		presenter.ErrorResponder(c, err)
 		return
 	}
 
@@ -81,7 +81,7 @@ func (h *LabsHandler) ListFullLabs(c *gin.Context) {
 // POST /:patientID/labs/upload
 // field: file (PDF/JPEG/PNG)
 func (h *LabsHandler) UploadAndProcessLabs(c *gin.Context) {
-	currentUser := apictx.MustGetCurrentUser(c)
+	currentUser := helpers.MustGetCurrentUser(c)
 
 	patientID, ok := parsePatientIDParam(c, "id")
 	if !ok {
@@ -90,7 +90,7 @@ func (h *LabsHandler) UploadAndProcessLabs(c *gin.Context) {
 
 	documentURI, mimeType, uploadErr := h.handleFileUpload(c, patientID)
 	if uploadErr != nil {
-		apierr.ErrorResponder(c, uploadErr)
+		presenter.ErrorResponder(c, uploadErr)
 		return
 	}
 
@@ -101,7 +101,7 @@ func (h *LabsHandler) UploadAndProcessLabs(c *gin.Context) {
 		UploadedByUserID: currentUser.ID,
 	})
 	if uploadErr != nil {
-		apierr.ErrorResponder(c, uploadErr)
+		presenter.ErrorResponder(c, uploadErr)
 		return
 	}
 
@@ -201,7 +201,7 @@ func parsePagination(c *gin.Context, defaultLimit, defaultOffset int) (limit, of
 	if limitStr := c.Query("limit"); limitStr != "" {
 		l, err := strconv.Atoi(limitStr)
 		if err != nil || l <= 0 {
-			apierr.ErrorResponder(c, &apperr.AppError{
+			presenter.ErrorResponder(c, &apperr.AppError{
 				Code:    apperr.VALIDATION_FAILED,
 				Message: "limit deve ser > 0",
 				Cause:   err,
@@ -214,7 +214,7 @@ func parsePagination(c *gin.Context, defaultLimit, defaultOffset int) (limit, of
 	if offsetStr := c.Query("offset"); offsetStr != "" {
 		o, err := strconv.Atoi(offsetStr)
 		if err != nil || o < 0 {
-			apierr.ErrorResponder(c, &apperr.AppError{
+			presenter.ErrorResponder(c, &apperr.AppError{
 				Code:    apperr.VALIDATION_FAILED,
 				Message: "offset deve ser >= 0",
 				Cause:   err,

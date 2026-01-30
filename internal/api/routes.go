@@ -1,14 +1,27 @@
-// internal/adapters/inbound/http/api/routes.go
+// internal/api/routes.go
 package api
 
 import (
+	"log/slog"
+	"net/http"
+
 	"github.com/gabrielgcmr/sonnda/internal/api/handlers"
 	"github.com/gabrielgcmr/sonnda/internal/api/handlers/patient"
 	"github.com/gabrielgcmr/sonnda/internal/api/handlers/user"
 	"github.com/gabrielgcmr/sonnda/internal/api/middleware"
+	"github.com/gabrielgcmr/sonnda/internal/config"
 
 	"github.com/gin-gonic/gin"
 )
+
+type Infra struct {
+	Logger *slog.Logger
+	Config *config.Config
+}
+
+type Deps struct {
+	API *APIDependencies
+}
 
 type APIDependencies struct {
 	AuthMiddleware         *middleware.AuthMiddleware
@@ -18,11 +31,36 @@ type APIDependencies struct {
 	LabsHandler            *handlers.LabsHandler
 }
 
+func NewRouter(infra Infra, deps Deps) *gin.Engine {
+	r := gin.New()
+
+	logger := infra.Logger
+	if logger == nil {
+		logger = slog.Default()
+	}
+
+	// Middlewares globais (infra)
+	r.Use(
+		middleware.RequestID(),
+		middleware.AccessLog(logger),
+		middleware.Recovery(logger),
+	)
+
+	// ---- Rotas ----
+	SetupRoutes(r, deps.API)
+
+	return r
+}
+
 func SetupRoutes(
 	r gin.IRouter,
 	deps *APIDependencies,
 
 ) {
+	r.GET("/favicon.ico", func(c *gin.Context) {
+		c.Data(http.StatusOK, "image/x-icon", faviconData)
+	})
+
 	v1 := r.Group("/v1")
 
 	// ---------------------------------------------------------------------

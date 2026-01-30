@@ -4,8 +4,8 @@ package middleware
 import (
 	"context"
 
-	apictx "github.com/gabrielgcmr/sonnda/internal/api/apictx"
-	"github.com/gabrielgcmr/sonnda/internal/api/apierr"
+	helpers "github.com/gabrielgcmr/sonnda/internal/api/helpers"
+	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
 	"github.com/gabrielgcmr/sonnda/internal/domain/model"
 	"github.com/gabrielgcmr/sonnda/internal/domain/model/user"
 	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
@@ -51,26 +51,26 @@ func (m *RegistrationMiddleware) resolveCurrentUser(ctx context.Context, id *mod
 // 4) Se existir → coloca CurrentUser no contexto
 func (m *RegistrationMiddleware) RequireRegisteredUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		id, ok := apictx.GetIdentity(c)
+		id, ok := helpers.GetIdentity(c)
 		if !ok || id == nil {
 			// Situação anômala: auth não rodou antes
-			apierr.ErrorResponder(c, apperr.Unauthorized("autenticação necessária"))
+			presenter.ErrorResponder(c, apperr.Unauthorized("autenticação necessária"))
 			return
 		}
 
 		u, err := m.resolveCurrentUser(c.Request.Context(), id)
 		if err != nil {
-			apierr.ErrorResponder(c, err)
+			presenter.ErrorResponder(c, err)
 			return
 		}
 
 		if u == nil {
 			// Autenticado no provider, mas sem cadastro local
-			apierr.ErrorResponder(c, apperr.Forbidden("cadastro necessário"))
+			presenter.ErrorResponder(c, apperr.Forbidden("cadastro necessário"))
 			return
 		}
 
-		apictx.SetCurrentUser(c, u)
+		helpers.SetCurrentUser(c, u)
 		c.Next()
 	}
 }
@@ -82,7 +82,7 @@ func (m *RegistrationMiddleware) RequireRegisteredUser() gin.HandlerFunc {
 // Útil para endpoints que aceitam usuário anônimo + autenticado
 func (m *RegistrationMiddleware) LoadCurrentUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		id, ok := apictx.GetIdentity(c)
+		id, ok := helpers.GetIdentity(c)
 		if !ok || id == nil {
 			c.Next()
 			return
@@ -90,7 +90,7 @@ func (m *RegistrationMiddleware) LoadCurrentUser() gin.HandlerFunc {
 
 		u, _ := m.resolveCurrentUser(c.Request.Context(), id)
 		if u != nil {
-			apictx.SetCurrentUser(c, u)
+			helpers.SetCurrentUser(c, u)
 		}
 
 		c.Next()

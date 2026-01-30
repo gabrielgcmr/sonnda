@@ -7,10 +7,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	apictx "github.com/gabrielgcmr/sonnda/internal/api/apictx"
-	"github.com/gabrielgcmr/sonnda/internal/api/apierr"
-	"github.com/gabrielgcmr/sonnda/internal/api/binder"
 	"github.com/gabrielgcmr/sonnda/internal/api/handlers"
+	helpers "github.com/gabrielgcmr/sonnda/internal/api/helpers"
+	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
 	usersvc "github.com/gabrielgcmr/sonnda/internal/app/services/user"
 	registrationuc "github.com/gabrielgcmr/sonnda/internal/app/usecase/registration"
 	"github.com/gabrielgcmr/sonnda/internal/domain/model/professional"
@@ -36,19 +35,19 @@ func NewHandler(
 
 func (h *Handler) Register(c *gin.Context) {
 	if h == nil || h.regUC == nil {
-		apierr.ErrorResponder(c, apperr.Internal("serviço indisponível", nil))
+		presenter.ErrorResponder(c, apperr.Internal("serviço indisponível", nil))
 		return
 	}
 
-	identity, ok := apictx.GetIdentity(c)
+	identity, ok := helpers.GetIdentity(c)
 	if !ok {
-		apierr.ErrorResponder(c, apperr.Unauthorized("autenticação necessária"))
+		presenter.ErrorResponder(c, apperr.Unauthorized("autenticação necessária"))
 		return
 	}
 
 	var req RegisterRequest
-	if err := binder.BindJSON(c, &req); err != nil {
-		apierr.ErrorResponder(c, err)
+	if err := helpers.BindJSON(c, &req); err != nil {
+		presenter.ErrorResponder(c, err)
 		return
 	}
 
@@ -56,7 +55,7 @@ func (h *Handler) Register(c *gin.Context) {
 
 	birthDate, err := handlers.ParseBirthDate(req.BirthDate)
 	if err != nil {
-		apierr.ErrorResponder(c, apperr.Validation("data de nascimento inválida",
+		presenter.ErrorResponder(c, apperr.Validation("data de nascimento inválida",
 			apperr.Violation{
 				Field:  "birth_date",
 				Reason: "invalid_format",
@@ -65,7 +64,7 @@ func (h *Handler) Register(c *gin.Context) {
 	}
 
 	if identity.Email == nil || strings.TrimSpace(*identity.Email) == "" {
-		apierr.ErrorResponder(c, apperr.Validation("email é obrigatório"))
+		presenter.ErrorResponder(c, apperr.Validation("email é obrigatório"))
 		return
 	}
 	email := strings.TrimSpace(*identity.Email)
@@ -93,7 +92,7 @@ func (h *Handler) Register(c *gin.Context) {
 
 	created, err := h.regUC.Register(c.Request.Context(), input)
 	if err != nil {
-		apierr.ErrorResponder(c, err)
+		presenter.ErrorResponder(c, err)
 		return
 	}
 
@@ -101,16 +100,16 @@ func (h *Handler) Register(c *gin.Context) {
 }
 
 func (h *Handler) GetUser(c *gin.Context) {
-	currentUser := apictx.MustGetCurrentUser(c)
+	currentUser := helpers.MustGetCurrentUser(c)
 	c.JSON(http.StatusOK, currentUser)
 }
 
 func (h *Handler) UpdateUser(c *gin.Context) {
-	currentUser := apictx.MustGetCurrentUser(c)
+	currentUser := helpers.MustGetCurrentUser(c)
 
 	var req UpdateUserRequest
-	if err := binder.BindJSON(c, &req); err != nil {
-		apierr.ErrorResponder(c, err)
+	if err := helpers.BindJSON(c, &req); err != nil {
+		presenter.ErrorResponder(c, err)
 		return
 	}
 
@@ -130,7 +129,7 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 
 	updated, err := h.userSvc.Update(c.Request.Context(), input)
 	if err != nil {
-		apierr.ErrorResponder(c, err)
+		presenter.ErrorResponder(c, err)
 		return
 	}
 
@@ -138,10 +137,10 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 }
 
 func (h *Handler) HardDeleteUser(c *gin.Context) {
-	currentUser := apictx.MustGetCurrentUser(c)
+	currentUser := helpers.MustGetCurrentUser(c)
 
 	if err := h.userSvc.Delete(c.Request.Context(), currentUser.ID); err != nil {
-		apierr.ErrorResponder(c, err)
+		presenter.ErrorResponder(c, err)
 		return
 	}
 
@@ -149,7 +148,7 @@ func (h *Handler) HardDeleteUser(c *gin.Context) {
 }
 
 func (h *Handler) ListMyPatients(c *gin.Context) {
-	currentUser := apictx.MustGetCurrentUser(c)
+	currentUser := helpers.MustGetCurrentUser(c)
 
 	// Parse query params
 	limit := 20
@@ -167,7 +166,7 @@ func (h *Handler) ListMyPatients(c *gin.Context) {
 
 	result, err := h.userSvc.ListMyPatients(c.Request.Context(), currentUser.ID, limit, offset)
 	if err != nil {
-		apierr.ErrorResponder(c, err)
+		presenter.ErrorResponder(c, err)
 		return
 	}
 

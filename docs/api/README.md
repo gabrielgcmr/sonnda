@@ -5,7 +5,7 @@ Documentação das APIs HTTP da Sonnda (REST).
 
 ## Visão geral
 
-- **Base API**: `/v1`
+- **Base API**: `https://api.sonnda.com.br/v1`
 - **Formato de erro**: contrato `AppError` (sempre em `{ "error": { "code", "message" } }`)
 - **JSON**: campos em `snake_case`
 

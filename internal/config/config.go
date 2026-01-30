@@ -11,6 +11,11 @@ import (
 )
 
 const (
+	envAppEnv    = "APP_ENV"
+	envPort      = "PORT"
+	envLogLevel  = "LOG_LEVEL"
+	envLogFormat = "LOG_FORMAT"
+
 	envGoogleApplicationCredentials = "GOOGLE_APPLICATION_CREDENTIALS"
 	envGCPProjectID                 = "GCP_PROJECT_ID"
 	envGCPProjectNumber             = "GCP_PROJECT_NUMBER"
@@ -18,15 +23,12 @@ const (
 	envGCPLocation                  = "GCP_LOCATION"
 	envGCPExtractLabsProcessorID    = "GCP_EXTRACT_LABS_PROCESSOR_ID"
 
-	envSupabaseURL        = "SUPABASE_URL"
+	envDatabaseURL = "DATABASE_URL"
+	envRedisURL    = "REDIS_URL"
+
 	envSupabaseProjectURL = "SUPABASE_PROJECT_URL"
 	envSupabaseJWTIssuer  = "SUPABASE_JWT_ISSUER"
 	envSupabaseJWTAud     = "SUPABASE_JWT_AUDIENCE"
-	envRedisURL           = "REDIS_URL"
-	envPort               = "PORT"
-	envAppEnv             = "APP_ENV"
-	envLogLevel           = "LOG_LEVEL"
-	envLogFormat          = "LOG_FORMAT"
 )
 
 var (
@@ -61,7 +63,7 @@ func Load() (*Config, error) {
 	_ = godotenv.Load()
 
 	cfg := &Config{
-		DatabaseURL: getEnv(envSupabaseURL),
+		DatabaseURL: getEnv(envDatabaseURL),
 		RedisURL:    getEnv(envRedisURL),
 		// Google
 		GoogleApplicationCredentials: getEnv(envGoogleApplicationCredentials),
@@ -82,7 +84,7 @@ func Load() (*Config, error) {
 
 	var violations []apperr.Violation
 
-	appendRequired(&violations, envSupabaseURL, cfg.DatabaseURL)
+	appendRequired(&violations, envDatabaseURL, cfg.DatabaseURL)
 	appendRequired(&violations, envSupabaseProjectURL, cfg.SupabaseProjectURL)
 	appendRequired(&violations, envGCPProjectID, cfg.GCPProjectID)
 	appendRequired(&violations, envGCSBucket, cfg.GCSBucket)

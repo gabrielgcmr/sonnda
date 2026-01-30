@@ -1,4 +1,4 @@
-package binder
+package helpers
 
 import (
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"

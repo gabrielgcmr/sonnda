@@ -1,5 +1,5 @@
 // internal/api/apierr/mapper.go
-package apierr
+package presenter
 
 import (
 	"errors"

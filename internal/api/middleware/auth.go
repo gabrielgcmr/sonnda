@@ -5,8 +5,8 @@ import (
 	"context"
 	"strings"
 
-	apictx "github.com/gabrielgcmr/sonnda/internal/api/apictx"
-	"github.com/gabrielgcmr/sonnda/internal/api/apierr"
+	"github.com/gabrielgcmr/sonnda/internal/api/helpers"
+	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
 	"github.com/gabrielgcmr/sonnda/internal/domain/model"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 
@@ -34,7 +34,7 @@ func (m *AuthMiddleware) RequireBearer() gin.HandlerFunc {
 		// 1) Extrai Authorization
 		h := strings.TrimSpace(c.GetHeader("Authorization"))
 		if h == "" {
-			apierr.ErrorResponder(c, apperr.Unauthorized("missing authorization header"))
+			presenter.ErrorResponder(c, apperr.Unauthorized("missing authorization header"))
 			c.Abort()
 			return
 		}
@@ -42,13 +42,13 @@ func (m *AuthMiddleware) RequireBearer() gin.HandlerFunc {
 		// 2) Extrai token Bearer
 		parts := strings.SplitN(h, " ", 2)
 		if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
-			apierr.ErrorResponder(c, apperr.Unauthorized("invalid authorization header"))
+			presenter.ErrorResponder(c, apperr.Unauthorized("invalid authorization header"))
 			c.Abort()
 			return
 		}
 		token := strings.TrimSpace(parts[1])
 		if token == "" {
-			apierr.ErrorResponder(c, apperr.Unauthorized("missing bearer token"))
+			presenter.ErrorResponder(c, apperr.Unauthorized("missing bearer token"))
 			c.Abort()
 			return
 		}
@@ -58,21 +58,21 @@ func (m *AuthMiddleware) RequireBearer() gin.HandlerFunc {
 		if err != nil {
 			// 4) Responde no formato padrão
 			if ae, ok := err.(*apperr.AppError); ok {
-				apierr.ErrorResponder(c, ae)
+				presenter.ErrorResponder(c, ae)
 			} else {
-				apierr.ErrorResponder(c, apperr.Internal("internal auth error", err))
+				presenter.ErrorResponder(c, apperr.Internal("internal auth error", err))
 			}
 			c.Abort()
 			return
 		}
 		if id == nil {
-			apierr.ErrorResponder(c, apperr.Unauthorized("token inválido ou expirado"))
+			presenter.ErrorResponder(c, apperr.Unauthorized("token inválido ou expirado"))
 			c.Abort()
 			return
 		}
 
 		// 5) Injeta Identity no contexto e segue
-		apictx.SetIdentity(c, id)
+		helpers.SetIdentity(c, id)
 		c.Next()
 	}
 }
