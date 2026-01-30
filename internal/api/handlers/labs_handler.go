@@ -10,8 +10,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	labsvc "github.com/gabrielgcmr/sonnda/internal/app/services/labs"
-	labsuc "github.com/gabrielgcmr/sonnda/internal/app/usecase/labs"
+	labsvc "github.com/gabrielgcmr/sonnda/internal/application/services/labs"
+	labsuc "github.com/gabrielgcmr/sonnda/internal/application/usecase/labs"
 
 	helpers "github.com/gabrielgcmr/sonnda/internal/api/helpers"
 	"github.com/gabrielgcmr/sonnda/internal/api/presenter"

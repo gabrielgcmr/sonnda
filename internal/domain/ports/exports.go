@@ -23,7 +23,6 @@ type (
 	PatientAccessRepo = data.PatientAccessRepo
 	RequestRepo       = data.RequestRepo
 	ProfessionalRepo  = data.ProfessionalRepo
-	UserRepo          = data.UserRepo
 	// data - DTOs
 	AccessiblePatient = data.AccessiblePatient
 

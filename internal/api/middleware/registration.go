@@ -6,9 +6,9 @@ import (
 
 	helpers "github.com/gabrielgcmr/sonnda/internal/api/helpers"
 	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
+	"github.com/gabrielgcmr/sonnda/internal/domain/entity/user"
 	"github.com/gabrielgcmr/sonnda/internal/domain/model"
-	"github.com/gabrielgcmr/sonnda/internal/domain/model/user"
-	"github.com/gabrielgcmr/sonnda/internal/domain/ports"
+	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 
 	"github.com/gin-gonic/gin"
@@ -19,10 +19,10 @@ import (
 // - garantir que exista um User local associado à Identity
 // - responder com JSON (contrato da API) quando não existir
 type RegistrationMiddleware struct {
-	userRepo ports.UserRepo
+	userRepo repository.User
 }
 
-func NewRegistrationMiddleware(userRepo ports.UserRepo) *RegistrationMiddleware {
+func NewRegistrationMiddleware(userRepo repository.User) *RegistrationMiddleware {
 	return &RegistrationMiddleware{userRepo: userRepo}
 }
 

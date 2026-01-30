@@ -10,10 +10,10 @@ import (
 	"github.com/gabrielgcmr/sonnda/internal/api/handlers"
 	helpers "github.com/gabrielgcmr/sonnda/internal/api/helpers"
 	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
-	usersvc "github.com/gabrielgcmr/sonnda/internal/app/services/user"
-	registrationuc "github.com/gabrielgcmr/sonnda/internal/app/usecase/registration"
+	usersvc "github.com/gabrielgcmr/sonnda/internal/application/services/user"
+	registrationuc "github.com/gabrielgcmr/sonnda/internal/application/usecase/registration"
+	"github.com/gabrielgcmr/sonnda/internal/domain/entity/user"
 	"github.com/gabrielgcmr/sonnda/internal/domain/model/professional"
-	"github.com/gabrielgcmr/sonnda/internal/domain/model/user"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 )
 

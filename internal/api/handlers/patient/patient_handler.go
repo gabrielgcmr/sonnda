@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	patientsvc "github.com/gabrielgcmr/sonnda/internal/app/services/patient"
+	patientsvc "github.com/gabrielgcmr/sonnda/internal/application/services/patient"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 	applog "github.com/gabrielgcmr/sonnda/internal/kernel/observability"
 
