@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type ProfessionalRepo interface {
+type Professional interface {
 	Create(ctx context.Context, p *professional.Professional) error
 	Update(ctx context.Context, p *professional.Professional) error
 	Delete(ctx context.Context, id uuid.UUID) error

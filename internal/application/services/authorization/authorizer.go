@@ -20,15 +20,15 @@ type Authorizer interface {
 
 type Service struct {
 	rbacPolicy        *rbac.RbacPolicy
-	patientRepo       repository.PatientRepo
+	patientRepo       repository.Patient
 	patientAccessRepo repository.PatientAccessRepo
-	profRepo          repository.ProfessionalRepo
+	profRepo          repository.Professional
 }
 
 func New(
-	patientRepo repository.PatientRepo,
+	patientRepo repository.Patient,
 	patientAccessRepo repository.PatientAccessRepo,
-	profRepo repository.ProfessionalRepo,
+	profRepo repository.Professional,
 ) *Service {
 	return &Service{
 		rbacPolicy:        rbac.NewRbacPolicy(),

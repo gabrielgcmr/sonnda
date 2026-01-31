@@ -33,19 +33,23 @@ Simple instructions for coding agents working on this repo.
 - The architecture follows a layered approach with low coupling and clear separation of concerns:
 - **Domain (`internal/domain`)**: Core business models and rules (infrastructure and HTTP agnostic).
   - **Entity (`internal/domain/entity`)**: Core business entities.
-  - **Model (`internal/domain/model`)**: Data structures and domain models.
   - **Repository (`internal/domain/repository`)**: Domain repository interfaces.
-  - **Ports (`internal/domain/ports`)**: Domain interfaces (abstractions for integrations).
+  - **Storage (`internal/domain/storage`)**: Storage interfaces (file storage abstractions).
+  - **AI (`internal/domain/ai`)**: AI/ML interfaces (abstractions for document processing).
 - **Application (`internal/application`)**: Where orchestration and cross-cutting concerns live.
   - **Use cases (`internal/application/usecase`)**: Business flows composed from domain models/ports.
   - **Services (`internal/application/services`)**: Application services that coordinate repositories/integrations.
-  - **Config (`internal/application/config`)**: Env config
-  - **bootstrap (`internal/application/bootstrap`)**: Wiring of dependencies, env/config loading.
-- **Adapters (`internal/adapters`)**: Protocol adapters (inbound).
-    - **API (`internal/adapters/inbound/http/api`)**: RESTful routes, handlers, and middleware for API consumers.
+  - **Bootstrap (`internal/application/bootstrap`)**: Wiring of dependencies, env/config loading.
+- **Config (`internal/config`)**: Environment configuration.
+- **API (`internal/api`)**: HTTP layer (RESTful API).
+  - **Handlers (`internal/api/handlers`)**: HTTP request handlers.
+  - **Middleware (`internal/api/middleware`)**: HTTP middlewares (auth, logging, CORS, etc).
+  - **Helpers (`internal/api/helpers`)**: HTTP helper functions (binding, validation, identity).
+  - **Presenter (`internal/api/presenter`)**: Response formatting and error presentation.
 - **Infrastructure (`internal/infrastructure`)**: Concrete implementations and outbound integrations.
   - **Persistence (`internal/infrastructure/persistence`)**: Database repositories, cache, file storage.
   - **Auth (`internal/infrastructure/auth`)**: Authentication/authorization implementations.
+  - **AI (`internal/infrastructure/ai`)**: AI integrations (Google Cloud Document AI).
 - **Kernel (`internal/kernel`)**: Cross-cutting concerns.
   - **Error contract (`internal/kernel/apperr`)**: Centralized `AppError` codes/messages; handlers must convert via HTTP layer helpers.
   - **Observability (`internal/kernel/observability`)**: Logging setup (slog), request-scoped logger injection.
@@ -69,8 +73,8 @@ This project uses a **centralized error contract** based on `AppError`.
 - **Prefer using helper constructors** from `internal/kernel/apperr/factory.go` instead of manually constructing them.
 - Services/use cases **must return `AppError` for known failures** (validation, conflicts, not found, infra errors).
 - Domain **never** imports HTTP, Gin, or `apperr`.
-- Handlers and middlewares **must call**: httperrors.WriteError(c,err)
-- HTTP error presentation is centralized in:`internal/adapters/inbound/http/shared/httperr`.
+- Handlers and middlewares **must call**: `presenter.WriteError(c, err)` or similar helper from the presenter layer.
+- HTTP error presentation is centralized in: `internal/api/presenter`.
 
 ---
 

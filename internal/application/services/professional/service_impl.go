@@ -13,12 +13,12 @@ import (
 )
 
 type service struct {
-	repo repository.ProfessionalRepo
+	repo repository.Professional
 }
 
 var _ Service = (*service)(nil)
 
-func New(repo repository.ProfessionalRepo) Service {
+func New(repo repository.Professional) Service {
 	return &service{repo: repo}
 }
 

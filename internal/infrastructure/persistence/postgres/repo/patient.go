@@ -20,41 +20,41 @@ type PatientRepository struct {
 	queries *patientsqlc.Queries
 }
 
-// FindByName implements [repository.PatientRepo].
+// FindByName implements [repository.Patient].
 func (r *PatientRepository) FindByName(ctx context.Context, name string) ([]patient.Patient, error) {
 	panic("unimplemented")
 }
 
-// SearchByName implements [repository.PatientRepo].
+// SearchByName implements [repository.Patient].
 func (r *PatientRepository) SearchByName(ctx context.Context, name string, limit int, offset int) ([]patient.Patient, error) {
 	panic("unimplemented")
 }
 
-// HardDelete implements [repository.PatientRepo].
+// HardDelete implements [repository.Patient].
 func (r *PatientRepository) HardDelete(ctx context.Context, id uuid.UUID) error {
 	panic("unimplemented")
 }
 
-// List implements [repository.PatientRepo].
+// List implements [repository.Patient].
 func (r *PatientRepository) List(ctx context.Context, limit int, offset int) ([]patient.Patient, error) {
 	panic("unimplemented")
 }
 
-// Update implements [repository.PatientRepo].
+// Update implements [repository.Patient].
 func (r *PatientRepository) Update(ctx context.Context, patient *patient.Patient) error {
 	panic("unimplemented")
 }
 
-var _ repository.PatientRepo = (*PatientRepository)(nil)
+var _ repository.Patient = (*PatientRepository)(nil)
 
-func NewPatientRepository(client *postgress.Client) repository.PatientRepo {
+func NewPatientRepository(client *postgress.Client) repository.Patient {
 	return &PatientRepository{
 		client:  client,
 		queries: patientsqlc.New(client.Pool()),
 	}
 }
 
-// Create implements [repository.PatientRepo].
+// Create implements [repository.Patient].
 func (r *PatientRepository) Create(ctx context.Context, p *patient.Patient) error {
 	params := patientsqlc.CreatePatientParams{
 		ID:          p.ID,
@@ -93,12 +93,12 @@ func (r *PatientRepository) Create(ctx context.Context, p *patient.Patient) erro
 	return nil
 }
 
-// SoftDelete implements [repository.PatientRepo].
+// SoftDelete implements [repository.Patient].
 func (p *PatientRepository) SoftDelete(ctx context.Context, id uuid.UUID) error {
 	panic("unimplemented")
 }
 
-// FindByCPF implements [repository.PatientRepo].
+// FindByCPF implements [repository.Patient].
 func (p *PatientRepository) FindByCPF(ctx context.Context, cpf string) (*patient.Patient, error) {
 	row, err := p.queries.GetPatientByCPF(ctx, cpf)
 	if err != nil {
@@ -124,7 +124,7 @@ func (p *PatientRepository) FindByCPF(ctx context.Context, cpf string) (*patient
 	}, nil
 }
 
-// FindByID implements [repository.PatientRepo].
+// FindByID implements [repository.Patient].
 func (p *PatientRepository) FindByID(ctx context.Context, id uuid.UUID) (*patient.Patient, error) {
 	row, err := p.queries.GetPatientByID(ctx, id)
 	if err != nil {

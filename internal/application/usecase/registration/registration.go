@@ -3,6 +3,7 @@ package registration
 
 import (
 	"context"
+	"errors"
 
 	professionalsvc "github.com/gabrielgcmr/sonnda/internal/application/services/professional"
 	usersvc "github.com/gabrielgcmr/sonnda/internal/application/services/user"
@@ -55,6 +56,10 @@ func (u *usecase) Register(ctx context.Context, input RegisterInput) (*user.User
 		Phone:       input.Phone,
 	})
 	if err != nil {
+		var appErr *apperr.AppError
+		if errors.As(err, &appErr) && appErr != nil {
+			return nil, appErr
+		}
 		return nil, apperr.Internal("falha ao criar usuário", err)
 	}
 

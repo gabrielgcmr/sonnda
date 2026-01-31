@@ -25,16 +25,16 @@ type CreateLabReportFromDocumentUseCase interface {
 }
 
 type createLabReportFromDocumentUseCase struct {
-	patientRepo repository.PatientRepo
-	labsRepo    repository.LabsRepo
+	patientRepo repository.Patient
+	labsRepo    repository.Labs
 	extractor   domainai.DocumentExtractorService
 }
 
 var _ CreateLabReportFromDocumentUseCase = (*createLabReportFromDocumentUseCase)(nil)
 
 func NewCreateLabReportFromDocument(
-	patientRepo repository.PatientRepo,
-	labsRepo repository.LabsRepo,
+	patientRepo repository.Patient,
+	labsRepo repository.Labs,
 	extractor domainai.DocumentExtractorService,
 ) CreateLabReportFromDocumentUseCase {
 	return &createLabReportFromDocumentUseCase{

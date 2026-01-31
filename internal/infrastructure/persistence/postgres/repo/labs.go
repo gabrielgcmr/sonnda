@@ -18,9 +18,9 @@ type LabsRepository struct {
 	queries *labsqlc.Queries
 }
 
-var _ repository.LabsRepo = (*LabsRepository)(nil)
+var _ repository.Labs = (*LabsRepository)(nil)
 
-func NewLabsRepository(client *postgress.Client) repository.LabsRepo {
+func NewLabsRepository(client *postgress.Client) repository.Labs {
 	return &LabsRepository{
 		client:  client,
 		queries: labsqlc.New(client.Pool()),

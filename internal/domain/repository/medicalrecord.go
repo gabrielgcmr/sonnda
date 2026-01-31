@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type MedicalRecordRepo interface {
+type MedicalRecord interface {
 	Create(ctx context.Context, record *medicalrecord.MedicalRecord) error
 	Update(ctx context.Context, record *medicalrecord.MedicalRecord) error
 	SoftDelete(ctx context.Context, id uuid.UUID) error

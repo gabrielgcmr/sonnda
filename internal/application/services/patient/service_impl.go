@@ -15,13 +15,13 @@ import (
 )
 
 type service struct {
-	repo repository.PatientRepo
+	repo repository.Patient
 	auth authorization.Authorizer
 }
 
 var _ Service = (*service)(nil)
 
-func New(repo repository.PatientRepo, auth authorization.Authorizer) Service {
+func New(repo repository.Patient, auth authorization.Authorizer) Service {
 	return &service{
 		repo: repo,
 		auth: auth,

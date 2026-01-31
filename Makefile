@@ -34,7 +34,7 @@ export PATH := $(PWD)/$(TOOLS_DIR):$(PATH)
 # ==============================================================================
 # 🎯 TARGETS PRINCIPAIS
 # ==============================================================================
-.PHONY: all api build clean test help
+.PHONY: all dev build clean test help
 
 all: build
 
@@ -42,7 +42,7 @@ all: build
 tools: $(AIR) $(SQLC)
 
 # Roda apenas o backend (Go + Air)
-api: tools
+dev: tools
 	$(AIR) -c .air.toml
 
 build:
@@ -103,7 +103,7 @@ docker-down:
 # ==============================================================================
 help:
 	@echo "Comandos disponíveis:"
-	@echo "  api     - Inicia apenas o Backend (Air)"
+	@echo "  dev     - Inicia apenas o Backend (Air)"
 	@echo "  build       - Gera o binário de produção"
 	@echo "  tools       - Baixa as ferramentas necessárias (localmente)"
 	@echo "  clean       - Limpa pastas geradas"

@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type LabsRepo interface {
+type Labs interface {
 	// CRUD basico
 	Create(ctx context.Context, report *labs.LabReport) error
 	FindByID(ctx context.Context, reportID uuid.UUID) (*labs.LabReport, error)

@@ -19,16 +19,16 @@ type Professional struct {
 	queries *professionalsqlc.Queries
 }
 
-var _ repository.ProfessionalRepo = (*Professional)(nil)
+var _ repository.Professional = (*Professional)(nil)
 
-func NewProfessionalRepository(client *postgress.Client) repository.ProfessionalRepo {
+func NewProfessionalRepository(client *postgress.Client) repository.Professional {
 	return &Professional{
 		client:  client,
 		queries: professionalsqlc.New(client.Pool()),
 	}
 }
 
-// Create implements [repository.ProfessionalRepo].
+// Create implements [repository.Professional].
 func (p *Professional) Create(ctx context.Context, prof *professional.Professional) error {
 	if prof == nil {
 		return errors.New("profile is nil")
@@ -62,37 +62,37 @@ func (p *Professional) Create(ctx context.Context, prof *professional.Profession
 	return nil
 }
 
-// Update implements [repository.ProfessionalRepo].
+// Update implements [repository.Professional].
 func (p *Professional) Update(ctx context.Context, profile *professional.Professional) error {
 	panic("unimplemented")
 }
 
-// Delete implements [repository.ProfessionalRepo].
+// Delete implements [repository.Professional].
 func (p *Professional) Delete(ctx context.Context, id uuid.UUID) error {
 	panic("unimplemented")
 }
 
-// SoftDelete implements [repository.ProfessionalRepo].
+// SoftDelete implements [repository.Professional].
 func (p *Professional) SoftDelete(ctx context.Context, id uuid.UUID) error {
 	panic("unimplemented")
 }
 
-// FindByID implements [repository.ProfessionalRepo].
+// FindByID implements [repository.Professional].
 func (p *Professional) FindByID(ctx context.Context, id uuid.UUID) (*professional.Professional, error) {
 	panic("unimplemented")
 }
 
-// FindByUserID implements [repository.ProfessionalRepo].
+// FindByUserID implements [repository.Professional].
 func (p *Professional) FindByUserID(ctx context.Context, userID uuid.UUID) (*professional.Professional, error) {
 	panic("unimplemented")
 }
 
-// FindByRegistration implements [repository.ProfessionalRepo].
+// FindByRegistration implements [repository.Professional].
 func (p *Professional) FindByRegistration(ctx context.Context, registrationNumber string, registrationIssuer string) (*professional.Professional, error) {
 	panic("unimplemented")
 }
 
-// FindByName implements [repository.ProfessionalRepo].
+// FindByName implements [repository.Professional].
 func (p *Professional) FindByName(ctx context.Context, name string, limit int, offset int) ([]*professional.Professional, error) {
 	panic("unimplemented")
 }
