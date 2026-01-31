@@ -100,7 +100,7 @@ func SetupRoutes(
 			me.GET("", deps.UserHandler.GetUser)
 			me.PUT("", deps.UserHandler.UpdateUser)
 			me.DELETE("", deps.UserHandler.HardDeleteUser)
-			me.GET("/patients", deps.UserHandler.ListMyPatients)
+			me.GET("/mypatients", deps.UserHandler.ListMyPatients)
 		}
 
 		//Pacientes
