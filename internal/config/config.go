@@ -1,4 +1,4 @@
-// internal/application/config/config.go
+// internal/config/config.go
 package config
 
 import (
@@ -16,12 +16,13 @@ const (
 	envLogLevel  = "LOG_LEVEL"
 	envLogFormat = "LOG_FORMAT"
 
-	envGoogleApplicationCredentials = "GOOGLE_APPLICATION_CREDENTIALS"
-	envGCPProjectID                 = "GCP_PROJECT_ID"
-	envGCPProjectNumber             = "GCP_PROJECT_NUMBER"
-	envGCSBucket                    = "GCS_BUCKET"
-	envGCPLocation                  = "GCP_LOCATION"
-	envGCPExtractLabsProcessorID    = "GCP_EXTRACT_LABS_PROCESSOR_ID"
+	envGoogleApplicationCredentials     = "GOOGLE_APPLICATION_CREDENTIALS"
+	envGoogleApplicationCredentialsJSON = "GOOGLE_APPLICATION_CREDENTIALS_JSON"
+	envGCPProjectID                     = "GCP_PROJECT_ID"
+	envGCPProjectNumber                 = "GCP_PROJECT_NUMBER"
+	envGCSBucket                        = "GCS_BUCKET"
+	envGCPLocation                      = "GCP_LOCATION"
+	envGCPExtractLabsProcessorID        = "GCP_EXTRACT_LABS_PROCESSOR_ID"
 
 	envDatabaseURL = "DATABASE_URL"
 	envRedisURL    = "REDIS_URL"
@@ -41,15 +42,16 @@ type Config struct {
 	DatabaseURL string
 	RedisURL    string
 
-	GoogleApplicationCredentials string
-	GCPProjectID                 string
-	GCPProjectNumber             string
-	GCSBucket                    string
-	GCPLocation                  string
-	GCPExtractLabsProcessorID    string
-	SupabaseProjectURL           string
-	SupabaseJWTIssuer            string
-	SupabaseJWTAudience          string
+	GoogleApplicationCredentials     string
+	GoogleApplicationCredentialsJSON string
+	GCPProjectID                     string
+	GCPProjectNumber                 string
+	GCSBucket                        string
+	GCPLocation                      string
+	GCPExtractLabsProcessorID        string
+	SupabaseProjectURL               string
+	SupabaseJWTIssuer                string
+	SupabaseJWTAudience              string
 
 	Port string // porta HTTP (ex.: "8080")
 	Env  string // ex.: "dev", "prod"
@@ -66,15 +68,16 @@ func Load() (*Config, error) {
 		DatabaseURL: getEnv(envDatabaseURL),
 		RedisURL:    getEnv(envRedisURL),
 		// Google
-		GoogleApplicationCredentials: getEnv(envGoogleApplicationCredentials),
-		GCPProjectID:                 getEnv(envGCPProjectID),
-		GCPProjectNumber:             getEnv(envGCPProjectNumber),
-		GCSBucket:                    getEnv(envGCSBucket),
-		GCPLocation:                  getEnv(envGCPLocation),
-		GCPExtractLabsProcessorID:    getEnv(envGCPExtractLabsProcessorID),
-		SupabaseProjectURL:           getEnv(envSupabaseProjectURL),
-		SupabaseJWTIssuer:            getEnv(envSupabaseJWTIssuer),
-		SupabaseJWTAudience:          getEnv(envSupabaseJWTAud),
+		GoogleApplicationCredentials:     getEnv(envGoogleApplicationCredentials),
+		GoogleApplicationCredentialsJSON: getEnv(envGoogleApplicationCredentialsJSON),
+		GCPProjectID:                     getEnv(envGCPProjectID),
+		GCPProjectNumber:                 getEnv(envGCPProjectNumber),
+		GCSBucket:                        getEnv(envGCSBucket),
+		GCPLocation:                      getEnv(envGCPLocation),
+		GCPExtractLabsProcessorID:        getEnv(envGCPExtractLabsProcessorID),
+		SupabaseProjectURL:               getEnv(envSupabaseProjectURL),
+		SupabaseJWTIssuer:                getEnv(envSupabaseJWTIssuer),
+		SupabaseJWTAudience:              getEnv(envSupabaseJWTAud),
 
 		Port:      getEnvOrDefault(envPort, "8080"),
 		Env:       strings.ToLower(getEnvOrDefault(envAppEnv, "dev")),
@@ -91,7 +94,13 @@ func Load() (*Config, error) {
 	appendRequired(&violations, envGCPLocation, cfg.GCPLocation)
 	appendRequired(&violations, envGCPExtractLabsProcessorID, cfg.GCPExtractLabsProcessorID)
 	appendRequired(&violations, envRedisURL, cfg.RedisURL)
-	appendRequired(&violations, envGoogleApplicationCredentials, cfg.GoogleApplicationCredentials)
+	// Exigir pelo menos uma forma de credenciais do Google Cloud
+	if cfg.GoogleApplicationCredentials == "" && cfg.GoogleApplicationCredentialsJSON == "" {
+		violations = append(violations, apperr.Violation{
+			Field:  "GOOGLE_CREDENTIALS",
+			Reason: "either GOOGLE_APPLICATION_CREDENTIALS or GOOGLE_APPLICATION_CREDENTIALS_JSON is required",
+		})
+	}
 	validateEnum(&violations, envAppEnv, cfg.Env, allowedEnvs)
 	validateEnum(&violations, envLogLevel, cfg.LogLevel, allowedLogLevels)
 	validateEnum(&violations, envLogFormat, cfg.LogFormat, allowedLogFormats)

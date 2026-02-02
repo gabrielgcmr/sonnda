@@ -1,7 +1,0 @@
-{
-  "templ.executablePath": "${workspaceFolder}/tools/bin/templ",
-  "[templ]": {
-    "editor.tabSize": 2,
-    "editor.defaultFormatter": "a-h.templ"
-  }
-}

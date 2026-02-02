@@ -1,8 +1,10 @@
+// internal/infrastructure/ai/client.go
 package ai
 
 import (
 	"context"
 	"fmt"
+	"os"
 
 	documentai "cloud.google.com/go/documentai/apiv1"
 	"cloud.google.com/go/documentai/apiv1/documentaipb"
@@ -23,6 +25,17 @@ func NewClient(
 	projectID, location string,
 	opts ...option.ClientOption,
 ) (*Client, error) {
+	// Se opts estiver vazio, tenta configurar credenciais automaticamente
+	if len(opts) == 0 {
+		if credsJSON := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS_JSON"); credsJSON != "" {
+			// Usa JSON inline (production/Railway)
+			opts = append(opts, option.WithCredentialsJSON([]byte(credsJSON)))
+		} else if credsFile := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"); credsFile != "" {
+			// Usa arquivo local (desenvolvimento)
+			opts = append(opts, option.WithCredentialsFile(credsFile))
+		}
+	}
+
 	c, err := documentai.NewDocumentProcessorClient(ctx, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("erro ao criar cliente do Document AI: %w", err)
