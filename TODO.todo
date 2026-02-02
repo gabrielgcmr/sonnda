@@ -29,7 +29,6 @@ Jeito simples: remover a variável local (hoje ela está “unused” e isso que
 normalizeHost quebra se vier com https://
 
 Jeito correto: usar net/url + net.SplitHostPort para extrair o host com segurança (e aceitar host com esquema/porta).
-Jeito simples: validar que APP_HOST e API_HOST não podem conter esquema nem porta; se vierem com :// ou :, retornar erro claro.
 Validação de enums (APP_ENV, LOG_LEVEL, LOG_FORMAT)
 
 Jeito correto: Validate() no Config retornando *apperr.AppError com INVALID_ENUM_VALUE e lista de opções válidas.
@@ -54,6 +53,5 @@ Se você quiser, eu implemento a versão “correta” ou “simples” e ajusto
 
 Assumptions / Open questions
 
-APP_HOST/API_HOST podem vir com https:// e porta, ou você quer restringir a “hostname puro”?
 GOOGLE_APPLICATION_CREDENTIALS é obrigatório sempre ou apenas em dev/local?
 DOCAI_LABS_PROCESSOR_ID e Firebase web keys são sempre necessários no backend, ou só em fluxos específicos?

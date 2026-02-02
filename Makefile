@@ -1,3 +1,4 @@
+# Makefile
 # ==============================================================================
 # 🛠️ CONFIGURAÇÕES E VARIÁVEIS
 # ==============================================================================
@@ -6,19 +7,15 @@ MAIN     := ./cmd/server
 
 # Versões das Ferramentas
 AIR_VERSION      := latest
-TAILWIND_VERSION := v4.1.18
-TEMPL_VERSION    := latest
+SQLC_VERSION     := latest
 
 # Diretórios e Binários
 TOOLS_DIR    := tools/bin
 AIR          := $(TOOLS_DIR)/air
-TAILWIND     := $(TOOLS_DIR)/tailwindcss
-TEMPL        := $(TOOLS_DIR)/templ
+SQLC         := $(TOOLS_DIR)/sqlc
 
 # Caminhos do Projeto (Preservados do arquivo original)
-TAILWIND_INPUT  := internal/adapters/inbound/http/web/styles/input.css
-TAILWIND_OUTPUT := internal/adapters/inbound/http/web/static/css/app.css
-SQLC_CONF       := internal/adapters/outbound/storage/postgres/sqlc/sqlc.yaml
+SQLC_CONF  := internal/adapters/outbound/storage/data/postgres/sqlc/sqlc.yaml
 
 # Detecção de OS/Arch para download dos binários
 OS := $(shell uname -s | tr '[:upper:]' '[:lower:]')
@@ -31,39 +28,25 @@ ifeq ($(ARCH),aarch64)
 	ARCH := arm64
 endif
 
-TAILWIND_ARCH := $(ARCH)
-ifeq ($(TAILWIND_ARCH),amd64)
-	TAILWIND_ARCH := x64
-endif
-
 # Adiciona tools/bin ao PATH para este Makefile
 export PATH := $(PWD)/$(TOOLS_DIR):$(PATH)
 
 # ==============================================================================
 # 🎯 TARGETS PRINCIPAIS
 # ==============================================================================
-.PHONY: all dev-api dev-web dev-web-watch build clean test help
+.PHONY: all dev build clean test help
 
 all: build
 
-# Instala todas as dependências (Air, Tailwind, Templ)
-tools: $(AIR) $(TAILWIND) $(TEMPL)
+# Instala todas as dependências (Air, SQLC)
+tools: $(AIR) $(SQLC)
 
 # Roda apenas o backend (Go + Air)
-dev-api: tools
+dev: tools
 	$(AIR) -c .air.toml
 
-# 🚀 Roda o ambiente COMPLETO (Templ + Tailwind + Air) em paralelo
-dev-web: tools
-	@echo "🏗️  Gerando assets primeiro..."
-	@$(MAKE) templ tailwind 
-	@echo "🚀 Subindo servidor..."
-	@$(MAKE) air-run     
-
-# 🚀 Roda o ambiente COMPLETO (Templ + Tailwind + Air) em modo -watch
-dev-web-watch: tools
-	@echo "🔥 Iniciando modo Watch Paralelo... Pode gerar erros de compilação devido a race conditions. Use com sabedoria."
-	@$(MAKE) -j3 templ-watch tailwind-watch air-run
+build:
+	go build -o bin/$(APP_NAME) $(MAIN)
 
 # Limpeza (Compatível com Linux/WSL)
 clean:
@@ -81,64 +64,48 @@ $(AIR):
 	@mkdir -p $(TOOLS_DIR)
 	@GOBIN=$(PWD)/$(TOOLS_DIR) go install github.com/air-verse/air@$(AIR_VERSION)
 
-
-$(TAILWIND):
-	@echo "🎨 Instalando tailwindcss versão: $(TAILWIND_VERSION)..."
-	@mkdir -p $(TOOLS_DIR)
-	@curl -L -o $(TAILWIND) https://github.com/tailwindlabs/tailwindcss/releases/download/$(TAILWIND_VERSION)/tailwindcss-$(OS)-$(TAILWIND_ARCH)
-	@chmod +x $(TAILWIND)
-
-$(TEMPL):
-	@echo "🔥 Instalando templ versão: $(TEMPL_VERSION)..."
-	@GOBIN=$(PWD)/$(TOOLS_DIR) go install github.com/a-h/templ/cmd/templ@$(TEMPL_VERSION)
-
+$(SQLC):
+	@echo "🗄️  Instalando sqlc versão: $(SQLC_VERSION)..."
+	@GOBIN=$(PWD)/$(TOOLS_DIR) go install github.com/sqlc-dev/sqlc/cmd/sqlc@$(SQLC_VERSION)
 
 # ==============================================================================
 # 🔄 WATCHERS E PROCESSOS INTERNOS
 # ==============================================================================
-.PHONY: templ templ-watch tailwind-watch air-run
+.PHONY: air-run
 
 air-run:
 	$(AIR) -c .air.toml
 
-templ:
-	$(TEMPL) generate
+# ==============================================================================
+# 🐘 DATABASE
+# ==============================================================================
+.PHONY: sqlc sqlc-check 
 
-templ-watch:
-	$(TEMPL) generate --watch
+sqlc: $(SQLC)
+	$(SQLC) generate -f $(SQLC_CONF)
 
-tailwind:
-	$(TAILWIND) -i $(TAILWIND_INPUT) -o $(TAILWIND_OUTPUT) 
-
-tailwind-watch:
-	$(TAILWIND) -i $(TAILWIND_INPUT) -o $(TAILWIND_OUTPUT) --watch
+sqlc-check: $(SQLC)
+	$(SQLC) compile -f $(SQLC_CONF)
 
 # ==============================================================================
-# 🐘 DATABASE & DOCKER
+# 🐘 DOCKER
 # ==============================================================================
-.PHONY: sqlc sqlc-check docker-up docker-down
-
-sqlc:
-	sqlc generate -f $(SQLC_CONF)
-
-sqlc-check:
-	sqlc compile -f $(SQLC_CONF)
+.PHONY: docker-up docker-down
 
 docker-up:
 	docker compose up -d
 
 docker-down:
-	docker compose down
+	docker compose down	
 
 # ==============================================================================
 # ℹ️ AJUDA
 # ==============================================================================
 help:
 	@echo "Comandos disponíveis:"
-	@echo "  dev-api     - Inicia apenas o Backend (Air)"
-	@echo "  dev-web     - Inicia Backend + Frontend (Templ/Tailwind) em paralelo"
-	@echo "  dev-web-watch - Inicia Backend + Frontend (Templ/Tailwind) em modo watch"
+	@echo "  dev     - Inicia apenas o Backend (Air)"
 	@echo "  build       - Gera o binário de produção"
 	@echo "  tools       - Baixa as ferramentas necessárias (localmente)"
 	@echo "  clean       - Limpa pastas geradas"
-	@echo "  docker-up   - Sobe o banco de dados"
+	@echo "  docker-up   - Sobe o docker"
+	@echo "  docker-down - Derruba o docker"

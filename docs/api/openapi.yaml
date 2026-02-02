@@ -1,0 +1,473 @@
+# docs/api/openapi.yaml
+openapi: 3.0.3
+info:
+  title: Sonnda API
+  version: "0.1.0"
+  description: OpenAPI inicial das rotas HTTP da Sonnda.
+servers:
+  - url: https://api.sonnda.com.br
+    description: Produção
+paths:
+  /v1/health:
+    get:
+      summary: Health check
+      tags: [Public]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+  /v1/docs:
+    get:
+      summary: Docs placeholder
+      tags: [Public]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocsResponse"
+  /v1/register:
+    post:
+      summary: Registrar usuário (onboarding)
+      description: Requer token válido do Supabase (Bearer).
+      tags: [Auth]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: Usuário criado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/AppError"
+        "401":
+          $ref: "#/components/responses/AppError"
+        "422":
+          $ref: "#/components/responses/AppError"
+        "500":
+          $ref: "#/components/responses/AppError"
+  /v1/me:
+    get:
+      summary: Obter perfil do usuário atual
+      tags: [User]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/AppError"
+        "500":
+          $ref: "#/components/responses/AppError"
+    put:
+      summary: Atualizar perfil do usuário atual
+      tags: [User]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/AppError"
+        "401":
+          $ref: "#/components/responses/AppError"
+        "422":
+          $ref: "#/components/responses/AppError"
+        "500":
+          $ref: "#/components/responses/AppError"
+    delete:
+      summary: Remover usuário atual (hard delete)
+      tags: [User]
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: No Content
+        "401":
+          $ref: "#/components/responses/AppError"
+        "500":
+          $ref: "#/components/responses/AppError"
+  /v1/me/patients:
+    get:
+      summary: Listar pacientes do usuário atual
+      tags: [User]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/LimitParam"
+        - $ref: "#/components/parameters/OffsetParam"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PatientsList"
+        "401":
+          $ref: "#/components/responses/AppError"
+        "500":
+          $ref: "#/components/responses/AppError"
+  /v1/patients:
+    post:
+      summary: Criar paciente
+      tags: [Patient]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePatientRequest"
+      responses:
+        "201":
+          description: Paciente criado
+          headers:
+            Location:
+              description: Caminho do novo recurso
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PatientCreatedResponse"
+        "400":
+          $ref: "#/components/responses/AppError"
+        "401":
+          $ref: "#/components/responses/AppError"
+        "422":
+          $ref: "#/components/responses/AppError"
+        "500":
+          $ref: "#/components/responses/AppError"
+    get:
+      summary: Listar pacientes
+      tags: [Patient]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PatientsList"
+        "401":
+          $ref: "#/components/responses/AppError"
+        "500":
+          $ref: "#/components/responses/AppError"
+  /v1/patients/{id}:
+    get:
+      summary: Obter paciente
+      tags: [Patient]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Patient"
+        "400":
+          $ref: "#/components/responses/AppError"
+        "401":
+          $ref: "#/components/responses/AppError"
+        "404":
+          $ref: "#/components/responses/AppError"
+        "500":
+          $ref: "#/components/responses/AppError"
+  /v1/patients/{id}/labs:
+    get:
+      summary: Listar laudos (resumo)
+      tags: [Labs]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/LimitParam"
+        - $ref: "#/components/parameters/OffsetParam"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LabsList"
+        "400":
+          $ref: "#/components/responses/AppError"
+        "401":
+          $ref: "#/components/responses/AppError"
+        "500":
+          $ref: "#/components/responses/AppError"
+  /v1/patients/{id}/labs/full:
+    get:
+      summary: Listar laudos (completo)
+      tags: [Labs]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/LimitParam"
+        - $ref: "#/components/parameters/OffsetParam"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LabsList"
+        "400":
+          $ref: "#/components/responses/AppError"
+        "401":
+          $ref: "#/components/responses/AppError"
+        "500":
+          $ref: "#/components/responses/AppError"
+  /v1/patients/{id}/labs/upload:
+    post:
+      summary: Upload de laudo
+      tags: [Labs]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "201":
+          description: Laudo criado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LabUploadResponse"
+        "400":
+          $ref: "#/components/responses/AppError"
+        "401":
+          $ref: "#/components/responses/AppError"
+        "413":
+          $ref: "#/components/responses/AppError"
+        "415":
+          $ref: "#/components/responses/AppError"
+        "500":
+          $ref: "#/components/responses/AppError"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    LimitParam:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+      description: Número máximo de itens
+    OffsetParam:
+      name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+      description: Número de itens para pular
+  responses:
+    AppError:
+      description: Erro padronizado (AppError)
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+      required: [error]
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+      required: [status]
+    DocsResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required: [message]
+    RegisterRequest:
+      type: object
+      required:
+        - full_name
+        - birth_date
+        - cpf
+        - phone
+        - account_type
+      properties:
+        full_name:
+          type: string
+        birth_date:
+          type: string
+          format: date
+        cpf:
+          type: string
+        phone:
+          type: string
+        account_type:
+          type: string
+          enum: [basic_care, professional]
+        professional:
+          $ref: "#/components/schemas/ProfessionalRequestData"
+    ProfessionalRequestData:
+      type: object
+      required:
+        - kind
+        - registration_number
+        - registration_issuer
+      properties:
+        kind:
+          type: string
+        registration_number:
+          type: string
+        registration_issuer:
+          type: string
+        registration_state:
+          type: string
+          nullable: true
+    UpdateUserRequest:
+      type: object
+      properties:
+        full_name:
+          type: string
+          nullable: true
+        birth_date:
+          type: string
+          format: date
+          nullable: true
+        cpf:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+    CreatePatientRequest:
+      type: object
+      required:
+        - cpf
+        - full_name
+        - birth_date
+        - gender
+        - race
+      properties:
+        cpf:
+          type: string
+        full_name:
+          type: string
+        birth_date:
+          type: string
+          format: date
+        gender:
+          type: string
+          enum: [MALE, FEMALE, OTHER, UNKNOWN]
+        race:
+          type: string
+          enum: [WHITE, BLACK, ASIAN, MIXED, INDIGENOUS, UNKNOWN]
+        phone:
+          type: string
+          nullable: true
+        avatar_url:
+          type: string
+    PatientCreatedResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+      required: [id]
+    User:
+      type: object
+      description: Representação simplificada do usuário.
+      additionalProperties: true
+    Patient:
+      type: object
+      description: Representação simplificada do paciente.
+      additionalProperties: true
+    PatientsList:
+      type: array
+      items:
+        $ref: "#/components/schemas/Patient"
+    LabsList:
+      type: array
+      items:
+        type: object
+        additionalProperties: true
+    LabUploadResponse:
+      type: object
+      description: Retorno do processamento do laudo.
+      additionalProperties: true

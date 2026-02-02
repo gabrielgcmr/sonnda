@@ -5,7 +5,7 @@ Endpoints para criação e consulta de pacientes.
 
 ## Base URL
 
-`/api/v1`
+`https://api.sonnda.com.br/v1`
 
 ## Autenticação
 
@@ -32,15 +32,15 @@ Mesmo conjunto de campos, todos opcionais.
 
 ## Endpoints
 
-| Método | Rota | Status |
-|---|---|---|
-| POST | `/patients` | Ativo |
-| GET | `/patients` | Ativo |
-| GET | `/patients/:id` | Ativo |
-| PUT | `/patients/:id` | Handler existe, rota não registrada |
+| Método | Rota            | Status                              |
+| ------ | --------------- | ----------------------------------- |
+| POST   | `/patients`     | Ativo                               |
+| GET    | `/patients`     | Ativo                               |
+| GET    | `/patients/:id` | Ativo                               |
+| PUT    | `/patients/:id` | Handler existe, rota não registrada |
 | DELETE | `/patients/:id` | Handler existe, rota não registrada |
 
-## Criar paciente (POST /api/v1/patients)
+## Criar paciente (POST /v1/patients)
 
 **Request (JSON):**
 ```json
@@ -57,7 +57,7 @@ Mesmo conjunto de campos, todos opcionais.
 
 **Exemplo (curl):**
 ```bash
-curl -i -X POST http://localhost:8080/api/v1/patients \
+curl -i -X POST https://api.sonnda.com.br/v1/patients \
   -H "Authorization: Bearer <id_token>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -83,7 +83,7 @@ curl -i -X POST http://localhost:8080/api/v1/patients \
 - `RESOURCE_ALREADY_EXISTS` (409) — CPF duplicado
 - `INFRA_DATABASE_ERROR` (5xx)
 
-## Buscar paciente (GET /api/v1/patients/:id)
+## Buscar paciente (GET /v1/patients/:id)
 
 **Resposta (200 OK):**
 ```json
@@ -105,7 +105,7 @@ curl -i -X POST http://localhost:8080/api/v1/patients \
 
 **Exemplo (curl):**
 ```bash
-curl -i http://localhost:8080/api/v1/patients/018f3a2a-4c1a-7c5a-9d9e-2b7d8d9c3f11 \
+curl -i https://api.sonnda.com.br/v1/patients/018f3a2a-4c1a-7c5a-9d9e-2b7d8d9c3f11 \
   -H "Authorization: Bearer <id_token>"
 ```
 
@@ -113,7 +113,7 @@ curl -i http://localhost:8080/api/v1/patients/018f3a2a-4c1a-7c5a-9d9e-2b7d8d9c3f
 - `VALIDATION_FAILED` (400)
 - `NOT_FOUND` (404)
 
-## Listar pacientes (GET /api/v1/patients)
+## Listar pacientes (GET /v1/patients)
 
 **Resposta (200 OK):**
 ```json
@@ -128,7 +128,7 @@ curl -i http://localhost:8080/api/v1/patients/018f3a2a-4c1a-7c5a-9d9e-2b7d8d9c3f
 
 **Exemplo (curl):**
 ```bash
-curl -i http://localhost:8080/api/v1/patients \
+curl -i https://api.sonnda.com.br/v1/patients \
   -H "Authorization: Bearer <id_token>"
 ```
 

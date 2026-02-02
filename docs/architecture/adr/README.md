@@ -7,7 +7,6 @@ Este README referencia os ADRs quando necessário, mas **não substitui** esses 
 
 - `docs/architecture/adr/ADR-005-repository-value-vs-service-pointer.md`
 - `docs/architecture/adr/ADR-006-error-handling-contract.md`
-- `docs/architecture/adr/ADR-007-static-vs-templates-no-assets.md`
 
 
 ---
@@ -39,4 +38,3 @@ Os ADRs explicam **por que ela é assim**.
 
 Sempre que uma decisão arquitetural relevante for tomada,  
 o código e a documentação devem evoluir juntos.
-

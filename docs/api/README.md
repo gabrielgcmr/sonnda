@@ -1,19 +1,17 @@
 <!-- docs/api/README.md -->
 # API Sonnda
 
-Documentação das APIs HTTP da Sonnda (REST + endpoints de autenticação web).
+Documentação das APIs HTTP da Sonnda (REST).
 
 ## Visão geral
 
-- **Base API**: `/api/v1`
-- **Sessão web (cookie)**: `/auth/*`
+- **Base API**: `https://api.sonnda.com.br/v1`
 - **Formato de erro**: contrato `AppError` (sempre em `{ "error": { "code", "message" } }`)
 - **JSON**: campos em `snake_case`
 
 ## Autenticação (resumo)
 
-- **Apps (mobile/backoffice)**: `Authorization: Bearer <id_token>` em todas as rotas `/api/v1`.
-- **Web (HTMX/SSR)**: `POST /auth/session` com `{ "id_token": "..." }` para criar cookie `__session`.
+- **Apps (mobile/backoffice/SPA)**: `Authorization: Bearer <access_token>` em todas as rotas `/v1`.
 
 ## Índice
 
