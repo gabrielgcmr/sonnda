@@ -1,4 +1,4 @@
-// internal/api/apierr/logging.go
+// internal/api/presenter/logging.go
 package presenter
 
 import (
@@ -35,13 +35,14 @@ func errorChain(err error) []string {
 	}
 
 	chain := make([]string, 0, 4)
-	seen := map[error]struct{}{}
+	seen := map[string]struct{}{}
 	for err != nil {
-		if _, ok := seen[err]; ok {
+		key := errorKey(err)
+		if _, ok := seen[key]; ok {
 			chain = append(chain, "cycle_detected")
 			break
 		}
-		seen[err] = struct{}{}
+		seen[key] = struct{}{}
 
 		chain = append(chain, describeError(err))
 		err = errors.Unwrap(err)
@@ -56,4 +57,11 @@ func describeError(err error) string {
 		return fmt.Sprintf("app_error code=%s msg=%s", appErr.Code, appErr.Message)
 	}
 	return err.Error()
+}
+
+func errorKey(err error) string {
+	if err == nil {
+		return ""
+	}
+	return fmt.Sprintf("%T:%s", err, err.Error())
 }

@@ -1,5 +1,4 @@
 // internal/application/bootstrap/patient.go
-// File: internal/app/bootstrap/patient.go
 package bootstrap
 
 import (
@@ -21,7 +20,7 @@ func NewPatientModule(db *postgress.Client) *PatientModule {
 	profRepo := repo.NewProfessionalRepository(db)
 
 	authz := authorization.New(patientRepo, accessRepo, profRepo)
-	svc := patientsvc.New(patientRepo, authz)
+	svc := patientsvc.New(patientRepo, accessRepo, authz)
 
 	return &PatientModule{
 		Service: svc,
