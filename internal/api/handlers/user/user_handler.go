@@ -146,6 +146,7 @@ func (h *Handler) HardDeleteUser(c *gin.Context) {
 	}
 
 	c.Status(http.StatusNoContent)
+
 }
 
 func (h *Handler) ListMyPatients(c *gin.Context) {

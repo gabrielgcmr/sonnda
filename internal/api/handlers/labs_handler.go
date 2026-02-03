@@ -118,7 +118,7 @@ func (h *LabsHandler) handleFileUpload(
 	c *gin.Context,
 	patientID uuid.UUID,
 ) (string, string, error) {
-	const MaxFileSize = 15 * 1024 * 1024 // 15MB
+	const MaxFileSize = 10 * 1024 * 1024 // 10MB
 
 	fileHeader, err := c.FormFile("file")
 	if err != nil {
@@ -158,6 +158,8 @@ func (h *LabsHandler) handleFileUpload(
 			_, _ = seeker.Seek(0, io.SeekStart)
 		}
 	}
+
+	contentType = normalizeMimeType(contentType)
 
 	if !isSupportedMimeType(contentType) {
 		return "", "", &apperr.AppError{
@@ -241,6 +243,17 @@ func isSupportedMimeType(ct string) bool {
 	default:
 		return false
 	}
+}
+
+func normalizeMimeType(raw string) string {
+	if raw == "" {
+		return ""
+	}
+	normalized := strings.ToLower(strings.TrimSpace(raw))
+	if idx := strings.Index(normalized, ";"); idx >= 0 {
+		normalized = strings.TrimSpace(normalized[:idx])
+	}
+	return normalized
 }
 
 func mimeToExt(ct string) string {

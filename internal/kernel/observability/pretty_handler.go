@@ -73,7 +73,7 @@ func (h *PrettyHandler) Handle(_ context.Context, r slog.Record) error {
 		bold+title+reset,
 	)
 
-	fmt.Fprintln(h.out, gray+strings.Repeat("─", 72)+reset)
+	fmt.Fprintln(h.out, gray+strings.Repeat("─", 40)+reset)
 
 	// ───── attributes ──────────────────────────────────────────
 	for _, a := range attrs {
@@ -98,7 +98,7 @@ func (h *PrettyHandler) Handle(_ context.Context, r slog.Record) error {
 
 func (h *PrettyHandler) printStack(stack string) {
 	fmt.Fprintf(h.out, "\n  %sSTACK TRACE%s\n", red, reset)
-	fmt.Fprintln(h.out, "  "+gray+strings.Repeat("─", 68)+reset)
+	fmt.Fprintln(h.out, "  "+gray+strings.Repeat("─", 40)+reset)
 
 	for _, line := range strings.Split(stack, "\n") {
 		if strings.TrimSpace(line) == "" {

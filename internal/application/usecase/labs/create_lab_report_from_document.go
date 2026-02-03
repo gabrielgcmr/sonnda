@@ -125,8 +125,8 @@ func (u *createLabReportFromDocumentUseCase) validateInput(input CreateLabReport
 		violations = append(violations, apperr.Violation{Field: "document_uri", Reason: "required"})
 	}
 
-	switch strings.ToLower(strings.TrimSpace(input.MimeType)) {
-	case "application/pdf", "image/jpeg", "image/png":
+	switch normalizeMimeType(input.MimeType) {
+	case "application/pdf", "image/pdf", "image/jpeg", "image/jpg", "image/png":
 	default:
 		violations = append(violations, apperr.Violation{Field: "mime_type", Reason: "unsupported"})
 	}
@@ -136,6 +136,17 @@ func (u *createLabReportFromDocumentUseCase) validateInput(input CreateLabReport
 	}
 
 	return nil
+}
+
+func normalizeMimeType(raw string) string {
+	if raw == "" {
+		return ""
+	}
+	normalized := strings.ToLower(strings.TrimSpace(raw))
+	if idx := strings.Index(normalized, ";"); idx >= 0 {
+		normalized = strings.TrimSpace(normalized[:idx])
+	}
+	return normalized
 }
 
 func (u *createLabReportFromDocumentUseCase) mapExtractedToDomain(
@@ -232,9 +243,28 @@ func (u *createLabReportFromDocumentUseCase) mapDomainError(err error) error {
 		errors.Is(err, labs.ErrInvalidUploadedByUser),
 		errors.Is(err, labs.ErrInvalidTestName),
 		errors.Is(err, labs.ErrInvalidParameterName):
+		violations := labDomainErrorViolations(err)
+		if len(violations) > 0 {
+			return apperr.Validation("entrada inválida", violations...)
+		}
 		return &apperr.AppError{Code: apperr.VALIDATION_FAILED, Message: "entrada inválida", Cause: err}
 	default:
 		return &apperr.AppError{Code: apperr.INTERNAL_ERROR, Message: "erro inesperado", Cause: err}
+	}
+}
+
+func labDomainErrorViolations(err error) []apperr.Violation {
+	switch {
+	case errors.Is(err, labs.ErrInvalidPatientID):
+		return []apperr.Violation{{Field: "patient_id", Reason: "invalid"}}
+	case errors.Is(err, labs.ErrInvalidUploadedByUser):
+		return []apperr.Violation{{Field: "uploaded_by_user_id", Reason: "invalid"}}
+	case errors.Is(err, labs.ErrInvalidTestName):
+		return []apperr.Violation{{Field: "tests[].test_name", Reason: "required"}}
+	case errors.Is(err, labs.ErrInvalidParameterName):
+		return []apperr.Violation{{Field: "tests[].items[].parameter_name", Reason: "required"}}
+	default:
+		return nil
 	}
 }
 
