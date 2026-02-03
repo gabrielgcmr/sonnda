@@ -10,6 +10,7 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"google.golang.org/api/option"
 
 	"github.com/gabrielgcmr/sonnda/internal/application/bootstrap"
 	"github.com/gabrielgcmr/sonnda/internal/config"
@@ -72,14 +73,15 @@ func main() {
 
 	//6. Conectando outros servicos
 	//6.1 Storage Service (GCS)
-	storageService, err := filestorage.NewGCSObjectStorage(ctx, cfg.GCSBucket, cfg.GCPProjectID)
+	gcpOpts := buildGCPClientOptions(cfg)
+	storageService, err := filestorage.NewGCSObjectStorage(ctx, cfg.GCSBucket, cfg.GCPProjectID, gcpOpts...)
 	if err != nil {
 		log.Fatalf("falha ao criar storage do GCS: %v", err)
 	}
 	defer storageService.Close()
 
 	//6.2 Document AI Service
-	docAIClient, err := ai.NewClient(ctx, cfg.GCPProjectID, cfg.GCPLocation)
+	docAIClient, err := ai.NewClient(ctx, cfg.GCPProjectID, cfg.GCPLocation, gcpOpts...)
 	if err != nil {
 		log.Fatalf("falha ao criar DocAI client: %v", err)
 	}
@@ -158,4 +160,17 @@ func main() {
 		// 2. Encerra o programa manualmente com codigo de erro 1
 		os.Exit(1)
 	}
+}
+
+func buildGCPClientOptions(cfg *config.Config) []option.ClientOption {
+	if cfg == nil {
+		return nil
+	}
+	if cfg.GoogleApplicationCredentialsJSON != "" {
+		return []option.ClientOption{option.WithCredentialsJSON([]byte(cfg.GoogleApplicationCredentialsJSON))}
+	}
+	if cfg.GoogleApplicationCredentials != "" {
+		return []option.ClientOption{option.WithCredentialsFile(cfg.GoogleApplicationCredentials)}
+	}
+	return nil
 }
