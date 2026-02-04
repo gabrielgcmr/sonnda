@@ -7,6 +7,10 @@ A Sonnda usa **Supabase Auth**. O cliente autentica no Supabase, recebe um **Acc
 
 - **API REST (/v1)**: envia o token no header `Authorization: Bearer <access_token>`.
 
+## Contrato oficial
+
+O contrato de endpoints, schemas e erros fica no OpenAPI: `/openapi.yaml`.
+
 ## Arquivos-chave
 
 | Camada | Arquivo |
@@ -20,7 +24,7 @@ A Sonnda usa **Supabase Auth**. O cliente autentica no Supabase, recebe um **Acc
 - `SUPABASE_JWT_ISSUER` (opcional, sobrescreve o issuer derivado do projeto)
 - `SUPABASE_JWT_AUDIENCE` (opcional)
 
-## API REST (Bearer)
+## Uso do token
 
 Todas as rotas em `/v1` exigem:
 
@@ -28,22 +32,15 @@ Todas as rotas em `/v1` exigem:
 Authorization: Bearer <access_token>
 ```
 
-### Onboarding
+## Fluxo de onboarding
 
-Endpoint de cadastro:
+Após autenticar no Supabase, o cliente chama o endpoint de cadastro (`POST /v1/register`).
 
-```
-POST /v1/register
-```
+Exemplo (curl):
 
-## Contrato de erro (AppError)
-
-Exemplo:
-```json
-{
-  "error": {
-    "code": "AUTH_TOKEN_INVALID",
-    "message": "token inválido ou expirado"
-  }
-}
+```bash
+curl -i -X POST https://api.sonnda.com.br/v1/register \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{ ... }'
 ```

@@ -49,6 +49,17 @@ func (h *LabsHandler) ListLabs(c *gin.Context) {
 		return
 	}
 
+	if shouldReturnFullLabs(c) {
+		list, err := h.svc.ListFull(c.Request.Context(), patientID, limit, offset)
+		if err != nil {
+			presenter.ErrorResponder(c, err)
+			return
+		}
+
+		c.JSON(http.StatusOK, list)
+		return
+	}
+
 	list, err := h.svc.List(c.Request.Context(), patientID, limit, offset)
 	if err != nil {
 		presenter.ErrorResponder(c, err)
@@ -58,28 +69,8 @@ func (h *LabsHandler) ListLabs(c *gin.Context) {
 	c.JSON(http.StatusOK, list)
 }
 
-func (h *LabsHandler) ListFullLabs(c *gin.Context) {
-	patientID, ok := parsePatientIDParam(c, "id")
-	if !ok {
-		return
-	}
-
-	limit, offset, ok := parsePagination(c, 100, 0)
-	if !ok {
-		return
-	}
-
-	list, err := h.svc.ListFull(c.Request.Context(), patientID, limit, offset)
-	if err != nil {
-		presenter.ErrorResponder(c, err)
-		return
-	}
-
-	c.JSON(http.StatusOK, list)
-}
-
 // Handler unico para upload de laudo
-// POST /:patientID/labs/upload
+// POST /:patientID/labs
 // field: file (PDF/JPEG/PNG)
 func (h *LabsHandler) UploadAndProcessLabs(c *gin.Context) {
 	currentUser := helpers.MustGetCurrentUser(c)
@@ -228,6 +219,27 @@ func parsePagination(c *gin.Context, defaultLimit, defaultOffset int) (limit, of
 	}
 
 	return limit, offset, true
+}
+
+func shouldReturnFullLabs(c *gin.Context) bool {
+	if strings.EqualFold(strings.TrimSpace(c.Query("expand")), "full") {
+		return true
+	}
+
+	include := strings.TrimSpace(c.Query("include"))
+	if include == "" {
+		return false
+	}
+
+	for _, raw := range strings.Split(include, ",") {
+		value := strings.ToLower(strings.TrimSpace(raw))
+		switch value {
+		case "full", "results", "test_results":
+			return true
+		}
+	}
+
+	return false
 }
 
 // isSupportedMimeType checks whether the upload is of an accepted type.

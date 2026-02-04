@@ -31,6 +31,21 @@ type APIDependencies struct {
 	LabsHandler            *handlers.LabsHandler
 }
 
+const rootAPIName = "sonnda"
+
+// rootAPIVersion is overridden via -ldflags in build/release pipelines.
+var rootAPIVersion = "1.0.0"
+
+type RootResponse struct {
+	Name        string `json:"name"`
+	Version     string `json:"version"`
+	Environment string `json:"environment"`
+	Docs        string `json:"docs"`
+	OpenAPI     string `json:"openapi"`
+	Health      string `json:"health"`
+	Ready       string `json:"ready"`
+}
+
 func NewRouter(infra Infra, deps Deps) *gin.Engine {
 	r := gin.New()
 
@@ -47,6 +62,7 @@ func NewRouter(infra Infra, deps Deps) *gin.Engine {
 	)
 
 	// ---- Rotas ----
+	registerRootRoute(r, infra.Config)
 	SetupRoutes(r, deps.API)
 
 	return r
@@ -60,17 +76,12 @@ func SetupRoutes(
 	r.GET("/favicon.ico", func(c *gin.Context) {
 		c.Data(http.StatusOK, "image/x-icon", faviconData)
 	})
+	// Rotas públicas (sem versão)
+	registerPublicRoutes(r)
+	registerDocsRoutes(r)
+	registerOpenAPIRoute(r)
 
 	v1 := r.Group("/v1")
-
-	// ---------------------------------------------------------------------
-	// NÍVEL 1: Público (Health Check, Webhooks, Docs)
-	// Ninguém precisa de token aqui.
-	// ---------------------------------------------------------------------
-	v1.GET("/health", func(c *gin.Context) { c.JSON(200, gin.H{"status": "ok"}) })
-	v1.GET("/docs", func(c *gin.Context) {
-		c.JSON(200, gin.H{"message": "API Documentation would be here."})
-	})
 
 	// ---------------------------------------------------------------------
 	// NÍVEL 2: Autenticado (Tem Token do Supabase)
@@ -100,7 +111,7 @@ func SetupRoutes(
 			me.GET("", deps.UserHandler.GetUser)
 			me.PUT("", deps.UserHandler.UpdateUser)
 			me.DELETE("", deps.UserHandler.HardDeleteUser)
-			me.GET("/mypatients", deps.UserHandler.ListMyPatients)
+			me.GET("/patients", deps.UserHandler.ListMyPatients)
 		}
 
 		//Pacientes
@@ -118,10 +129,48 @@ func SetupRoutes(
 			labs := patients.Group("/:id/labs")
 			{
 				labs.GET("", deps.LabsHandler.ListLabs)
-				labs.POST("/upload", deps.LabsHandler.UploadAndProcessLabs)
-				labs.GET("/full", deps.LabsHandler.ListFullLabs)
+				labs.POST("", deps.LabsHandler.UploadAndProcessLabs)
 			}
 
 		}
 	}
+}
+
+func registerRootRoute(r gin.IRouter, cfg *config.Config) {
+	environment := "dev"
+	if cfg != nil && cfg.Env != "" {
+		environment = cfg.Env
+	}
+
+	r.GET("/", func(c *gin.Context) {
+		c.JSON(http.StatusOK, RootResponse{
+			Name:        rootAPIName,
+			Version:     rootAPIVersion,
+			Environment: environment,
+			Docs:        "/docs",
+			OpenAPI:     "/openapi.yaml",
+			Health:      "/healthz",
+			Ready:       "/readyz",
+		})
+	})
+}
+
+func registerPublicRoutes(r gin.IRouter) {
+	r.GET("/healthz", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{"status": "ok"}) })
+	r.GET("/readyz", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{"status": "ok"}) })
+}
+
+func registerDocsRoutes(r gin.IRouter) {
+	r.GET("/docs", func(c *gin.Context) {
+		c.Data(http.StatusOK, "text/html; charset=utf-8", docsHTML)
+	})
+	r.GET("/docs/redoc.standalone.js", func(c *gin.Context) {
+		c.Data(http.StatusOK, "application/javascript; charset=utf-8", redocBundle)
+	})
+}
+
+func registerOpenAPIRoute(r gin.IRouter) {
+	r.GET("/openapi.yaml", func(c *gin.Context) {
+		c.Data(http.StatusOK, "application/yaml; charset=utf-8", openapiSpec)
+	})
 }

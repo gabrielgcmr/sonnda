@@ -11,15 +11,9 @@ Endpoints de perfil e onboarding de usuário.
 
 Todas as rotas exigem `Authorization: Bearer <id_token>`.
 
-## Endpoints
+## Contrato oficial
 
-| Método | Rota           | Status |
-| ------ | -------------- | ------ |
-| POST   | `/register`    | Ativo  |
-| GET    | `/me`          | Ativo  |
-| PUT    | `/me`          | Ativo  |
-| DELETE | `/me`          | Ativo  |
-| GET    | `/me/patients` | Ativo  |
+O contrato completo de endpoints, schemas e erros fica no OpenAPI: `/openapi.yaml`.
 
 ## Onboarding (POST /v1/register)
 
@@ -59,10 +53,6 @@ curl -i -X POST https://api.sonnda.com.br/v1/register \
     }
   }'
 ```
-
-**Erros comuns:**
-- `VALIDATION_FAILED` (400)
-- `RESOURCE_ALREADY_EXISTS` (409)
 
 ## Perfil atual (GET /v1/me)
 

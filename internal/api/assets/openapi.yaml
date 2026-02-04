@@ -1,5 +1,5 @@
-# docs/api/openapi.yaml
-# NOTE: keep in sync with internal/api/assets/openapi.yaml (served at /openapi.yaml)
+# internal/api/assets/openapi.yaml
+# NOTE: keep in sync with docs/api/openapi.yaml
 openapi: 3.0.3
 info:
   title: Sonnda API

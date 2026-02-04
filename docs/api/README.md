@@ -9,6 +9,14 @@ Documentação das APIs HTTP da Sonnda (REST).
 - **Formato de erro**: contrato `AppError` (sempre em `{ "error": { "code", "message" } }`)
 - **JSON**: campos em `snake_case`
 
+## Contrato oficial
+
+- A fonte de verdade é `docs/api/openapi.yaml` (servido em `/openapi.yaml`).
+- A UI em `/docs` é gerada a partir do OpenAPI (Redoc embutido no binário).
+- Arquivos `.md` são guias com exemplos e fluxos, e não duplicam o contrato.
+- Para atualizar o bundle local do Redoc: `make sync-redoc`.
+- Para validar o contrato localmente: `make openapi-validate`.
+
 ## Autenticação (resumo)
 
 - **Apps (mobile/backoffice/SPA)**: `Authorization: Bearer <access_token>` em todas as rotas `/v1`.

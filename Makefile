@@ -4,6 +4,8 @@
 # ==============================================================================
 APP_NAME := sonnda
 MAIN     := ./cmd/server
+VERSION ?= 1.0.0
+LDFLAGS := -s -w -X github.com/gabrielgcmr/sonnda/internal/api.rootAPIVersion=$(VERSION)
 
 # Versões das Ferramentas
 AIR_VERSION      := latest
@@ -34,7 +36,7 @@ export PATH := $(PWD)/$(TOOLS_DIR):$(PATH)
 # ==============================================================================
 # 🎯 TARGETS PRINCIPAIS
 # ==============================================================================
-.PHONY: all dev build clean test help
+.PHONY: all dev build clean test help sync-openapi sync-redoc openapi-validate
 
 all: build
 
@@ -45,8 +47,8 @@ tools: $(AIR) $(SQLC)
 dev: tools
 	$(AIR) -c .air.toml
 
-build:
-	go build -o bin/$(APP_NAME) $(MAIN)
+build: sync-openapi
+	go build -o bin/$(APP_NAME) -ldflags "$(LDFLAGS)" $(MAIN)
 
 # Limpeza (Compatível com Linux/WSL)
 clean:
@@ -107,5 +109,37 @@ help:
 	@echo "  build       - Gera o binário de produção"
 	@echo "  tools       - Baixa as ferramentas necessárias (localmente)"
 	@echo "  clean       - Limpa pastas geradas"
+	@echo "  sync-openapi - Sincroniza o OpenAPI em assets"
+	@echo "  sync-redoc  - Baixa o bundle do Redoc para assets"
+	@echo "  openapi-validate - Valida o OpenAPI local"
 	@echo "  docker-up   - Sobe o docker"
 	@echo "  docker-down - Derruba o docker"
+
+# ==============================================================================
+# 📚 OPENAPI
+# ==============================================================================
+OPENAPI_DOCS := docs/api/openapi.yaml
+OPENAPI_ASSETS := internal/api/assets/openapi.yaml
+
+sync-openapi:
+	@mkdir -p $(dir $(OPENAPI_ASSETS))
+	@{ \
+		echo "# internal/api/assets/openapi.yaml"; \
+		echo "# NOTE: keep in sync with docs/api/openapi.yaml"; \
+		tail -n +3 $(OPENAPI_DOCS); \
+	} > $(OPENAPI_ASSETS)
+
+OPENAPI_VALIDATE := ./cmd/openapi-validate
+
+openapi-validate:
+	go run $(OPENAPI_VALIDATE) -file $(OPENAPI_DOCS)
+
+REDOC_URL := https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js
+REDOC_ASSETS := internal/api/assets/redoc.standalone.js
+
+sync-redoc:
+	@mkdir -p $(dir $(REDOC_ASSETS))
+	@{ \
+		echo "// internal/api/assets/redoc.standalone.js"; \
+		curl -fsSL $(REDOC_URL); \
+	} > $(REDOC_ASSETS)

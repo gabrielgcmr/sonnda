@@ -11,34 +11,9 @@ Endpoints para criação e consulta de pacientes.
 
 Todas as rotas exigem `Authorization: Bearer <id_token>` e usuário registrado.
 
-## Campos e enums
+## Contrato oficial
 
-### Create (obrigatórios)
-
-- `cpf` (string) — 11 dígitos
-- `full_name` (string)
-- `birth_date` (string) — formato `YYYY-MM-DD`
-- `gender` — `MALE | FEMALE | OTHER | UNKNOWN`
-- `race` — `WHITE | BLACK | ASIAN | MIXED | INDIGENOUS | UNKNOWN`
-
-### Create (opcionais)
-
-- `phone` (string)
-- `avatar_url` (string)
-
-### Update (opcionais)
-
-Mesmo conjunto de campos, todos opcionais.
-
-## Endpoints
-
-| Método | Rota            | Status                              |
-| ------ | --------------- | ----------------------------------- |
-| POST   | `/patients`     | Ativo                               |
-| GET    | `/patients`     | Ativo                               |
-| GET    | `/patients/:id` | Ativo                               |
-| PUT    | `/patients/:id` | Handler existe, rota não registrada |
-| DELETE | `/patients/:id` | Handler existe, rota não registrada |
+O contrato completo de endpoints, schemas e erros fica no OpenAPI: `/openapi.yaml`.
 
 ## Criar paciente (POST /v1/patients)
 
@@ -78,11 +53,6 @@ curl -i -X POST https://api.sonnda.com.br/v1/patients \
 }
 ```
 
-**Erros comuns:**
-- `VALIDATION_FAILED` (400)
-- `RESOURCE_ALREADY_EXISTS` (409) — CPF duplicado
-- `INFRA_DATABASE_ERROR` (5xx)
-
 ## Buscar paciente (GET /v1/patients/:id)
 
 **Resposta (200 OK):**
@@ -109,10 +79,6 @@ curl -i https://api.sonnda.com.br/v1/patients/018f3a2a-4c1a-7c5a-9d9e-2b7d8d9c3f
   -H "Authorization: Bearer <id_token>"
 ```
 
-**Erros comuns:**
-- `VALIDATION_FAILED` (400)
-- `NOT_FOUND` (404)
-
 ## Listar pacientes (GET /v1/patients)
 
 **Resposta (200 OK):**
@@ -131,6 +97,3 @@ curl -i https://api.sonnda.com.br/v1/patients/018f3a2a-4c1a-7c5a-9d9e-2b7d8d9c3f
 curl -i https://api.sonnda.com.br/v1/patients \
   -H "Authorization: Bearer <id_token>"
 ```
-
-**Notas:**
-- Paginação está fixa em `limit=100` e `offset=0` no handler atual.
