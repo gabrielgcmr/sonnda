@@ -38,7 +38,7 @@ export PATH := $(PWD)/$(TOOLS_DIR):$(PATH)
 # ==============================================================================
 # 🎯 TARGETS PRINCIPAIS
 # ==============================================================================
-.PHONY: all dev build clean test help sync-openapi sync-redoc openapi-validate
+.PHONY: all dev build clean test help openapi-validate
 
 all: build
 
@@ -49,7 +49,7 @@ tools: $(AIR) $(SQLC) $(OAPI_CODEGEN)
 dev: tools
 	$(AIR) -c .air.toml
 
-build: sync-openapi
+build:
 	go build -o bin/$(APP_NAME) -ldflags "$(LDFLAGS)" $(MAIN)
 
 # Limpeza (Compatível com Linux/WSL)
@@ -116,8 +116,6 @@ help:
 	@echo "  build       - Gera o binário de produção"
 	@echo "  tools       - Baixa as ferramentas necessárias (localmente)"
 	@echo "  clean       - Limpa pastas geradas"
-	@echo "  sync-openapi - Sincroniza o OpenAPI em assets"
-	@echo "  sync-redoc  - Baixa o bundle do Redoc para assets"
 	@echo "  openapi-validate - Valida o OpenAPI local"
 	@echo "  docker-up   - Sobe o docker"
 	@echo "  docker-down - Derruba o docker"
@@ -125,28 +123,9 @@ help:
 # ==============================================================================
 # 📚 OPENAPI
 # ==============================================================================
-OPENAPI_DOCS := docs/api/openapi.yaml
-OPENAPI_ASSETS := internal/api/assets/openapi.yaml
-
-sync-openapi:
-	@mkdir -p $(dir $(OPENAPI_ASSETS))
-	@{ \
-		echo "# internal/api/assets/openapi.yaml"; \
-		echo "# NOTE: keep in sync with docs/api/openapi.yaml"; \
-		tail -n +3 $(OPENAPI_DOCS); \
-	} > $(OPENAPI_ASSETS)
+OPENAPI_DOCS := static/openapi.yaml
 
 OPENAPI_VALIDATE := ./cmd/openapi-validate
 
 openapi-validate:
 	go run $(OPENAPI_VALIDATE) -file $(OPENAPI_DOCS)
-
-REDOC_URL := https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js
-REDOC_ASSETS := internal/api/assets/redoc.standalone.js
-
-sync-redoc:
-	@mkdir -p $(dir $(REDOC_ASSETS))
-	@{ \
-		echo "// internal/api/assets/redoc.standalone.js"; \
-		curl -fsSL $(REDOC_URL); \
-	} > $(REDOC_ASSETS)

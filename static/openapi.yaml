@@ -1,11 +1,13 @@
-# internal/api/assets/openapi.yaml
-# NOTE: keep in sync with docs/api/openapi.yaml
+# static/openapi.yaml
+# NOTE: served at /openapi.yaml (embedded from this file)
 openapi: 3.0.3
 info:
   title: Sonnda API
   version: "0.1.0"
   description: OpenAPI inicial das rotas HTTP da Sonnda.
 servers:
+  - url: http://localhost:8080
+    description: Desenvolvimento local
   - url: https://api.sonnda.com.br
     description: Produção
 paths:
@@ -235,7 +237,8 @@ paths:
   /v1/patients/{id}/labs:
     get:
       summary: Listar laudos
-      tags: [Labs]
+      tags:
+        - Labs
       security:
         - bearerAuth: []
       parameters:
@@ -250,7 +253,8 @@ paths:
           required: false
           schema:
             type: string
-            enum: [full]
+            enum:
+              - full
           description: Retorna a representação completa quando expand=full
         - name: include
           in: query

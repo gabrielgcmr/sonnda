@@ -132,7 +132,7 @@ Estrutura atual do projeto:
 │   │   ├── labs.md
 │   │   ├── patient.md
 │   │   ├── user.md
-│   │   └── openapi.yaml
+│   │   └── README.md
 │   ├── architecture/               # Arquitetura e decisões
 │   │   ├── access-control.md
 │   │   ├── app-source-of-truth.md
@@ -140,6 +140,11 @@ Estrutura atual do projeto:
 │   │   └── adr/                    # Architecture Decision Records
 │   └── dev/                        # Guias de desenvolvimento
 │       └── setup.md
+├── static/                         # Assets embutidos (docs, openapi, favicon)
+│   ├── embed.go
+│   ├── openapi.yaml
+│   ├── docs.html
+│   └── favicon.ico
 ├── internal/
 │   ├── api/                        # [LEGADO - sendo migrado]
 │   │   ├── routes.go

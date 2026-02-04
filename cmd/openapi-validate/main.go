@@ -23,7 +23,7 @@ type OpenAPIInfo struct {
 
 func main() {
 	var filePath string
-	flag.StringVar(&filePath, "file", "docs/api/openapi.yaml", "path to OpenAPI yaml")
+	flag.StringVar(&filePath, "file", "static/openapi.yaml", "path to OpenAPI yaml")
 	flag.Parse()
 
 	data, err := os.ReadFile(filePath)

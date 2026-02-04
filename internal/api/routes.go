@@ -164,9 +164,6 @@ func registerDocsRoutes(r gin.IRouter) {
 	r.GET("/docs", func(c *gin.Context) {
 		c.Data(http.StatusOK, "text/html; charset=utf-8", docsHTML)
 	})
-	r.GET("/docs/redoc.standalone.js", func(c *gin.Context) {
-		c.Data(http.StatusOK, "application/javascript; charset=utf-8", redocBundle)
-	})
 }
 
 func registerOpenAPIRoute(r gin.IRouter) {
