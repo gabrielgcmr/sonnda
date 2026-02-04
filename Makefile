@@ -10,11 +10,13 @@ LDFLAGS := -s -w -X github.com/gabrielgcmr/sonnda/internal/api.rootAPIVersion=$(
 # Versões das Ferramentas
 AIR_VERSION      := latest
 SQLC_VERSION     := latest
+OAPI_CODEGEN_VERSION := latest
 
 # Diretórios e Binários
 TOOLS_DIR    := tools/bin
 AIR          := $(TOOLS_DIR)/air
 SQLC         := $(TOOLS_DIR)/sqlc
+OAPI_CODEGEN := $(TOOLS_DIR)/oapi-codegen
 
 # Caminhos do Projeto (Preservados do arquivo original)
 SQLC_CONF  := internal/adapters/outbound/storage/data/postgres/sqlc/sqlc.yaml
@@ -41,7 +43,7 @@ export PATH := $(PWD)/$(TOOLS_DIR):$(PATH)
 all: build
 
 # Instala todas as dependências (Air, SQLC)
-tools: $(AIR) $(SQLC)
+tools: $(AIR) $(SQLC) $(OAPI_CODEGEN)
 
 # Roda apenas o backend (Go + Air)
 dev: tools
@@ -69,6 +71,11 @@ $(AIR):
 $(SQLC):
 	@echo "🗄️  Instalando sqlc versão: $(SQLC_VERSION)..."
 	@GOBIN=$(PWD)/$(TOOLS_DIR) go install github.com/sqlc-dev/sqlc/cmd/sqlc@$(SQLC_VERSION)
+
+$(OAPI_CODEGEN):
+	@echo "🧩 Instalando oapi-codegen versão: $(OAPI_CODEGEN_VERSION)..."
+	@mkdir -p $(TOOLS_DIR)
+	@GOBIN=$(PWD)/$(TOOLS_DIR) go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@$(OAPI_CODEGEN_VERSION)
 
 # ==============================================================================
 # 🔄 WATCHERS E PROCESSOS INTERNOS

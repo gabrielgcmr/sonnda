@@ -140,8 +140,8 @@ func main() {
 		localScheme = "https"
 		localPort = ""
 	}
-	localAPIURL := localScheme + "://localhost" + localPort + "/v1"
-	publicAPIURL := "https://api.sonnda.com.br/v1"
+	localAPIURL := localScheme + "://localhost" + localPort
+	publicAPIURL := "https://api.sonnda.com.br"
 	slog.Info(
 		"Sonnda is running",
 		slog.String("mode", cfg.Env),

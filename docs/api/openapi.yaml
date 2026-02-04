@@ -1,11 +1,13 @@
 # docs/api/openapi.yaml
 # NOTE: keep in sync with internal/api/assets/openapi.yaml (served at /openapi.yaml)
-openapi: 3.0.3
+openapi: 3.1.1
 info:
   title: Sonnda API
   version: "0.1.0"
   description: OpenAPI inicial das rotas HTTP da Sonnda.
 servers:
+  - url: http://localhost:8080
+    description: Desenvolvimento local
   - url: https://api.sonnda.com.br
     description: Produção
 paths:
