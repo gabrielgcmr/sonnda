@@ -134,7 +134,7 @@ OPENAPI_VALIDATE := ./cmd/openapi-validate
 openapi-validate:
 	go run $(OPENAPI_VALIDATE) -file $(OPENAPI_DOCS)
 
-REDOC_URL := https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js
+REDOC_URL := https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js
 REDOC_ASSETS := internal/api/assets/redoc.standalone.js
 
 sync-redoc:

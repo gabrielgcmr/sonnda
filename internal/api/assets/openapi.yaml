@@ -257,7 +257,7 @@ paths:
           required: false
           schema:
             type: string
-          description: Lista de campos para expandir (ex.: results)
+          description: "Lista de campos para expandir (ex.: results)"
         - $ref: "#/components/parameters/LimitParam"
         - $ref: "#/components/parameters/OffsetParam"
       responses:
