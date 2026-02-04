@@ -235,7 +235,8 @@ paths:
   /v1/patients/{id}/labs:
     get:
       summary: Listar laudos
-      tags: [Labs]
+      tags:
+        - Labs
       security:
         - bearerAuth: []
       parameters:
@@ -250,7 +251,8 @@ paths:
           required: false
           schema:
             type: string
-            enum: [full]
+            enum:
+              - full
           description: Retorna a representação completa quando expand=full
         - name: include
           in: query
