@@ -46,21 +46,6 @@ func (h *User) CreateUser(c *gin.Context) {
 		return
 	}
 
-	accountType := user.AccountType(req.AccountType).Normalize()
-	if !accountType.IsValid() {
-		presenter.ErrorResponder(c, apperr.Validation("tipo de conta inválido",
-			apperr.Violation{
-				Field:  "account_type",
-				Reason: "invalid_enum",
-			}))
-		return
-	}
-
-	if accountType == user.AccountTypeProfessional {
-		presenter.ErrorResponder(c, apperr.DomainRuleViolation("criação de profissional ainda não está implementada no MVP"))
-		return
-	}
-
 	if req.BirthDate.Time.IsZero() {
 		presenter.ErrorResponder(c, apperr.Validation("data de nascimento é obrigatória",
 			apperr.Violation{
@@ -82,7 +67,7 @@ func (h *User) CreateUser(c *gin.Context) {
 		Subject:     identity.Subject,
 		Email:       email,
 		FullName:    req.FullName,
-		AccountType: accountType,
+		AccountType: user.AccountTypeBasicCare,
 		BirthDate:   birthDate,
 		CPF:         req.Cpf,
 		Phone:       req.Phone,

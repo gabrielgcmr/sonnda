@@ -17,7 +17,7 @@ O contrato completo de endpoints, schemas e erros fica no OpenAPI: `/openapi.yam
 
 ## Criar usuário (POST /v1/users)
 
-Nota (MVP): a criação/gestão de profissionais ainda não está implementada. Por enquanto, use `account_type="basic_care"`.
+Nota (MVP): a criação/gestão de profissionais ainda não está implementada.
 
 **Request (JSON):**
 ```json
@@ -25,8 +25,7 @@ Nota (MVP): a criação/gestão de profissionais ainda não está implementada. 
   "full_name": "Joana Silva",
   "birth_date": "1990-05-12",
   "cpf": "12345678901",
-  "phone": "+55 11 99999-0000",
-  "account_type": "basic_care"
+  "phone": "+55 11 99999-0000"
 }
 ```
 
@@ -39,14 +38,9 @@ curl -i -X POST https://api.sonnda.com.br/v1/users \
     "full_name": "Joana Silva",
     "birth_date": "1990-05-12",
     "cpf": "12345678901",
-    "phone": "+55 11 99999-0000",
-    "account_type": "basic_care"
+    "phone": "+55 11 99999-0000"
   }'
 ```
-
-### Campos reservados (profissional)
-
-O request também define `account_type="professional"` e o objeto `professional`, mas no MVP a API vai rejeitar esse fluxo (ainda não implementado).
 
 ## Perfil atual (GET /v1/me)
 
@@ -58,7 +52,7 @@ O request também define `account_type="professional"` e o objeto `professional`
   "auth_subject": "uid",
   "email": "user@example.com",
   "full_name": "Joana Silva",
-  "account_type": "professional",
+  "account_type": "basic_care",
   "birth_date": "1990-05-12T00:00:00Z",
   "cpf": "12345678901",
   "phone": "+55 11 99999-0000",

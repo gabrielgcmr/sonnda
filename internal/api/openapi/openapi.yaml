@@ -77,8 +77,6 @@ paths:
       description: |-
         Cria o usuário da plataforma a partir da identidade autenticada (JWT do Supabase).
         Requer token válido do Supabase (Bearer).
-
-        Nota (MVP): `account_type=professional` ainda não está implementado.
       tags: [User]
       requestBody:
         required: true
@@ -403,7 +401,6 @@ components:
         - birth_date
         - cpf
         - phone
-        - account_type
       properties:
         full_name:
           type: string
@@ -414,31 +411,6 @@ components:
           type: string
         phone:
           type: string
-        account_type:
-          type: string
-          enum: [basic_care, professional]
-          description: |-
-            Nota (MVP): apenas `basic_care` está disponível no momento.
-        professional:
-          $ref: "#/components/schemas/ProfessionalRequestData"
-          description: |-
-            Nota (MVP): ainda não implementado. Se `account_type=professional`, a API vai rejeitar a criação.
-    ProfessionalRequestData:
-      type: object
-      required:
-        - kind
-        - registration_number
-        - registration_issuer
-      properties:
-        kind:
-          type: string
-        registration_number:
-          type: string
-        registration_issuer:
-          type: string
-        registration_state:
-          type: string
-          nullable: true
     UpdateUserRequest:
       type: object
       properties:
