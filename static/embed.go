@@ -3,9 +3,6 @@ package static
 
 import "embed"
 
-//go:embed openapi.yaml
-var OpenAPISpec []byte
-
 //go:embed docs.html
 var DocsHTML []byte
 

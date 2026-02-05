@@ -8,6 +8,8 @@ import (
 	"github.com/gabrielgcmr/sonnda/internal/api/handlers/patient"
 	"github.com/gabrielgcmr/sonnda/internal/api/handlers/user"
 	"github.com/gabrielgcmr/sonnda/internal/api/middleware"
+	openapispec "github.com/gabrielgcmr/sonnda/internal/api/openapi"
+	openapigen "github.com/gabrielgcmr/sonnda/internal/api/openapi/generated"
 
 	"github.com/gin-gonic/gin"
 )
@@ -109,12 +111,12 @@ func registerRootRoute(r gin.IRouter, info RootInfo) {
 	}
 
 	r.GET("/", func(c *gin.Context) {
-		c.JSON(http.StatusOK, RootResponse{
+		c.JSON(http.StatusOK, openapigen.RootResponse{
 			Name:        name,
 			Version:     version,
 			Environment: environment,
 			Docs:        "/docs",
-			OpenAPI:     "/openapi.yaml",
+			Openapi:     "/openapi.yaml",
 			Health:      "/healthz",
 			Ready:       "/readyz",
 		})
@@ -134,6 +136,6 @@ func registerDocsRoutes(r gin.IRouter) {
 
 func registerOpenAPIRoute(r gin.IRouter) {
 	r.GET("/openapi.yaml", func(c *gin.Context) {
-		c.Data(http.StatusOK, "application/yaml; charset=utf-8", openapiSpec)
+		c.Data(http.StatusOK, "application/yaml; charset=utf-8", openapispec.OpenAPISpec)
 	})
 }

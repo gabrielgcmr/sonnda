@@ -10,6 +10,7 @@ import (
 
 	"github.com/gabrielgcmr/sonnda/internal/api/handlers"
 	helpers "github.com/gabrielgcmr/sonnda/internal/api/helpers"
+	openapi "github.com/gabrielgcmr/sonnda/internal/api/openapi/generated"
 	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
 	usersvc "github.com/gabrielgcmr/sonnda/internal/application/services/user"
 	registrationuc "github.com/gabrielgcmr/sonnda/internal/application/usecase/registration"
@@ -35,34 +36,37 @@ func NewHandler(
 }
 
 func (h *Handler) Register(c *gin.Context) {
-	if h == nil || h.regUC == nil {
-		presenter.ErrorResponder(c, apperr.Internal("serviço indisponível", nil))
-		return
-	}
-
 	identity, ok := helpers.GetIdentity(c)
 	if !ok {
 		presenter.ErrorResponder(c, apperr.Unauthorized("autenticação necessária"))
 		return
 	}
 
-	var req RegisterRequest
+	var req openapi.RegisterRequest
 	if err := helpers.BindJSON(c, &req); err != nil {
 		presenter.ErrorResponder(c, err)
 		return
 	}
 
 	accountType := user.AccountType(req.AccountType).Normalize()
-
-	birthDate, err := handlers.ParseBirthDate(req.BirthDate)
-	if err != nil {
-		presenter.ErrorResponder(c, apperr.Validation("data de nascimento inválida",
+	if !accountType.IsValid() {
+		presenter.ErrorResponder(c, apperr.Validation("tipo de conta inválido",
 			apperr.Violation{
-				Field:  "birth_date",
-				Reason: "invalid_format",
+				Field:  "account_type",
+				Reason: "invalid_enum",
 			}))
 		return
 	}
+
+	if req.BirthDate.Time.IsZero() {
+		presenter.ErrorResponder(c, apperr.Validation("data de nascimento é obrigatória",
+			apperr.Violation{
+				Field:  "birth_date",
+				Reason: "required",
+			}))
+		return
+	}
+	birthDate := req.BirthDate.Time
 
 	if identity.Email == nil || strings.TrimSpace(*identity.Email) == "" {
 		presenter.ErrorResponder(c, apperr.Validation("email é obrigatório"))
@@ -77,11 +81,20 @@ func (h *Handler) Register(c *gin.Context) {
 		FullName:    req.FullName,
 		AccountType: accountType,
 		BirthDate:   birthDate,
-		CPF:         req.CPF,
+		CPF:         req.Cpf,
 		Phone:       req.Phone,
 	}
 
 	if accountType == user.AccountTypeProfessional {
+		if req.Professional == nil {
+			presenter.ErrorResponder(c, apperr.Validation("dados de profissional são obrigatórios",
+				apperr.Violation{
+					Field:  "professional",
+					Reason: "required",
+				}))
+			return
+		}
+
 		kind := professional.Kind(req.Professional.Kind).Normalize()
 		input.Professional = &registrationuc.ProfessionalInput{
 			Kind:               kind,

@@ -71,7 +71,6 @@ func main() {
 		log.Fatalf("falha ao conectar ao Redis: %v", err)
 	}
 	defer redisClient.Close()
-	slog.Info("Redis conectado com sucesso")
 
 	//6. Conectando outros servicos
 	//6.1 Storage Service (GCS)
@@ -123,7 +122,6 @@ func main() {
 		Name:    "Sonnda API",
 		Version: version,
 		Env:     cfg.App.Env,
-		Addr:    ":" + cfg.HTTP.Port,
 		Logger:  appLogger,
 		Deps: &api.APIDependencies{
 			AuthMiddleware:         apiAuthMW,
@@ -135,22 +133,13 @@ func main() {
 	})
 
 	// 10. Inicia o servidor
-	localScheme := "http"
-	localPort := ":" + cfg.HTTP.Port
-	if cfg.App.Env == "prod" {
-		localScheme = "https"
-		localPort = ""
-	}
-	localAPIURL := localScheme + "://localhost" + localPort
-	publicAPIURL := "https://api.sonnda.com.br"
 	slog.Info(
 		"Sonnda is running",
 		slog.String("mode", cfg.App.Env),
-		slog.String("listen_addr", ":"+cfg.HTTP.Port),
-		slog.String("local_api_url", localAPIURL),
-		slog.String("public_api_url", publicAPIURL),
+		slog.String("local_api_url", "http://localhost:"+cfg.HTTP.Port),
+		slog.String("public_api_url", "https://api.sonnda.com.br"),
 	)
-	if err := app.Run(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+	if err := app.Run(":" + cfg.HTTP.Port); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		// 1. Loga o erro com nivel Error (estruturado)
 		slog.Error("failed to start server", "error", err)
 

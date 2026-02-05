@@ -1,3 +1,4 @@
+// internal/api/app.go
 package api
 
 import (
@@ -12,20 +13,15 @@ type Options struct {
 	Name    string
 	Version string
 	Env     string
-	Addr    string
 	Logger  *slog.Logger
 	Deps    *APIDependencies
 }
 
 type App struct {
 	router *gin.Engine
-	addr   string
 }
 
 func New(opts Options) *App {
-	if opts.Addr == "" {
-		opts.Addr = ":8080"
-	}
 	if opts.Deps == nil {
 		panic("api.New: Options.Deps is required")
 	}
@@ -53,13 +49,15 @@ func New(opts Options) *App {
 
 	return &App{
 		router: r,
-		addr:   opts.Addr,
 	}
 }
 
-func (a *App) Run() error {
+func (a *App) Run(addr string) error {
+	if addr == "" {
+		addr = ":8080"
+	}
 	server := &http.Server{
-		Addr:    a.addr,
+		Addr:    addr,
 		Handler: a.router,
 	}
 	return server.ListenAndServe()

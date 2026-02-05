@@ -11,7 +11,7 @@ Documentação das APIs HTTP da Sonnda (REST).
 
 ## Contrato oficial
 
-- A fonte de verdade é `docs/api/openapi.yaml` (sincronizado para `static/openapi.yaml` e servido em `/openapi.yaml`).
+- A fonte de verdade é `internal/api/openapi/openapi.yaml` (embutido no binário e servido em `/openapi.yaml`).
 - A UI em `/docs` é gerada a partir do OpenAPI (Redoc via CDN).
 - Arquivos `.md` são guias com exemplos e fluxos, e não duplicam o contrato.
 - Para validar o contrato localmente: `make openapi-validate`.

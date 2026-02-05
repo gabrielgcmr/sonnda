@@ -1,5 +1,5 @@
-# docs/api/openapi.yaml
-# NOTE: source of truth. Synced to static/openapi.yaml for embedding at /openapi.yaml.
+# internal/api/openapi/openapi.yaml
+# NOTE: source of truth. Embedded and served at /openapi.yaml.
 openapi: 3.0.3
 info:
   title: Sonnda API
@@ -11,6 +11,9 @@ servers:
   - url: https://api.sonnda.com.br
     description: Produção
 paths:
+  # =========================
+  # Public
+  # =========================
   /:
     get:
       summary: API metadata
@@ -56,6 +59,13 @@ paths:
             text/html:
               schema:
                 type: string
+  # =========================
+  # Auth
+  # =========================
+
+  # =========================
+  # Register user
+  # =========================
   /v1/register:
     post:
       summary: Registrar usuário (onboarding)
@@ -159,6 +169,10 @@ paths:
           $ref: "#/components/responses/AppError"
         "500":
           $ref: "#/components/responses/AppError"
+
+  # =========================
+  # patients
+  # =========================
   /v1/patients:
     post:
       summary: Criar paciente
@@ -318,7 +332,13 @@ paths:
           $ref: "#/components/responses/AppError"
         "500":
           $ref: "#/components/responses/AppError"
+# =========================
+# Components
+# =========================
 components:
+  # =========================
+  # Security Schemes
+  # =========================
   securitySchemes:
     bearerAuth:
       type: http

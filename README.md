@@ -141,14 +141,17 @@ Estrutura atual do projeto:
 │   │   └── adr/                    # Architecture Decision Records
 │   └── dev/                        # Guias de desenvolvimento
 │       └── setup.md
-├── static/                         # Assets embutidos (docs, openapi, favicon)
+├── static/                         # Assets embutidos (docs, favicon)
 │   ├── embed.go
-│   ├── openapi.yaml               # Gerado a partir de docs/api/openapi.yaml
 │   ├── docs.html
 │   └── favicon.ico
 ├── internal/
 │   ├── api/                        # [LEGADO - sendo migrado]
 │   │   ├── routes.go
+│   │   ├── openapi/
+│   │   │   ├── openapi.yaml        # Fonte de verdade (embutido e servido em /openapi.yaml)
+│   │   │   └── generated/          # Código gerado via oapi-codegen
+│   │   │       └── oapi.gen.go
 │   │   ├── handlers/
 │   │   ├── helpers/
 │   │   ├── middleware/

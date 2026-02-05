@@ -6,13 +6,13 @@ APP_NAME := sonnda
 MAIN     := ./cmd/api
 VERSION ?= 1.0.0
 LDFLAGS := -s -w -X github.com/gabrielgcmr/sonnda/cmd/api.version=$(VERSION)
-SQLC_CONF := internal/infrastructure/persistence/postgres/sqlc/sqlc.yaml
-OPENAPI_SPEC := docs/api/openapi.yaml
+SQLC_SPEC := internal/infrastructure/persistence/postgres/sqlc/sqlc.yaml
+OPENAPI_SPEC := internal/api/openapi/openapi.yaml
 
 # ==============================================================================
 # 🎯 TARGETS PRINCIPAIS
 # ==============================================================================
-.PHONY: all dev build clean generate test help openapi-validate oapi-codegen openapi-sync
+.PHONY: all dev build clean generate test help openapi-validate oapi-codegen
 
 all: build
 
@@ -45,30 +45,24 @@ air-run:
 .PHONY: sqlc sqlc-check 
 
 sqlc:
-	go tool sqlc generate -f $(SQLC_CONF)
+	go tool sqlc generate -f $(SQLC_SPEC)
 
 sqlc-check:
-	go tool sqlc compile -f $(SQLC_CONF)
+	go tool sqlc compile -f $(SQLC_SPEC)
 
 # ==============================================================================
 # 🧬 CODEGEN
 # ==============================================================================
 OAPI_CODEGEN_INPUT   := $(OPENAPI_SPEC)
-OAPI_CODEGEN_OUTPUT  := internal/api/oapi.gen.go
-OAPI_CODEGEN_PACKAGE := api
+OAPI_CODEGEN_OUTPUT  := internal/api/openapi/generated/oapi.gen.go
+OAPI_CODEGEN_PACKAGE := openapi
 OAPI_CODEGEN_GENERATE := types,gin
 
 oapi-codegen:
+	@mkdir -p $(dir $(OAPI_CODEGEN_OUTPUT))
 	go tool oapi-codegen -generate $(OAPI_CODEGEN_GENERATE) -package $(OAPI_CODEGEN_PACKAGE) -o $(OAPI_CODEGEN_OUTPUT) $(OAPI_CODEGEN_INPUT)
 
-openapi-sync:
-	@{ \
-		echo "# static/openapi.yaml"; \
-		echo "# NOTE: generated from docs/api/openapi.yaml. Do not edit by hand."; \
-		tail -n +3 $(OPENAPI_SPEC); \
-	} > static/openapi.yaml
-
-generate: openapi-sync sqlc oapi-codegen
+generate: sqlc oapi-codegen
 
 # ==============================================================================
 # 🐘 DOCKER
