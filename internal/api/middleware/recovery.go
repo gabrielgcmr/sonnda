@@ -1,12 +1,13 @@
+// internal/api/middleware/recovery.go
 package middleware
 
 import (
 	"log/slog"
-	"net/http"
 	"runtime/debug"
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 	applog "github.com/gabrielgcmr/sonnda/internal/kernel/observability"
 )
@@ -46,7 +47,8 @@ func Recovery(l *slog.Logger) gin.HandlerFunc {
 				reqLog.Error("panic_recovered", attrs...)
 
 				if !c.Writer.Written() {
-					c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": apperr.INTERNAL_ERROR})
+					c.Set("panic_recovered", true)
+					presenter.ErrorResponder(c, apperr.Internal("erro inesperado", nil))
 					return
 				}
 				c.Abort()

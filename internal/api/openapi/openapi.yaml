@@ -352,23 +352,56 @@ components:
       description: Número de itens para pular
   responses:
     AppError:
-      description: Erro padronizado (AppError)
+      description: Erro padronizado (RFC 9457 - Problem Details)
       content:
-        application/json:
+        application/problem+json:
           schema:
-            $ref: "#/components/schemas/ErrorResponse"
+            $ref: "#/components/schemas/ProblemDetails"
   schemas:
-    ErrorResponse:
+    ProblemDetails:
       type: object
       properties:
-        error:
-          type: object
-          properties:
-            code:
-              type: string
-            message:
-              type: string
-      required: [error]
+        type:
+          type: string
+          description: URI que identifica o tipo do problema.
+          example: urn:sonnda:problem:validation_failed
+        title:
+          type: string
+          description: Resumo curto e legível do problema.
+          example: Falha de validação
+        status:
+          type: integer
+          description: HTTP status code.
+          example: 400
+        detail:
+          type: string
+          description: Explicação específica desta ocorrência.
+          example: entrada inválida
+        instance:
+          type: string
+          description: URI que identifica a ocorrência específica do problema.
+          example: urn:sonnda:request-id:8a0f8a9b-2e1c-4c46-a2b1-1a6f8a6c2e44
+        code:
+          type: string
+          description: Código estável do erro (contrato Sonnda).
+          example: VALIDATION_FAILED
+        request_id:
+          type: string
+          description: Identificador de request (também retornado em X-Request-ID).
+          example: 8a0f8a9b-2e1c-4c46-a2b1-1a6f8a6c2e44
+        violations:
+          type: array
+          description: Lista de violações de validação (quando aplicável).
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                example: birth_date
+              reason:
+                type: string
+                example: required
+      required: [type, title, status, detail, code]
     HealthResponse:
       type: object
       properties:

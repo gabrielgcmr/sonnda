@@ -7,9 +7,9 @@ Este documento descreve a arquitetura de tratamento de erros da Sonnda API, insp
 - ADR: `docs/architecture/adr/ADR-002-error-handling-contrato.md`
 - Catálogo de códigos: `internal/kernel/apperr/catalog.go`
 - Política de log por erro: `internal/kernel/apperr/logging.go`
-- Presenter HTTP (canonical): `internal/adapters/inbound/http/shared/httperr` (veja `APIErrorResponder`)
-- Middleware de AccessLog: `internal/adapters/inbound/http/middleware/logging.go`
-- Middleware de Recovery: `internal/adapters/inbound/http/middleware/recovery.go`
+- Presenter HTTP (canonical): `internal/api/presenter` (veja `ErrorResponder`)
+- Middleware de AccessLog: `internal/api/middleware/access_log.go`
+- Middleware de Recovery: `internal/api/middleware/recovery.go`
 
 ---
 
@@ -25,18 +25,26 @@ Este documento descreve a arquitetura de tratamento de erros da Sonnda API, insp
 
 ## Contrato HTTP de erro
 
-Formato padrão:
+Formato padrão (RFC 9457 - Problem Details):
 
 ```json
 {
-  "error": { "code": "X", "message": "Y" }
+  "type": "urn:sonnda:problem:validation_failed",
+  "title": "Falha de validação",
+  "status": 400,
+  "detail": "payload inválido",
+  "instance": "urn:sonnda:request-id:8a0f8a9b-2e1c-4c46-a2b1-1a6f8a6c2e44",
+  "code": "VALIDATION_FAILED",
+  "violations": [{ "field": "email", "reason": "required" }],
+  "request_id": "8a0f8a9b-2e1c-4c46-a2b1-1a6f8a6c2e44"
 }
 ```
 
+- Content-Type: `application/problem+json`
 - `code`: identificador estável (contrato com clientes).
-- `message`: mensagem segura (não expõe detalhes internos).
+- `detail`: mensagem segura (não expõe detalhes internos).
 
-Implementado por `internal/adapters/inbound/http/shared/httperr.ToHTTP` + presenter `APIErrorResponder` no mesmo package.
+Implementado por `internal/api/presenter.ToProblem` + `internal/api/presenter.ErrorResponder`.
 
 ---
 
@@ -48,9 +56,9 @@ HTTP Handler (Gin)
   │    └─ cria *apperr.AppError { Code, Message, Cause }
   ├─ chama Service (internal/application/...)
   │    └─ Service converte erros esperados em *apperr.AppError
-  └─ escreve resposta (internal/adapters/inbound/http/shared/httperr)
-       ├─ ToHTTP(err) => (status, {code,message})
-       └─ APIErrorResponder(c, err) | WebErrorResponder(c, err) => resposta + context keys + logging (5xx)
+  └─ escreve resposta (internal/api/presenter)
+       ├─ ToProblem(err) => (status, problem_details)
+       └─ ErrorResponder(c, err) => resposta + context keys + logging (5xx)
 ```
 
 ---
@@ -78,11 +86,9 @@ O catálogo de códigos fica em `internal/kernel/apperr/catalog.go`.
 
 ### HTTP adapter (presenter canonical)
 
-O presenter canonical é o package `internal/adapters/inbound/http/shared/httperr` que exporta:
-- `ToHTTP(err) (status int, body ErrorResponse)`
-- `APIErrorResponder(c *gin.Context, err error)` — presenter para endpoints JSON (API)
-
-Observação: implementação antiga em `internal/adapters/inbound/http/api/apierr` foi depreciada. Contribuições novas devem usar `httperr`.
+O presenter canonical é o package `internal/api/presenter` que exporta:
+- `ToProblem(err) (status int, body problem.Details)`
+- `ErrorResponder(c *gin.Context, err error)` — presenter para endpoints da API
 
 ---
 
@@ -95,8 +101,7 @@ O mapeamento é centralizado em `internal/adapters/inbound/http/shared/httperr/h
 ## Padrão de uso nos handlers
 
 Regras:
-- Handler **não chama** `apperr.ToHTTP` diretamente.
-- Handler deve chamar `internal/adapters/inbound/http/shared/httperr.APIErrorResponder(c, err)` para APIs JSON.
+- Handler deve chamar `internal/api/presenter.ErrorResponder(c, err)`.
 - Erros de fronteira (auth/bind/parse) são convertidos para `&apperr.AppError{Code, Message, Cause}` no handler e passados para o presenter.
 - Erros do service/usecase **já devem** voltar como `*apperr.AppError` quando forem esperados.
 
@@ -104,12 +109,12 @@ Exemplo (padrão):
 
 ```go
 import (
-  httperr "github.com/gabrielgcmr/sonnda/internal/adapters/inbound/http/shared/httperr"
+  "github.com/gabrielgcmr/sonnda/internal/api/presenter"
   "github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 )
 
 if err := c.ShouldBindJSON(&req); err != nil {
-  httperr.APIErrorResponder(c, &apperr.AppError{
+  presenter.ErrorResponder(c, &apperr.AppError{
     Code: apperr.VALIDATION_FAILED,
     Message: "payload inválido",
     Cause: err,

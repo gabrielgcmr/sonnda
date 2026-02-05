@@ -6,7 +6,7 @@ Documentação das APIs HTTP da Sonnda (REST).
 ## Visão geral
 
 - **Base API**: `https://api.sonnda.com.br/v1`
-- **Formato de erro**: contrato `AppError` (sempre em `{ "error": { "code", "message" } }`)
+- **Formato de erro**: RFC 9457 (Problem Details) em `application/problem+json`
 - **JSON**: campos em `snake_case`
 
 ## Contrato oficial
@@ -23,19 +23,7 @@ Documentação das APIs HTTP da Sonnda (REST).
 ## Índice
 
 - [Autenticação](auth.md)
+- [Erros](errors.md)
 - [Pacientes](patient.md)
 - [Usuários](user.md)
 - [Labs](labs.md)
-
-## Contrato de erro (AppError)
-
-Exemplo de resposta:
-
-```json
-{
-  "error": {
-    "code": "AUTH_REQUIRED",
-    "message": "autenticação necessária"
-  }
-}
-```

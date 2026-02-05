@@ -1,4 +1,5 @@
-# ADR-002 — Contrato de erros com AppError + Presenter HTTP
+<!-- docs/architecture/adr/ADR-002-error-handling-contrato.md -->
+# ADR-002 — Contrato de erros com AppError + Problem Details (RFC 9457)
 
 **Status:** Aceito  
 **Data:** 2026-01  
@@ -33,13 +34,13 @@ Padronizar o tratamento de erros em três peças (por camada):
    - Catálogo de códigos em `internal/kernel/apperr/catalog.go` (`ErrorCode`).
    - Política de log por erro em `internal/kernel/apperr/logging.go` (`ErrorCodeOf`, `LogLevelOf`).
 
-2) **Presenter HTTP (adaptador Gin):** `internal/adapters/inbound/http/shared/httperr`
-   - `ToHTTP(err) -> (status, payload)` produz `{ "error": { "code", "message" } }`.
-   - `WriteError(c *gin.Context, err error)` escreve a resposta e adiciona metadados no `gin.Context`:
+2) **Presenter HTTP (adaptador Gin):** `internal/api/presenter`
+   - `ToProblem(err) -> (status, payload)` produz **RFC 9457** em `application/problem+json`.
+   - `ErrorResponder(c *gin.Context, err error)` escreve a resposta e adiciona metadados no `gin.Context`:
      - `error_code`
      - `http_status`
      - `error_log_level`
-   - `WriteError` evita log detalhado em 4xx (deixa o AccessLog cobrir); em 5xx, registra log detalhado com a cadeia `%w`.
+   - `ErrorResponder` evita log detalhado em 4xx (deixa o AccessLog cobrir); em 5xx, registra log detalhado com a cadeia `%w`.
 
 3) **AccessLog como log principal por request:** middleware HTTP
    - Sempre 1 log por request (status/latência/route/etc.).

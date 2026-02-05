@@ -1,34 +1,24 @@
-// internal/api/apierr/mapper.go
+// internal/api/presenter/mapper.go
 package presenter
 
 import (
 	"errors"
 	"net/http"
 
+	"github.com/gabrielgcmr/sonnda/internal/api/problem"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 )
 
-type ErrorResponse struct {
-	Code       apperr.ErrorCode   `json:"code"`
-	Message    string             `json:"message"`
-	Violations []apperr.Violation `json:"violations,omitempty"`
-}
-
-func ToHTTP(err error) (status int, body ErrorResponse) {
+func ToProblem(err error, meta problem.Meta) (status int, body problem.Details) {
 	var appErr *apperr.AppError
 
 	if errors.As(err, &appErr) && appErr != nil {
-		return StatusFromCode(appErr.Code), ErrorResponse{
-			Code:       appErr.Code,
-			Message:    appErr.Message,
-			Violations: appErr.Violations,
-		}
+		status = StatusFromCode(appErr.Code)
+		return status, problem.New(status, appErr.Code, appErr.Message, appErr.Violations, meta)
 	}
 
-	return StatusFromCode(apperr.INTERNAL_ERROR), ErrorResponse{
-		Code:    apperr.INTERNAL_ERROR,
-		Message: "erro inesperado",
-	}
+	status = StatusFromCode(apperr.INTERNAL_ERROR)
+	return status, problem.New(status, apperr.INTERNAL_ERROR, "erro inesperado", nil, meta)
 }
 
 func StatusFromCode(code apperr.ErrorCode) int {
