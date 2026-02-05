@@ -2,26 +2,15 @@
 package api
 
 import (
-	"log/slog"
 	"net/http"
 
 	"github.com/gabrielgcmr/sonnda/internal/api/handlers"
 	"github.com/gabrielgcmr/sonnda/internal/api/handlers/patient"
 	"github.com/gabrielgcmr/sonnda/internal/api/handlers/user"
 	"github.com/gabrielgcmr/sonnda/internal/api/middleware"
-	"github.com/gabrielgcmr/sonnda/internal/config"
 
 	"github.com/gin-gonic/gin"
 )
-
-type Infra struct {
-	Logger *slog.Logger
-	Config *config.Config
-}
-
-type Deps struct {
-	API *APIDependencies
-}
 
 type APIDependencies struct {
 	AuthMiddleware         *middleware.AuthMiddleware
@@ -31,41 +20,10 @@ type APIDependencies struct {
 	LabsHandler            *handlers.LabsHandler
 }
 
-const rootAPIName = "sonnda"
-
-// rootAPIVersion is overridden via -ldflags in build/release pipelines.
-var rootAPIVersion = "1.0.0"
-
-type RootResponse struct {
-	Name        string `json:"name"`
-	Version     string `json:"version"`
-	Environment string `json:"environment"`
-	Docs        string `json:"docs"`
-	OpenAPI     string `json:"openapi"`
-	Health      string `json:"health"`
-	Ready       string `json:"ready"`
-}
-
-func NewRouter(infra Infra, deps Deps) *gin.Engine {
-	r := gin.New()
-
-	logger := infra.Logger
-	if logger == nil {
-		logger = slog.Default()
-	}
-
-	// Middlewares globais (infra)
-	r.Use(
-		middleware.RequestID(),
-		middleware.AccessLog(logger),
-		middleware.Recovery(logger),
-	)
-
-	// ---- Rotas ----
-	registerRootRoute(r, infra.Config)
-	SetupRoutes(r, deps.API)
-
-	return r
+type RootInfo struct {
+	Name    string
+	Version string
+	Env     string
 }
 
 func SetupRoutes(
@@ -136,16 +94,24 @@ func SetupRoutes(
 	}
 }
 
-func registerRootRoute(r gin.IRouter, cfg *config.Config) {
-	environment := "dev"
-	if cfg != nil && cfg.Env != "" {
-		environment = cfg.Env
+func registerRootRoute(r gin.IRouter, info RootInfo) {
+	environment := info.Env
+	if environment == "" {
+		environment = "dev"
+	}
+	name := info.Name
+	if name == "" {
+		name = "Sonnda API"
+	}
+	version := info.Version
+	if version == "" {
+		version = "dev"
 	}
 
 	r.GET("/", func(c *gin.Context) {
 		c.JSON(http.StatusOK, RootResponse{
-			Name:        rootAPIName,
-			Version:     rootAPIVersion,
+			Name:        name,
+			Version:     version,
 			Environment: environment,
 			Docs:        "/docs",
 			OpenAPI:     "/openapi.yaml",

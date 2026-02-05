@@ -1,5 +1,5 @@
-# static/openapi.yaml
-# NOTE: generated from docs/api/openapi.yaml. Do not edit by hand.
+# docs/api/openapi.yaml
+# NOTE: source of truth. Synced to static/openapi.yaml for embedding at /openapi.yaml.
 openapi: 3.0.3
 info:
   title: Sonnda API

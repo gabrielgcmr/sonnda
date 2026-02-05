@@ -3,51 +3,22 @@
 # 🛠️ CONFIGURAÇÕES E VARIÁVEIS
 # ==============================================================================
 APP_NAME := sonnda
-MAIN     := ./cmd/server
+MAIN     := ./cmd/api
 VERSION ?= 1.0.0
-LDFLAGS := -s -w -X github.com/gabrielgcmr/sonnda/internal/api.rootAPIVersion=$(VERSION)
-
-# Versões das Ferramentas
-AIR_VERSION      := latest
-SQLC_VERSION     := latest
-OAPI_CODEGEN_VERSION := latest
-
-# Diretórios e Binários
-TOOLS_DIR    := tools/bin
-AIR          := $(TOOLS_DIR)/air
-SQLC         := $(TOOLS_DIR)/sqlc
-OAPI_CODEGEN := $(TOOLS_DIR)/oapi-codegen
-
-# Caminhos do Projeto (Preservados do arquivo original)
-SQLC_CONF  := internal/adapters/outbound/storage/data/postgres/sqlc/sqlc.yaml
-
-# Detecção de OS/Arch para download dos binários
-OS := $(shell uname -s | tr '[:upper:]' '[:lower:]')
-ARCH := $(shell uname -m)
-
-ifeq ($(ARCH),x86_64)
-	ARCH := amd64
-endif
-ifeq ($(ARCH),aarch64)
-	ARCH := arm64
-endif
-
-# Adiciona tools/bin ao PATH para este Makefile
-export PATH := $(PWD)/$(TOOLS_DIR):$(PATH)
+LDFLAGS := -s -w -X github.com/gabrielgcmr/sonnda/cmd/api.version=$(VERSION)
+SQLC_CONF := internal/infrastructure/persistence/postgres/sqlc/sqlc.yaml
+OPENAPI_SPEC := docs/api/openapi.yaml
 
 # ==============================================================================
 # 🎯 TARGETS PRINCIPAIS
 # ==============================================================================
-.PHONY: all dev build clean test help openapi-validate
+.PHONY: all dev build clean generate test help openapi-validate oapi-codegen openapi-sync
 
 all: build
 
-# Instala todas as dependências (Air, SQLC)
-tools: $(AIR) $(SQLC) $(OAPI_CODEGEN)
-
 # Roda apenas o backend (Go + Air)
-dev: tools
-	$(AIR) -c .air.toml
+dev:
+	air -c .air.toml
 
 build:
 	go build -o bin/$(APP_NAME) -ldflags "$(LDFLAGS)" $(MAIN)
@@ -55,27 +26,10 @@ build:
 # Limpeza (Compatível com Linux/WSL)
 clean:
 	@echo "🧹 Limpando binários e cache..."
-	rm -rf bin $(TOOLS_DIR)
+	rm -rf bin
 
 test:
 	go test ./... -v
-
-# ==============================================================================
-# 📦 INSTALAÇÃO DE FERRAMENTAS (Auto-Download)
-# ==============================================================================
-$(AIR):
-	@echo "☁️  Instalando air versão: $(AIR_VERSION)..."
-	@mkdir -p $(TOOLS_DIR)
-	@GOBIN=$(PWD)/$(TOOLS_DIR) go install github.com/air-verse/air@$(AIR_VERSION)
-
-$(SQLC):
-	@echo "🗄️  Instalando sqlc versão: $(SQLC_VERSION)..."
-	@GOBIN=$(PWD)/$(TOOLS_DIR) go install github.com/sqlc-dev/sqlc/cmd/sqlc@$(SQLC_VERSION)
-
-$(OAPI_CODEGEN):
-	@echo "🧩 Instalando oapi-codegen versão: $(OAPI_CODEGEN_VERSION)..."
-	@mkdir -p $(TOOLS_DIR)
-	@GOBIN=$(PWD)/$(TOOLS_DIR) go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@$(OAPI_CODEGEN_VERSION)
 
 # ==============================================================================
 # 🔄 WATCHERS E PROCESSOS INTERNOS
@@ -83,18 +37,38 @@ $(OAPI_CODEGEN):
 .PHONY: air-run
 
 air-run:
-	$(AIR) -c .air.toml
+	air -c .air.toml
 
 # ==============================================================================
 # 🐘 DATABASE
 # ==============================================================================
 .PHONY: sqlc sqlc-check 
 
-sqlc: $(SQLC)
-	$(SQLC) generate -f $(SQLC_CONF)
+sqlc:
+	go tool sqlc generate -f $(SQLC_CONF)
 
-sqlc-check: $(SQLC)
-	$(SQLC) compile -f $(SQLC_CONF)
+sqlc-check:
+	go tool sqlc compile -f $(SQLC_CONF)
+
+# ==============================================================================
+# 🧬 CODEGEN
+# ==============================================================================
+OAPI_CODEGEN_INPUT   := $(OPENAPI_SPEC)
+OAPI_CODEGEN_OUTPUT  := internal/api/oapi.gen.go
+OAPI_CODEGEN_PACKAGE := api
+OAPI_CODEGEN_GENERATE := types,gin
+
+oapi-codegen:
+	go tool oapi-codegen -generate $(OAPI_CODEGEN_GENERATE) -package $(OAPI_CODEGEN_PACKAGE) -o $(OAPI_CODEGEN_OUTPUT) $(OAPI_CODEGEN_INPUT)
+
+openapi-sync:
+	@{ \
+		echo "# static/openapi.yaml"; \
+		echo "# NOTE: generated from docs/api/openapi.yaml. Do not edit by hand."; \
+		tail -n +3 $(OPENAPI_SPEC); \
+	} > static/openapi.yaml
+
+generate: openapi-sync sqlc oapi-codegen
 
 # ==============================================================================
 # 🐘 DOCKER
@@ -114,8 +88,8 @@ help:
 	@echo "Comandos disponíveis:"
 	@echo "  dev     - Inicia apenas o Backend (Air)"
 	@echo "  build       - Gera o binário de produção"
-	@echo "  tools       - Baixa as ferramentas necessárias (localmente)"
 	@echo "  clean       - Limpa pastas geradas"
+	@echo "  generate    - Gera código (sqlc + oapi-codegen)"
 	@echo "  openapi-validate - Valida o OpenAPI local"
 	@echo "  docker-up   - Sobe o docker"
 	@echo "  docker-down - Derruba o docker"
@@ -123,7 +97,7 @@ help:
 # ==============================================================================
 # 📚 OPENAPI
 # ==============================================================================
-OPENAPI_DOCS := static/openapi.yaml
+OPENAPI_DOCS := $(OPENAPI_SPEC)
 
 OPENAPI_VALIDATE := ./cmd/openapi-validate
 

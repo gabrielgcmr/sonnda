@@ -130,6 +130,7 @@ Estrutura atual do projeto:
 │   ├── api/                        # Documentação de endpoints
 │   │   ├── auth.md
 │   │   ├── labs.md
+│   │   ├── openapi.yaml
 │   │   ├── patient.md
 │   │   ├── user.md
 │   │   └── README.md
@@ -142,7 +143,7 @@ Estrutura atual do projeto:
 │       └── setup.md
 ├── static/                         # Assets embutidos (docs, openapi, favicon)
 │   ├── embed.go
-│   ├── openapi.yaml
+│   ├── openapi.yaml               # Gerado a partir de docs/api/openapi.yaml
 │   ├── docs.html
 │   └── favicon.ico
 ├── internal/

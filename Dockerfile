@@ -14,8 +14,8 @@ COPY . .
 
 #Build
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
-  go build -trimpath -ldflags="-s -w -X github.com/gabrielgcmr/sonnda/internal/api.rootAPIVersion=${VERSION}" \
-  -o /bin/sonnda ./cmd/server
+  go build -trimpath -ldflags="-s -w -X github.com/gabrielgcmr/sonnda/cmd/api.version=${VERSION}" \
+  -o /bin/sonnda ./cmd/api
 
 # Etapa 2: runtime
 FROM alpine:3.20

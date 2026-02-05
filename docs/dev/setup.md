@@ -27,7 +27,7 @@ Opcao simples:
 
 ```bash
 set -a && source .env && set +a
-go run ./cmd/server
+go run ./cmd/api
 ```
 
 Com hot reload (requer `air`):
