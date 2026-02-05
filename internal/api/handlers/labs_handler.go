@@ -20,25 +20,25 @@ import (
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 )
 
-type LabsHandler struct {
+type Labs struct {
 	svc      labsvc.Service
 	createUC labsuc.CreateLabReportFromDocumentUseCase
 	storage  domainstorage.FileStorageService
 }
 
-func NewLabsHandler(
+func NewLabs(
 	svc labsvc.Service,
 	createUC labsuc.CreateLabReportFromDocumentUseCase,
 	storageClient domainstorage.FileStorageService,
-) *LabsHandler {
-	return &LabsHandler{
+) *Labs {
+	return &Labs{
 		svc:      svc,
 		createUC: createUC,
 		storage:  storageClient,
 	}
 }
 
-func (h *LabsHandler) ListLabs(c *gin.Context) {
+func (h *Labs) ListLabs(c *gin.Context) {
 	patientID, ok := parsePatientIDParam(c, "id")
 	if !ok {
 		return
@@ -72,7 +72,7 @@ func (h *LabsHandler) ListLabs(c *gin.Context) {
 // Handler unico para upload de laudo
 // POST /:patientID/labs
 // field: file (PDF/JPEG/PNG)
-func (h *LabsHandler) UploadAndProcessLabs(c *gin.Context) {
+func (h *Labs) UploadAndProcessLabs(c *gin.Context) {
 	currentUser := helpers.MustGetCurrentUser(c)
 
 	patientID, ok := parsePatientIDParam(c, "id")
@@ -105,7 +105,7 @@ func (h *LabsHandler) UploadAndProcessLabs(c *gin.Context) {
 // - detectar/validar content-type
 // - fazer upload pro storage
 // - retornar (URI, MIME)
-func (h *LabsHandler) handleFileUpload(
+func (h *Labs) handleFileUpload(
 	c *gin.Context,
 	patientID uuid.UUID,
 ) (string, string, error) {

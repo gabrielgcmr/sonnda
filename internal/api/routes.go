@@ -6,7 +6,7 @@ import (
 
 	"github.com/gabrielgcmr/sonnda/internal/api/handlers"
 	"github.com/gabrielgcmr/sonnda/internal/api/handlers/patient"
-	"github.com/gabrielgcmr/sonnda/internal/api/handlers/user"
+
 	"github.com/gabrielgcmr/sonnda/internal/api/middleware"
 	openapispec "github.com/gabrielgcmr/sonnda/internal/api/openapi"
 	openapigen "github.com/gabrielgcmr/sonnda/internal/api/openapi/generated"
@@ -17,9 +17,9 @@ import (
 type APIDependencies struct {
 	AuthMiddleware         *middleware.AuthMiddleware
 	RegistrationMiddleware *middleware.RegistrationMiddleware
-	UserHandler            *user.Handler
+	UserHandler            *handlers.User
 	PatientHandler         *patient.PatientHandler
-	LabsHandler            *handlers.LabsHandler
+	LabsHandler            *handlers.Labs
 }
 
 type RootInfo struct {
@@ -51,8 +51,8 @@ func SetupRoutes(
 	auth := v1.Group("")
 	auth.Use(deps.AuthMiddleware.RequireBearer())
 	{
-		// Rota de Cadastro (Onboarding)
-		auth.POST("/register", deps.UserHandler.Register)
+		// Criação de usuário (Onboarding)
+		auth.POST("/users", deps.UserHandler.CreateUser)
 	}
 
 	// ---------------------------------------------------------------------

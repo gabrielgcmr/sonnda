@@ -33,16 +33,17 @@ func New(userRepo repository.User, userSvc usersvc.Service, profSvc professional
 }
 
 func (u *usecase) Register(ctx context.Context, input RegisterInput) (*user.User, error) {
+	if input.AccountType == user.AccountTypeProfessional {
+		return nil, apperr.DomainRuleViolation("criação de profissional ainda não está implementada no MVP")
+	}
+
 	// Verificar se usuário já existe
 	existing, err := u.userRepo.FindByAuthIdentity(ctx, input.Issuer, input.Subject)
 	if err != nil {
 		return nil, apperr.Internal("falha ao verificar registro", err)
 	}
 	if existing != nil {
-		return nil, &apperr.AppError{
-			Code:    apperr.RESOURCE_ALREADY_EXISTS,
-			Message: "usuário já cadastrado",
-		}
+		return nil, apperr.AlreadyExists("usuário já cadastrado")
 	}
 
 	createdUser, err := u.userSvc.Create(ctx, usersvc.UserCreateInput{
@@ -63,24 +64,5 @@ func (u *usecase) Register(ctx context.Context, input RegisterInput) (*user.User
 		return nil, apperr.Internal("falha ao criar usuário", err)
 	}
 
-	if input.AccountType != user.AccountTypeProfessional {
-		return createdUser, nil
-	}
-
-	if input.Professional == nil {
-		return nil, apperr.Validation("dados do profissional inválidos")
-	}
-
-	_, err = u.profSvc.Create(ctx, professionalsvc.CreateInput{
-		UserID:             createdUser.ID,
-		Kind:               input.Professional.Kind,
-		RegistrationNumber: input.Professional.RegistrationNumber,
-		RegistrationIssuer: input.Professional.RegistrationIssuer,
-		RegistrationState:  input.Professional.RegistrationState,
-	})
-	if err == nil {
-		return createdUser, nil
-	}
-
-	return nil, err
+	return createdUser, nil
 }

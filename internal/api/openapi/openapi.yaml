@@ -4,12 +4,17 @@ openapi: 3.0.3
 info:
   title: Sonnda API
   version: "0.1.0"
-  description: OpenAPI inicial das rotas HTTP da Sonnda.
+  description: |-
+    OpenAPI inicial das rotas HTTP da Sonnda.
+
+    Nota (MVP): criação/gestão de profissionais ainda não está implementada.
 servers:
   - url: http://localhost:8080
     description: Desenvolvimento local
   - url: https://api.sonnda.com.br
     description: Produção
+security:
+  - bearerAuth: []
 paths:
   # =========================
   # Public
@@ -17,6 +22,7 @@ paths:
   /:
     get:
       summary: API metadata
+      security: []
       tags: [Public]
       responses:
         "200":
@@ -29,6 +35,7 @@ paths:
   /healthz:
     get:
       summary: Health check
+      security: []
       tags: [Public]
       responses:
         "200":
@@ -40,6 +47,7 @@ paths:
   /readyz:
     get:
       summary: Readiness check
+      security: []
       tags: [Public]
       responses:
         "200":
@@ -51,6 +59,7 @@ paths:
   /docs:
     get:
       summary: API docs (Redoc)
+      security: []
       tags: [Public]
       responses:
         "200":
@@ -60,25 +69,23 @@ paths:
               schema:
                 type: string
   # =========================
-  # Auth
+  # User
   # =========================
-
-  # =========================
-  # Register user
-  # =========================
-  /v1/register:
+  /v1/users:
     post:
-      summary: Registrar usuário (onboarding)
-      description: Requer token válido do Supabase (Bearer).
-      tags: [Auth]
-      security:
-        - bearerAuth: []
+      summary: Criar usuário
+      description: |-
+        Cria o usuário da plataforma a partir da identidade autenticada (JWT do Supabase).
+        Requer token válido do Supabase (Bearer).
+
+        Nota (MVP): `account_type=professional` ainda não está implementado.
+      tags: [User]
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/RegisterRequest"
+              $ref: "#/components/schemas/CreateUserRequest"
       responses:
         "201":
           description: Usuário criado
@@ -86,6 +93,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/User"
+        "409":
+          $ref: "#/components/responses/AppError"
         "400":
           $ref: "#/components/responses/AppError"
         "401":
@@ -98,8 +107,6 @@ paths:
     get:
       summary: Obter perfil do usuário atual
       tags: [User]
-      security:
-        - bearerAuth: []
       responses:
         "200":
           description: OK
@@ -114,8 +121,6 @@ paths:
     put:
       summary: Atualizar perfil do usuário atual
       tags: [User]
-      security:
-        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -140,8 +145,6 @@ paths:
     delete:
       summary: Remover usuário atual (hard delete)
       tags: [User]
-      security:
-        - bearerAuth: []
       responses:
         "204":
           description: No Content
@@ -153,8 +156,6 @@ paths:
     get:
       summary: Listar pacientes do usuário atual
       tags: [User]
-      security:
-        - bearerAuth: []
       parameters:
         - $ref: "#/components/parameters/LimitParam"
         - $ref: "#/components/parameters/OffsetParam"
@@ -177,8 +178,6 @@ paths:
     post:
       summary: Criar paciente
       tags: [Patient]
-      security:
-        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -208,8 +207,6 @@ paths:
     get:
       summary: Listar pacientes
       tags: [Patient]
-      security:
-        - bearerAuth: []
       responses:
         "200":
           description: OK
@@ -225,8 +222,6 @@ paths:
     get:
       summary: Obter paciente
       tags: [Patient]
-      security:
-        - bearerAuth: []
       parameters:
         - name: id
           in: path
@@ -254,8 +249,6 @@ paths:
       summary: Listar laudos
       tags:
         - Labs
-      security:
-        - bearerAuth: []
       parameters:
         - name: id
           in: path
@@ -295,8 +288,6 @@ paths:
     post:
       summary: Upload de laudo
       tags: [Labs]
-      security:
-        - bearerAuth: []
       parameters:
         - name: id
           in: path
@@ -405,7 +396,7 @@ components:
         ready:
           type: string
       required: [name, version, environment, docs, openapi, health, ready]
-    RegisterRequest:
+    CreateUserRequest:
       type: object
       required:
         - full_name
@@ -426,8 +417,12 @@ components:
         account_type:
           type: string
           enum: [basic_care, professional]
+          description: |-
+            Nota (MVP): apenas `basic_care` está disponível no momento.
         professional:
           $ref: "#/components/schemas/ProfessionalRequestData"
+          description: |-
+            Nota (MVP): ainda não implementado. Se `account_type=professional`, a API vai rejeitar a criação.
     ProfessionalRequestData:
       type: object
       required:

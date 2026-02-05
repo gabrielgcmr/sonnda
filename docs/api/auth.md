@@ -34,12 +34,12 @@ Authorization: Bearer <access_token>
 
 ## Fluxo de onboarding
 
-Após autenticar no Supabase, o cliente chama o endpoint de cadastro (`POST /v1/register`).
+Após autenticar no Supabase, o cliente chama o endpoint de criação de usuário (`POST /v1/users`).
 
 Exemplo (curl):
 
 ```bash
-curl -i -X POST https://api.sonnda.com.br/v1/register \
+curl -i -X POST https://api.sonnda.com.br/v1/users \
   -H "Authorization: Bearer <access_token>" \
   -H "Content-Type: application/json" \
   -d '{ ... }'

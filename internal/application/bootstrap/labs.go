@@ -14,7 +14,7 @@ import (
 )
 
 type LabsModule struct {
-	Handler *labshandler.LabsHandler
+	Handler *labshandler.Labs
 }
 
 func NewLabsModule(
@@ -28,6 +28,6 @@ func NewLabsModule(
 	svc := labsvc.New(patientRepo, labsRepo)
 	createUC := labsuc.NewCreateLabReportFromDocument(patientRepo, labsRepo, docExtractor)
 	return &LabsModule{
-		Handler: labshandler.NewLabsHandler(svc, createUC, storage),
+		Handler: labshandler.NewLabs(svc, createUC, storage),
 	}
 }

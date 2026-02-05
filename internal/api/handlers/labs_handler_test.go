@@ -31,7 +31,7 @@ func TestListLabs_DefaultUsesSummary(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	svc := &fakeLabsService{}
-	h := NewLabsHandler(svc, nil, nil)
+	h := NewLabs(svc, nil, nil)
 
 	r := gin.New()
 	r.GET("/patients/:id/labs", h.ListLabs)
@@ -57,7 +57,7 @@ func TestListLabs_ExpandFullUsesFull(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	svc := &fakeLabsService{}
-	h := NewLabsHandler(svc, nil, nil)
+	h := NewLabs(svc, nil, nil)
 
 	r := gin.New()
 	r.GET("/patients/:id/labs", h.ListLabs)
@@ -83,7 +83,7 @@ func TestListLabs_IncludeResultsUsesFull(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	svc := &fakeLabsService{}
-	h := NewLabsHandler(svc, nil, nil)
+	h := NewLabs(svc, nil, nil)
 
 	r := gin.New()
 	r.GET("/patients/:id/labs", h.ListLabs)

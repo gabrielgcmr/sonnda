@@ -1,3 +1,4 @@
+// internal/kernel/apperr/factory.go
 package apperr
 
 // Fábricas de Erro (Factories)
@@ -47,5 +48,14 @@ func Forbidden(msg string) *AppError {
 	return &AppError{
 		Code:    ACCESS_DENIED,
 		Message: msg,
+	}
+}
+
+// DomainRuleViolation retorna um erro de regra de domínio (422)
+func DomainRuleViolation(msg string, violations ...Violation) *AppError {
+	return &AppError{
+		Code:       DOMAIN_RULE_VIOLATION,
+		Message:    msg,
+		Violations: violations,
 	}
 }

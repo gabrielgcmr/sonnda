@@ -1,5 +1,5 @@
-// internal/api/handlers/user/user_handler.go
-package user
+// internal/api/handlers/user_handler.go
+package handlers
 
 import (
 	"net/http"
@@ -8,41 +8,39 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/gabrielgcmr/sonnda/internal/api/handlers"
 	helpers "github.com/gabrielgcmr/sonnda/internal/api/helpers"
 	openapi "github.com/gabrielgcmr/sonnda/internal/api/openapi/generated"
 	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
 	usersvc "github.com/gabrielgcmr/sonnda/internal/application/services/user"
 	registrationuc "github.com/gabrielgcmr/sonnda/internal/application/usecase/registration"
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/professional"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/user"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 )
 
-type Handler struct {
+type User struct {
 	regUC   registrationuc.UseCase
 	userSvc usersvc.Service
 }
 
-func NewHandler(
+func NewUser(
 	regUC registrationuc.UseCase,
 	userSvc usersvc.Service,
 
-) *Handler {
-	return &Handler{
+) *User {
+	return &User{
 		regUC:   regUC,
 		userSvc: userSvc,
 	}
 }
 
-func (h *Handler) Register(c *gin.Context) {
+func (h *User) CreateUser(c *gin.Context) {
 	identity, ok := helpers.GetIdentity(c)
 	if !ok {
 		presenter.ErrorResponder(c, apperr.Unauthorized("autenticação necessária"))
 		return
 	}
 
-	var req openapi.RegisterRequest
+	var req openapi.CreateUserRequest
 	if err := helpers.BindJSON(c, &req); err != nil {
 		presenter.ErrorResponder(c, err)
 		return
@@ -55,6 +53,11 @@ func (h *Handler) Register(c *gin.Context) {
 				Field:  "account_type",
 				Reason: "invalid_enum",
 			}))
+		return
+	}
+
+	if accountType == user.AccountTypeProfessional {
+		presenter.ErrorResponder(c, apperr.DomainRuleViolation("criação de profissional ainda não está implementada no MVP"))
 		return
 	}
 
@@ -85,25 +88,6 @@ func (h *Handler) Register(c *gin.Context) {
 		Phone:       req.Phone,
 	}
 
-	if accountType == user.AccountTypeProfessional {
-		if req.Professional == nil {
-			presenter.ErrorResponder(c, apperr.Validation("dados de profissional são obrigatórios",
-				apperr.Violation{
-					Field:  "professional",
-					Reason: "required",
-				}))
-			return
-		}
-
-		kind := professional.Kind(req.Professional.Kind).Normalize()
-		input.Professional = &registrationuc.ProfessionalInput{
-			Kind:               kind,
-			RegistrationNumber: req.Professional.RegistrationNumber,
-			RegistrationIssuer: req.Professional.RegistrationIssuer,
-			RegistrationState:  req.Professional.RegistrationState,
-		}
-	}
-
 	created, err := h.regUC.Register(c.Request.Context(), input)
 	if err != nil {
 		presenter.ErrorResponder(c, err)
@@ -113,15 +97,15 @@ func (h *Handler) Register(c *gin.Context) {
 	c.JSON(http.StatusCreated, created)
 }
 
-func (h *Handler) GetUser(c *gin.Context) {
+func (h *User) GetUser(c *gin.Context) {
 	currentUser := helpers.MustGetCurrentUser(c)
 	c.JSON(http.StatusOK, currentUser)
 }
 
-func (h *Handler) UpdateUser(c *gin.Context) {
+func (h *User) UpdateUser(c *gin.Context) {
 	currentUser := helpers.MustGetCurrentUser(c)
 
-	var req UpdateUserRequest
+	var req openapi.UpdateUserRequest
 	if err := helpers.BindJSON(c, &req); err != nil {
 		presenter.ErrorResponder(c, err)
 		return
@@ -129,7 +113,7 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 
 	input := usersvc.UserUpdateInput{
 		UserID: currentUser.ID,
-		CPF:    req.CPF,
+		CPF:    req.Cpf,
 		Phone:  req.Phone,
 	}
 
@@ -137,7 +121,7 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 		input.FullName = req.FullName
 	}
 	if req.BirthDate != nil {
-		parsed, _ := handlers.ParseBirthDate(*req.BirthDate)
+		parsed := req.BirthDate.Time
 		input.BirthDate = &parsed
 	}
 
@@ -150,7 +134,7 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 	c.JSON(http.StatusOK, updated)
 }
 
-func (h *Handler) HardDeleteUser(c *gin.Context) {
+func (h *User) HardDeleteUser(c *gin.Context) {
 	currentUser := helpers.MustGetCurrentUser(c)
 
 	if err := h.userSvc.Delete(c.Request.Context(), currentUser.ID); err != nil {
@@ -162,7 +146,7 @@ func (h *Handler) HardDeleteUser(c *gin.Context) {
 
 }
 
-func (h *Handler) ListMyPatients(c *gin.Context) {
+func (h *User) ListMyPatients(c *gin.Context) {
 	currentUser := helpers.MustGetCurrentUser(c)
 
 	// Parse query params

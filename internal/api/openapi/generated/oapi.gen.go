@@ -34,10 +34,10 @@ const (
 	CreatePatientRequestRaceWHITE      CreatePatientRequestRace = "WHITE"
 )
 
-// Defines values for RegisterRequestAccountType.
+// Defines values for CreateUserRequestAccountType.
 const (
-	BasicCare    RegisterRequestAccountType = "basic_care"
-	Professional RegisterRequestAccountType = "professional"
+	BasicCare    CreateUserRequestAccountType = "basic_care"
+	Professional CreateUserRequestAccountType = "professional"
 )
 
 // Defines values for GetV1PatientsIdLabsParamsExpand.
@@ -61,6 +61,20 @@ type CreatePatientRequestGender string
 
 // CreatePatientRequestRace defines model for CreatePatientRequest.Race.
 type CreatePatientRequestRace string
+
+// CreateUserRequest defines model for CreateUserRequest.
+type CreateUserRequest struct {
+	// AccountType Nota (MVP): apenas `basic_care` está disponível no momento.
+	AccountType  CreateUserRequestAccountType `json:"account_type"`
+	BirthDate    openapi_types.Date           `json:"birth_date"`
+	Cpf          string                       `json:"cpf"`
+	FullName     string                       `json:"full_name"`
+	Phone        string                       `json:"phone"`
+	Professional *ProfessionalRequestData     `json:"professional,omitempty"`
+}
+
+// CreateUserRequestAccountType Nota (MVP): apenas `basic_care` está disponível no momento.
+type CreateUserRequestAccountType string
 
 // ErrorResponse defines model for ErrorResponse.
 type ErrorResponse struct {
@@ -99,19 +113,6 @@ type ProfessionalRequestData struct {
 	RegistrationNumber string  `json:"registration_number"`
 	RegistrationState  *string `json:"registration_state"`
 }
-
-// RegisterRequest defines model for RegisterRequest.
-type RegisterRequest struct {
-	AccountType  RegisterRequestAccountType `json:"account_type"`
-	BirthDate    openapi_types.Date         `json:"birth_date"`
-	Cpf          string                     `json:"cpf"`
-	FullName     string                     `json:"full_name"`
-	Phone        string                     `json:"phone"`
-	Professional *ProfessionalRequestData   `json:"professional,omitempty"`
-}
-
-// RegisterRequestAccountType defines model for RegisterRequest.AccountType.
-type RegisterRequestAccountType string
 
 // RootResponse defines model for RootResponse.
 type RootResponse struct {
@@ -185,8 +186,8 @@ type PostV1PatientsJSONRequestBody = CreatePatientRequest
 // PostV1PatientsIdLabsMultipartRequestBody defines body for PostV1PatientsIdLabs for multipart/form-data ContentType.
 type PostV1PatientsIdLabsMultipartRequestBody PostV1PatientsIdLabsMultipartBody
 
-// PostV1RegisterJSONRequestBody defines body for PostV1Register for application/json ContentType.
-type PostV1RegisterJSONRequestBody = RegisterRequest
+// PostV1UsersJSONRequestBody defines body for PostV1Users for application/json ContentType.
+type PostV1UsersJSONRequestBody = CreateUserRequest
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
@@ -229,9 +230,9 @@ type ServerInterface interface {
 	// Upload de laudo
 	// (POST /v1/patients/{id}/labs)
 	PostV1PatientsIdLabs(c *gin.Context, id openapi_types.UUID)
-	// Registrar usuário (onboarding)
-	// (POST /v1/register)
-	PostV1Register(c *gin.Context)
+	// Criar usuário
+	// (POST /v1/users)
+	PostV1Users(c *gin.Context)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -519,8 +520,8 @@ func (siw *ServerInterfaceWrapper) PostV1PatientsIdLabs(c *gin.Context) {
 	siw.Handler.PostV1PatientsIdLabs(c, id)
 }
 
-// PostV1Register operation middleware
-func (siw *ServerInterfaceWrapper) PostV1Register(c *gin.Context) {
+// PostV1Users operation middleware
+func (siw *ServerInterfaceWrapper) PostV1Users(c *gin.Context) {
 
 	c.Set(BearerAuthScopes, []string{})
 
@@ -531,7 +532,7 @@ func (siw *ServerInterfaceWrapper) PostV1Register(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.PostV1Register(c)
+	siw.Handler.PostV1Users(c)
 }
 
 // GinServerOptions provides options for the Gin server.
@@ -574,5 +575,5 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.GET(options.BaseURL+"/v1/patients/:id", wrapper.GetV1PatientsId)
 	router.GET(options.BaseURL+"/v1/patients/:id/labs", wrapper.GetV1PatientsIdLabs)
 	router.POST(options.BaseURL+"/v1/patients/:id/labs", wrapper.PostV1PatientsIdLabs)
-	router.POST(options.BaseURL+"/v1/register", wrapper.PostV1Register)
+	router.POST(options.BaseURL+"/v1/users", wrapper.PostV1Users)
 }

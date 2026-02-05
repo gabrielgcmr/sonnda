@@ -15,7 +15,9 @@ Todas as rotas exigem `Authorization: Bearer <id_token>`.
 
 O contrato completo de endpoints, schemas e erros fica no OpenAPI: `/openapi.yaml`.
 
-## Onboarding (POST /v1/register)
+## Criar usuário (POST /v1/users)
+
+Nota (MVP): a criação/gestão de profissionais ainda não está implementada. Por enquanto, use `account_type="basic_care"`.
 
 **Request (JSON):**
 ```json
@@ -24,19 +26,13 @@ O contrato completo de endpoints, schemas e erros fica no OpenAPI: `/openapi.yam
   "birth_date": "1990-05-12",
   "cpf": "12345678901",
   "phone": "+55 11 99999-0000",
-  "account_type": "professional",
-  "professional": {
-    "kind": "physician",
-    "registration_number": "CRM 12345",
-    "registration_issuer": "CRM",
-    "registration_state": "SP"
-  }
+  "account_type": "basic_care"
 }
 ```
 
 **Exemplo (curl):**
 ```bash
-curl -i -X POST https://api.sonnda.com.br/v1/register \
+curl -i -X POST https://api.sonnda.com.br/v1/users \
   -H "Authorization: Bearer <id_token>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -44,15 +40,13 @@ curl -i -X POST https://api.sonnda.com.br/v1/register \
     "birth_date": "1990-05-12",
     "cpf": "12345678901",
     "phone": "+55 11 99999-0000",
-    "account_type": "professional",
-    "professional": {
-      "kind": "physician",
-      "registration_number": "CRM 12345",
-      "registration_issuer": "CRM",
-      "registration_state": "SP"
-    }
+    "account_type": "basic_care"
   }'
 ```
+
+### Campos reservados (profissional)
+
+O request também define `account_type="professional"` e o objeto `professional`, mas no MVP a API vai rejeitar esse fluxo (ainda não implementado).
 
 ## Perfil atual (GET /v1/me)
 
