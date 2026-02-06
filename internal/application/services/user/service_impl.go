@@ -110,7 +110,7 @@ func (s *service) SoftDelete(ctx context.Context, userID uuid.UUID) error {
 	if err := s.userRepo.SoftDelete(ctx, userID); err != nil {
 		mapped := mapRepoError("userRepo.SoftDelete", err)
 		var appErr *apperr.AppError
-		if errors.As(mapped, &appErr) && appErr != nil && appErr.Code == apperr.NOT_FOUND {
+		if errors.As(mapped, &appErr) && appErr != nil && appErr.Kind == apperr.NOT_FOUND {
 			return nil
 		}
 		return mapped

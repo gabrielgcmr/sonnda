@@ -1,4 +1,4 @@
-// internal/api/handlers/labs_handler_test.go
+// internal/api/handlers/labs_test.go
 package handlers
 
 import (

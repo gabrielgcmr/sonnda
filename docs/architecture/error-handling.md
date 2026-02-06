@@ -36,7 +36,8 @@ Formato padrão (RFC 9457 - Problem Details):
   "instance": "urn:sonnda:request-id:8a0f8a9b-2e1c-4c46-a2b1-1a6f8a6c2e44",
   "code": "VALIDATION_FAILED",
   "violations": [{ "field": "email", "reason": "required" }],
-  "request_id": "8a0f8a9b-2e1c-4c46-a2b1-1a6f8a6c2e44"
+  "traceId": "8a0f8a9b-2e1c-4c46-a2b1-1a6f8a6c2e44",
+  "timestamp": "2026-02-06T12:34:56Z"
 }
 ```
 

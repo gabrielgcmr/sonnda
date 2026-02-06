@@ -1,5 +1,4 @@
 // internal/application/services/patient/service.go
-// internal/application/services/patient/service.go
 package patientsvc
 
 import (

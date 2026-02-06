@@ -38,14 +38,13 @@ A arquitetura segue uma abordagem em camadas com baixo acoplamento e clara separ
 
 - **Domain (`internal/domain`)**: Modelos e regras de negócio centrais (agnóstico de infraestrutura e HTTP).
   - **Entity (`internal/domain/entity`)**: Entidades de negócio centrais.
-  - **Model (`internal/domain/model`)**: Estruturas de dados e modelos de domínio.
   - **Repository (`internal/domain/repository`)**: Interfaces de repositórios do domínio.
-  - **Ports (`internal/domain/ports`)**: Interfaces do domínio (abstrações para integrações).
+  - **Storage (`internal/domain/storage`)**: Interfaces de armazenamento de arquivos (abstrações).
+  - **AI (`internal/domain/ai`)**: Interfaces para integrações de IA/ML (abstrações).
 
 - **Application (`internal/application`)**: Orquestração e preocupações transversais.
-  - **Use cases (`internal/application/usecase`)**: Fluxos de negócio compostos a partir de modelos/portas do domínio.
+  - **Use cases (`internal/application/usecase`)**: Fluxos de negócio compostos a partir de modelos do domínio.
   - **Services (`internal/application/services`)**: Serviços de aplicação que coordenam repositórios/integrações.
-  - **Config (`internal/application/config`)**: Configuração de ambiente.
   - **Bootstrap (`internal/application/bootstrap`)**: Injeção de dependências e carregamento de configuração.
 
 - **Infrastructure (`internal/infrastructure`)**: Implementações concretas e integrações outbound.
@@ -100,8 +99,8 @@ Este projeto usa um **contrato de erro centralizado** baseado em `AppError`.
 - **Prefira usar construtores helper** de `internal/kernel/apperr/factory.go` ao invés de construí-los manualmente.
 - Services/use cases **devem retornar `AppError` para falhas conhecidas** (validação, conflitos, não encontrado, erros de infra).
 - Domínio **nunca** importa HTTP, Gin ou `apperr`.
-- Handlers e middlewares **devem chamar**: `httperrors.WriteError(c, err)`
-- Apresentação de erro HTTP é centralizada em: `internal/adapters/inbound/http/shared/httperr`.
+- Handlers e middlewares **devem chamar**: `presenter.ErrorResponder(c, err)`
+- Apresentação de erro HTTP é centralizada em: `internal/api/presenter`.
 
 ## Configuracao de ambiente (dev/prod)
 

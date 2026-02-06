@@ -1,4 +1,4 @@
-// internal/api/handlers/labs_handler.go
+// internal/api/handlers/labs.go
 package handlers
 
 import (
@@ -20,7 +20,7 @@ import (
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 )
 
-type Labs struct {
+type LabsHandler struct {
 	svc      labsvc.Service
 	createUC labsuc.CreateLabReportFromDocumentUseCase
 	storage  domainstorage.FileStorageService
@@ -30,15 +30,15 @@ func NewLabs(
 	svc labsvc.Service,
 	createUC labsuc.CreateLabReportFromDocumentUseCase,
 	storageClient domainstorage.FileStorageService,
-) *Labs {
-	return &Labs{
+) *LabsHandler {
+	return &LabsHandler{
 		svc:      svc,
 		createUC: createUC,
 		storage:  storageClient,
 	}
 }
 
-func (h *Labs) ListLabs(c *gin.Context) {
+func (h *LabsHandler) ListLabs(c *gin.Context) {
 	patientID, ok := parsePatientIDParam(c, "id")
 	if !ok {
 		return
@@ -72,7 +72,7 @@ func (h *Labs) ListLabs(c *gin.Context) {
 // Handler unico para upload de laudo
 // POST /:patientID/labs
 // field: file (PDF/JPEG/PNG)
-func (h *Labs) UploadAndProcessLabs(c *gin.Context) {
+func (h *LabsHandler) UploadAndProcessLabs(c *gin.Context) {
 	currentUser := helpers.MustGetCurrentUser(c)
 
 	patientID, ok := parsePatientIDParam(c, "id")
@@ -105,7 +105,7 @@ func (h *Labs) UploadAndProcessLabs(c *gin.Context) {
 // - detectar/validar content-type
 // - fazer upload pro storage
 // - retornar (URI, MIME)
-func (h *Labs) handleFileUpload(
+func (h *LabsHandler) handleFileUpload(
 	c *gin.Context,
 	patientID uuid.UUID,
 ) (string, string, error) {
@@ -114,21 +114,21 @@ func (h *Labs) handleFileUpload(
 	fileHeader, err := c.FormFile("file")
 	if err != nil {
 		return "", "", &apperr.AppError{
-			Code:    apperr.REQUIRED_FIELD_MISSING,
+			Kind:    apperr.REQUIRED_FIELD_MISSING,
 			Message: "arquivo é obrigatório",
 			Cause:   err,
 		}
 	}
 	if fileHeader.Size == 0 {
 		return "", "", &apperr.AppError{
-			Code:    apperr.VALIDATION_FAILED,
+			Kind:    apperr.VALIDATION_FAILED,
 			Message: "arquivo vazio",
 		}
 	}
 
 	if fileHeader.Size > MaxFileSize {
 		return "", "", &apperr.AppError{
-			Code:    apperr.UPLOAD_SIZE_EXCEEDED,
+			Kind:    apperr.UPLOAD_SIZE_EXCEEDED,
 			Message: "arquivo muito grande",
 		}
 	}
@@ -154,7 +154,7 @@ func (h *Labs) handleFileUpload(
 
 	if !isSupportedMimeType(contentType) {
 		return "", "", &apperr.AppError{
-			Code:    apperr.INVALID_FIELD_FORMAT,
+			Kind:    apperr.INVALID_FIELD_FORMAT,
 			Message: "tipo de arquivo não suportado",
 			Cause:   fmt.Errorf("content_type=%s", contentType),
 		}
@@ -164,7 +164,7 @@ func (h *Labs) handleFileUpload(
 	ext := mimeToExt(contentType)
 	if ext == "" {
 		return "", "", &apperr.AppError{
-			Code:    apperr.INVALID_FIELD_FORMAT,
+			Kind:    apperr.INVALID_FIELD_FORMAT,
 			Message: "tipo de arquivo não suportado",
 			Cause:   fmt.Errorf("content_type=%s", contentType),
 		}
@@ -179,7 +179,7 @@ func (h *Labs) handleFileUpload(
 	uri, err := h.storage.Upload(c.Request.Context(), file, objectName, contentType)
 	if err != nil {
 		return "", "", &apperr.AppError{
-			Code:    apperr.INFRA_STORAGE_ERROR,
+			Kind:    apperr.INFRA_STORAGE_ERROR,
 			Message: "falha no upload",
 			Cause:   err,
 		}
@@ -196,7 +196,7 @@ func parsePagination(c *gin.Context, defaultLimit, defaultOffset int) (limit, of
 		l, err := strconv.Atoi(limitStr)
 		if err != nil || l <= 0 {
 			presenter.ErrorResponder(c, &apperr.AppError{
-				Code:    apperr.VALIDATION_FAILED,
+				Kind:    apperr.VALIDATION_FAILED,
 				Message: "limit deve ser > 0",
 				Cause:   err,
 			})
@@ -209,7 +209,7 @@ func parsePagination(c *gin.Context, defaultLimit, defaultOffset int) (limit, of
 		o, err := strconv.Atoi(offsetStr)
 		if err != nil || o < 0 {
 			presenter.ErrorResponder(c, &apperr.AppError{
-				Code:    apperr.VALIDATION_FAILED,
+				Kind:    apperr.VALIDATION_FAILED,
 				Message: "offset deve ser >= 0",
 				Cause:   err,
 			})

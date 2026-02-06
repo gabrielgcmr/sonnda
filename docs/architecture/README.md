@@ -14,20 +14,27 @@ O backend segue um modelo em camadas simples, com baixo acoplamento e separaçã
 
 - **Domain (`internal/domain`)**  
   Modelos do domínio, regras de negócio e invariantes.  
-  - Models em `internal/domain/model`; entities em `internal/domain/entity`; repositories em `internal/domain/repository`; ports em `internal/domain/ports`.
+  - Entities em `internal/domain/entity`; repositories em `internal/domain/repository`; storage abstractions em `internal/domain/storage`; AI abstractions em `internal/domain/ai`.
 
 - **Application (`internal/application`)**  
   Orquestração e cross-cutting concerns.  
   - Use cases em `internal/application/usecase`; services em `internal/application/services`.  
-  - Config/bootstrapping em `internal/application/config` e `internal/application/bootstrap`.
+  - Bootstrapping (injeção de dependências) em `internal/application/bootstrap`.
 
-- **Adapters (`internal/adapters`)**  
-  Implementações de adapters de protocolo (inbound).  
-  - **Inbound (`internal/adapters/inbound/http`)**: HTTP (API REST), rotas, handlers e middlewares.
+- **API (`internal/api`)**  
+  Implementações de adapters HTTP (inbound).  
+  - Handlers em `internal/api/handlers`; rotas em `internal/api/routes`; middlewares em `internal/api/middleware`; presenter em `internal/api/presenter`.
 
 - **Infrastructure (`internal/infrastructure`)**  
   Implementações concretas de persistência e integrações externas.  
   - **Persistence (`internal/infrastructure/persistence`)**: repositórios (sqlc/pgx), cache.
+  - **Auth (`internal/infrastructure/auth`)**: Supabase auth provider.
+  - **AI (`internal/infrastructure/ai`)**: Google Cloud Document AI adapter.
+
+- **Kernel (`internal/kernel`)**  
+  Preocupações transversais (cross-cutting concerns).  
+  - Error contract (`internal/kernel/apperr`): `AppError` e catalog de códigos.
+  - Observability (`internal/kernel/observability`): logging (slog) com escopo de requisição.
   - **Auth (`internal/infrastructure/auth`)**: autenticação e autorização (Supabase Auth, etc).
 
 - **Kernel (`internal/kernel`)**  
@@ -88,14 +95,14 @@ Essas camadas representam **limites conceituais**, não apenas organização de 
 
 - Variáveis de ambiente definidas no ambiente (veja `.env.example` para referência).
 - `APP_ENV` define o ambiente (`dev | prod`).
-- Configurações carregadas na inicialização da aplicação (`internal/application/config`).
+- Configurações carregadas na inicialização da aplicação (`internal/config`).
 
 ---
 
 ## Bootstrap e rotas
 
 - Bootstrap faz o wiring (repos, services e handlers) em `internal/application/bootstrap`.
-- As rotas HTTP vivem em `internal/adapters/inbound/http/router.go` (API).  
+- As rotas HTTP vivem em `internal/api/routes.go` (API REST).  
 - Níveis de acesso:
   - público
   - autenticado

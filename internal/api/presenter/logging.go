@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func buildLogAttrs(c *gin.Context, status int, code apperr.ErrorCode, err error) []any {
+func buildLogAttrs(c *gin.Context, status int, code apperr.ErrorKind, err error) []any {
 	attrs := []any{
 		slog.Int("status", status),
 		slog.String("error_code", string(code)),
@@ -54,7 +54,7 @@ func errorChain(err error) []string {
 func describeError(err error) string {
 	var appErr *apperr.AppError
 	if errors.As(err, &appErr) && appErr != nil {
-		return fmt.Sprintf("app_error code=%s msg=%s", appErr.Code, appErr.Message)
+		return fmt.Sprintf("app_error code=%s msg=%s", appErr.Kind, appErr.Message)
 	}
 	return err.Error()
 }

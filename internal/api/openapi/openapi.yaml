@@ -385,10 +385,15 @@ components:
           type: string
           description: Código estável do erro (contrato Sonnda).
           example: VALIDATION_FAILED
-        request_id:
+        traceId:
           type: string
-          description: Identificador de request (também retornado em X-Request-ID).
+          description: Identificador para rastreamento (normalmente X-Request-ID).
           example: 8a0f8a9b-2e1c-4c46-a2b1-1a6f8a6c2e44
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp (UTC) da ocorrência do erro.
+          example: "2026-02-06T12:34:56Z"
         violations:
           type: array
           description: Lista de violações de validação (quando aplicável).
@@ -437,13 +442,21 @@ components:
       properties:
         full_name:
           type: string
+          minLength: 2
+          maxLength: 120
+        account_type:
+          type: string
+          enum: [basic_care] # tira "professional" do contrato enquanto MVP
         birth_date:
           type: string
           format: date
         cpf:
           type: string
+          pattern: "^[0-9]{11}$"
+          description: "CPF sem pontuação (apenas dígitos)"
         phone:
           type: string
+          pattern: "^\\+?[0-9]{10,15}$"
     UpdateUserRequest:
       type: object
       properties:
@@ -456,9 +469,12 @@ components:
           nullable: true
         cpf:
           type: string
+          pattern: "^[0-9]{11}$"
+          description: "CPF sem pontuação (apenas dígitos)"
           nullable: true
         phone:
           type: string
+          pattern: "^\\+?[0-9]{10,15}$"
           nullable: true
     CreatePatientRequest:
       type: object
@@ -471,8 +487,13 @@ components:
       properties:
         cpf:
           type: string
+          pattern: "^[0-9]{11}$"
+          minLength: 11
+          maxLength: 11
+          description: "CPF sem pontuação (apenas dígitos)"
         full_name:
           type: string
+          minLength: 1
         birth_date:
           type: string
           format: date
@@ -484,9 +505,14 @@ components:
           enum: [WHITE, BLACK, ASIAN, MIXED, INDIGENOUS, UNKNOWN]
         phone:
           type: string
+          pattern: "^\\+?[0-9]{10,15}$"
+          minLength: 10
+          maxLength: 16
           nullable: true
         avatar_url:
           type: string
+          format: uri
+          nullable: true
     PatientCreatedResponse:
       type: object
       properties:
@@ -502,6 +528,36 @@ components:
       type: object
       description: Representação simplificada do paciente.
       additionalProperties: true
+      properties:
+        id:
+          type: string
+          format: uuid
+        cpf:
+          type: string
+          pattern: "^[0-9]{11}$"
+          minLength: 11
+          maxLength: 11
+        full_name:
+          type: string
+          minLength: 1
+        birth_date:
+          type: string
+          format: date
+        gender:
+          type: string
+          enum: [MALE, FEMALE, OTHER, UNKNOWN]
+        race:
+          type: string
+          enum: [WHITE, BLACK, ASIAN, MIXED, INDIGENOUS, UNKNOWN]
+        phone:
+          type: string
+          pattern: "^\\+?[0-9]{10,15}$"
+          nullable: true
+        avatar_url:
+          type: string
+          format: uri
+          nullable: true
+      required: [id]
     PatientsList:
       type: array
       items:

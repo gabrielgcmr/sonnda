@@ -1,12 +1,14 @@
-// internal/api/handlers/user_handler.go
+// internal/api/handlers/user.go
 package handlers
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 
 	helpers "github.com/gabrielgcmr/sonnda/internal/api/helpers"
 	openapi "github.com/gabrielgcmr/sonnda/internal/api/openapi/generated"
@@ -17,23 +19,29 @@ import (
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 )
 
-type User struct {
-	regUC   registrationuc.UseCase
-	userSvc usersvc.Service
+type userService interface {
+	Update(ctx context.Context, input usersvc.UserUpdateInput) (*user.User, error)
+	Delete(ctx context.Context, userID uuid.UUID) error
+	ListMyPatients(ctx context.Context, userID uuid.UUID, limit, offset int) (*usersvc.MyPatientsOutput, error)
 }
 
-func NewUser(
-	regUC registrationuc.UseCase,
-	userSvc usersvc.Service,
+type UserHandler struct {
+	regUC   registrationuc.UseCase
+	userSvc userService
+}
 
-) *User {
-	return &User{
+func NewUserHandler(
+	regUC registrationuc.UseCase,
+	userSvc userService,
+
+) *UserHandler {
+	return &UserHandler{
 		regUC:   regUC,
 		userSvc: userSvc,
 	}
 }
 
-func (h *User) CreateUser(c *gin.Context) {
+func (h *UserHandler) CreateUser(c *gin.Context) {
 	identity, ok := helpers.GetIdentity(c)
 	if !ok {
 		presenter.ErrorResponder(c, apperr.Unauthorized("autenticação necessária"))
@@ -82,12 +90,12 @@ func (h *User) CreateUser(c *gin.Context) {
 	c.JSON(http.StatusCreated, created)
 }
 
-func (h *User) GetUser(c *gin.Context) {
+func (h *UserHandler) GetUser(c *gin.Context) {
 	currentUser := helpers.MustGetCurrentUser(c)
 	c.JSON(http.StatusOK, currentUser)
 }
 
-func (h *User) UpdateUser(c *gin.Context) {
+func (h *UserHandler) UpdateUser(c *gin.Context) {
 	currentUser := helpers.MustGetCurrentUser(c)
 
 	var req openapi.UpdateUserRequest
@@ -119,7 +127,7 @@ func (h *User) UpdateUser(c *gin.Context) {
 	c.JSON(http.StatusOK, updated)
 }
 
-func (h *User) HardDeleteUser(c *gin.Context) {
+func (h *UserHandler) HardDeleteUser(c *gin.Context) {
 	currentUser := helpers.MustGetCurrentUser(c)
 
 	if err := h.userSvc.Delete(c.Request.Context(), currentUser.ID); err != nil {
@@ -131,7 +139,7 @@ func (h *User) HardDeleteUser(c *gin.Context) {
 
 }
 
-func (h *User) ListMyPatients(c *gin.Context) {
+func (h *UserHandler) ListMyPatients(c *gin.Context) {
 	currentUser := helpers.MustGetCurrentUser(c)
 
 	// Parse query params

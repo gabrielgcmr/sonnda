@@ -55,7 +55,7 @@ func (s *service) GetByID(ctx context.Context, profileID uuid.UUID) (*profession
 		return nil, mapRepoError("profRepo.FindByID", err)
 	}
 	if p == nil {
-		return nil, professionalNotFound(nil)
+		return nil, professionalNotFound()
 	}
 	return p, nil
 }
@@ -70,7 +70,7 @@ func (s *service) GetByUserID(ctx context.Context, userID uuid.UUID) (*professio
 		return nil, mapRepoError("profRepo.FindByUserID", err)
 	}
 	if p == nil {
-		return nil, professionalNotFound(nil)
+		return nil, professionalNotFound()
 	}
 	return p, nil
 }
@@ -85,7 +85,7 @@ func (s *service) Delete(ctx context.Context, profileID uuid.UUID) error {
 		return mapRepoError("profRepo.FindByID", err)
 	}
 	if existing == nil {
-		return professionalNotFound(nil)
+		return professionalNotFound()
 	}
 
 	if err := s.repo.Delete(ctx, profileID); err != nil {

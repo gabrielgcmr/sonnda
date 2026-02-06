@@ -5,7 +5,7 @@ package apperr
 // Validation retorna um erro deBadRequest (400)
 func Validation(msg string, violations ...Violation) *AppError {
 	return &AppError{
-		Code:       VALIDATION_FAILED,
+		Kind:       VALIDATION_FAILED,
 		Message:    msg,
 		Violations: violations,
 	}
@@ -14,7 +14,7 @@ func Validation(msg string, violations ...Violation) *AppError {
 // Internal retorna um erro de servidor (500) e oculta detalhes do cliente
 func Internal(msg string, cause error) *AppError {
 	return &AppError{
-		Code:    INTERNAL_ERROR,
+		Kind:    INTERNAL_ERROR,
 		Message: msg,
 		Cause:   cause,
 	}
@@ -23,14 +23,14 @@ func Internal(msg string, cause error) *AppError {
 // Conflict para recursos duplicados (409)
 func Conflict(msg string) *AppError {
 	return &AppError{
-		Code:    RESOURCE_CONFLICT,
+		Kind:    RESOURCE_CONFLICT,
 		Message: msg,
 	}
 }
 
 func AlreadyExists(msg string) *AppError {
 	return &AppError{
-		Code:    RESOURCE_ALREADY_EXISTS,
+		Kind:    RESOURCE_ALREADY_EXISTS,
 		Message: msg,
 	}
 }
@@ -38,7 +38,7 @@ func AlreadyExists(msg string) *AppError {
 // Unauthorized para falhas de login (401)
 func Unauthorized(msg string) *AppError {
 	return &AppError{
-		Code:    AUTH_REQUIRED,
+		Kind:    AUTH_REQUIRED,
 		Message: msg,
 	}
 }
@@ -46,7 +46,15 @@ func Unauthorized(msg string) *AppError {
 // Forbidden para falhas de permissão (403)
 func Forbidden(msg string) *AppError {
 	return &AppError{
-		Code:    ACCESS_DENIED,
+		Kind:    ACCESS_DENIED,
+		Message: msg,
+	}
+}
+
+// NotFound para recursos não encontrados (404)
+func NotFound(msg string) *AppError {
+	return &AppError{
+		Kind:    NOT_FOUND,
 		Message: msg,
 	}
 }
@@ -54,7 +62,7 @@ func Forbidden(msg string) *AppError {
 // DomainRuleViolation retorna um erro de regra de domínio (422)
 func DomainRuleViolation(msg string, violations ...Violation) *AppError {
 	return &AppError{
-		Code:       DOMAIN_RULE_VIOLATION,
+		Kind:       DOMAIN_RULE_VIOLATION,
 		Message:    msg,
 		Violations: violations,
 	}

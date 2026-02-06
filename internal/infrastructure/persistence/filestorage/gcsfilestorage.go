@@ -8,11 +8,13 @@ package filestorage
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"time"
 
 	domainstorage "github.com/gabrielgcmr/sonnda/internal/domain/storage"
+	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 
 	"cloud.google.com/go/storage"
 	"google.golang.org/api/option"
@@ -42,7 +44,7 @@ func NewGCSObjectStorage(
 		client, err = storage.NewClient(ctx)
 	}
 	if err != nil {
-		return nil, fmt.Errorf("failed to create gcs client: %w", err)
+		return nil, wrapStorageError("falha ao inicializar storage", "gcs.new_client", err)
 	}
 
 	return &GCSObjectStorage{
@@ -68,10 +70,10 @@ func (a *GCSObjectStorage) Upload(
 
 	if _, err := io.Copy(writer, file); err != nil {
 		_ = writer.Close()
-		return "", fmt.Errorf("failed to copy file content: %w", err)
+		return "", wrapStorageError("falha ao enviar arquivo", "gcs.upload.copy", err)
 	}
 	if err := writer.Close(); err != nil {
-		return "", fmt.Errorf("failed to close writer: %w", err)
+		return "", wrapStorageError("falha ao enviar arquivo", "gcs.upload.close_writer", err)
 	}
 
 	// URL pública assinada (24h)
@@ -84,7 +86,7 @@ func (a *GCSObjectStorage) Delete(ctx context.Context, uri string) error {
 
 	object := a.client.Bucket(a.bucketName).Object(objectName)
 	if err := object.Delete(ctx); err != nil {
-		return fmt.Errorf("failed to delete file %s: %w", uri, err)
+		return wrapStorageError("falha ao remover arquivo", "gcs.delete", fmt.Errorf("uri=%s: %w", uri, err))
 	}
 	return nil
 }
@@ -103,7 +105,7 @@ func (a *GCSObjectStorage) GetSignedURL(
 
 	url, err := a.client.Bucket(a.bucketName).SignedURL(objectName, opts)
 	if err != nil {
-		return "", fmt.Errorf("failed to generate signed URL: %w", err)
+		return "", wrapStorageError("falha ao gerar URL assinada", "gcs.signed_url", err)
 	}
 
 	return url, nil
@@ -126,4 +128,34 @@ func extractObjectName(uri, bucketName string) string {
 	}
 	// Se não tiver o prefixo, assume que já é o object name
 	return uri
+}
+
+func wrapStorageError(message, op string, err error) error {
+	if err == nil {
+		return nil
+	}
+
+	switch {
+	case errors.Is(err, context.DeadlineExceeded),
+		errors.Is(err, context.Canceled):
+		return &apperr.AppError{
+			Kind:    apperr.INFRA_TIMEOUT,
+			Message: "tempo limite excedido",
+			Cause:   fmt.Errorf("%s: %w", op, err),
+		}
+
+	case errors.Is(err, storage.ErrObjectNotExist):
+		return &apperr.AppError{
+			Kind:    apperr.NOT_FOUND,
+			Message: "arquivo não encontrado",
+			Cause:   fmt.Errorf("%s: %w", op, err),
+		}
+
+	default:
+		return &apperr.AppError{
+			Kind:    apperr.INFRA_STORAGE_ERROR,
+			Message: message,
+			Cause:   fmt.Errorf("%s: %w", op, err),
+		}
+	}
 }

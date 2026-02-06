@@ -7,7 +7,8 @@ Além dos campos padrão (`type`, `title`, `status`, `detail`, `instance`), a So
 
 - `code`: código estável (`apperr.ErrorCode`)
 - `violations`: lista de violações (quando aplicável)
-- `request_id`: id da requisição (também no header `X-Request-ID`)
+- `traceId`: id de rastreamento (normalmente o `X-Request-ID`)
+- `timestamp`: timestamp (UTC)
 
 ## Exemplo (401)
 
@@ -19,7 +20,8 @@ Além dos campos padrão (`type`, `title`, `status`, `detail`, `instance`), a So
   "detail": "autenticação necessária",
   "instance": "urn:sonnda:request-id:8a0f8a9b-2e1c-4c46-a2b1-1a6f8a6c2e44",
   "code": "AUTH_REQUIRED",
-  "request_id": "8a0f8a9b-2e1c-4c46-a2b1-1a6f8a6c2e44"
+  "traceId": "8a0f8a9b-2e1c-4c46-a2b1-1a6f8a6c2e44",
+  "timestamp": "2026-02-06T12:34:56Z"
 }
 ```
 
@@ -37,4 +39,3 @@ Além dos campos padrão (`type`, `title`, `status`, `detail`, `instance`), a So
   ]
 }
 ```
-

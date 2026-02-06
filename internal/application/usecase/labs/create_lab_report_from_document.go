@@ -53,14 +53,14 @@ func (u *createLabReportFromDocumentUseCase) Execute(ctx context.Context, input 
 	p, err := u.patientRepo.FindByID(ctx, input.PatientID)
 	if err != nil {
 		return nil, &apperr.AppError{
-			Code:    apperr.INFRA_DATABASE_ERROR,
+			Kind:    apperr.INFRA_DATABASE_ERROR,
 			Message: "falha técnica",
 			Cause:   err,
 		}
 	}
 	if p == nil {
 		return nil, &apperr.AppError{
-			Code:    apperr.NOT_FOUND,
+			Kind:    apperr.NOT_FOUND,
 			Message: "paciente não encontrado",
 		}
 	}
@@ -68,7 +68,7 @@ func (u *createLabReportFromDocumentUseCase) Execute(ctx context.Context, input 
 	extracted, err := u.extractor.ExtractLabReport(ctx, input.DocumentURI, input.MimeType)
 	if err != nil {
 		return nil, &apperr.AppError{
-			Code:    apperr.INFRA_EXTERNAL_SERVICE_ERROR,
+			Kind:    apperr.INFRA_EXTERNAL_SERVICE_ERROR,
 			Message: "falha ao processar documento",
 			Cause:   err,
 		}
@@ -84,14 +84,14 @@ func (u *createLabReportFromDocumentUseCase) Execute(ctx context.Context, input 
 	exists, err := u.labsRepo.ExistsBySignature(ctx, input.PatientID, fingerprint)
 	if err != nil {
 		return nil, &apperr.AppError{
-			Code:    apperr.INFRA_DATABASE_ERROR,
+			Kind:    apperr.INFRA_DATABASE_ERROR,
 			Message: "falha técnica",
 			Cause:   err,
 		}
 	}
 	if exists {
 		return nil, &apperr.AppError{
-			Code:    apperr.RESOURCE_ALREADY_EXISTS,
+			Kind:    apperr.RESOURCE_ALREADY_EXISTS,
 			Message: "laudo já existe",
 		}
 	}
@@ -103,7 +103,7 @@ func (u *createLabReportFromDocumentUseCase) Execute(ctx context.Context, input 
 			return nil, appErr
 		}
 		return nil, &apperr.AppError{
-			Code:    apperr.INFRA_DATABASE_ERROR,
+			Kind:    apperr.INFRA_DATABASE_ERROR,
 			Message: "falha técnica",
 			Cause:   err,
 		}
@@ -247,9 +247,9 @@ func (u *createLabReportFromDocumentUseCase) mapDomainError(err error) error {
 		if len(violations) > 0 {
 			return apperr.Validation("entrada inválida", violations...)
 		}
-		return &apperr.AppError{Code: apperr.VALIDATION_FAILED, Message: "entrada inválida", Cause: err}
+		return &apperr.AppError{Kind: apperr.VALIDATION_FAILED, Message: "entrada inválida", Cause: err}
 	default:
-		return &apperr.AppError{Code: apperr.INTERNAL_ERROR, Message: "erro inesperado", Cause: err}
+		return &apperr.AppError{Kind: apperr.INTERNAL_ERROR, Message: "erro inesperado", Cause: err}
 	}
 }
 

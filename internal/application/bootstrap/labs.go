@@ -1,10 +1,8 @@
 // internal/application/bootstrap/labs.go
-// internal/application/bootstrap/labs.go
-// File: internal/app/bootstrap/labs.go
 package bootstrap
 
 import (
-	labshandler "github.com/gabrielgcmr/sonnda/internal/api/handlers"
+	handlers "github.com/gabrielgcmr/sonnda/internal/api/handlers"
 	labsvc "github.com/gabrielgcmr/sonnda/internal/application/services/labs"
 	labsuc "github.com/gabrielgcmr/sonnda/internal/application/usecase/labs"
 	domainai "github.com/gabrielgcmr/sonnda/internal/domain/ai"
@@ -14,7 +12,7 @@ import (
 )
 
 type LabsModule struct {
-	Handler *labshandler.Labs
+	Handler *handlers.LabsHandler
 }
 
 func NewLabsModule(
@@ -28,6 +26,6 @@ func NewLabsModule(
 	svc := labsvc.New(patientRepo, labsRepo)
 	createUC := labsuc.NewCreateLabReportFromDocument(patientRepo, labsRepo, docExtractor)
 	return &LabsModule{
-		Handler: labshandler.NewLabs(svc, createUC, storage),
+		Handler: handlers.NewLabs(svc, createUC, storage),
 	}
 }

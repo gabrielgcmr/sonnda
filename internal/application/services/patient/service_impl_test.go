@@ -163,8 +163,8 @@ func TestCreate_AccessRepoError_ReturnsInfraDatabaseError(t *testing.T) {
 	if !errors.As(err, &appErr) {
 		t.Fatalf("expected AppError, got %T", err)
 	}
-	if appErr.Code != apperr.INFRA_DATABASE_ERROR {
-		t.Fatalf("expected INFRA_DATABASE_ERROR, got %s", appErr.Code)
+	if appErr.Kind != apperr.INFRA_DATABASE_ERROR {
+		t.Fatalf("expected INFRA_DATABASE_ERROR, got %s", appErr.Kind)
 	}
 }
 
@@ -186,7 +186,7 @@ func TestCreate_NilUser_ReturnsAuthRequired(t *testing.T) {
 	if !errors.As(err, &appErr) {
 		t.Fatalf("expected AppError, got %T", err)
 	}
-	if appErr.Code != apperr.AUTH_REQUIRED {
-		t.Fatalf("expected AUTH_REQUIRED, got %s", appErr.Code)
+	if appErr.Kind != apperr.AUTH_REQUIRED {
+		t.Fatalf("expected AUTH_REQUIRED, got %s", appErr.Kind)
 	}
 }

@@ -5,10 +5,10 @@ import (
 	"log/slog"
 )
 
-func ErrorCodeOf(err error) ErrorCode {
+func ErrorCodeOf(err error) ErrorKind {
 	var ae *AppError
 	if errors.As(err, &ae) && ae != nil {
-		return ae.Code
+		return ae.Kind
 	}
 	return INTERNAL_ERROR
 }

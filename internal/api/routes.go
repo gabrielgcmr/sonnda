@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/gabrielgcmr/sonnda/internal/api/handlers"
-	"github.com/gabrielgcmr/sonnda/internal/api/handlers/patient"
 
 	"github.com/gabrielgcmr/sonnda/internal/api/middleware"
 	openapispec "github.com/gabrielgcmr/sonnda/internal/api/openapi"
@@ -17,9 +16,9 @@ import (
 type APIDependencies struct {
 	AuthMiddleware         *middleware.AuthMiddleware
 	RegistrationMiddleware *middleware.RegistrationMiddleware
-	UserHandler            *handlers.User
-	PatientHandler         *patient.PatientHandler
-	LabsHandler            *handlers.Labs
+	UserHandler            *handlers.UserHandler
+	PatientHandler         *handlers.PatientHandler
+	LabsHandler            *handlers.LabsHandler
 }
 
 type RootInfo struct {

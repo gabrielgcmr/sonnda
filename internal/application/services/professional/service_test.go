@@ -1,5 +1,4 @@
 // internal/application/services/professional/service_test.go
-// internal/application/services/professional/service_test.go
 package professionalsvc
 
 import (
@@ -60,8 +59,8 @@ func TestCreate_InvalidKind_ReturnsValidationFailed(t *testing.T) {
 	if !errors.As(err, &appErr) {
 		t.Fatalf("expected AppError, got %T", err)
 	}
-	if appErr.Code != apperr.VALIDATION_FAILED {
-		t.Fatalf("expected VALIDATION_FAILED, got %s", appErr.Code)
+	if appErr.Kind != apperr.VALIDATION_FAILED {
+		t.Fatalf("expected VALIDATION_FAILED, got %s", appErr.Kind)
 	}
 }
 
@@ -80,8 +79,8 @@ func TestCreate_RepoError_ReturnsInfraDatabaseError(t *testing.T) {
 	if !errors.As(err, &appErr) {
 		t.Fatalf("expected AppError, got %T", err)
 	}
-	if appErr.Code != apperr.INFRA_DATABASE_ERROR {
-		t.Fatalf("expected INFRA_DATABASE_ERROR, got %s", appErr.Code)
+	if appErr.Kind != apperr.INFRA_DATABASE_ERROR {
+		t.Fatalf("expected INFRA_DATABASE_ERROR, got %s", appErr.Kind)
 	}
 }
 
@@ -94,8 +93,8 @@ func TestGetByID_NotFound_ReturnsNotFound(t *testing.T) {
 	if !errors.As(err, &appErr) {
 		t.Fatalf("expected AppError, got %T", err)
 	}
-	if appErr.Code != apperr.NOT_FOUND {
-		t.Fatalf("expected NOT_FOUND, got %s", appErr.Code)
+	if appErr.Kind != apperr.NOT_FOUND {
+		t.Fatalf("expected NOT_FOUND, got %s", appErr.Kind)
 	}
 }
 
@@ -108,7 +107,7 @@ func TestDeleteByID_NotFound_ReturnsNotFound(t *testing.T) {
 	if !errors.As(err, &appErr) {
 		t.Fatalf("expected AppError, got %T", err)
 	}
-	if appErr.Code != apperr.NOT_FOUND {
-		t.Fatalf("expected NOT_FOUND, got %s", appErr.Code)
+	if appErr.Kind != apperr.NOT_FOUND {
+		t.Fatalf("expected NOT_FOUND, got %s", appErr.Kind)
 	}
 }

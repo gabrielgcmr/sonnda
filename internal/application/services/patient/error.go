@@ -1,5 +1,4 @@
 // internal/application/services/patient/error.go
-// internal/application/services/patient/error.go
 package patientsvc
 
 import (
@@ -22,22 +21,14 @@ func mapDomainError(err error) error {
 		errors.Is(err, patient.ErrInvalidBirthDate),
 		errors.Is(err, patient.ErrInvalidGender),
 		errors.Is(err, patient.ErrInvalidRace):
-		return &apperr.AppError{
-			Code:    apperr.VALIDATION_FAILED,
-			Message: "dados inválidos",
-			Cause:   err,
-		}
+		return apperr.Validation("dados inválidos")
 
 	default:
 		var appErr *apperr.AppError
 		if errors.As(err, &appErr) && appErr != nil {
 			return appErr
 		}
-		return &apperr.AppError{
-			Code:    apperr.INTERNAL_ERROR,
-			Message: "erro inesperado",
-			Cause:   err,
-		}
+		return apperr.Internal("erro inesperado", err)
 	}
 }
 
@@ -53,38 +44,19 @@ func mapRepoError(op string, err error) error {
 
 	switch {
 	case errors.Is(err, repo.ErrPatientAlreadyExists):
-		return &apperr.AppError{
-			Code:    apperr.RESOURCE_ALREADY_EXISTS,
-			Message: "paciente já cadastrado",
-			Cause:   err,
-		}
+		return apperr.AlreadyExists("paciente já cadastrado")
 
 	case errors.Is(err, repo.ErrPatientNotFound):
-		return &apperr.AppError{
-			Code:    apperr.NOT_FOUND,
-			Message: "paciente não encontrado",
-			Cause:   err,
-		}
+		return patientNotFound()
 
 	case errors.Is(err, repo.ErrRepositoryFailure):
-		return &apperr.AppError{
-			Code:    apperr.INFRA_DATABASE_ERROR,
-			Message: "falha técnica",
-			Cause:   fmt.Errorf("%s: %w", op, err),
-		}
+		return apperr.Internal("falha técnica", fmt.Errorf("%s: %w", op, err))
 
 	default:
-		return &apperr.AppError{
-			Code:    apperr.INTERNAL_ERROR,
-			Message: "erro inesperado",
-			Cause:   fmt.Errorf("%s: %w", op, err),
-		}
+		return apperr.Internal("erro inesperado", fmt.Errorf("%s: %w", op, err))
 	}
 }
 
 func patientNotFound() error {
-	return &apperr.AppError{
-		Code:    apperr.NOT_FOUND,
-		Message: "paciente não encontrado",
-	}
+	return apperr.NotFound("paciente não encontrado")
 }

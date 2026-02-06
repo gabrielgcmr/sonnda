@@ -11,7 +11,7 @@ func BindJSON(c *gin.Context, dst any) error {
 		violations := ValidationErrorsToViolations(err)
 
 		appErr := &apperr.AppError{
-			Code:    apperr.VALIDATION_FAILED,
+			Kind:    apperr.VALIDATION_FAILED,
 			Message: "dados de entrada inválidos",
 			Cause:   err,
 		}

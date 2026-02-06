@@ -21,14 +21,14 @@ func mapDomainError(err error) error {
 		errors.Is(err, user.ErrInvalidCPF),
 		errors.Is(err, user.ErrInvalidPhone):
 		return &apperr.AppError{
-			Code:    apperr.VALIDATION_FAILED,
+			Kind:    apperr.VALIDATION_FAILED,
 			Message: "dados do usuário inválidos",
 			Cause:   err,
 		}
 
 	default:
 		return &apperr.AppError{
-			Code:    apperr.INTERNAL_ERROR,
+			Kind:    apperr.INTERNAL_ERROR,
 			Message: "erro inesperado",
 			Cause:   err,
 		}
@@ -48,28 +48,28 @@ func mapRepoError(op string, err error) error {
 	switch {
 	case errors.Is(err, repo.ErrUserAlreadyExists):
 		return &apperr.AppError{
-			Code:    apperr.RESOURCE_ALREADY_EXISTS,
+			Kind:    apperr.RESOURCE_ALREADY_EXISTS,
 			Message: "usuário já cadastrado",
 			Cause:   err,
 		}
 
 	case errors.Is(err, repo.ErrUserNotFound):
 		return &apperr.AppError{
-			Code:    apperr.NOT_FOUND,
+			Kind:    apperr.NOT_FOUND,
 			Message: "usuário não encontrado",
 			Cause:   err,
 		}
 
 	case errors.Is(err, repo.ErrRepositoryFailure):
 		return &apperr.AppError{
-			Code:    apperr.INFRA_DATABASE_ERROR,
+			Kind:    apperr.INFRA_DATABASE_ERROR,
 			Message: "falha técnica",
 			Cause:   fmt.Errorf("%s: %w", op, err),
 		}
 
 	default:
 		return &apperr.AppError{
-			Code:    apperr.INTERNAL_ERROR,
+			Kind:    apperr.INTERNAL_ERROR,
 			Message: "erro inesperado",
 			Cause:   fmt.Errorf("%s: %w", op, err),
 		}
@@ -78,7 +78,7 @@ func mapRepoError(op string, err error) error {
 
 func userNotFound() error {
 	return &apperr.AppError{
-		Code:    apperr.NOT_FOUND,
+		Kind:    apperr.NOT_FOUND,
 		Message: "usuário não encontrado",
 	}
 }

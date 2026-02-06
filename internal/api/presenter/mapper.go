@@ -5,23 +5,22 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/gabrielgcmr/sonnda/internal/api/problem"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 )
 
-func ToProblem(err error, meta problem.Meta) (status int, body problem.Details) {
+func ToProblem(err error, meta ProblemMeta) (status int, body Problem) {
 	var appErr *apperr.AppError
 
 	if errors.As(err, &appErr) && appErr != nil {
-		status = StatusFromCode(appErr.Code)
-		return status, problem.New(status, appErr.Code, appErr.Message, appErr.Violations, meta)
+		status = StatusFromCode(appErr.Kind)
+		return status, NewProblem(status, appErr.Kind, appErr.Message, appErr.Violations, meta, err)
 	}
 
 	status = StatusFromCode(apperr.INTERNAL_ERROR)
-	return status, problem.New(status, apperr.INTERNAL_ERROR, "erro inesperado", nil, meta)
+	return status, NewProblem(status, apperr.INTERNAL_ERROR, "erro inesperado", nil, meta, err)
 }
 
-func StatusFromCode(code apperr.ErrorCode) int {
+func StatusFromCode(code apperr.ErrorKind) int {
 	switch code {
 	// AUTH
 	case apperr.AUTH_REQUIRED,

@@ -30,7 +30,7 @@ func parsePatientIDParam(c *gin.Context, id string) (uuid.UUID, bool) {
 	idStr := c.Param(id)
 	if idStr == "" {
 		presenter.ErrorResponder(c, &apperr.AppError{
-			Code:    apperr.REQUIRED_FIELD_MISSING,
+			Kind:    apperr.REQUIRED_FIELD_MISSING,
 			Message: "patient_id é obrigatório",
 		})
 		return uuid.UUID{}, false
@@ -39,7 +39,7 @@ func parsePatientIDParam(c *gin.Context, id string) (uuid.UUID, bool) {
 	parsedID, err := uuid.Parse(idStr)
 	if err != nil {
 		presenter.ErrorResponder(c, &apperr.AppError{
-			Code:    apperr.INVALID_FIELD_FORMAT,
+			Kind:    apperr.INVALID_FIELD_FORMAT,
 			Message: "patient_id inválido",
 			Cause:   err,
 		})
@@ -47,4 +47,21 @@ func parsePatientIDParam(c *gin.Context, id string) (uuid.UUID, bool) {
 	}
 
 	return parsedID, true
+}
+
+func ParseGender(genderStr string) (demographics.Gender, error) {
+	gender, err := demographics.ParseGender(genderStr)
+	if err != nil {
+		return "", fmt.Errorf("invalid gender value: %s: %w", genderStr, demographics.ErrInvalidGender)
+	}
+	return gender, nil
+}
+
+// ParseRace valida e converte a raça/etnia para o tipo do domínio.
+func ParseRace(raceStr string) (demographics.Race, error) {
+	race, err := demographics.ParseRace(raceStr)
+	if err != nil {
+		return "", fmt.Errorf("invalid race value: %s: %w", raceStr, demographics.ErrInvalidRace)
+	}
+	return race, nil
 }

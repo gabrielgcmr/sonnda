@@ -12,7 +12,7 @@ import (
 )
 
 type UserModule struct {
-	Handler                *handlers.User
+	Handler                *handlers.UserHandler
 	RegistrationMiddleware *middleware.RegistrationMiddleware
 }
 
@@ -25,7 +25,7 @@ func NewUserModule(db *postgress.Client) *UserModule {
 	profSvc := professionalsvc.New(profRepo)
 	regUC := registrationuc.New(userRepo, userSvc, profSvc)
 
-	handler := handlers.NewUser(regUC, userSvc)
+	handler := handlers.NewUserHandler(regUC, userSvc)
 	regMiddleware := middleware.NewRegistrationMiddleware(userRepo)
 
 	return &UserModule{

@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/gabrielgcmr/sonnda/internal/api/problem"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 	applog "github.com/gabrielgcmr/sonnda/internal/kernel/observability"
 
@@ -35,9 +34,9 @@ func ErrorResponder(c *gin.Context, err error) {
 	}
 
 	// Mapeia erro para HTTP + contrato público (RFC 9457).
-	status, resp := ToProblem(err, problem.Meta{
-		Instance:  instance,
-		RequestID: rid,
+	status, resp := ToProblem(err, ProblemMeta{
+		Instance: instance,
+		TraceID:  rid,
 	})
 	level := apperr.LogLevelOf(err)
 
@@ -71,7 +70,7 @@ func shouldSkipErrorLog(c *gin.Context) bool {
 	return skip
 }
 
-func writeProblem(c *gin.Context, status int, body problem.Details) {
+func writeProblem(c *gin.Context, status int, body Problem) {
 	if c == nil {
 		return
 	}

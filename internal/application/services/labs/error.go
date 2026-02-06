@@ -26,7 +26,7 @@ func mapRepoError(op string, err error) error {
 		fallthrough
 	default:
 		return &apperr.AppError{
-			Code:    apperr.INFRA_DATABASE_ERROR,
+			Kind:    apperr.INFRA_DATABASE_ERROR,
 			Message: "falha técnica",
 			Cause:   fmt.Errorf("%s: %w", op, err),
 		}
@@ -35,7 +35,7 @@ func mapRepoError(op string, err error) error {
 
 func patientNotFound() error {
 	return &apperr.AppError{
-		Code:    apperr.NOT_FOUND,
+		Kind:    apperr.NOT_FOUND,
 		Message: "paciente não encontrado",
 	}
 }

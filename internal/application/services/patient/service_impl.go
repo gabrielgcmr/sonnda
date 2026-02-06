@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/gabrielgcmr/sonnda/internal/application/services/authorization"
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patientaccess"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patient"
+	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patientaccess"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/rbac"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/user"
 	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
@@ -82,7 +82,7 @@ func (s *service) Create(ctx context.Context, currentUser *user.User, input Crea
 	}
 	if err := s.accessRepo.Upsert(ctx, access); err != nil {
 		return nil, &apperr.AppError{
-			Code:    apperr.INFRA_DATABASE_ERROR,
+			Kind:    apperr.INFRA_DATABASE_ERROR,
 			Message: "falha técnica",
 			Cause:   fmt.Errorf("patientAccessRepo.Upsert: %w", err),
 		}

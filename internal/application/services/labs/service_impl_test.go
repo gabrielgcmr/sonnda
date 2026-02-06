@@ -1,5 +1,4 @@
 // internal/application/services/labs/service_impl_test.go
-// internal/application/services/labs/service_impl_test.go
 package labsvc
 
 import (
@@ -74,8 +73,8 @@ func TestList_InvalidPatientID_ReturnsValidationFailed(t *testing.T) {
 	if !errors.As(err, &appErr) {
 		t.Fatalf("expected AppError, got %T", err)
 	}
-	if appErr.Code != apperr.VALIDATION_FAILED {
-		t.Fatalf("expected VALIDATION_FAILED, got %s", appErr.Code)
+	if appErr.Kind != apperr.VALIDATION_FAILED {
+		t.Fatalf("expected VALIDATION_FAILED, got %s", appErr.Kind)
 	}
 }
 
@@ -88,8 +87,8 @@ func TestList_PatientNotFound_ReturnsNotFound(t *testing.T) {
 	if !errors.As(err, &appErr) {
 		t.Fatalf("expected AppError, got %T", err)
 	}
-	if appErr.Code != apperr.NOT_FOUND {
-		t.Fatalf("expected NOT_FOUND, got %s", appErr.Code)
+	if appErr.Kind != apperr.NOT_FOUND {
+		t.Fatalf("expected NOT_FOUND, got %s", appErr.Kind)
 	}
 }
 
@@ -103,8 +102,8 @@ func TestList_PatientRepoError_ReturnsInfraDatabaseError(t *testing.T) {
 	if !errors.As(err, &appErr) {
 		t.Fatalf("expected AppError, got %T", err)
 	}
-	if appErr.Code != apperr.INFRA_DATABASE_ERROR {
-		t.Fatalf("expected INFRA_DATABASE_ERROR, got %s", appErr.Code)
+	if appErr.Kind != apperr.INFRA_DATABASE_ERROR {
+		t.Fatalf("expected INFRA_DATABASE_ERROR, got %s", appErr.Kind)
 	}
 }
 
@@ -120,7 +119,7 @@ func TestList_LabsRepoError_ReturnsInfraDatabaseError(t *testing.T) {
 	if !errors.As(err, &appErr) {
 		t.Fatalf("expected AppError, got %T", err)
 	}
-	if appErr.Code != apperr.INFRA_DATABASE_ERROR {
-		t.Fatalf("expected INFRA_DATABASE_ERROR, got %s", appErr.Code)
+	if appErr.Kind != apperr.INFRA_DATABASE_ERROR {
+		t.Fatalf("expected INFRA_DATABASE_ERROR, got %s", appErr.Kind)
 	}
 }

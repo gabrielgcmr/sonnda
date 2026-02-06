@@ -1,25 +1,39 @@
-package patient
+// internal/api/handlers/patient.go
+package handlers
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
+	openapi "github.com/gabrielgcmr/sonnda/internal/api/openapi/generated"
 	patientsvc "github.com/gabrielgcmr/sonnda/internal/application/services/patient"
+	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patient"
+	"github.com/gabrielgcmr/sonnda/internal/domain/entity/user"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 	applog "github.com/gabrielgcmr/sonnda/internal/kernel/observability"
 
-	"github.com/gabrielgcmr/sonnda/internal/api/handlers"
+	openapi_types "github.com/oapi-codegen/runtime/types"
+
 	helpers "github.com/gabrielgcmr/sonnda/internal/api/helpers"
 	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
 )
 
-type PatientHandler struct {
-	svc patientsvc.Service
+type patientService interface {
+	Create(ctx context.Context, currentUser *user.User, input patientsvc.CreateInput) (*patient.Patient, error)
+	Get(ctx context.Context, currentUser *user.User, id uuid.UUID) (*patient.Patient, error)
+	Update(ctx context.Context, currentUser *user.User, id uuid.UUID, input patientsvc.UpdateInput) (*patient.Patient, error)
+	HardDelete(ctx context.Context, currentUser *user.User, id uuid.UUID) error
+	ListMyPatients(ctx context.Context, currentUser *user.User, limit, offset int) ([]*patient.Patient, error)
 }
 
-func NewPatientHandler(svc patientsvc.Service) *PatientHandler {
+type PatientHandler struct {
+	svc patientService
+}
+
+func NewPatientHandler(svc patientService) *PatientHandler {
 	return &PatientHandler{svc: svc}
 }
 
@@ -31,13 +45,13 @@ func (h *PatientHandler) Create(c *gin.Context) {
 	user, ok := helpers.GetCurrentUser(c)
 	if !ok || user == nil {
 		presenter.ErrorResponder(c, &apperr.AppError{
-			Code:    apperr.AUTH_REQUIRED,
+			Kind:    apperr.AUTH_REQUIRED,
 			Message: "autenticação necessária",
 		})
 		return
 	}
 
-	var req CreatePatientRequest
+	var req openapi.CreatePatientRequest
 	// 1. Bind do request
 	if err := helpers.BindJSON(c, &req); err != nil {
 		presenter.ErrorResponder(c, err)
@@ -45,45 +59,47 @@ func (h *PatientHandler) Create(c *gin.Context) {
 	}
 
 	// 3. Parsing / normalização de fronteira
-	birthDate, err := handlers.ParseBirthDate(req.BirthDate)
-	if err != nil {
-		presenter.ErrorResponder(c, &apperr.AppError{
-			Code:    apperr.VALIDATION_FAILED,
-			Message: "data de nascimento inválida",
-			Cause:   err,
-		})
+	if req.BirthDate.Time.IsZero() {
+		presenter.ErrorResponder(c, apperr.Validation("data de nascimento é obrigatória",
+			apperr.Violation{Field: "birth_date", Reason: "required"}))
 		return
 	}
+	birthDate := req.BirthDate.Time
 
-	gender, err := ParseGender(req.Gender)
+	gender, err := ParseGender(string(req.Gender))
 	if err != nil {
 		presenter.ErrorResponder(c, &apperr.AppError{
-			Code:    apperr.VALIDATION_FAILED,
+			Kind:    apperr.VALIDATION_FAILED,
 			Message: "gênero inválido",
 			Cause:   err,
 		})
 		return
 	}
 
-	race, err := ParseRace(req.Race)
+	race, err := ParseRace(string(req.Race))
 	if err != nil {
 		presenter.ErrorResponder(c, &apperr.AppError{
-			Code:    apperr.VALIDATION_FAILED,
+			Kind:    apperr.VALIDATION_FAILED,
 			Message: "raça inválida",
 			Cause:   err,
 		})
 		return
 	}
 
+	avatarURL := ""
+	if req.AvatarUrl != nil {
+		avatarURL = *req.AvatarUrl
+	}
+
 	// 4. Montagem do input da aplicação
 	input := patientsvc.CreateInput{
-		CPF:       req.CPF,
+		CPF:       req.Cpf,
 		FullName:  req.FullName,
 		BirthDate: birthDate,
 		Gender:    gender,
 		Race:      race,
 		Phone:     req.Phone,
-		AvatarURL: req.AvatarURL,
+		AvatarURL: avatarURL,
 	}
 
 	// 5. Execução do use case
@@ -94,8 +110,8 @@ func (h *PatientHandler) Create(c *gin.Context) {
 	}
 
 	c.Header("Location", "/patients/"+p.ID.String())
-	c.JSON(http.StatusCreated, gin.H{
-		"id": p.ID.String(),
+	c.JSON(http.StatusCreated, openapi.PatientCreatedResponse{
+		Id: openapi_types.UUID(p.ID),
 	})
 }
 
@@ -105,7 +121,7 @@ func (h *PatientHandler) GetPatient(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
 		presenter.ErrorResponder(c, &apperr.AppError{
-			Code:    apperr.VALIDATION_FAILED,
+			Kind:    apperr.VALIDATION_FAILED,
 			Message: "patient_id é obrigatório",
 		})
 		return
@@ -114,7 +130,7 @@ func (h *PatientHandler) GetPatient(c *gin.Context) {
 	parsedID, err := uuid.Parse(id)
 	if err != nil {
 		presenter.ErrorResponder(c, &apperr.AppError{
-			Code:    apperr.VALIDATION_FAILED,
+			Kind:    apperr.VALIDATION_FAILED,
 			Message: "patient_id inválido",
 			Cause:   err,
 		})
@@ -136,7 +152,7 @@ func (h *PatientHandler) UpdatePatient(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
 		presenter.ErrorResponder(c, &apperr.AppError{
-			Code:    apperr.VALIDATION_FAILED,
+			Kind:    apperr.VALIDATION_FAILED,
 			Message: "patient_id é obrigatório",
 		})
 		return
@@ -145,7 +161,7 @@ func (h *PatientHandler) UpdatePatient(c *gin.Context) {
 	parsedID, err := uuid.Parse(id)
 	if err != nil {
 		presenter.ErrorResponder(c, &apperr.AppError{
-			Code:    apperr.VALIDATION_FAILED,
+			Kind:    apperr.VALIDATION_FAILED,
 			Message: "patient_id inválido",
 			Cause:   err,
 		})
@@ -155,7 +171,7 @@ func (h *PatientHandler) UpdatePatient(c *gin.Context) {
 	var input patientsvc.UpdateInput
 	if err := c.ShouldBindJSON(&input); err != nil {
 		presenter.ErrorResponder(c, &apperr.AppError{
-			Code:    apperr.VALIDATION_FAILED,
+			Kind:    apperr.VALIDATION_FAILED,
 			Message: "payload inválido",
 			Cause:   err,
 		})
@@ -194,7 +210,7 @@ func (h *PatientHandler) HardDeletePatient(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
 		presenter.ErrorResponder(c, &apperr.AppError{
-			Code:    apperr.VALIDATION_FAILED,
+			Kind:    apperr.VALIDATION_FAILED,
 			Message: "patient_id é obrigatório",
 		})
 		return
@@ -203,7 +219,7 @@ func (h *PatientHandler) HardDeletePatient(c *gin.Context) {
 	parsedID, parseErr := uuid.Parse(id)
 	if parseErr != nil {
 		presenter.ErrorResponder(c, &apperr.AppError{
-			Code:    apperr.INVALID_FIELD_FORMAT,
+			Kind:    apperr.INVALID_FIELD_FORMAT,
 			Message: "patient_id inválido",
 			Cause:   parseErr,
 		})

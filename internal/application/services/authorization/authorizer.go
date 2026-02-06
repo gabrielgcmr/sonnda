@@ -41,7 +41,7 @@ func New(
 func (s *Service) Require(ctx context.Context, actor *user.User, action rbac.Action, patientID *uuid.UUID) error {
 	if actor == nil {
 		return &apperr.AppError{
-			Code:    apperr.AUTH_REQUIRED,
+			Kind:    apperr.AUTH_REQUIRED,
 			Message: "autenticação necessária",
 		}
 	}
@@ -53,7 +53,7 @@ func (s *Service) Require(ctx context.Context, actor *user.User, action rbac.Act
 
 	if !s.rbacPolicy.CanPerform(subject, action) {
 		return &apperr.AppError{
-			Code:    apperr.ACTION_NOT_ALLOWED,
+			Kind:    apperr.ACTION_NOT_ALLOWED,
 			Message: "ação não permitida",
 		}
 	}
@@ -64,7 +64,7 @@ func (s *Service) Require(ctx context.Context, actor *user.User, action rbac.Act
 
 	if patientID == nil || *patientID == uuid.Nil {
 		return &apperr.AppError{
-			Code:    apperr.INTERNAL_ERROR,
+			Kind:    apperr.INTERNAL_ERROR,
 			Message: "erro inesperado",
 			Cause:   errors.New("patientID is required for patient-scoped action"),
 		}
@@ -92,7 +92,7 @@ func (s *Service) buildSubject(ctx context.Context, actor *user.User, action rba
 
 	if s.profRepo == nil {
 		return rbac.Subject{}, &apperr.AppError{
-			Code:    apperr.INTERNAL_ERROR,
+			Kind:    apperr.INTERNAL_ERROR,
 			Message: "erro inesperado",
 			Cause:   errors.New("professional repository not configured"),
 		}
@@ -101,14 +101,14 @@ func (s *Service) buildSubject(ctx context.Context, actor *user.User, action rba
 	prof, err := s.profRepo.FindByUserID(ctx, actor.ID)
 	if err != nil {
 		return rbac.Subject{}, &apperr.AppError{
-			Code:    apperr.INFRA_DATABASE_ERROR,
+			Kind:    apperr.INFRA_DATABASE_ERROR,
 			Message: "falha técnica",
 			Cause:   fmt.Errorf("profRepo.FindByUserID: %w", err),
 		}
 	}
 	if prof == nil {
 		return rbac.Subject{}, &apperr.AppError{
-			Code:    apperr.INTERNAL_ERROR,
+			Kind:    apperr.INTERNAL_ERROR,
 			Message: "erro inesperado",
 			Cause:   fmt.Errorf("professional profile missing for user_id=%s", actor.ID),
 		}
@@ -122,7 +122,7 @@ func (s *Service) buildSubject(ctx context.Context, actor *user.User, action rba
 func (s *Service) requirePatientAccess(ctx context.Context, actorID uuid.UUID, patientID uuid.UUID) error {
 	if s.patientRepo == nil || s.patientAccessRepo == nil {
 		return &apperr.AppError{
-			Code:    apperr.INTERNAL_ERROR,
+			Kind:    apperr.INTERNAL_ERROR,
 			Message: "erro inesperado",
 			Cause:   errors.New("authorizer repositories not configured"),
 		}
@@ -131,7 +131,7 @@ func (s *Service) requirePatientAccess(ctx context.Context, actorID uuid.UUID, p
 	p, err := s.patientRepo.FindByID(ctx, patientID)
 	if err != nil {
 		return &apperr.AppError{
-			Code:    apperr.INFRA_DATABASE_ERROR,
+			Kind:    apperr.INFRA_DATABASE_ERROR,
 			Message: "falha técnica",
 			Cause:   fmt.Errorf("patientRepo.FindByID: %w", err),
 		}
@@ -141,7 +141,7 @@ func (s *Service) requirePatientAccess(ctx context.Context, actorID uuid.UUID, p
 	// para evitar vazar existência de recursos.
 	if p == nil {
 		return &apperr.AppError{
-			Code:    apperr.ACCESS_DENIED,
+			Kind:    apperr.ACCESS_DENIED,
 			Message: "acesso negado",
 		}
 	}
@@ -153,7 +153,7 @@ func (s *Service) requirePatientAccess(ctx context.Context, actorID uuid.UUID, p
 	hasAccess, err := s.patientAccessRepo.HasActiveAccess(ctx, patientID, actorID)
 	if err != nil {
 		return &apperr.AppError{
-			Code:    apperr.INFRA_DATABASE_ERROR,
+			Kind:    apperr.INFRA_DATABASE_ERROR,
 			Message: "falha técnica",
 			Cause:   fmt.Errorf("patientAccessRepo.HasActiveAccess: %w", err),
 		}
@@ -163,7 +163,7 @@ func (s *Service) requirePatientAccess(ctx context.Context, actorID uuid.UUID, p
 	}
 
 	return &apperr.AppError{
-		Code:    apperr.ACCESS_DENIED,
+		Kind:    apperr.ACCESS_DENIED,
 		Message: "acesso negado",
 	}
 }

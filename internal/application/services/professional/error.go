@@ -1,5 +1,4 @@
 // internal/application/services/professional/error.go
-// internal/application/services/professional/error.go
 package professionalsvc
 
 import (
@@ -17,22 +16,14 @@ func mapDomainError(err error) error {
 		errors.Is(err, professional.ErrInvalidKind),
 		errors.Is(err, professional.ErrInvalidRegistrationNumber),
 		errors.Is(err, professional.ErrInvalidRegistrationIssuer):
-		return &apperr.AppError{
-			Code:    apperr.VALIDATION_FAILED,
-			Message: "dados profissionais inválidos",
-			Cause:   err,
-		}
+		return apperr.Validation("dados profissionais inválidos")
 
 	default:
 		var appErr *apperr.AppError
 		if errors.As(err, &appErr) && appErr != nil {
 			return appErr
 		}
-		return &apperr.AppError{
-			Code:    apperr.INTERNAL_ERROR,
-			Message: "erro inesperado",
-			Cause:   err,
-		}
+		return apperr.Internal("erro inesperado", err)
 	}
 }
 
@@ -48,35 +39,23 @@ func mapRepoError(op string, err error) error {
 
 	switch {
 	case errors.Is(err, repo.ErrProfessionalAlreadyExists):
-		return &apperr.AppError{
-			Code:    apperr.RESOURCE_ALREADY_EXISTS,
-			Message: "profissional já cadastrado",
-			Cause:   err,
-		}
+		return apperr.AlreadyExists("profissional já cadastrado")
 
 	case errors.Is(err, repo.ErrProfessionalNotFound):
-		return professionalNotFound(err)
+		return professionalNotFound()
 
 	case errors.Is(err, repo.ErrRepositoryFailure):
 		return &apperr.AppError{
-			Code:    apperr.INFRA_DATABASE_ERROR,
+			Kind:    apperr.INFRA_DATABASE_ERROR,
 			Message: "falha técnica",
 			Cause:   fmt.Errorf("%s: %w", op, err),
 		}
 
 	default:
-		return &apperr.AppError{
-			Code:    apperr.INTERNAL_ERROR,
-			Message: "erro inesperado",
-			Cause:   fmt.Errorf("%s: %w", op, err),
-		}
+		return apperr.Internal("erro inesperado", fmt.Errorf("%s: %w", op, err))
 	}
 }
 
-func professionalNotFound(cause error) error {
-	return &apperr.AppError{
-		Code:    apperr.NOT_FOUND,
-		Message: "profissional não encontrado",
-		Cause:   cause,
-	}
+func professionalNotFound() error {
+	return apperr.NotFound("profissional não encontrado")
 }
