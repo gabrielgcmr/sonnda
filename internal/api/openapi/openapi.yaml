@@ -69,15 +69,15 @@ paths:
               schema:
                 type: string
   # =========================
-  # User
+  # Me (usuário autenticado)
   # =========================
-  /v1/users:
+  /v1/me:
     post:
       summary: Criar usuário
       description: |-
         Cria o usuário da plataforma a partir da identidade autenticada (JWT do Supabase).
         Requer token válido do Supabase (Bearer).
-      tags: [User]
+      tags: [Me]
       requestBody:
         required: true
         content:
@@ -101,10 +101,9 @@ paths:
           $ref: "#/components/responses/AppError"
         "500":
           $ref: "#/components/responses/AppError"
-  /v1/me:
     get:
       summary: Obter perfil do usuário atual
-      tags: [User]
+      tags: [Me]
       responses:
         "200":
           description: OK
@@ -118,7 +117,7 @@ paths:
           $ref: "#/components/responses/AppError"
     put:
       summary: Atualizar perfil do usuário atual
-      tags: [User]
+      tags: [Me]
       requestBody:
         required: true
         content:
@@ -142,7 +141,7 @@ paths:
           $ref: "#/components/responses/AppError"
     delete:
       summary: Remover usuário atual (hard delete)
-      tags: [User]
+      tags: [Me]
       responses:
         "204":
           description: No Content
@@ -153,7 +152,7 @@ paths:
   /v1/me/patients:
     get:
       summary: Listar pacientes do usuário atual
-      tags: [User]
+      tags: [Me]
       parameters:
         - $ref: "#/components/parameters/LimitParam"
         - $ref: "#/components/parameters/OffsetParam"
