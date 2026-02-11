@@ -109,7 +109,7 @@ func (h *PatientHandler) Create(c *gin.Context) {
 		return
 	}
 
-	c.Header("Location", "/patients/"+p.ID.String())
+	c.Header("Location", "/v1/patients/"+p.ID.String())
 	c.JSON(http.StatusCreated, openapi.PatientCreatedResponse{
 		Id: openapi_types.UUID(p.ID),
 	})

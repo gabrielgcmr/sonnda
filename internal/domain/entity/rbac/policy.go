@@ -27,9 +27,9 @@ func (ps *RbacPolicy) CanPerform(subject Subject, action Action) bool {
 	case ActionReadPatient:
 		return isProfessional || isBasicCare
 	case ActionCreatePatient, ActionUpdatePatient:
-		return isProfessional
+		return isProfessional || isBasicCare
 	case ActionListPatients:
-		return isProfessional
+		return isProfessional || isBasicCare
 	case ActionSoftDeletePatient:
 		return false
 

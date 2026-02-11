@@ -8,6 +8,9 @@ import (
 	"testing"
 
 	labsvc "github.com/gabrielgcmr/sonnda/internal/application/services/labs"
+	helpers "github.com/gabrielgcmr/sonnda/internal/api/helpers"
+	"github.com/gabrielgcmr/sonnda/internal/domain/entity/rbac"
+	"github.com/gabrielgcmr/sonnda/internal/domain/entity/user"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -15,6 +18,12 @@ import (
 type fakeLabsService struct {
 	listCalled     bool
 	listFullCalled bool
+}
+
+type allowAllAuthorizer struct{}
+
+func (a allowAllAuthorizer) Require(ctx context.Context, actor *user.User, action rbac.Action, patientID *uuid.UUID) error {
+	return nil
 }
 
 func (f *fakeLabsService) List(ctx context.Context, patientID uuid.UUID, limit, offset int) ([]labsvc.LabReportSummaryOutput, error) {
@@ -31,9 +40,13 @@ func TestListLabs_DefaultUsesSummary(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	svc := &fakeLabsService{}
-	h := NewLabs(svc, nil, nil)
+	h := NewLabs(svc, nil, nil, allowAllAuthorizer{})
 
 	r := gin.New()
+	r.Use(func(c *gin.Context) {
+		helpers.SetCurrentUser(c, &user.User{ID: uuid.Must(uuid.NewV7()), AccountType: user.AccountTypeBasicCare})
+		c.Next()
+	})
 	r.GET("/patients/:id/labs", h.ListLabs)
 
 	id := uuid.Must(uuid.NewV7()).String()
@@ -57,9 +70,13 @@ func TestListLabs_ExpandFullUsesFull(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	svc := &fakeLabsService{}
-	h := NewLabs(svc, nil, nil)
+	h := NewLabs(svc, nil, nil, allowAllAuthorizer{})
 
 	r := gin.New()
+	r.Use(func(c *gin.Context) {
+		helpers.SetCurrentUser(c, &user.User{ID: uuid.Must(uuid.NewV7()), AccountType: user.AccountTypeBasicCare})
+		c.Next()
+	})
 	r.GET("/patients/:id/labs", h.ListLabs)
 
 	id := uuid.Must(uuid.NewV7()).String()
@@ -83,9 +100,13 @@ func TestListLabs_IncludeResultsUsesFull(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	svc := &fakeLabsService{}
-	h := NewLabs(svc, nil, nil)
+	h := NewLabs(svc, nil, nil, allowAllAuthorizer{})
 
 	r := gin.New()
+	r.Use(func(c *gin.Context) {
+		helpers.SetCurrentUser(c, &user.User{ID: uuid.Must(uuid.NewV7()), AccountType: user.AccountTypeBasicCare})
+		c.Next()
+	})
 	r.GET("/patients/:id/labs", h.ListLabs)
 
 	id := uuid.Must(uuid.NewV7()).String()

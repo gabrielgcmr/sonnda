@@ -32,6 +32,14 @@ A Sonnda resolve um problema recorrente na pratica clinica: pacientes precisam c
 
 ---
 
+## OpenAPI
+
+Fonte de verdade do contrato HTTP da API.
+
+- Spec: `internal/api/openapi/openapi.yaml` (embutido no binario e servido em `/openapi.yaml`).
+- Codigo gerado: `internal/api/openapi/generated/oapi.gen.go`.
+- Erros HTTP: RFC 9457 (Problem Details) via `application/problem+json`.
+
 ## Arquitetura
 
 A arquitetura segue uma abordagem em camadas com baixo acoplamento e clara separação de responsabilidades:
@@ -148,7 +156,7 @@ Estrutura atual do projeto:
 │   ├── api/                        # [LEGADO - sendo migrado]
 │   │   ├── routes.go
 │   │   ├── openapi/
-│   │   │   ├── openapi.yaml        # Fonte de verdade (embutido e servido em /openapi.yaml)
+│   │   │   ├── openapi.yaml        # Fonte de verdade (embutido)
 │   │   │   └── generated/          # Código gerado via oapi-codegen
 │   │   │       └── oapi.gen.go
 │   │   ├── handlers/

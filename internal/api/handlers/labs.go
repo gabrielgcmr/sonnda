@@ -11,11 +11,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
+	authorization "github.com/gabrielgcmr/sonnda/internal/application/services/authorization"
 	labsvc "github.com/gabrielgcmr/sonnda/internal/application/services/labs"
 	labsuc "github.com/gabrielgcmr/sonnda/internal/application/usecase/labs"
 
 	helpers "github.com/gabrielgcmr/sonnda/internal/api/helpers"
 	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
+	"github.com/gabrielgcmr/sonnda/internal/domain/entity/rbac"
 	domainstorage "github.com/gabrielgcmr/sonnda/internal/domain/storage"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 )
@@ -24,24 +26,36 @@ type LabsHandler struct {
 	svc      labsvc.Service
 	createUC labsuc.CreateLabReportFromDocumentUseCase
 	storage  domainstorage.FileStorageService
+	authz    authorization.Authorizer
 }
 
 func NewLabs(
 	svc labsvc.Service,
 	createUC labsuc.CreateLabReportFromDocumentUseCase,
 	storageClient domainstorage.FileStorageService,
+	authz authorization.Authorizer,
 ) *LabsHandler {
 	return &LabsHandler{
 		svc:      svc,
 		createUC: createUC,
 		storage:  storageClient,
+		authz:    authz,
 	}
 }
 
 func (h *LabsHandler) ListLabs(c *gin.Context) {
+	currentUser := helpers.MustGetCurrentUser(c)
+
 	patientID, ok := parsePatientIDParam(c, "id")
 	if !ok {
 		return
+	}
+
+	if h.authz != nil {
+		if err := h.authz.Require(c.Request.Context(), currentUser, rbac.ActionReadLabs, &patientID); err != nil {
+			presenter.ErrorResponder(c, err)
+			return
+		}
 	}
 
 	limit, offset, ok := parsePagination(c, 100, 0)
@@ -78,6 +92,13 @@ func (h *LabsHandler) UploadAndProcessLabs(c *gin.Context) {
 	patientID, ok := parsePatientIDParam(c, "id")
 	if !ok {
 		return
+	}
+
+	if h.authz != nil {
+		if err := h.authz.Require(c.Request.Context(), currentUser, rbac.ActionUploadLabs, &patientID); err != nil {
+			presenter.ErrorResponder(c, err)
+			return
+		}
 	}
 
 	documentURI, mimeType, uploadErr := h.handleFileUpload(c, patientID)

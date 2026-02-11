@@ -10,12 +10,19 @@ import (
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/demographics"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patient"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patientaccess"
+	"github.com/gabrielgcmr/sonnda/internal/domain/entity/rbac"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/user"
 	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 
 	"github.com/google/uuid"
 )
+
+type allowAllAuthorizer struct{}
+
+func (a allowAllAuthorizer) Require(ctx context.Context, actor *user.User, action rbac.Action, patientID *uuid.UUID) error {
+	return nil
+}
 
 type fakePatientRepo struct {
 	created   *patient.Patient
@@ -70,7 +77,7 @@ func (r *fakeAccessRepo) HasActiveAccess(ctx context.Context, patientID, grantee
 func TestCreate_ProfessionalCreatesAccess(t *testing.T) {
 	patientRepo := &fakePatientRepo{}
 	accessRepo := &fakeAccessRepo{}
-	svc := New(patientRepo, accessRepo, nil)
+	svc := New(patientRepo, accessRepo, allowAllAuthorizer{})
 
 	currentUser := &user.User{
 		ID:          uuid.Must(uuid.NewV7()),
@@ -112,7 +119,7 @@ func TestCreate_ProfessionalCreatesAccess(t *testing.T) {
 
 func TestCreate_BasicCareCreatesAccess(t *testing.T) {
 	accessRepo := &fakeAccessRepo{}
-	svc := New(&fakePatientRepo{}, accessRepo, nil)
+	svc := New(&fakePatientRepo{}, accessRepo, allowAllAuthorizer{})
 
 	currentUser := &user.User{
 		ID:          uuid.Must(uuid.NewV7()),
@@ -141,7 +148,7 @@ func TestCreate_BasicCareCreatesAccess(t *testing.T) {
 }
 
 func TestCreate_AccessRepoError_ReturnsInfraDatabaseError(t *testing.T) {
-	svc := New(&fakePatientRepo{}, &fakeAccessRepo{upsertErr: errors.New("db down")}, nil)
+	svc := New(&fakePatientRepo{}, &fakeAccessRepo{upsertErr: errors.New("db down")}, allowAllAuthorizer{})
 
 	currentUser := &user.User{
 		ID:          uuid.Must(uuid.NewV7()),
@@ -169,7 +176,7 @@ func TestCreate_AccessRepoError_ReturnsInfraDatabaseError(t *testing.T) {
 }
 
 func TestCreate_NilUser_ReturnsAuthRequired(t *testing.T) {
-	svc := New(&fakePatientRepo{}, &fakeAccessRepo{}, nil)
+	svc := New(&fakePatientRepo{}, &fakeAccessRepo{}, allowAllAuthorizer{})
 
 	input := CreateInput{
 		CPF:       "12345678901",

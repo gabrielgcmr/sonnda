@@ -51,6 +51,9 @@ func SetupRoutes(
 	auth.Use(deps.AuthMiddleware.RequireBearer())
 	{
 		// Criação de usuário (Onboarding)
+		// OpenAPI: POST /v1/me
+		auth.POST("/me", deps.UserHandler.CreateUser)
+		// Legacy: keep /v1/users for backwards-compat
 		auth.POST("/users", deps.UserHandler.CreateUser)
 	}
 

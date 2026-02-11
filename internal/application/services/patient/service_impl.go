@@ -42,6 +42,9 @@ func (s *service) Create(ctx context.Context, currentUser *user.User, input Crea
 	if currentUser == nil {
 		return nil, apperr.Unauthorized("autenticação necessária")
 	}
+	if err := s.auth.Require(ctx, currentUser, rbac.ActionCreatePatient, nil); err != nil {
+		return nil, err
+	}
 	if s.accessRepo == nil {
 		return nil, apperr.Internal("erro inesperado", errors.New("patient access repository not configured"))
 	}
@@ -92,6 +95,9 @@ func (s *service) Create(ctx context.Context, currentUser *user.User, input Crea
 }
 
 func (s *service) Get(ctx context.Context, currentUser *user.User, id uuid.UUID) (*patient.Patient, error) {
+	if err := s.auth.Require(ctx, currentUser, rbac.ActionReadPatient, &id); err != nil {
+		return nil, err
+	}
 
 	p, err := s.repo.FindByID(ctx, id)
 	if err != nil {
@@ -104,6 +110,9 @@ func (s *service) Get(ctx context.Context, currentUser *user.User, id uuid.UUID)
 }
 
 func (s *service) Update(ctx context.Context, currentUser *user.User, id uuid.UUID, input UpdateInput) (*patient.Patient, error) {
+	if err := s.auth.Require(ctx, currentUser, rbac.ActionUpdatePatient, &id); err != nil {
+		return nil, err
+	}
 
 	p, err := s.repo.FindByID(ctx, id)
 	if err != nil {
@@ -133,6 +142,9 @@ func (s *service) Update(ctx context.Context, currentUser *user.User, id uuid.UU
 }
 
 func (s *service) SoftDelete(ctx context.Context, currentUser *user.User, id uuid.UUID) error {
+	if err := s.auth.Require(ctx, currentUser, rbac.ActionSoftDeletePatient, &id); err != nil {
+		return err
+	}
 
 	p, err := s.repo.FindByID(ctx, id)
 	if err != nil {
@@ -172,14 +184,29 @@ func (s *service) ListMyPatients(ctx context.Context, currentUser *user.User, li
 		return nil, err
 	}
 
-	rows, err := s.repo.List(ctx, limit, offset)
-	if err != nil {
-		return nil, mapRepoError("patientRepo.List", err)
+	if s.accessRepo == nil {
+		return nil, apperr.Internal("erro inesperado", errors.New("patient access repository not configured"))
 	}
 
-	out := make([]*patient.Patient, len(rows))
-	for i := range rows {
-		out[i] = &rows[i]
+	accessible, _, err := s.accessRepo.ListAccessiblePatientsByUser(ctx, currentUser.ID, limit, offset)
+	if err != nil {
+		return nil, &apperr.AppError{
+			Kind:    apperr.INFRA_DATABASE_ERROR,
+			Message: "falha técnica",
+			Cause:   fmt.Errorf("patientAccessRepo.ListAccessiblePatientsByUser: %w", err),
+		}
+	}
+
+	out := make([]*patient.Patient, 0, len(accessible))
+	for _, row := range accessible {
+		p, err := s.repo.FindByID(ctx, row.PatientID)
+		if err != nil {
+			return nil, mapRepoError("patientRepo.FindByID", err)
+		}
+		if p == nil {
+			continue
+		}
+		out = append(out, p)
 	}
 
 	return out, nil

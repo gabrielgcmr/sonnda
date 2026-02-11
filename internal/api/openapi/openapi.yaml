@@ -16,9 +16,7 @@ servers:
 security:
   - bearerAuth: []
 paths:
-  # =========================
   # Public
-  # =========================
   /:
     get:
       summary: API metadata
@@ -31,7 +29,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/RootResponse"
-
   /healthz:
     get:
       summary: Health check
@@ -68,9 +65,7 @@ paths:
             text/html:
               schema:
                 type: string
-  # =========================
   # Me (usuário autenticado)
-  # =========================
   /v1/me:
     post:
       summary: Criar usuário
@@ -92,15 +87,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/User"
         "409":
-          $ref: "#/components/responses/AppError"
+          $ref: "#/components/responses/Problem"
         "400":
-          $ref: "#/components/responses/AppError"
+          $ref: "#/components/responses/Problem"
         "401":
-          $ref: "#/components/responses/AppError"
+          $ref: "#/components/responses/Problem"
         "422":
-          $ref: "#/components/responses/AppError"
+          $ref: "#/components/responses/Problem"
         "500":
-          $ref: "#/components/responses/AppError"
+          $ref: "#/components/responses/Problem"
     get:
       summary: Obter perfil do usuário atual
       tags: [Me]
@@ -112,9 +107,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/User"
         "401":
-          $ref: "#/components/responses/AppError"
+          $ref: "#/components/responses/Problem"
         "500":
-          $ref: "#/components/responses/AppError"
+          $ref: "#/components/responses/Problem"
     put:
       summary: Atualizar perfil do usuário atual
       tags: [Me]
@@ -132,13 +127,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/User"
         "400":
-          $ref: "#/components/responses/AppError"
+          $ref: "#/components/responses/Problem"
         "401":
-          $ref: "#/components/responses/AppError"
+          $ref: "#/components/responses/Problem"
         "422":
-          $ref: "#/components/responses/AppError"
+          $ref: "#/components/responses/Problem"
         "500":
-          $ref: "#/components/responses/AppError"
+          $ref: "#/components/responses/Problem"
     delete:
       summary: Remover usuário atual (hard delete)
       tags: [Me]
@@ -146,9 +141,9 @@ paths:
         "204":
           description: No Content
         "401":
-          $ref: "#/components/responses/AppError"
+          $ref: "#/components/responses/Problem"
         "500":
-          $ref: "#/components/responses/AppError"
+          $ref: "#/components/responses/Problem"
   /v1/me/patients:
     get:
       summary: Listar pacientes do usuário atual
@@ -164,13 +159,10 @@ paths:
               schema:
                 $ref: "#/components/schemas/PatientsList"
         "401":
-          $ref: "#/components/responses/AppError"
+          $ref: "#/components/responses/Problem"
         "500":
-          $ref: "#/components/responses/AppError"
-
-  # =========================
+          $ref: "#/components/responses/Problem"
   # patients
-  # =========================
   /v1/patients:
     post:
       summary: Criar paciente
@@ -194,13 +186,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/PatientCreatedResponse"
         "400":
-          $ref: "#/components/responses/AppError"
+          $ref: "#/components/responses/Problem"
         "401":
-          $ref: "#/components/responses/AppError"
+          $ref: "#/components/responses/Problem"
         "422":
-          $ref: "#/components/responses/AppError"
+          $ref: "#/components/responses/Problem"
         "500":
-          $ref: "#/components/responses/AppError"
+          $ref: "#/components/responses/Problem"
     get:
       summary: Listar pacientes
       tags: [Patient]
@@ -212,9 +204,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/PatientsList"
         "401":
-          $ref: "#/components/responses/AppError"
+          $ref: "#/components/responses/Problem"
         "500":
-          $ref: "#/components/responses/AppError"
+          $ref: "#/components/responses/Problem"
   /v1/patients/{id}:
     get:
       summary: Obter paciente
@@ -234,13 +226,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/Patient"
         "400":
-          $ref: "#/components/responses/AppError"
+          $ref: "#/components/responses/Problem"
         "401":
-          $ref: "#/components/responses/AppError"
+          $ref: "#/components/responses/Problem"
         "404":
-          $ref: "#/components/responses/AppError"
+          $ref: "#/components/responses/Problem"
         "500":
-          $ref: "#/components/responses/AppError"
+          $ref: "#/components/responses/Problem"
   /v1/patients/{id}/labs:
     get:
       summary: Listar laudos
@@ -277,11 +269,11 @@ paths:
               schema:
                 $ref: "#/components/schemas/LabsList"
         "400":
-          $ref: "#/components/responses/AppError"
+          $ref: "#/components/responses/Problem"
         "401":
-          $ref: "#/components/responses/AppError"
+          $ref: "#/components/responses/Problem"
         "500":
-          $ref: "#/components/responses/AppError"
+          $ref: "#/components/responses/Problem"
     post:
       summary: Upload de laudo
       tags: [Labs]
@@ -311,27 +303,26 @@ paths:
               schema:
                 $ref: "#/components/schemas/LabUploadResponse"
         "400":
-          $ref: "#/components/responses/AppError"
+          $ref: "#/components/responses/Problem"
         "401":
-          $ref: "#/components/responses/AppError"
+          $ref: "#/components/responses/Problem"
         "413":
-          $ref: "#/components/responses/AppError"
+          $ref: "#/components/responses/Problem"
         "415":
-          $ref: "#/components/responses/AppError"
+          $ref: "#/components/responses/Problem"
         "500":
-          $ref: "#/components/responses/AppError"
+          $ref: "#/components/responses/Problem"
 # =========================
 # Components
 # =========================
 components:
-  # =========================
   # Security Schemes
-  # =========================
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
+  # Parameters
   parameters:
     LimitParam:
       name: limit
@@ -349,8 +340,9 @@ components:
         type: integer
         minimum: 0
       description: Número de itens para pular
+  # Responses
   responses:
-    AppError:
+    Problem:
       description: Erro padronizado (RFC 9457 - Problem Details)
       content:
         application/problem+json:
