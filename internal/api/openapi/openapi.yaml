@@ -6,8 +6,6 @@ info:
   version: "0.1.0"
   description: |-
     OpenAPI inicial das rotas HTTP da Sonnda.
-
-    Nota (MVP): criação/gestão de profissionais ainda não está implementada.
 servers:
   - url: http://localhost:8080
     description: Desenvolvimento local
