@@ -11,12 +11,15 @@ func Load() (*Config, error) {
 	// Carrega variáveis do arquivo .env
 	_ = godotenv.Load()
 
+	appCfg := loadAppConfig()
+
 	cfg := &Config{
-		App:      loadAppConfig(),
+		App:      appCfg,
 		HTTP:     loadHTTPConfig(),
 		Database: loadDatabaseConfig(),
 		Auth:     loadAuthConfig(),
 		Storage:  loadStorageConfig(),
+		CORS:     loadCORSConfig(appCfg.Env),
 	}
 
 	var violations []apperr.Violation

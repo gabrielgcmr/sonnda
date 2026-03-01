@@ -6,15 +6,17 @@ import (
 	"net/http"
 
 	"github.com/gabrielgcmr/sonnda/internal/api/middleware"
+	"github.com/gabrielgcmr/sonnda/internal/config"
 	"github.com/gin-gonic/gin"
 )
 
 type Options struct {
-	Name    string
-	Version string
-	Env     string
-	Logger  *slog.Logger
-	Deps    *APIDependencies
+	Name       string
+	Version    string
+	Env        string
+	Logger     *slog.Logger
+	Deps       *APIDependencies
+	CORSConfig config.CORSConfig
 }
 
 type App struct {
@@ -34,6 +36,9 @@ func New(opts Options) *App {
 	}
 
 	// Middlewares globais (infra)
+	// IMPORTANTE: CORS deve ser o PRIMEIRO middleware para garantir que
+	// headers de CORS sejam incluídos em TODAS as respostas, inclusive em erros (404, 401, etc).
+	r.Use(middleware.SetupCors(opts.CORSConfig))
 	r.Use(
 		middleware.RequestID(),
 		middleware.AccessLog(logger),

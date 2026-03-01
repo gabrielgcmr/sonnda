@@ -7,4 +7,5 @@ type Config struct {
 	Database DatabaseConfig
 	Auth     AuthConfig
 	Storage  StorageConfig
+	CORS     CORSConfig
 }

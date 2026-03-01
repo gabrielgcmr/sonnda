@@ -119,10 +119,11 @@ func main() {
 	gin.SetMode(ginMode)
 
 	app := api.New(api.Options{
-		Name:    "Sonnda API",
-		Version: version,
-		Env:     cfg.App.Env,
-		Logger:  appLogger,
+		Name:       "Sonnda API",
+		Version:    version,
+		Env:        cfg.App.Env,
+		Logger:     appLogger,
+		CORSConfig: cfg.CORS,
 		Deps: &api.APIDependencies{
 			AuthMiddleware:         apiAuthMW,
 			RegistrationMiddleware: apiRegMW,
