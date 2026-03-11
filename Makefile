@@ -12,13 +12,21 @@ OPENAPI_SPEC := internal/api/openapi/openapi.yaml
 # ==============================================================================
 # 🎯 TARGETS PRINCIPAIS
 # ==============================================================================
-.PHONY: all dev build clean generate test help openapi-validate oapi-codegen
+.PHONY: all dev build clean generate test help openapi-validate oapi-codegen tools-air
 
 all: build
 
 # Roda apenas o backend (Go + Air)
 dev:
-	air -c .air.toml
+	@if [ -x "./bin/air" ]; then \
+		./bin/air -c .air.toml; \
+	elif command -v air >/dev/null 2>&1; then \
+		air -c .air.toml; \
+	else \
+		echo "Aviso: 'air' não encontrado; iniciando sem hot reload."; \
+		echo "Para instalar: go install github.com/air-verse/air@latest"; \
+		go run $(MAIN); \
+	fi
 
 build:
 	go build -o bin/$(APP_NAME) -ldflags "$(LDFLAGS)" $(MAIN)
@@ -37,7 +45,20 @@ test:
 .PHONY: air-run
 
 air-run:
-	air -c .air.toml
+	@if [ -x "./bin/air" ]; then \
+		./bin/air -c .air.toml; \
+	elif command -v air >/dev/null 2>&1; then \
+		air -c .air.toml; \
+	else \
+		echo "Aviso: 'air' não encontrado; iniciando sem hot reload."; \
+		echo "Para instalar: go install github.com/air-verse/air@latest"; \
+		go run $(MAIN); \
+	fi
+
+# Instala o Air localmente em ./bin (para uso em dev / CI)
+tools-air:
+	@mkdir -p bin
+	GOBIN=$(CURDIR)/bin go install github.com/air-verse/air@latest
 
 # ==============================================================================
 # 🐘 DATABASE
@@ -85,6 +106,7 @@ help:
 	@echo "  clean       - Limpa pastas geradas"
 	@echo "  generate    - Gera código (sqlc + oapi-codegen)"
 	@echo "  openapi-validate - Valida o OpenAPI local"
+	@echo "  tools-air   - Instala o Air em ./bin"
 	@echo "  docker-up   - Sobe o docker"
 	@echo "  docker-down - Derruba o docker"
 
