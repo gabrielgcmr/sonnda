@@ -53,6 +53,9 @@ func (s *service) Create(ctx context.Context, currentUser *user.User, input Crea
 	if err != nil {
 		return nil, err
 	}
+	if input.RelationType != nil {
+		relationType = *input.RelationType
+	}
 
 	newPatient, err := patient.NewPatient(patient.NewPatientParams{
 		UserID:    input.UserID,

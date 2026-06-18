@@ -30,7 +30,6 @@ func Load() (*Config, error) {
 	appendRequired(&violations, envGCSBucket, cfg.Storage.GCSBucket)
 	appendRequired(&violations, envGCPLocation, cfg.Storage.GCPLocation)
 	appendRequired(&violations, envGCPExtractLabsProcessorID, cfg.Storage.GCPExtractLabsProcessorID)
-	appendRequired(&violations, envRedisURL, cfg.Database.RedisURL)
 	// Exigir pelo menos uma forma de credenciais do Google Cloud
 	if cfg.Storage.GoogleApplicationCredentials == "" && cfg.Storage.GoogleApplicationCredentialsJSON == "" {
 		violations = append(violations, apperr.Violation{

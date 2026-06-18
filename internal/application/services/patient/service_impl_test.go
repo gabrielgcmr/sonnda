@@ -147,6 +147,43 @@ func TestCreate_BasicCareCreatesAccess(t *testing.T) {
 	}
 }
 
+func TestCreate_SelfRelationCreatesOwnedPatient(t *testing.T) {
+	patientRepo := &fakePatientRepo{}
+	accessRepo := &fakeAccessRepo{}
+	svc := New(patientRepo, accessRepo, allowAllAuthorizer{})
+
+	currentUser := &user.User{
+		ID:          uuid.Must(uuid.NewV7()),
+		AccountType: user.AccountTypeBasicCare,
+	}
+	relationType := patientaccess.RelationshipTypeSelf
+
+	input := CreateInput{
+		UserID:       &currentUser.ID,
+		CPF:          "12345678901",
+		FullName:     "Joana Silva",
+		BirthDate:    time.Date(1990, time.January, 1, 0, 0, 0, 0, time.UTC),
+		Gender:       demographics.GenderFemale,
+		Race:         demographics.RaceWhite,
+		AvatarURL:    "https://example.com/avatar.png",
+		RelationType: &relationType,
+	}
+
+	created, err := svc.Create(context.Background(), currentUser, input)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if created.OwnerUserID == nil || *created.OwnerUserID != currentUser.ID {
+		t.Fatalf("expected owner_user_id=%s, got %v", currentUser.ID, created.OwnerUserID)
+	}
+	if accessRepo.upsertAccess == nil {
+		t.Fatalf("expected patient access to be created")
+	}
+	if accessRepo.upsertAccess.RelationType != patientaccess.RelationshipTypeSelf {
+		t.Fatalf("expected relation_type=%s, got %s", patientaccess.RelationshipTypeSelf, accessRepo.upsertAccess.RelationType)
+	}
+}
+
 func TestCreate_AccessRepoError_ReturnsInfraDatabaseError(t *testing.T) {
 	svc := New(&fakePatientRepo{}, &fakeAccessRepo{upsertErr: errors.New("db down")}, allowAllAuthorizer{})
 

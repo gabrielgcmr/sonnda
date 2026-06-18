@@ -4,6 +4,7 @@ package handlers
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -11,6 +12,7 @@ import (
 	openapi "github.com/gabrielgcmr/sonnda/internal/api/openapi/generated"
 	patientsvc "github.com/gabrielgcmr/sonnda/internal/application/services/patient"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patient"
+	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patientaccess"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/user"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 	applog "github.com/gabrielgcmr/sonnda/internal/kernel/observability"
@@ -33,6 +35,18 @@ type PatientHandler struct {
 	svc patientService
 }
 
+type createPatientRequest struct {
+	Cpf          string             `json:"cpf" binding:"required"`
+	Cns          *string            `json:"cns,omitempty"`
+	FullName     string             `json:"full_name" binding:"required"`
+	BirthDate    openapi_types.Date `json:"birth_date" binding:"required"`
+	Gender       string             `json:"gender" binding:"required"`
+	Race         string             `json:"race" binding:"required"`
+	Phone        *string            `json:"phone,omitempty"`
+	AvatarUrl    *string            `json:"avatar_url,omitempty"`
+	RelationType *string            `json:"relation_type,omitempty"`
+}
+
 func NewPatientHandler(svc patientService) *PatientHandler {
 	return &PatientHandler{svc: svc}
 }
@@ -51,7 +65,7 @@ func (h *PatientHandler) Create(c *gin.Context) {
 		return
 	}
 
-	var req openapi.CreatePatientRequest
+	var req createPatientRequest
 	// 1. Bind do request
 	if err := helpers.BindJSON(c, &req); err != nil {
 		presenter.ErrorResponder(c, err)
@@ -91,15 +105,36 @@ func (h *PatientHandler) Create(c *gin.Context) {
 		avatarURL = *req.AvatarUrl
 	}
 
+	var ownerUserID *uuid.UUID
+	var relationType *patientaccess.RelationshipType
+	if req.RelationType != nil && strings.TrimSpace(*req.RelationType) != "" {
+		rt := patientaccess.RelationshipType(strings.TrimSpace(*req.RelationType))
+		if !rt.IsValid() {
+			presenter.ErrorResponder(c, &apperr.AppError{
+				Kind:    apperr.VALIDATION_FAILED,
+				Message: "vÃ­nculo com paciente invÃ¡lido",
+				Cause:   patientaccess.ErrInvalidRelationshipType,
+			})
+			return
+		}
+		relationType = &rt
+		if rt == patientaccess.RelationshipTypeSelf {
+			ownerUserID = &user.ID
+		}
+	}
+
 	// 4. Montagem do input da aplicação
 	input := patientsvc.CreateInput{
-		CPF:       req.Cpf,
-		FullName:  req.FullName,
-		BirthDate: birthDate,
-		Gender:    gender,
-		Race:      race,
-		Phone:     req.Phone,
-		AvatarURL: avatarURL,
+		UserID:       ownerUserID,
+		CPF:          req.Cpf,
+		CNS:          req.Cns,
+		FullName:     req.FullName,
+		BirthDate:    birthDate,
+		Gender:       gender,
+		Race:         race,
+		Phone:        req.Phone,
+		AvatarURL:    avatarURL,
+		RelationType: relationType,
 	}
 
 	// 5. Execução do use case

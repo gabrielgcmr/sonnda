@@ -429,6 +429,9 @@ components:
         - cpf
         - phone
       properties:
+        cns:
+          type: string
+          nullable: true
         full_name:
           type: string
           minLength: 2
@@ -443,6 +446,10 @@ components:
           type: string
           pattern: "^[0-9]{11}$"
           description: "CPF sem pontuação (apenas dígitos)"
+        relation_type:
+          type: string
+          enum: [caregiver, family, professional, self]
+          nullable: true
         phone:
           type: string
           pattern: "^\\+?[0-9]{10,15}$"
