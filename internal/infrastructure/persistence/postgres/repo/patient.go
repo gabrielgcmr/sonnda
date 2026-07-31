@@ -5,14 +5,18 @@ package repo
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/demographics"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patient"
+	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patientaccess"
 	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
 	patientsqlc "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/sqlc/generated/patient"
+	patientaccesssqlc "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/sqlc/generated/patientaccess"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type PatientRepository struct {
@@ -56,6 +60,61 @@ func NewPatientRepository(client *postgress.Client) repository.Patient {
 
 // Create implements [repository.Patient].
 func (r *PatientRepository) Create(ctx context.Context, p *patient.Patient) error {
+	return r.createWithQueries(ctx, r.queries, p)
+}
+
+// CreateWithAccess creates a patient and its initial access grant atomically.
+func (r *PatientRepository) CreateWithAccess(
+	ctx context.Context,
+	p *patient.Patient,
+	access *patientaccess.PatientAccess,
+) error {
+	if err := access.Validate(); err != nil {
+		return fmt.Errorf("invalid patient access: %w", err)
+	}
+
+	tx, err := r.client.BeginTx(ctx)
+	if err != nil {
+		return errors.Join(ErrRepositoryFailure, err)
+	}
+	defer func() {
+		_ = tx.Rollback(ctx)
+	}()
+
+	patientQueries := r.queries.WithTx(tx)
+	accessQueries := patientaccesssqlc.New(r.client.Pool()).WithTx(tx)
+
+	if err := r.createWithQueries(ctx, patientQueries, p); err != nil {
+		return err
+	}
+
+	var grantedBy pgtype.UUID
+	if access.GrantedBy != nil {
+		grantedBy = pgtype.UUID{Bytes: *access.GrantedBy, Valid: true}
+	}
+
+	err = accessQueries.UpsertPatientAccess(ctx, patientaccesssqlc.UpsertPatientAccessParams{
+		PatientID:    pgtype.UUID{Bytes: access.PatientID, Valid: true},
+		GranteeID:    pgtype.UUID{Bytes: access.GranteeID, Valid: true},
+		RelationType: string(access.RelationType),
+		GrantedBy:    grantedBy,
+	})
+	if err != nil {
+		return errors.Join(ErrRepositoryFailure, fmt.Errorf("failed to upsert patient access: %w", err))
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return errors.Join(ErrRepositoryFailure, err)
+	}
+
+	return nil
+}
+
+func (r *PatientRepository) createWithQueries(
+	ctx context.Context,
+	queries *patientsqlc.Queries,
+	p *patient.Patient,
+) error {
 	params := patientsqlc.CreatePatientParams{
 		ID:          p.ID,
 		OwnerUserID: FromNullableUUIDToPgUUID(p.OwnerUserID),
@@ -69,7 +128,7 @@ func (r *PatientRepository) Create(ctx context.Context, p *patient.Patient) erro
 		AvatarUrl:   FromNullableStringToPgText(&p.AvatarURL),
 	}
 
-	row, err := r.queries.CreatePatient(ctx, params)
+	row, err := queries.CreatePatient(ctx, params)
 	if err != nil {
 		if IsUniqueViolationError(err) {
 			return ErrPatientAlreadyExists

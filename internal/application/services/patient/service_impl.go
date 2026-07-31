@@ -72,10 +72,6 @@ func (s *service) Create(ctx context.Context, currentUser *user.User, input Crea
 		return nil, mapDomainError(err)
 	}
 
-	if err := s.repo.Create(ctx, newPatient); err != nil {
-		return nil, mapRepoError("patientRepo.Create", err)
-	}
-
 	access, err := patientaccess.NewPatientAccess(
 		newPatient.ID,
 		currentUser.ID,
@@ -86,12 +82,8 @@ func (s *service) Create(ctx context.Context, currentUser *user.User, input Crea
 	if err != nil {
 		return nil, apperr.Internal("erro inesperado", err)
 	}
-	if err := s.accessRepo.Upsert(ctx, access); err != nil {
-		return nil, &apperr.AppError{
-			Kind:    apperr.INFRA_DATABASE_ERROR,
-			Message: "falha técnica",
-			Cause:   fmt.Errorf("patientAccessRepo.Upsert: %w", err),
-		}
+	if err := s.repo.CreateWithAccess(ctx, newPatient, access); err != nil {
+		return nil, mapRepoError("patientRepo.CreateWithAccess", err)
 	}
 
 	return newPatient, nil

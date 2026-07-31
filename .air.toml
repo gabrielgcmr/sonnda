@@ -8,16 +8,16 @@ tmp_dir = "tmp"
 
 [build]
 args_bin = []
-bin = "./tmp/main"
-cmd = "go build -o ./tmp/main ./cmd/api"
+bin = "./tmp/main.exe"
+cmd = "go build -o ./tmp/main.exe ./cmd/api"
 delay = 1000
-entrypoint = ["./tmp/main"]
+entrypoint = ["./tmp/main.exe"]
 exclude_dir = ["assets", "tmp", "vendor", "testdata"]
 exclude_file = []
 exclude_regex = ["_test.go"]
 exclude_unchanged = false
 follow_symlink = false
-full_bin = "./tmp/main"
+full_bin = "./tmp/main.exe"
 ignore_dangerous_root_dir = false
 include_dir = []
 include_ext = ["go", "tpl", "tmpl", "html"]

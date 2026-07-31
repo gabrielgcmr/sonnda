@@ -8,6 +8,7 @@ import (
 
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/labs"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patient"
+	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patientaccess"
 	"github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/repo"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 
@@ -20,6 +21,13 @@ type fakePatientRepo struct {
 }
 
 func (r *fakePatientRepo) Create(ctx context.Context, p *patient.Patient) error { panic("unused") }
+func (r *fakePatientRepo) CreateWithAccess(
+	ctx context.Context,
+	p *patient.Patient,
+	access *patientaccess.PatientAccess,
+) error {
+	panic("unused")
+}
 func (r *fakePatientRepo) Update(ctx context.Context, p *patient.Patient) error { panic("unused") }
 func (r *fakePatientRepo) SoftDelete(ctx context.Context, id uuid.UUID) error   { panic("unused") }
 func (r *fakePatientRepo) HardDelete(ctx context.Context, id uuid.UUID) error   { panic("unused") }

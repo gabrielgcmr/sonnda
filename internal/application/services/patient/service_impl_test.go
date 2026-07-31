@@ -13,6 +13,7 @@ import (
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/rbac"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/user"
 	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
+	"github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/repo"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 
 	"github.com/google/uuid"
@@ -25,12 +26,24 @@ func (a allowAllAuthorizer) Require(ctx context.Context, actor *user.User, actio
 }
 
 type fakePatientRepo struct {
-	created   *patient.Patient
-	createErr error
+	created          *patient.Patient
+	createAccess     *patientaccess.PatientAccess
+	createErr        error
+	createWithAccess bool
 }
 
 func (r *fakePatientRepo) Create(ctx context.Context, p *patient.Patient) error {
 	r.created = p
+	return r.createErr
+}
+func (r *fakePatientRepo) CreateWithAccess(
+	ctx context.Context,
+	p *patient.Patient,
+	access *patientaccess.PatientAccess,
+) error {
+	r.created = p
+	r.createAccess = access
+	r.createWithAccess = true
 	return r.createErr
 }
 func (r *fakePatientRepo) Update(ctx context.Context, p *patient.Patient) error { panic("unused") }
@@ -100,26 +113,29 @@ func TestCreate_ProfessionalCreatesAccess(t *testing.T) {
 	if created == nil || patientRepo.created == nil {
 		t.Fatalf("expected patient to be created")
 	}
-	if accessRepo.upsertAccess == nil {
+	if !patientRepo.createWithAccess {
+		t.Fatalf("expected patient and access to be created atomically")
+	}
+	if patientRepo.createAccess == nil {
 		t.Fatalf("expected patient access to be created")
 	}
-	if accessRepo.upsertAccess.PatientID != created.ID {
-		t.Fatalf("expected patient_id=%s, got %s", created.ID, accessRepo.upsertAccess.PatientID)
+	if patientRepo.createAccess.PatientID != created.ID {
+		t.Fatalf("expected patient_id=%s, got %s", created.ID, patientRepo.createAccess.PatientID)
 	}
-	if accessRepo.upsertAccess.GranteeID != currentUser.ID {
-		t.Fatalf("expected grantee_id=%s, got %s", currentUser.ID, accessRepo.upsertAccess.GranteeID)
+	if patientRepo.createAccess.GranteeID != currentUser.ID {
+		t.Fatalf("expected grantee_id=%s, got %s", currentUser.ID, patientRepo.createAccess.GranteeID)
 	}
-	if accessRepo.upsertAccess.GrantedBy == nil || *accessRepo.upsertAccess.GrantedBy != currentUser.ID {
+	if patientRepo.createAccess.GrantedBy == nil || *patientRepo.createAccess.GrantedBy != currentUser.ID {
 		t.Fatalf("expected granted_by=%s", currentUser.ID)
 	}
-	if accessRepo.upsertAccess.RelationType != patientaccess.RelationshipTypeProfessional {
-		t.Fatalf("expected relation_type=%s, got %s", patientaccess.RelationshipTypeProfessional, accessRepo.upsertAccess.RelationType)
+	if patientRepo.createAccess.RelationType != patientaccess.RelationshipTypeProfessional {
+		t.Fatalf("expected relation_type=%s, got %s", patientaccess.RelationshipTypeProfessional, patientRepo.createAccess.RelationType)
 	}
 }
 
 func TestCreate_BasicCareCreatesAccess(t *testing.T) {
-	accessRepo := &fakeAccessRepo{}
-	svc := New(&fakePatientRepo{}, accessRepo, allowAllAuthorizer{})
+	patientRepo := &fakePatientRepo{}
+	svc := New(patientRepo, &fakeAccessRepo{}, allowAllAuthorizer{})
 
 	currentUser := &user.User{
 		ID:          uuid.Must(uuid.NewV7()),
@@ -139,11 +155,11 @@ func TestCreate_BasicCareCreatesAccess(t *testing.T) {
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
-	if accessRepo.upsertAccess == nil {
+	if patientRepo.createAccess == nil {
 		t.Fatalf("expected patient access to be created")
 	}
-	if accessRepo.upsertAccess.RelationType != patientaccess.RelationshipTypeCaregiver {
-		t.Fatalf("expected relation_type=%s, got %s", patientaccess.RelationshipTypeCaregiver, accessRepo.upsertAccess.RelationType)
+	if patientRepo.createAccess.RelationType != patientaccess.RelationshipTypeCaregiver {
+		t.Fatalf("expected relation_type=%s, got %s", patientaccess.RelationshipTypeCaregiver, patientRepo.createAccess.RelationType)
 	}
 }
 
@@ -176,16 +192,20 @@ func TestCreate_SelfRelationCreatesOwnedPatient(t *testing.T) {
 	if created.OwnerUserID == nil || *created.OwnerUserID != currentUser.ID {
 		t.Fatalf("expected owner_user_id=%s, got %v", currentUser.ID, created.OwnerUserID)
 	}
-	if accessRepo.upsertAccess == nil {
+	if patientRepo.createAccess == nil {
 		t.Fatalf("expected patient access to be created")
 	}
-	if accessRepo.upsertAccess.RelationType != patientaccess.RelationshipTypeSelf {
-		t.Fatalf("expected relation_type=%s, got %s", patientaccess.RelationshipTypeSelf, accessRepo.upsertAccess.RelationType)
+	if patientRepo.createAccess.RelationType != patientaccess.RelationshipTypeSelf {
+		t.Fatalf("expected relation_type=%s, got %s", patientaccess.RelationshipTypeSelf, patientRepo.createAccess.RelationType)
 	}
 }
 
-func TestCreate_AccessRepoError_ReturnsInfraDatabaseError(t *testing.T) {
-	svc := New(&fakePatientRepo{}, &fakeAccessRepo{upsertErr: errors.New("db down")}, allowAllAuthorizer{})
+func TestCreate_AtomicCreateError_ReturnsInternalError(t *testing.T) {
+	svc := New(
+		&fakePatientRepo{createErr: errors.Join(repo.ErrRepositoryFailure, errors.New("db down"))},
+		&fakeAccessRepo{},
+		allowAllAuthorizer{},
+	)
 
 	currentUser := &user.User{
 		ID:          uuid.Must(uuid.NewV7()),
@@ -207,8 +227,36 @@ func TestCreate_AccessRepoError_ReturnsInfraDatabaseError(t *testing.T) {
 	if !errors.As(err, &appErr) {
 		t.Fatalf("expected AppError, got %T", err)
 	}
-	if appErr.Kind != apperr.INFRA_DATABASE_ERROR {
-		t.Fatalf("expected INFRA_DATABASE_ERROR, got %s", appErr.Kind)
+	if appErr.Kind != apperr.INTERNAL_ERROR {
+		t.Fatalf("expected INTERNAL_ERROR, got %s", appErr.Kind)
+	}
+}
+
+func TestCreate_AlreadyExists_ReturnsResourceAlreadyExists(t *testing.T) {
+	svc := New(&fakePatientRepo{createErr: repo.ErrPatientAlreadyExists}, &fakeAccessRepo{}, allowAllAuthorizer{})
+
+	currentUser := &user.User{
+		ID:          uuid.Must(uuid.NewV7()),
+		AccountType: user.AccountTypeProfessional,
+	}
+
+	input := CreateInput{
+		CPF:       "12345678901",
+		FullName:  "Joana Silva",
+		BirthDate: time.Date(1990, time.January, 1, 0, 0, 0, 0, time.UTC),
+		Gender:    demographics.GenderFemale,
+		Race:      demographics.RaceWhite,
+		AvatarURL: "https://example.com/avatar.png",
+	}
+
+	_, err := svc.Create(context.Background(), currentUser, input)
+
+	var appErr *apperr.AppError
+	if !errors.As(err, &appErr) {
+		t.Fatalf("expected AppError, got %T", err)
+	}
+	if appErr.Kind != apperr.RESOURCE_ALREADY_EXISTS {
+		t.Fatalf("expected RESOURCE_ALREADY_EXISTS, got %s", appErr.Kind)
 	}
 }
 

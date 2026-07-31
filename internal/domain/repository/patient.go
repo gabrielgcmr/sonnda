@@ -5,6 +5,7 @@ import (
 	"context"
 
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patient"
+	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patientaccess"
 
 	"github.com/google/uuid"
 )
@@ -12,6 +13,7 @@ import (
 type Patient interface {
 	// Operações CRUD básicas
 	Create(ctx context.Context, patient *patient.Patient) error
+	CreateWithAccess(ctx context.Context, patient *patient.Patient, access *patientaccess.PatientAccess) error
 	Update(ctx context.Context, patient *patient.Patient) error
 	SoftDelete(ctx context.Context, id uuid.UUID) error
 	HardDelete(ctx context.Context, id uuid.UUID) error

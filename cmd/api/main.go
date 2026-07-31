@@ -69,14 +69,14 @@ func main() {
 	gcpOpts := buildGCPClientOptions(cfg)
 	storageService, err := filestorage.NewGCSObjectStorage(ctx, cfg.Storage.GCSBucket, cfg.Storage.GCPProjectID, gcpOpts...)
 	if err != nil {
-		log.Fatalf("falha ao criar storage do GCS: %v", err)
+		logInfraFatal("falha ao criar storage do GCS", err)
 	}
 	defer storageService.Close()
 
 	//6.2 Document AI Service
 	docAIClient, err := ai.NewClient(ctx, cfg.Storage.GCPProjectID, cfg.Storage.GCPLocation, gcpOpts...)
 	if err != nil {
-		log.Fatalf("falha ao criar DocAI client: %v", err)
+		logInfraFatal("falha ao criar DocAI client", err)
 	}
 	defer docAIClient.Close()
 
@@ -92,7 +92,7 @@ func main() {
 		Audience:    cfg.Auth.SupabaseJWTAudience,
 	})
 	if err != nil {
-		log.Fatalf("falha ao criar supabase bearer provider: %v", err)
+		logInfraFatal("falha ao criar supabase bearer provider", err)
 	}
 
 	//7. Módulos
@@ -139,6 +139,22 @@ func main() {
 		// 2. Encerra o programa manualmente com codigo de erro 1
 		os.Exit(1)
 	}
+}
+
+func logInfraFatal(prefix string, err error) {
+	if err == nil {
+		log.Fatal(prefix)
+	}
+
+	var appErr *apperr.AppError
+	if errors.As(err, &appErr) && appErr != nil {
+		if appErr.Cause != nil {
+			log.Fatalf("%s: %s (cause: %v)", prefix, appErr.Message, appErr.Cause)
+		}
+		log.Fatalf("%s: %s", prefix, appErr.Message)
+	}
+
+	log.Fatalf("%s: %v", prefix, err)
 }
 
 func buildGCPClientOptions(cfg *config.Config) []option.ClientOption {
