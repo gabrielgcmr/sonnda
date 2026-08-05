@@ -35,8 +35,8 @@ func loadCORSConfig(appEnv string) CORSConfig {
 		// Staging
 		defaultOrigins = "https://app-staging.sonnda.com.br"
 	default:
-		// Desenvolvimento: Vite e localhost genérico
-		defaultOrigins = "http://localhost:5173,http://localhost:3000"
+		// Desenvolvimento: aceita localhost com porta dinâmica (Flutter Web/Chrome)
+		defaultOrigins = "http://localhost:*,http://127.0.0.1:*,http://localhost:5173,http://localhost:3000"
 	}
 
 	originsStr := getEnvOrDefault(envCORSOrigins, defaultOrigins)
