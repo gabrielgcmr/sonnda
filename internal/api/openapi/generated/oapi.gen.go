@@ -4,8 +4,10 @@
 package openapi
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/oapi-codegen/runtime"
@@ -34,6 +36,37 @@ const (
 	CreatePatientRequestRaceWHITE      CreatePatientRequestRace = "WHITE"
 )
 
+// Defines values for CreateUserRequestAccountType.
+const (
+	BasicCare CreateUserRequestAccountType = "basic_care"
+)
+
+// Defines values for CreateUserRequestRelationType.
+const (
+	Caregiver    CreateUserRequestRelationType = "caregiver"
+	Family       CreateUserRequestRelationType = "family"
+	Professional CreateUserRequestRelationType = "professional"
+	Self         CreateUserRequestRelationType = "self"
+)
+
+// Defines values for PatientGender.
+const (
+	PatientGenderFEMALE  PatientGender = "FEMALE"
+	PatientGenderMALE    PatientGender = "MALE"
+	PatientGenderOTHER   PatientGender = "OTHER"
+	PatientGenderUNKNOWN PatientGender = "UNKNOWN"
+)
+
+// Defines values for PatientRace.
+const (
+	PatientRaceASIAN      PatientRace = "ASIAN"
+	PatientRaceBLACK      PatientRace = "BLACK"
+	PatientRaceINDIGENOUS PatientRace = "INDIGENOUS"
+	PatientRaceMIXED      PatientRace = "MIXED"
+	PatientRaceUNKNOWN    PatientRace = "UNKNOWN"
+	PatientRaceWHITE      PatientRace = "WHITE"
+)
+
 // Defines values for GetV1PatientsIdLabsParamsExpand.
 const (
 	Full GetV1PatientsIdLabsParamsExpand = "full"
@@ -41,13 +74,15 @@ const (
 
 // CreatePatientRequest defines model for CreatePatientRequest.
 type CreatePatientRequest struct {
-	AvatarUrl *string                    `json:"avatar_url,omitempty"`
-	BirthDate openapi_types.Date         `json:"birth_date"`
-	Cpf       string                     `json:"cpf"`
-	FullName  string                     `json:"full_name"`
-	Gender    CreatePatientRequestGender `json:"gender"`
-	Phone     *string                    `json:"phone"`
-	Race      CreatePatientRequestRace   `json:"race"`
+	AvatarUrl *string            `json:"avatar_url"`
+	BirthDate openapi_types.Date `json:"birth_date"`
+
+	// Cpf CPF sem pontuação (apenas dígitos)
+	Cpf      string                     `json:"cpf"`
+	FullName string                     `json:"full_name"`
+	Gender   CreatePatientRequestGender `json:"gender"`
+	Phone    *string                    `json:"phone"`
+	Race     CreatePatientRequestRace   `json:"race"`
 }
 
 // CreatePatientRequestGender defines model for CreatePatientRequest.Gender.
@@ -58,33 +93,123 @@ type CreatePatientRequestRace string
 
 // CreateUserRequest defines model for CreateUserRequest.
 type CreateUserRequest struct {
-	BirthDate openapi_types.Date `json:"birth_date"`
-	Cpf       string             `json:"cpf"`
-	FullName  string             `json:"full_name"`
-	Phone     string             `json:"phone"`
+	AccountType *CreateUserRequestAccountType `json:"account_type,omitempty"`
+	BirthDate   openapi_types.Date            `json:"birth_date"`
+	Cns         *string                       `json:"cns"`
+
+	// Cpf CPF sem pontuação (apenas dígitos)
+	Cpf          string                         `json:"cpf"`
+	FullName     string                         `json:"full_name"`
+	Phone        string                         `json:"phone"`
+	RelationType *CreateUserRequestRelationType `json:"relation_type"`
 }
 
-// ErrorResponse defines model for ErrorResponse.
-type ErrorResponse struct {
-	Error struct {
-		Code    *string `json:"code,omitempty"`
-		Message *string `json:"message,omitempty"`
-	} `json:"error"`
-}
+// CreateUserRequestAccountType defines model for CreateUserRequest.AccountType.
+type CreateUserRequestAccountType string
+
+// CreateUserRequestRelationType defines model for CreateUserRequest.RelationType.
+type CreateUserRequestRelationType string
 
 // HealthResponse defines model for HealthResponse.
 type HealthResponse struct {
 	Status string `json:"status"`
 }
 
+// LabReportFull defines model for LabReportFull.
+type LabReportFull struct {
+	CreatedAt         time.Time            `json:"CreatedAt"`
+	Fingerprint       *string              `json:"Fingerprint"`
+	ID                openapi_types.UUID   `json:"ID"`
+	InsuranceProvider *string              `json:"InsuranceProvider"`
+	LabName           *string              `json:"LabName"`
+	LabPhone          *string              `json:"LabPhone"`
+	PatientDOB        *time.Time           `json:"PatientDOB"`
+	PatientID         openapi_types.UUID   `json:"PatientID"`
+	PatientName       *string              `json:"PatientName"`
+	ReportDate        *time.Time           `json:"ReportDate"`
+	RequestingDoctor  *string              `json:"RequestingDoctor"`
+	TechnicalManager  *string              `json:"TechnicalManager"`
+	TestResults       *[]LabTestResultFull `json:"TestResults"`
+	UpdatedAt         time.Time            `json:"UpdatedAt"`
+	UploadedByUserID  openapi_types.UUID   `json:"UploadedByUserID"`
+}
+
+// LabReportFullList defines model for LabReportFullList.
+type LabReportFullList = []LabReportFull
+
+// LabReportSummary defines model for LabReportSummary.
+type LabReportSummary struct {
+	Id           openapi_types.UUID  `json:"id"`
+	PatientId    openapi_types.UUID  `json:"patient_id"`
+	ReportDate   *time.Time          `json:"report_date"`
+	SummaryTests *[]LabResultSummary `json:"summary_tests"`
+}
+
+// LabReportSummaryList defines model for LabReportSummaryList.
+type LabReportSummaryList = []LabReportSummary
+
+// LabResultItemSummary defines model for LabResultItemSummary.
+type LabResultItemSummary struct {
+	ParameterName string  `json:"parameter_name"`
+	ResultUnit    *string `json:"result_unit"`
+	ResultValue   *string `json:"result_value"`
+}
+
+// LabResultSummary defines model for LabResultSummary.
+type LabResultSummary struct {
+	CollectedAt *time.Time              `json:"collected_at"`
+	KeyResults  *[]LabResultItemSummary `json:"key_results"`
+	TestName    string                  `json:"test_name"`
+}
+
+// LabTestItemFull defines model for LabTestItemFull.
+type LabTestItemFull struct {
+	ID            openapi_types.UUID `json:"ID"`
+	ParameterName string             `json:"ParameterName"`
+	ReferenceText *string            `json:"ReferenceText"`
+	ResultUnit    *string            `json:"ResultUnit"`
+	ResultValue   *string            `json:"ResultValue"`
+}
+
+// LabTestResultFull defines model for LabTestResultFull.
+type LabTestResultFull struct {
+	CollectedAt *time.Time         `json:"CollectedAt"`
+	ID          openapi_types.UUID `json:"ID"`
+	Items       *[]LabTestItemFull `json:"Items"`
+	Material    *string            `json:"Material"`
+	Method      *string            `json:"Method"`
+	ReleaseAt   *time.Time         `json:"ReleaseAt"`
+	TestName    string             `json:"TestName"`
+}
+
 // LabUploadResponse Retorno do processamento do laudo.
 type LabUploadResponse map[string]interface{}
 
-// LabsList defines model for LabsList.
-type LabsList = []map[string]interface{}
+// LabsList Lista de laudos. Por padrao retorna a representacao resumida
+// (LabReportSummaryList). Quando expand=full ou include contem full,
+// results ou test_results, retorna LabReportFullList.
+type LabsList struct {
+	union json.RawMessage
+}
 
 // Patient Representação simplificada do paciente.
-type Patient map[string]interface{}
+type Patient struct {
+	AvatarUrl            *string                `json:"avatar_url"`
+	BirthDate            *openapi_types.Date    `json:"birth_date,omitempty"`
+	Cpf                  *string                `json:"cpf,omitempty"`
+	FullName             *string                `json:"full_name,omitempty"`
+	Gender               *PatientGender         `json:"gender,omitempty"`
+	Id                   openapi_types.UUID     `json:"id"`
+	Phone                *string                `json:"phone"`
+	Race                 *PatientRace           `json:"race,omitempty"`
+	AdditionalProperties map[string]interface{} `json:"-"`
+}
+
+// PatientGender defines model for Patient.Gender.
+type PatientGender string
+
+// PatientRace defines model for Patient.Race.
+type PatientRace string
 
 // PatientCreatedResponse defines model for PatientCreatedResponse.
 type PatientCreatedResponse struct {
@@ -93,6 +218,39 @@ type PatientCreatedResponse struct {
 
 // PatientsList defines model for PatientsList.
 type PatientsList = []Patient
+
+// ProblemDetails defines model for ProblemDetails.
+type ProblemDetails struct {
+	// Code Código estável do erro (contrato Sonnda).
+	Code string `json:"code"`
+
+	// Detail Explicação específica desta ocorrência.
+	Detail string `json:"detail"`
+
+	// Instance URI que identifica a ocorrência específica do problema.
+	Instance *string `json:"instance,omitempty"`
+
+	// Status HTTP status code.
+	Status int `json:"status"`
+
+	// Timestamp Timestamp (UTC) da ocorrência do erro.
+	Timestamp *time.Time `json:"timestamp,omitempty"`
+
+	// Title Resumo curto e legível do problema.
+	Title string `json:"title"`
+
+	// TraceId Identificador para rastreamento (normalmente X-Request-ID).
+	TraceId *string `json:"traceId,omitempty"`
+
+	// Type URI que identifica o tipo do problema.
+	Type string `json:"type"`
+
+	// Violations Lista de violações de validação (quando aplicável).
+	Violations *[]struct {
+		Field  *string `json:"field,omitempty"`
+		Reason *string `json:"reason,omitempty"`
+	} `json:"violations,omitempty"`
+}
 
 // RootResponse defines model for RootResponse.
 type RootResponse struct {
@@ -108,9 +266,11 @@ type RootResponse struct {
 // UpdateUserRequest defines model for UpdateUserRequest.
 type UpdateUserRequest struct {
 	BirthDate *openapi_types.Date `json:"birth_date"`
-	Cpf       *string             `json:"cpf"`
-	FullName  *string             `json:"full_name"`
-	Phone     *string             `json:"phone"`
+
+	// Cpf CPF sem pontuação (apenas dígitos)
+	Cpf      *string `json:"cpf"`
+	FullName *string `json:"full_name"`
+	Phone    *string `json:"phone"`
 }
 
 // User Representação simplificada do usuário.
@@ -122,8 +282,8 @@ type LimitParam = int
 // OffsetParam defines model for OffsetParam.
 type OffsetParam = int
 
-// AppError defines model for AppError.
-type AppError = ErrorResponse
+// Problem defines model for Problem.
+type Problem = ProblemDetails
 
 // GetV1MePatientsParams defines parameters for GetV1MePatients.
 type GetV1MePatientsParams struct {
@@ -157,6 +317,9 @@ type PostV1PatientsIdLabsMultipartBody struct {
 	File openapi_types.File `json:"file"`
 }
 
+// PostV1MeJSONRequestBody defines body for PostV1Me for application/json ContentType.
+type PostV1MeJSONRequestBody = CreateUserRequest
+
 // PutV1MeJSONRequestBody defines body for PutV1Me for application/json ContentType.
 type PutV1MeJSONRequestBody = UpdateUserRequest
 
@@ -166,8 +329,238 @@ type PostV1PatientsJSONRequestBody = CreatePatientRequest
 // PostV1PatientsIdLabsMultipartRequestBody defines body for PostV1PatientsIdLabs for multipart/form-data ContentType.
 type PostV1PatientsIdLabsMultipartRequestBody PostV1PatientsIdLabsMultipartBody
 
-// PostV1UsersJSONRequestBody defines body for PostV1Users for application/json ContentType.
-type PostV1UsersJSONRequestBody = CreateUserRequest
+// Getter for additional properties for Patient. Returns the specified
+// element and whether it was found
+func (a Patient) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for Patient
+func (a *Patient) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for Patient to handle AdditionalProperties
+func (a *Patient) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["avatar_url"]; found {
+		err = json.Unmarshal(raw, &a.AvatarUrl)
+		if err != nil {
+			return fmt.Errorf("error reading 'avatar_url': %w", err)
+		}
+		delete(object, "avatar_url")
+	}
+
+	if raw, found := object["birth_date"]; found {
+		err = json.Unmarshal(raw, &a.BirthDate)
+		if err != nil {
+			return fmt.Errorf("error reading 'birth_date': %w", err)
+		}
+		delete(object, "birth_date")
+	}
+
+	if raw, found := object["cpf"]; found {
+		err = json.Unmarshal(raw, &a.Cpf)
+		if err != nil {
+			return fmt.Errorf("error reading 'cpf': %w", err)
+		}
+		delete(object, "cpf")
+	}
+
+	if raw, found := object["full_name"]; found {
+		err = json.Unmarshal(raw, &a.FullName)
+		if err != nil {
+			return fmt.Errorf("error reading 'full_name': %w", err)
+		}
+		delete(object, "full_name")
+	}
+
+	if raw, found := object["gender"]; found {
+		err = json.Unmarshal(raw, &a.Gender)
+		if err != nil {
+			return fmt.Errorf("error reading 'gender': %w", err)
+		}
+		delete(object, "gender")
+	}
+
+	if raw, found := object["id"]; found {
+		err = json.Unmarshal(raw, &a.Id)
+		if err != nil {
+			return fmt.Errorf("error reading 'id': %w", err)
+		}
+		delete(object, "id")
+	}
+
+	if raw, found := object["phone"]; found {
+		err = json.Unmarshal(raw, &a.Phone)
+		if err != nil {
+			return fmt.Errorf("error reading 'phone': %w", err)
+		}
+		delete(object, "phone")
+	}
+
+	if raw, found := object["race"]; found {
+		err = json.Unmarshal(raw, &a.Race)
+		if err != nil {
+			return fmt.Errorf("error reading 'race': %w", err)
+		}
+		delete(object, "race")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for Patient to handle AdditionalProperties
+func (a Patient) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.AvatarUrl != nil {
+		object["avatar_url"], err = json.Marshal(a.AvatarUrl)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'avatar_url': %w", err)
+		}
+	}
+
+	if a.BirthDate != nil {
+		object["birth_date"], err = json.Marshal(a.BirthDate)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'birth_date': %w", err)
+		}
+	}
+
+	if a.Cpf != nil {
+		object["cpf"], err = json.Marshal(a.Cpf)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'cpf': %w", err)
+		}
+	}
+
+	if a.FullName != nil {
+		object["full_name"], err = json.Marshal(a.FullName)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'full_name': %w", err)
+		}
+	}
+
+	if a.Gender != nil {
+		object["gender"], err = json.Marshal(a.Gender)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'gender': %w", err)
+		}
+	}
+
+	object["id"], err = json.Marshal(a.Id)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'id': %w", err)
+	}
+
+	if a.Phone != nil {
+		object["phone"], err = json.Marshal(a.Phone)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'phone': %w", err)
+		}
+	}
+
+	if a.Race != nil {
+		object["race"], err = json.Marshal(a.Race)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'race': %w", err)
+		}
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// AsLabReportSummaryList returns the union data inside the LabsList as a LabReportSummaryList
+func (t LabsList) AsLabReportSummaryList() (LabReportSummaryList, error) {
+	var body LabReportSummaryList
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromLabReportSummaryList overwrites any union data inside the LabsList as the provided LabReportSummaryList
+func (t *LabsList) FromLabReportSummaryList(v LabReportSummaryList) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeLabReportSummaryList performs a merge with any union data inside the LabsList, using the provided LabReportSummaryList
+func (t *LabsList) MergeLabReportSummaryList(v LabReportSummaryList) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsLabReportFullList returns the union data inside the LabsList as a LabReportFullList
+func (t LabsList) AsLabReportFullList() (LabReportFullList, error) {
+	var body LabReportFullList
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromLabReportFullList overwrites any union data inside the LabsList as the provided LabReportFullList
+func (t *LabsList) FromLabReportFullList(v LabReportFullList) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeLabReportFullList performs a merge with any union data inside the LabsList, using the provided LabReportFullList
+func (t *LabsList) MergeLabReportFullList(v LabReportFullList) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t LabsList) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *LabsList) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
@@ -189,6 +582,9 @@ type ServerInterface interface {
 	// Obter perfil do usuário atual
 	// (GET /v1/me)
 	GetV1Me(c *gin.Context)
+	// Criar usuário
+	// (POST /v1/me)
+	PostV1Me(c *gin.Context)
 	// Atualizar perfil do usuário atual
 	// (PUT /v1/me)
 	PutV1Me(c *gin.Context)
@@ -210,9 +606,6 @@ type ServerInterface interface {
 	// Upload de laudo
 	// (POST /v1/patients/{id}/labs)
 	PostV1PatientsIdLabs(c *gin.Context, id openapi_types.UUID)
-	// Criar usuário
-	// (POST /v1/users)
-	PostV1Users(c *gin.Context)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -304,6 +697,21 @@ func (siw *ServerInterfaceWrapper) GetV1Me(c *gin.Context) {
 	}
 
 	siw.Handler.GetV1Me(c)
+}
+
+// PostV1Me operation middleware
+func (siw *ServerInterfaceWrapper) PostV1Me(c *gin.Context) {
+
+	c.Set(BearerAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.PostV1Me(c)
 }
 
 // PutV1Me operation middleware
@@ -500,21 +908,6 @@ func (siw *ServerInterfaceWrapper) PostV1PatientsIdLabs(c *gin.Context) {
 	siw.Handler.PostV1PatientsIdLabs(c, id)
 }
 
-// PostV1Users operation middleware
-func (siw *ServerInterfaceWrapper) PostV1Users(c *gin.Context) {
-
-	c.Set(BearerAuthScopes, []string{})
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		middleware(c)
-		if c.IsAborted() {
-			return
-		}
-	}
-
-	siw.Handler.PostV1Users(c)
-}
-
 // GinServerOptions provides options for the Gin server.
 type GinServerOptions struct {
 	BaseURL      string
@@ -548,6 +941,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.GET(options.BaseURL+"/readyz", wrapper.GetReadyz)
 	router.DELETE(options.BaseURL+"/v1/me", wrapper.DeleteV1Me)
 	router.GET(options.BaseURL+"/v1/me", wrapper.GetV1Me)
+	router.POST(options.BaseURL+"/v1/me", wrapper.PostV1Me)
 	router.PUT(options.BaseURL+"/v1/me", wrapper.PutV1Me)
 	router.GET(options.BaseURL+"/v1/me/patients", wrapper.GetV1MePatients)
 	router.GET(options.BaseURL+"/v1/patients", wrapper.GetV1Patients)
@@ -555,5 +949,4 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.GET(options.BaseURL+"/v1/patients/:id", wrapper.GetV1PatientsId)
 	router.GET(options.BaseURL+"/v1/patients/:id/labs", wrapper.GetV1PatientsIdLabs)
 	router.POST(options.BaseURL+"/v1/patients/:id/labs", wrapper.PostV1PatientsIdLabs)
-	router.POST(options.BaseURL+"/v1/users", wrapper.PostV1Users)
 }

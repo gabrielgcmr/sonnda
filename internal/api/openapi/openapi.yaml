@@ -559,10 +559,180 @@ components:
       items:
         $ref: "#/components/schemas/Patient"
     LabsList:
+      description: |-
+        Lista de laudos. Por padrao retorna a representacao resumida
+        (LabReportSummaryList). Quando expand=full ou include contem full,
+        results ou test_results, retorna LabReportFullList.
+      oneOf:
+        - $ref: "#/components/schemas/LabReportSummaryList"
+        - $ref: "#/components/schemas/LabReportFullList"
+    LabReportSummaryList:
       type: array
       items:
-        type: object
-        additionalProperties: true
+        $ref: "#/components/schemas/LabReportSummary"
+    LabReportSummary:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        patient_id:
+          type: string
+          format: uuid
+        report_date:
+          type: string
+          format: date-time
+          nullable: true
+        summary_tests:
+          type: array
+          nullable: true
+          items:
+            $ref: "#/components/schemas/LabResultSummary"
+      required: [id, patient_id, summary_tests]
+    LabResultSummary:
+      type: object
+      additionalProperties: false
+      properties:
+        test_name:
+          type: string
+        collected_at:
+          type: string
+          format: date-time
+          nullable: true
+        key_results:
+          type: array
+          nullable: true
+          items:
+            $ref: "#/components/schemas/LabResultItemSummary"
+      required: [test_name, key_results]
+    LabResultItemSummary:
+      type: object
+      additionalProperties: false
+      properties:
+        parameter_name:
+          type: string
+        result_value:
+          type: string
+          nullable: true
+        result_unit:
+          type: string
+          nullable: true
+      required: [parameter_name]
+    LabReportFullList:
+      type: array
+      items:
+        $ref: "#/components/schemas/LabReportFull"
+    LabReportFull:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        patient_id:
+          type: string
+          format: uuid
+        patient_name:
+          type: string
+          nullable: true
+        patient_dob:
+          type: string
+          format: date-time
+          nullable: true
+        lab_name:
+          type: string
+          nullable: true
+        lab_phone:
+          type: string
+          nullable: true
+        insurance_provider:
+          type: string
+          nullable: true
+        requesting_doctor:
+          type: string
+          nullable: true
+        technical_manager:
+          type: string
+          nullable: true
+        report_date:
+          type: string
+          format: date-time
+          nullable: true
+        uploaded_by_user_id:
+          type: string
+          format: uuid
+        fingerprint:
+          type: string
+          nullable: true
+        test_results:
+          type: array
+          nullable: true
+          items:
+            $ref: "#/components/schemas/LabTestResultFull"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        [
+          id,
+          patient_id,
+          uploaded_by_user_id,
+          test_results,
+          created_at,
+          updated_at,
+        ]
+    LabTestResultFull:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        test_name:
+          type: string
+        material:
+          type: string
+          nullable: true
+        method:
+          type: string
+          nullable: true
+        collected_at:
+          type: string
+          format: date-time
+          nullable: true
+        release_at:
+          type: string
+          format: date-time
+          nullable: true
+        items:
+          type: array
+          nullable: true
+          items:
+            $ref: "#/components/schemas/LabTestItemFull"
+      required: [id, test_name, items]
+    LabTestItemFull:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        parameter_name:
+          type: string
+        result_value:
+          type: string
+          nullable: true
+        result_unit:
+          type: string
+          nullable: true
+        reference_text:
+          type: string
+          nullable: true
+      required: [id, parameter_name]
     LabUploadResponse:
       type: object
       description: Retorno do processamento do laudo.
