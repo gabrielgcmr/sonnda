@@ -8,7 +8,6 @@ import (
 
 const (
 	envCORSOrigins     = "CORS_ORIGINS"
-	envCORSMaxAge      = "CORS_MAX_AGE"
 	envCORSCredentials = "CORS_CREDENTIALS"
 )
 
