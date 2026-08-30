@@ -15,6 +15,12 @@ type CreateExamDocumentInput struct {
 	MimeType         string
 }
 
+type RouteExamDocumentInput struct {
+	ID               uuid.UUID
+	ExtractedText    string
+	ExtractionMethod string
+}
+
 type ExamDocumentOutput struct {
 	ID               uuid.UUID            `json:"id"`
 	PatientID        uuid.UUID            `json:"patient_id"`

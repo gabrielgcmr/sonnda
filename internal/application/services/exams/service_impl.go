@@ -2,6 +2,7 @@ package examsvc
 
 import (
 	"context"
+	"strings"
 
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/exams"
 	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
@@ -12,6 +13,7 @@ import (
 type service struct {
 	patientRepo repository.Patient
 	examsRepo   repository.Exams
+	router      ExamRouter
 }
 
 var _ Service = (*service)(nil)
@@ -20,6 +22,7 @@ func New(patientRepo repository.Patient, examsRepo repository.Exams) Service {
 	return &service{
 		patientRepo: patientRepo,
 		examsRepo:   examsRepo,
+		router:      NewHeuristicExamRouter(),
 	}
 }
 
@@ -97,6 +100,49 @@ func (s *service) ListByPatient(ctx context.Context, patientID uuid.UUID, limit,
 	}
 
 	return out, nil
+}
+
+func (s *service) RouteDocument(ctx context.Context, input RouteExamDocumentInput) (*ExamDocumentOutput, error) {
+	if input.ID == uuid.Nil {
+		return nil, apperr.Validation("entrada invalida", apperr.Violation{Field: "id", Reason: "required"})
+	}
+
+	document, err := s.examsRepo.FindByID(ctx, input.ID)
+	if err != nil {
+		return nil, mapRepoError("exams.find_by_id", err)
+	}
+	if document == nil {
+		return nil, nil
+	}
+
+	extractionMethod := strings.TrimSpace(input.ExtractionMethod)
+	if extractionMethod == "" {
+		extractionMethod = "unknown"
+	}
+
+	route := s.router.Route(ExamRouteInput{
+		ExtractedText:    input.ExtractedText,
+		MimeType:         document.MimeType,
+		OriginalFilename: document.OriginalFilename,
+	})
+
+	updated, err := s.examsRepo.MarkClassified(
+		ctx,
+		input.ID,
+		route.Status,
+		route.ExamType,
+		&extractionMethod,
+		&route.Confidence,
+		&input.ExtractedText,
+	)
+	if err != nil {
+		return nil, mapRepoError("exams.mark_classified", err)
+	}
+	if updated == nil {
+		return nil, nil
+	}
+
+	return mapDomainDocumentToOutput(updated), nil
 }
 
 func mapDomainDocumentToOutput(document *exams.ExamDocument) *ExamDocumentOutput {

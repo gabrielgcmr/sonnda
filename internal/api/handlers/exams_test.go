@@ -36,6 +36,10 @@ func (f *fakeExamsService) ListByPatient(ctx context.Context, patientID uuid.UUI
 	return []examsvc.ExamDocumentOutput{}, nil
 }
 
+func (f *fakeExamsService) RouteDocument(ctx context.Context, input examsvc.RouteExamDocumentInput) (*examsvc.ExamDocumentOutput, error) {
+	return nil, nil
+}
+
 func TestListExamDocuments_UsesServiceWithDefaultPagination(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
