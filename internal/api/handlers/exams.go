@@ -34,6 +34,35 @@ func NewExams(
 	}
 }
 
+func (h *ExamsHandler) ListExamDocuments(c *gin.Context) {
+	currentUser := helpers.MustGetCurrentUser(c)
+
+	patientID, ok := parsePatientIDParam(c, "id")
+	if !ok {
+		return
+	}
+
+	if h.authz != nil {
+		if err := h.authz.Require(c.Request.Context(), currentUser, rbac.ActionReadExams, &patientID); err != nil {
+			presenter.ErrorResponder(c, err)
+			return
+		}
+	}
+
+	limit, offset, ok := parsePagination(c, 100, 0)
+	if !ok {
+		return
+	}
+
+	list, err := h.svc.ListByPatient(c.Request.Context(), patientID, limit, offset)
+	if err != nil {
+		presenter.ErrorResponder(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, list)
+}
+
 // UploadExamDocument saves the original exam document for later routing.
 // POST /v1/patients/:id/exames
 // field: file (PDF/JPEG/PNG)

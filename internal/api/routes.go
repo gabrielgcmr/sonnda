@@ -97,6 +97,7 @@ func SetupRoutes(
 
 			exams := patients.Group("/:id/exames")
 			{
+				exams.GET("", deps.ExamsHandler.ListExamDocuments)
 				exams.POST("", deps.ExamsHandler.UploadExamDocument)
 			}
 
