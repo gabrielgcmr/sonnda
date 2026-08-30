@@ -177,6 +177,8 @@ func isPatientScoped(action rbac.Action) bool {
 		rbac.ActionWriteClinicalNote,
 		rbac.ActionReadLabs,
 		rbac.ActionUploadLabs,
+		rbac.ActionReadExams,
+		rbac.ActionUploadExams,
 		rbac.ActionReadPrescriptions,
 		rbac.ActionWritePrescriptions:
 		return true

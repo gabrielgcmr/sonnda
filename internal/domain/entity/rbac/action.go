@@ -15,8 +15,10 @@ const (
 	ActionRecordMeasurement Action = "measurement:record"
 	ActionWriteClinicalNote Action = "clinical_note:write"
 	// Exames laboratiriais do paciente
-	ActionReadLabs   Action = "labs:read"
-	ActionUploadLabs Action = "labs:upload"
+	ActionReadLabs    Action = "labs:read"
+	ActionUploadLabs  Action = "labs:upload"
+	ActionReadExams   Action = "exams:read"
+	ActionUploadExams Action = "exams:upload"
 	//Prescrições médicas do paciente
 	ActionReadPrescriptions  Action = "prescriptions:read"
 	ActionWritePrescriptions Action = "prescriptions:write"

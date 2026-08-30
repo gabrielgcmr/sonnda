@@ -19,6 +19,7 @@ type APIDependencies struct {
 	UserHandler            *handlers.UserHandler
 	PatientHandler         *handlers.PatientHandler
 	LabsHandler            *handlers.LabsHandler
+	ExamsHandler           *handlers.ExamsHandler
 }
 
 type RootInfo struct {
@@ -92,6 +93,11 @@ func SetupRoutes(
 			{
 				labs.GET("", deps.LabsHandler.ListLabs)
 				labs.POST("", deps.LabsHandler.UploadAndProcessLabs)
+			}
+
+			exams := patients.Group("/:id/exames")
+			{
+				exams.POST("", deps.ExamsHandler.UploadExamDocument)
 			}
 
 		}

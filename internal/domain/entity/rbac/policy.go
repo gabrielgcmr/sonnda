@@ -44,6 +44,10 @@ func (ps *RbacPolicy) CanPerform(subject Subject, action Action) bool {
 		return isProfessional || isBasicCare
 	case ActionUploadLabs:
 		return isProfessional || isBasicCare
+	case ActionReadExams:
+		return isProfessional || isBasicCare
+	case ActionUploadExams:
+		return isProfessional || isBasicCare
 
 	// Prescriptions
 	case ActionReadPrescriptions:

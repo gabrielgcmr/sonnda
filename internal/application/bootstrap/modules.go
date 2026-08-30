@@ -13,6 +13,7 @@ type Modules struct {
 	User    *UserModule
 	Patient *PatientModule
 	Labs    *LabsModule
+	Exams   *ExamsModule
 }
 
 func NewModules(
@@ -24,5 +25,6 @@ func NewModules(
 		User:    NewUserModule(dbClient),
 		Patient: NewPatientModule(dbClient),
 		Labs:    NewLabsModule(dbClient, docExtractor, storage),
+		Exams:   NewExamsModule(dbClient, storage),
 	}
 }

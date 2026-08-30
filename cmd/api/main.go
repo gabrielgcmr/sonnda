@@ -122,6 +122,7 @@ func main() {
 			UserHandler:            modules.User.Handler,
 			PatientHandler:         modules.Patient.Handler,
 			LabsHandler:            modules.Labs.Handler,
+			ExamsHandler:           modules.Exams.Handler,
 		},
 	})
 
