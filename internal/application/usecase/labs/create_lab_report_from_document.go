@@ -78,6 +78,7 @@ func (u *createLabReportFromDocumentUseCase) Execute(ctx context.Context, input 
 	if err != nil {
 		return nil, u.mapDomainError(err)
 	}
+	report.ExamDocumentID = input.ExamDocumentID
 
 	fingerprint := generateLabFingerprint(input.PatientID, report)
 
@@ -368,6 +369,7 @@ func toOutput(report *labs.LabReport) *labsvc.LabReportOutput {
 	output := &labsvc.LabReportOutput{
 		ID:                report.ID,
 		PatientID:         report.PatientID,
+		ExamDocumentID:    report.ExamDocumentID,
 		PatientName:       report.PatientName,
 		PatientDOB:        report.PatientDOB,
 		LabName:           report.LabName,

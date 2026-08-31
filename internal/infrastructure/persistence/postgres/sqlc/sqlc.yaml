@@ -4,6 +4,7 @@ sql:
     schema:
       - "sql/schema/users.sql"
       - "sql/schema/patient.sql"
+      - "sql/schema/exam.sql"
       - "sql/schema/lab.sql"
     queries: "sql/queries/lab_queries.sql"
     gen:

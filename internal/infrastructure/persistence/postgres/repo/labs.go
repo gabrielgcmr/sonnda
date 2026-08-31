@@ -37,6 +37,7 @@ func (l *LabsRepository) Create(ctx context.Context, report *labs.LabReport) err
 	reportRow, err := l.queries.CreateLabReport(ctx, labsqlc.CreateLabReportParams{
 		ID:                report.ID,
 		PatientID:         report.PatientID,
+		ExamDocumentID:    FromNullableUUIDToPgUUID(report.ExamDocumentID),
 		PatientName:       FromNullableStringToPgText(report.PatientName),
 		PatientDob:        FromNullableTimestamptzToPgTimestamptz(report.PatientDOB),
 		LabName:           FromNullableStringToPgText(report.LabName),
@@ -164,6 +165,7 @@ func (l *LabsRepository) FindByID(ctx context.Context, reportID uuid.UUID) (*lab
 	return &labs.LabReport{
 		ID:                reportRow.ID,
 		PatientID:         reportRow.PatientID,
+		ExamDocumentID:    FromPgUUIDToNullableUUID(reportRow.ExamDocumentID),
 		PatientName:       FromPgTextToNullableString(reportRow.PatientName),
 		PatientDOB:        FromPgTimestamptzToNullableTimestamptz(reportRow.PatientDob),
 		LabName:           FromPgTextToNullableString(reportRow.LabName),
@@ -224,15 +226,16 @@ func (l *LabsRepository) ListLabs(ctx context.Context, patientID uuid.UUID, limi
 	var reports []labs.LabReport
 	for _, row := range rows {
 		reports = append(reports, labs.LabReport{
-			ID:          row.ID,
-			PatientID:   row.PatientID,
-			PatientName: FromPgTextToNullableString(row.PatientName),
-			LabName:     FromPgTextToNullableString(row.LabName),
-			ReportDate:  FromPgTimestamptzToNullableTimestamptz(row.ReportDate),
-			Fingerprint: FromPgTextToNullableString(row.Fingerprint),
-			CreatedAt:   row.CreatedAt.Time,
-			UpdatedAt:   row.UpdatedAt.Time,
-			UploadedBy:  row.UploadedByUserID,
+			ID:             row.ID,
+			PatientID:      row.PatientID,
+			ExamDocumentID: FromPgUUIDToNullableUUID(row.ExamDocumentID),
+			PatientName:    FromPgTextToNullableString(row.PatientName),
+			LabName:        FromPgTextToNullableString(row.LabName),
+			ReportDate:     FromPgTimestamptzToNullableTimestamptz(row.ReportDate),
+			Fingerprint:    FromPgTextToNullableString(row.Fingerprint),
+			CreatedAt:      row.CreatedAt.Time,
+			UpdatedAt:      row.UpdatedAt.Time,
+			UploadedBy:     row.UploadedByUserID,
 		})
 	}
 

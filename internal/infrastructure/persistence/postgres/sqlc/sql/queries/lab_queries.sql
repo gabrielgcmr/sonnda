@@ -6,6 +6,7 @@
 INSERT INTO lab_reports (
     id,
     patient_id,
+    exam_document_id,
     patient_name,
     patient_dob,
     lab_name,
@@ -21,11 +22,12 @@ INSERT INTO lab_reports (
 VALUES (
     $1, $2, $3, $4, $5, $6,
     $7, $8, $9, $10, $11, $12,
-    $13
+    $13, $14
 )
 RETURNING
     id,
     patient_id,
+    exam_document_id,
     patient_name,
     patient_dob,
     lab_name,
@@ -73,6 +75,7 @@ RETURNING id;
 SELECT
     id,
     patient_id,
+    exam_document_id,
     patient_name,
     patient_dob,
     lab_name,
@@ -121,6 +124,7 @@ SELECT EXISTS(
 SELECT
     id,
     patient_id,
+    exam_document_id,
     patient_name,
     lab_name,
     report_date,

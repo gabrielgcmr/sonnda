@@ -145,6 +145,27 @@ func (s *service) RouteDocument(ctx context.Context, input RouteExamDocumentInpu
 	return mapDomainDocumentToOutput(updated), nil
 }
 
+func (s *service) MarkFailed(ctx context.Context, input MarkExamDocumentFailedInput) (*ExamDocumentOutput, error) {
+	if input.ID == uuid.Nil {
+		return nil, apperr.Validation("entrada invalida", apperr.Violation{Field: "id", Reason: "required"})
+	}
+
+	errorMessage := strings.TrimSpace(input.ErrorMessage)
+	if errorMessage == "" {
+		errorMessage = "falha ao processar exame"
+	}
+
+	document, err := s.examsRepo.MarkFailed(ctx, input.ID, errorMessage)
+	if err != nil {
+		return nil, mapRepoError("exams.mark_failed", err)
+	}
+	if document == nil {
+		return nil, nil
+	}
+
+	return mapDomainDocumentToOutput(document), nil
+}
+
 func mapDomainDocumentToOutput(document *exams.ExamDocument) *ExamDocumentOutput {
 	return &ExamDocumentOutput{
 		ID:               document.ID,

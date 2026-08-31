@@ -25,6 +25,6 @@ func NewModules(
 		User:    NewUserModule(dbClient),
 		Patient: NewPatientModule(dbClient),
 		Labs:    NewLabsModule(dbClient, docExtractor, storage),
-		Exams:   NewExamsModule(dbClient, storage),
+		Exams:   NewExamsModule(dbClient, docExtractor, storage),
 	}
 }

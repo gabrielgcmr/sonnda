@@ -11,4 +11,5 @@ type Service interface {
 	FindByID(ctx context.Context, id uuid.UUID) (*ExamDocumentOutput, error)
 	ListByPatient(ctx context.Context, patientID uuid.UUID, limit, offset int) ([]ExamDocumentOutput, error)
 	RouteDocument(ctx context.Context, input RouteExamDocumentInput) (*ExamDocumentOutput, error)
+	MarkFailed(ctx context.Context, input MarkExamDocumentFailedInput) (*ExamDocumentOutput, error)
 }

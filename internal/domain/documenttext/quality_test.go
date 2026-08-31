@@ -1,0 +1,25 @@
+package documenttext
+
+import "testing"
+
+func TestIsUsableText_AcceptsClinicalText(t *testing.T) {
+	text := "Ressonância magnética do joelho. Técnica do exame preservada. Achados compatíveis com lesão meniscal. Conclusão ao final do laudo."
+
+	if !IsUsableText(text) {
+		t.Fatal("expected clinical text to be usable")
+	}
+}
+
+func TestIsUsableText_RejectsShortText(t *testing.T) {
+	if IsUsableText("tomografia") {
+		t.Fatal("expected short text to be rejected")
+	}
+}
+
+func TestIsUsableText_RejectsTextWithoutClinicalSignals(t *testing.T) {
+	text := "Documento recebido em formato digital com informacoes gerais sem conteudo clinico suficiente para classificacao automatica."
+
+	if IsUsableText(text) {
+		t.Fatal("expected text without clinical signals to be rejected")
+	}
+}

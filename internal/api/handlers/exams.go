@@ -4,11 +4,16 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 
 	"github.com/gabrielgcmr/sonnda/internal/api/helpers"
 	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
 	authorization "github.com/gabrielgcmr/sonnda/internal/application/services/authorization"
 	examsvc "github.com/gabrielgcmr/sonnda/internal/application/services/exams"
+	labsuc "github.com/gabrielgcmr/sonnda/internal/application/usecase/labs"
+	domaindoc "github.com/gabrielgcmr/sonnda/internal/domain/documenttext"
+	"github.com/gabrielgcmr/sonnda/internal/domain/entity/exams"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/rbac"
 	domainstorage "github.com/gabrielgcmr/sonnda/internal/domain/storage"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
@@ -17,20 +22,26 @@ import (
 )
 
 type ExamsHandler struct {
-	svc     examsvc.Service
-	storage domainstorage.FileStorageService
-	authz   authorization.Authorizer
+	svc           examsvc.Service
+	createLabUC   labsuc.CreateLabReportFromDocumentUseCase
+	storage       domainstorage.FileStorageService
+	textExtractor domaindoc.Extractor
+	authz         authorization.Authorizer
 }
 
 func NewExams(
 	svc examsvc.Service,
+	createLabUC labsuc.CreateLabReportFromDocumentUseCase,
 	storageClient domainstorage.FileStorageService,
+	textExtractor domaindoc.Extractor,
 	authz authorization.Authorizer,
 ) *ExamsHandler {
 	return &ExamsHandler{
-		svc:     svc,
-		storage: storageClient,
-		authz:   authz,
+		svc:           svc,
+		createLabUC:   createLabUC,
+		storage:       storageClient,
+		textExtractor: textExtractor,
+		authz:         authz,
 	}
 }
 
@@ -86,6 +97,7 @@ func (h *ExamsHandler) UploadExamDocument(c *gin.Context) {
 		presenter.ErrorResponder(c, err)
 		return
 	}
+	defer os.Remove(upload.localPath)
 
 	output, err := h.svc.Create(c.Request.Context(), examsvc.CreateExamDocumentInput{
 		PatientID:        patientID,
@@ -99,13 +111,53 @@ func (h *ExamsHandler) UploadExamDocument(c *gin.Context) {
 		return
 	}
 
+	if h.textExtractor != nil {
+		if routed := h.extractAndRoute(c, output.ID, upload); routed != nil {
+			output = routed
+			if updated := h.createLabReportIfNeeded(c, output, upload); updated != nil {
+				output = updated
+			}
+		}
+	}
+
 	c.JSON(http.StatusCreated, output)
+}
+
+func (h *ExamsHandler) createLabReportIfNeeded(c *gin.Context, document *examsvc.ExamDocumentOutput, upload *uploadedExamFile) *examsvc.ExamDocumentOutput {
+	if h.createLabUC == nil || document == nil || document.ExamType == nil {
+		return nil
+	}
+	if *document.ExamType != exams.ExamTypeLaboratory {
+		return nil
+	}
+
+	_, err := h.createLabUC.Execute(c.Request.Context(), labsuc.CreateLabReportFromDocumentInput{
+		PatientID:        document.PatientID,
+		ExamDocumentID:   &document.ID,
+		DocumentURI:      upload.storageURI,
+		MimeType:         upload.mimeType,
+		UploadedByUserID: document.UploadedByUserID,
+	})
+	if err != nil {
+		// O upload continua salvo; retry sera tratado no processamento posterior.
+		failed, markErr := h.svc.MarkFailed(c.Request.Context(), examsvc.MarkExamDocumentFailedInput{
+			ID:           document.ID,
+			ErrorMessage: "falha ao criar laudo laboratorial",
+		})
+		if markErr != nil {
+			return nil
+		}
+		return failed
+	}
+
+	return nil
 }
 
 type uploadedExamFile struct {
 	storageURI       string
 	originalFilename string
 	mimeType         string
+	localPath        string
 }
 
 func (h *ExamsHandler) handleExamFileUpload(c *gin.Context, patientID uuid.UUID) (*uploadedExamFile, error) {
@@ -138,15 +190,37 @@ func (h *ExamsHandler) handleExamFileUpload(c *gin.Context, patientID uuid.UUID)
 	}
 	defer file.Close()
 
+	extHint := filepath.Ext(fileHeader.Filename)
+	tempFile, err := os.CreateTemp("", "sonnda-exam-*"+extHint)
+	if err != nil {
+		return nil, apperr.Internal("falha ao preparar arquivo temporario", err)
+	}
+	tempPath := tempFile.Name()
+	removeTempOnError := true
+	defer func() {
+		if removeTempOnError {
+			_ = os.Remove(tempPath)
+		}
+	}()
+
+	if _, err := io.Copy(tempFile, file); err != nil {
+		_ = tempFile.Close()
+		return nil, apperr.Internal("falha ao copiar arquivo", err)
+	}
+	if err := tempFile.Close(); err != nil {
+		return nil, apperr.Internal("falha ao fechar arquivo temporario", err)
+	}
+
 	contentType := fileHeader.Header.Get("Content-Type")
 	if contentType == "" {
-		buf := make([]byte, 512)
-		n, _ := file.Read(buf)
-		contentType = http.DetectContentType(buf[:n])
-
-		if seeker, ok := file.(io.Seeker); ok {
-			_, _ = seeker.Seek(0, io.SeekStart)
+		detectFile, err := os.Open(tempPath)
+		if err != nil {
+			return nil, apperr.Internal("falha ao detectar tipo de arquivo", err)
 		}
+		buf := make([]byte, 512)
+		n, _ := detectFile.Read(buf)
+		_ = detectFile.Close()
+		contentType = http.DetectContentType(buf[:n])
 	}
 
 	contentType = normalizeMimeType(contentType)
@@ -171,7 +245,13 @@ func (h *ExamsHandler) handleExamFileUpload(c *gin.Context, patientID uuid.UUID)
 	}
 
 	objectName := fmt.Sprintf("patients/%s/exam-documents/%s%s", patientID.String(), uuid.NewString(), ext)
-	uri, err := h.storage.Upload(c.Request.Context(), file, objectName, contentType)
+	uploadFile, err := os.Open(tempPath)
+	if err != nil {
+		return nil, apperr.Internal("falha ao reabrir arquivo", err)
+	}
+	defer uploadFile.Close()
+
+	uri, err := h.storage.Upload(c.Request.Context(), uploadFile, objectName, contentType)
 	if err != nil {
 		return nil, &apperr.AppError{
 			Kind:    apperr.INFRA_STORAGE_ERROR,
@@ -180,9 +260,35 @@ func (h *ExamsHandler) handleExamFileUpload(c *gin.Context, patientID uuid.UUID)
 		}
 	}
 
+	removeTempOnError = false
 	return &uploadedExamFile{
 		storageURI:       uri,
 		originalFilename: fileHeader.Filename,
 		mimeType:         contentType,
+		localPath:        tempPath,
 	}, nil
+}
+
+func (h *ExamsHandler) extractAndRoute(c *gin.Context, documentID uuid.UUID, upload *uploadedExamFile) *examsvc.ExamDocumentOutput {
+	extracted, err := h.textExtractor.Extract(c.Request.Context(), domaindoc.ExtractInput{
+		LocalPath:        upload.localPath,
+		MimeType:         upload.mimeType,
+		OriginalFilename: upload.originalFilename,
+	})
+	if err != nil {
+		// Sem fallback caro nesta etapa; o documento fica como uploaded.
+		return nil
+	}
+
+	output, err := h.svc.RouteDocument(c.Request.Context(), examsvc.RouteExamDocumentInput{
+		ID:               documentID,
+		ExtractedText:    extracted.Text,
+		ExtractionMethod: extracted.Method,
+	})
+	if err != nil {
+		// Upload ja foi salvo; reprocessamento pode ocorrer depois.
+		return nil
+	}
+
+	return output
 }

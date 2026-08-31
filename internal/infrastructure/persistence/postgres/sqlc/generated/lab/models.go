@@ -9,10 +9,28 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type ExamDocument struct {
+	ID               uuid.UUID          `json:"id"`
+	PatientID        uuid.UUID          `json:"patient_id"`
+	UploadedByUserID uuid.UUID          `json:"uploaded_by_user_id"`
+	StorageUri       string             `json:"storage_uri"`
+	OriginalFilename string             `json:"original_filename"`
+	MimeType         string             `json:"mime_type"`
+	Status           string             `json:"status"`
+	ExamType         pgtype.Text        `json:"exam_type"`
+	ExtractionMethod pgtype.Text        `json:"extraction_method"`
+	Confidence       pgtype.Float8      `json:"confidence"`
+	ExtractedText    pgtype.Text        `json:"extracted_text"`
+	ErrorMessage     pgtype.Text        `json:"error_message"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
+}
+
 type LabReport struct {
 	ID                uuid.UUID          `json:"id"`
 	PatientID         uuid.UUID          `json:"patient_id"`
 	UploadedByUserID  uuid.UUID          `json:"uploaded_by_user_id"`
+	ExamDocumentID    pgtype.UUID        `json:"exam_document_id"`
 	PatientName       pgtype.Text        `json:"patient_name"`
 	PatientDob        pgtype.Timestamptz `json:"patient_dob"`
 	LabName           pgtype.Text        `json:"lab_name"`

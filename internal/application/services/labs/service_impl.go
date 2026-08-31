@@ -58,9 +58,10 @@ func (s *service) List(ctx context.Context, patientID uuid.UUID, limit, offset i
 		}
 
 		summary := LabReportSummaryOutput{
-			ID:         fullReport.ID,
-			PatientID:  fullReport.PatientID,
-			ReportDate: fullReport.ReportDate,
+			ID:             fullReport.ID,
+			PatientID:      fullReport.PatientID,
+			ExamDocumentID: fullReport.ExamDocumentID,
+			ReportDate:     fullReport.ReportDate,
 		}
 
 		for _, tr := range fullReport.TestResults {
@@ -126,6 +127,7 @@ func mapDomainReportToOutput(report *labs.LabReport) *LabReportOutput {
 	output := &LabReportOutput{
 		ID:                report.ID,
 		PatientID:         report.PatientID,
+		ExamDocumentID:    report.ExamDocumentID,
 		PatientName:       report.PatientName,
 		PatientDOB:        report.PatientDOB,
 		LabName:           report.LabName,

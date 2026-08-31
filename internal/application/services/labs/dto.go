@@ -10,6 +10,7 @@ import (
 type LabReportOutput struct {
 	ID                uuid.UUID          `json:"id"`
 	PatientID         uuid.UUID          `json:"patient_id"`
+	ExamDocumentID    *uuid.UUID         `json:"exam_document_id,omitempty"`
 	PatientName       *string            `json:"patient_name,omitempty"`
 	PatientDOB        *time.Time         `json:"patient_dob,omitempty"`
 	LabName           *string            `json:"lab_name,omitempty"`
@@ -45,10 +46,11 @@ type TestItemOutput struct {
 
 // Usado em: GET /patients/:patientID/labs/summary.
 type LabReportSummaryOutput struct {
-	ID           uuid.UUID                `json:"id"`
-	PatientID    uuid.UUID                `json:"patient_id"`
-	ReportDate   *time.Time               `json:"report_date,omitempty"`
-	SummaryTests []LabResultSummaryOutput `json:"summary_tests"`
+	ID             uuid.UUID                `json:"id"`
+	PatientID      uuid.UUID                `json:"patient_id"`
+	ExamDocumentID *uuid.UUID               `json:"exam_document_id,omitempty"`
+	ReportDate     *time.Time               `json:"report_date,omitempty"`
+	SummaryTests   []LabResultSummaryOutput `json:"summary_tests"`
 }
 
 type LabResultSummaryOutput struct {

@@ -40,11 +40,15 @@ func (f *fakeExamsService) RouteDocument(ctx context.Context, input examsvc.Rout
 	return nil, nil
 }
 
+func (f *fakeExamsService) MarkFailed(ctx context.Context, input examsvc.MarkExamDocumentFailedInput) (*examsvc.ExamDocumentOutput, error) {
+	return nil, nil
+}
+
 func TestListExamDocuments_UsesServiceWithDefaultPagination(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	svc := &fakeExamsService{}
-	h := NewExams(svc, nil, allowAllAuthorizer{})
+	h := NewExams(svc, nil, nil, nil, allowAllAuthorizer{})
 
 	r := gin.New()
 	r.Use(func(c *gin.Context) {
@@ -80,7 +84,7 @@ func TestListExamDocuments_UsesQueryPagination(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	svc := &fakeExamsService{}
-	h := NewExams(svc, nil, allowAllAuthorizer{})
+	h := NewExams(svc, nil, nil, nil, allowAllAuthorizer{})
 
 	r := gin.New()
 	r.Use(func(c *gin.Context) {

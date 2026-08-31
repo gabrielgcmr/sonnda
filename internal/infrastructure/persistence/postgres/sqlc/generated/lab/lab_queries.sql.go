@@ -17,6 +17,7 @@ const createLabReport = `-- name: CreateLabReport :one
 INSERT INTO lab_reports (
     id,
     patient_id,
+    exam_document_id,
     patient_name,
     patient_dob,
     lab_name,
@@ -32,11 +33,12 @@ INSERT INTO lab_reports (
 VALUES (
     $1, $2, $3, $4, $5, $6,
     $7, $8, $9, $10, $11, $12,
-    $13
+    $13, $14
 )
 RETURNING
     id,
     patient_id,
+    exam_document_id,
     patient_name,
     patient_dob,
     lab_name,
@@ -55,6 +57,7 @@ RETURNING
 type CreateLabReportParams struct {
 	ID                uuid.UUID          `json:"id"`
 	PatientID         uuid.UUID          `json:"patient_id"`
+	ExamDocumentID    pgtype.UUID        `json:"exam_document_id"`
 	PatientName       pgtype.Text        `json:"patient_name"`
 	PatientDob        pgtype.Timestamptz `json:"patient_dob"`
 	LabName           pgtype.Text        `json:"lab_name"`
@@ -71,6 +74,7 @@ type CreateLabReportParams struct {
 type CreateLabReportRow struct {
 	ID                uuid.UUID          `json:"id"`
 	PatientID         uuid.UUID          `json:"patient_id"`
+	ExamDocumentID    pgtype.UUID        `json:"exam_document_id"`
 	PatientName       pgtype.Text        `json:"patient_name"`
 	PatientDob        pgtype.Timestamptz `json:"patient_dob"`
 	LabName           pgtype.Text        `json:"lab_name"`
@@ -93,6 +97,7 @@ func (q *Queries) CreateLabReport(ctx context.Context, arg CreateLabReportParams
 	row := q.db.QueryRow(ctx, createLabReport,
 		arg.ID,
 		arg.PatientID,
+		arg.ExamDocumentID,
 		arg.PatientName,
 		arg.PatientDob,
 		arg.LabName,
@@ -109,6 +114,7 @@ func (q *Queries) CreateLabReport(ctx context.Context, arg CreateLabReportParams
 	err := row.Scan(
 		&i.ID,
 		&i.PatientID,
+		&i.ExamDocumentID,
 		&i.PatientName,
 		&i.PatientDob,
 		&i.LabName,
@@ -276,6 +282,7 @@ const getLabReportByID = `-- name: GetLabReportByID :one
 SELECT
     id,
     patient_id,
+    exam_document_id,
     patient_name,
     patient_dob,
     lab_name,
@@ -296,6 +303,7 @@ WHERE id = $1
 type GetLabReportByIDRow struct {
 	ID                uuid.UUID          `json:"id"`
 	PatientID         uuid.UUID          `json:"patient_id"`
+	ExamDocumentID    pgtype.UUID        `json:"exam_document_id"`
 	PatientName       pgtype.Text        `json:"patient_name"`
 	PatientDob        pgtype.Timestamptz `json:"patient_dob"`
 	LabName           pgtype.Text        `json:"lab_name"`
@@ -320,6 +328,7 @@ func (q *Queries) GetLabReportByID(ctx context.Context, id uuid.UUID) (GetLabRep
 	err := row.Scan(
 		&i.ID,
 		&i.PatientID,
+		&i.ExamDocumentID,
 		&i.PatientName,
 		&i.PatientDob,
 		&i.LabName,
@@ -453,6 +462,7 @@ const listLabReportsByPatientID = `-- name: ListLabReportsByPatientID :many
 SELECT
     id,
     patient_id,
+    exam_document_id,
     patient_name,
     lab_name,
     report_date,
@@ -475,6 +485,7 @@ type ListLabReportsByPatientIDParams struct {
 type ListLabReportsByPatientIDRow struct {
 	ID               uuid.UUID          `json:"id"`
 	PatientID        uuid.UUID          `json:"patient_id"`
+	ExamDocumentID   pgtype.UUID        `json:"exam_document_id"`
 	PatientName      pgtype.Text        `json:"patient_name"`
 	LabName          pgtype.Text        `json:"lab_name"`
 	ReportDate       pgtype.Timestamptz `json:"report_date"`
@@ -499,6 +510,7 @@ func (q *Queries) ListLabReportsByPatientID(ctx context.Context, arg ListLabRepo
 		if err := rows.Scan(
 			&i.ID,
 			&i.PatientID,
+			&i.ExamDocumentID,
 			&i.PatientName,
 			&i.LabName,
 			&i.ReportDate,

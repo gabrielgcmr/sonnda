@@ -21,6 +21,11 @@ type RouteExamDocumentInput struct {
 	ExtractionMethod string
 }
 
+type MarkExamDocumentFailedInput struct {
+	ID           uuid.UUID
+	ErrorMessage string
+}
+
 type ExamDocumentOutput struct {
 	ID               uuid.UUID            `json:"id"`
 	PatientID        uuid.UUID            `json:"patient_id"`

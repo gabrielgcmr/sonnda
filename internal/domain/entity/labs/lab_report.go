@@ -12,6 +12,7 @@ type LabReport struct {
 	ID        uuid.UUID `json:"id"`
 	PatientID uuid.UUID `json:"patient_id"`
 
+	ExamDocumentID    *uuid.UUID `json:"exam_document_id,omitempty"`
 	PatientName       *string    `json:"patient_name,omitempty"`
 	PatientDOB        *time.Time `json:"patient_dob,omitempty"`
 	LabName           *string    `json:"lab_name,omitempty"`

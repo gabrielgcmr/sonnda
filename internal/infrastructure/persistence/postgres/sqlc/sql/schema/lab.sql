@@ -3,6 +3,7 @@ CREATE TABLE lab_reports (
     id                 UUID PRIMARY KEY,
     patient_id         UUID NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
     uploaded_by_user_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    exam_document_id   UUID REFERENCES exam_documents(id) ON DELETE SET NULL,
     patient_name       TEXT,
     patient_dob        TIMESTAMP WITH TIME ZONE,
     lab_name           TEXT,
@@ -40,6 +41,7 @@ CREATE TABLE lab_result_items (
 
 -- Useful indexes/uniqueness for lookups and idempotency
 CREATE UNIQUE INDEX idx_lab_reports_fingerprint ON lab_reports(fingerprint) WHERE fingerprint IS NOT NULL;
+CREATE UNIQUE INDEX idx_lab_reports_exam_document ON lab_reports(exam_document_id) WHERE exam_document_id IS NOT NULL;
 CREATE INDEX idx_lab_reports_patient ON lab_reports(patient_id);
 CREATE INDEX idx_lab_reports_report_date ON lab_reports(report_date);
 CREATE INDEX idx_lab_results_report ON lab_results(lab_report_id);
