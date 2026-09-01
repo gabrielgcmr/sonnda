@@ -74,6 +74,35 @@ func (h *ExamsHandler) ListExamDocuments(c *gin.Context) {
 	c.JSON(http.StatusOK, list)
 }
 
+func (h *ExamsHandler) ListExamReports(c *gin.Context) {
+	currentUser := helpers.MustGetCurrentUser(c)
+
+	patientID, ok := parsePatientIDParam(c, "id")
+	if !ok {
+		return
+	}
+
+	if h.authz != nil {
+		if err := h.authz.Require(c.Request.Context(), currentUser, rbac.ActionReadExams, &patientID); err != nil {
+			presenter.ErrorResponder(c, err)
+			return
+		}
+	}
+
+	limit, offset, ok := parsePagination(c, 100, 0)
+	if !ok {
+		return
+	}
+
+	list, err := h.svc.ListReportsByPatient(c.Request.Context(), patientID, limit, offset)
+	if err != nil {
+		presenter.ErrorResponder(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, list)
+}
+
 // UploadExamDocument saves the original exam document for later routing.
 // POST /v1/patients/:id/exames
 // field: file (PDF/JPEG/PNG)
@@ -113,22 +142,46 @@ func (h *ExamsHandler) UploadExamDocument(c *gin.Context) {
 
 	if h.textExtractor != nil {
 		if routed := h.extractAndRoute(c, output.ID, upload); routed != nil {
-			output = routed
-			if updated := h.createLabReportIfNeeded(c, output, upload); updated != nil {
-				output = updated
-			}
+			output = routed.document
+			h.createExamReportIfPossible(c, output, routed.extracted)
+			h.createLabReportIfNeeded(c, output, upload)
 		}
 	}
 
 	c.JSON(http.StatusCreated, output)
 }
 
-func (h *ExamsHandler) createLabReportIfNeeded(c *gin.Context, document *examsvc.ExamDocumentOutput, upload *uploadedExamFile) *examsvc.ExamDocumentOutput {
+func (h *ExamsHandler) createExamReportIfPossible(c *gin.Context, document *examsvc.ExamDocumentOutput, extracted *domaindoc.ExtractOutput) {
+	if document == nil || extracted == nil {
+		return
+	}
+
+	category := exams.ExamTypeUnknown
+	if document.ExamType != nil {
+		category = *document.ExamType
+	}
+
+	_, err := h.svc.CreateReportFromText(c.Request.Context(), examsvc.CreateExamReportFromTextInput{
+		ExamDocumentID:   document.ID,
+		PatientID:        document.PatientID,
+		UploadedByUserID: document.UploadedByUserID,
+		Category:         category,
+		ReportText:       extracted.Text,
+		ExtractionMethod: extracted.Method,
+		Confidence:       document.Confidence,
+	})
+	if err != nil {
+		// O texto fica em exam_documents; retry pode criar exam_reports depois.
+		return
+	}
+}
+
+func (h *ExamsHandler) createLabReportIfNeeded(c *gin.Context, document *examsvc.ExamDocumentOutput, upload *uploadedExamFile) {
 	if h.createLabUC == nil || document == nil || document.ExamType == nil {
-		return nil
+		return
 	}
 	if *document.ExamType != exams.ExamTypeLaboratory {
-		return nil
+		return
 	}
 
 	_, err := h.createLabUC.Execute(c.Request.Context(), labsuc.CreateLabReportFromDocumentInput{
@@ -139,18 +192,9 @@ func (h *ExamsHandler) createLabReportIfNeeded(c *gin.Context, document *examsvc
 		UploadedByUserID: document.UploadedByUserID,
 	})
 	if err != nil {
-		// O upload continua salvo; retry sera tratado no processamento posterior.
-		failed, markErr := h.svc.MarkFailed(c.Request.Context(), examsvc.MarkExamDocumentFailedInput{
-			ID:           document.ID,
-			ErrorMessage: "falha ao criar laudo laboratorial",
-		})
-		if markErr != nil {
-			return nil
-		}
-		return failed
+		// Laudo textual ja existe; labs estruturado pode ser reprocessado depois.
+		return
 	}
-
-	return nil
 }
 
 type uploadedExamFile struct {
@@ -269,7 +313,12 @@ func (h *ExamsHandler) handleExamFileUpload(c *gin.Context, patientID uuid.UUID)
 	}, nil
 }
 
-func (h *ExamsHandler) extractAndRoute(c *gin.Context, documentID uuid.UUID, upload *uploadedExamFile) *examsvc.ExamDocumentOutput {
+type routedExamDocument struct {
+	document  *examsvc.ExamDocumentOutput
+	extracted *domaindoc.ExtractOutput
+}
+
+func (h *ExamsHandler) extractAndRoute(c *gin.Context, documentID uuid.UUID, upload *uploadedExamFile) *routedExamDocument {
 	extracted, err := h.textExtractor.Extract(c.Request.Context(), domaindoc.ExtractInput{
 		LocalPath:        upload.localPath,
 		MimeType:         upload.mimeType,
@@ -290,5 +339,8 @@ func (h *ExamsHandler) extractAndRoute(c *gin.Context, documentID uuid.UUID, upl
 		return nil
 	}
 
-	return output
+	return &routedExamDocument{
+		document:  output,
+		extracted: extracted,
+	}
 }

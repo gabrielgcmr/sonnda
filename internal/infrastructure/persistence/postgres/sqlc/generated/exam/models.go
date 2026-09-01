@@ -26,6 +26,26 @@ type ExamDocument struct {
 	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
 }
 
+type ExamReport struct {
+	ID                 uuid.UUID          `json:"id"`
+	ExamDocumentID     pgtype.UUID        `json:"exam_document_id"`
+	PatientID          uuid.UUID          `json:"patient_id"`
+	UploadedByUserID   uuid.UUID          `json:"uploaded_by_user_id"`
+	Category           string             `json:"category"`
+	Title              pgtype.Text        `json:"title"`
+	Modality           pgtype.Text        `json:"modality"`
+	BodySite           pgtype.Text        `json:"body_site"`
+	PerformedAt        pgtype.Timestamptz `json:"performed_at"`
+	FacilityName       pgtype.Text        `json:"facility_name"`
+	InterpretingDoctor pgtype.Text        `json:"interpreting_doctor"`
+	ReportText         string             `json:"report_text"`
+	Conclusion         pgtype.Text        `json:"conclusion"`
+	ExtractionMethod   pgtype.Text        `json:"extraction_method"`
+	Confidence         pgtype.Float8      `json:"confidence"`
+	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+}
+
 type Patient struct {
 	ID          uuid.UUID          `json:"id"`
 	OwnerUserID pgtype.UUID        `json:"owner_user_id"`

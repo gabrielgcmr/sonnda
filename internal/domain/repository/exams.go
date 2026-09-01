@@ -22,4 +22,7 @@ type Exams interface {
 		extractedText *string,
 	) (*exams.ExamDocument, error)
 	MarkFailed(ctx context.Context, id uuid.UUID, errorMessage string) (*exams.ExamDocument, error)
+	CreateReport(ctx context.Context, report *exams.ExamReport) error
+	FindReportByDocumentID(ctx context.Context, documentID uuid.UUID) (*exams.ExamReport, error)
+	ListReportsByPatient(ctx context.Context, patientID uuid.UUID, limit, offset int) ([]exams.ExamReport, error)
 }

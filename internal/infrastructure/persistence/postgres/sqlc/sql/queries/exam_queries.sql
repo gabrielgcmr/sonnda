@@ -62,3 +62,45 @@ SET
     updated_at = $3
 WHERE id = $1
 RETURNING *;
+
+-- name: CreateExamReport :one
+INSERT INTO exam_reports (
+    id,
+    exam_document_id,
+    patient_id,
+    uploaded_by_user_id,
+    category,
+    title,
+    modality,
+    body_site,
+    performed_at,
+    facility_name,
+    interpreting_doctor,
+    report_text,
+    conclusion,
+    extraction_method,
+    confidence,
+    created_at,
+    updated_at
+) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8, $9,
+    $10, $11, $12, $13, $14, $15, $16, $17
+)
+RETURNING *;
+
+-- name: GetExamReportByID :one
+SELECT *
+FROM exam_reports
+WHERE id = $1;
+
+-- name: GetExamReportByDocumentID :one
+SELECT *
+FROM exam_reports
+WHERE exam_document_id = $1;
+
+-- name: ListExamReportsByPatientID :many
+SELECT *
+FROM exam_reports
+WHERE patient_id = $1
+ORDER BY performed_at DESC NULLS LAST, created_at DESC
+LIMIT $2 OFFSET $3;

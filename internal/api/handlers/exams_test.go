@@ -15,6 +15,7 @@ import (
 
 type fakeExamsService struct {
 	listByPatientCalled bool
+	listReportsCalled   bool
 	patientID           uuid.UUID
 	limit               int
 	offset              int
@@ -42,6 +43,18 @@ func (f *fakeExamsService) RouteDocument(ctx context.Context, input examsvc.Rout
 
 func (f *fakeExamsService) MarkFailed(ctx context.Context, input examsvc.MarkExamDocumentFailedInput) (*examsvc.ExamDocumentOutput, error) {
 	return nil, nil
+}
+
+func (f *fakeExamsService) CreateReportFromText(ctx context.Context, input examsvc.CreateExamReportFromTextInput) (*examsvc.ExamReportOutput, error) {
+	return nil, nil
+}
+
+func (f *fakeExamsService) ListReportsByPatient(ctx context.Context, patientID uuid.UUID, limit, offset int) ([]examsvc.ExamReportOutput, error) {
+	f.listReportsCalled = true
+	f.patientID = patientID
+	f.limit = limit
+	f.offset = offset
+	return []examsvc.ExamReportOutput{}, nil
 }
 
 func TestListExamDocuments_UsesServiceWithDefaultPagination(t *testing.T) {
@@ -77,6 +90,33 @@ func TestListExamDocuments_UsesServiceWithDefaultPagination(t *testing.T) {
 	}
 	if svc.offset != 0 {
 		t.Fatalf("expected default offset 0, got %d", svc.offset)
+	}
+}
+
+func TestListExamReports_UsesService(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	svc := &fakeExamsService{}
+	h := NewExams(svc, nil, nil, nil, allowAllAuthorizer{})
+
+	r := gin.New()
+	r.Use(func(c *gin.Context) {
+		helpers.SetCurrentUser(c, &user.User{ID: uuid.Must(uuid.NewV7()), AccountType: user.AccountTypeBasicCare})
+		c.Next()
+	})
+	r.GET("/patients/:id/exames/reports", h.ListExamReports)
+
+	id := uuid.Must(uuid.NewV7())
+	req := httptest.NewRequest(http.MethodGet, "/patients/"+id.String()+"/exames/reports", nil)
+	resp := httptest.NewRecorder()
+
+	r.ServeHTTP(resp, req)
+
+	if resp.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, resp.Code)
+	}
+	if !svc.listReportsCalled {
+		t.Fatal("expected ListReportsByPatient to be called")
 	}
 }
 

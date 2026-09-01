@@ -26,6 +26,16 @@ type MarkExamDocumentFailedInput struct {
 	ErrorMessage string
 }
 
+type CreateExamReportFromTextInput struct {
+	ExamDocumentID   uuid.UUID
+	PatientID        uuid.UUID
+	UploadedByUserID uuid.UUID
+	Category         exams.ExamType
+	ReportText       string
+	ExtractionMethod string
+	Confidence       *float64
+}
+
 type ExamDocumentOutput struct {
 	ID               uuid.UUID            `json:"id"`
 	PatientID        uuid.UUID            `json:"patient_id"`
@@ -40,4 +50,24 @@ type ExamDocumentOutput struct {
 	ErrorMessage     *string              `json:"error_message,omitempty"`
 	CreatedAt        time.Time            `json:"created_at"`
 	UpdatedAt        time.Time            `json:"updated_at"`
+}
+
+type ExamReportOutput struct {
+	ID                 uuid.UUID      `json:"id"`
+	ExamDocumentID     *uuid.UUID     `json:"exam_document_id,omitempty"`
+	PatientID          uuid.UUID      `json:"patient_id"`
+	UploadedByUserID   uuid.UUID      `json:"uploaded_by_user_id"`
+	Category           exams.ExamType `json:"category"`
+	Title              *string        `json:"title,omitempty"`
+	Modality           *string        `json:"modality,omitempty"`
+	BodySite           *string        `json:"body_site,omitempty"`
+	PerformedAt        *time.Time     `json:"performed_at,omitempty"`
+	FacilityName       *string        `json:"facility_name,omitempty"`
+	InterpretingDoctor *string        `json:"interpreting_doctor,omitempty"`
+	ReportText         string         `json:"report_text"`
+	Conclusion         *string        `json:"conclusion,omitempty"`
+	ExtractionMethod   *string        `json:"extraction_method,omitempty"`
+	Confidence         *float64       `json:"confidence,omitempty"`
+	CreatedAt          time.Time      `json:"created_at"`
+	UpdatedAt          time.Time      `json:"updated_at"`
 }

@@ -88,6 +88,95 @@ func (q *Queries) CreateExamDocument(ctx context.Context, arg CreateExamDocument
 	return i, err
 }
 
+const createExamReport = `-- name: CreateExamReport :one
+INSERT INTO exam_reports (
+    id,
+    exam_document_id,
+    patient_id,
+    uploaded_by_user_id,
+    category,
+    title,
+    modality,
+    body_site,
+    performed_at,
+    facility_name,
+    interpreting_doctor,
+    report_text,
+    conclusion,
+    extraction_method,
+    confidence,
+    created_at,
+    updated_at
+) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8, $9,
+    $10, $11, $12, $13, $14, $15, $16, $17
+)
+RETURNING id, exam_document_id, patient_id, uploaded_by_user_id, category, title, modality, body_site, performed_at, facility_name, interpreting_doctor, report_text, conclusion, extraction_method, confidence, created_at, updated_at
+`
+
+type CreateExamReportParams struct {
+	ID                 uuid.UUID          `json:"id"`
+	ExamDocumentID     pgtype.UUID        `json:"exam_document_id"`
+	PatientID          uuid.UUID          `json:"patient_id"`
+	UploadedByUserID   uuid.UUID          `json:"uploaded_by_user_id"`
+	Category           string             `json:"category"`
+	Title              pgtype.Text        `json:"title"`
+	Modality           pgtype.Text        `json:"modality"`
+	BodySite           pgtype.Text        `json:"body_site"`
+	PerformedAt        pgtype.Timestamptz `json:"performed_at"`
+	FacilityName       pgtype.Text        `json:"facility_name"`
+	InterpretingDoctor pgtype.Text        `json:"interpreting_doctor"`
+	ReportText         string             `json:"report_text"`
+	Conclusion         pgtype.Text        `json:"conclusion"`
+	ExtractionMethod   pgtype.Text        `json:"extraction_method"`
+	Confidence         pgtype.Float8      `json:"confidence"`
+	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) CreateExamReport(ctx context.Context, arg CreateExamReportParams) (ExamReport, error) {
+	row := q.db.QueryRow(ctx, createExamReport,
+		arg.ID,
+		arg.ExamDocumentID,
+		arg.PatientID,
+		arg.UploadedByUserID,
+		arg.Category,
+		arg.Title,
+		arg.Modality,
+		arg.BodySite,
+		arg.PerformedAt,
+		arg.FacilityName,
+		arg.InterpretingDoctor,
+		arg.ReportText,
+		arg.Conclusion,
+		arg.ExtractionMethod,
+		arg.Confidence,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
+	var i ExamReport
+	err := row.Scan(
+		&i.ID,
+		&i.ExamDocumentID,
+		&i.PatientID,
+		&i.UploadedByUserID,
+		&i.Category,
+		&i.Title,
+		&i.Modality,
+		&i.BodySite,
+		&i.PerformedAt,
+		&i.FacilityName,
+		&i.InterpretingDoctor,
+		&i.ReportText,
+		&i.Conclusion,
+		&i.ExtractionMethod,
+		&i.Confidence,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getExamDocumentByID = `-- name: GetExamDocumentByID :one
 SELECT id, patient_id, uploaded_by_user_id, storage_uri, original_filename, mime_type, status, exam_type, extraction_method, confidence, extracted_text, error_message, created_at, updated_at
 FROM exam_documents
@@ -110,6 +199,68 @@ func (q *Queries) GetExamDocumentByID(ctx context.Context, id uuid.UUID) (ExamDo
 		&i.Confidence,
 		&i.ExtractedText,
 		&i.ErrorMessage,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getExamReportByDocumentID = `-- name: GetExamReportByDocumentID :one
+SELECT id, exam_document_id, patient_id, uploaded_by_user_id, category, title, modality, body_site, performed_at, facility_name, interpreting_doctor, report_text, conclusion, extraction_method, confidence, created_at, updated_at
+FROM exam_reports
+WHERE exam_document_id = $1
+`
+
+func (q *Queries) GetExamReportByDocumentID(ctx context.Context, examDocumentID pgtype.UUID) (ExamReport, error) {
+	row := q.db.QueryRow(ctx, getExamReportByDocumentID, examDocumentID)
+	var i ExamReport
+	err := row.Scan(
+		&i.ID,
+		&i.ExamDocumentID,
+		&i.PatientID,
+		&i.UploadedByUserID,
+		&i.Category,
+		&i.Title,
+		&i.Modality,
+		&i.BodySite,
+		&i.PerformedAt,
+		&i.FacilityName,
+		&i.InterpretingDoctor,
+		&i.ReportText,
+		&i.Conclusion,
+		&i.ExtractionMethod,
+		&i.Confidence,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getExamReportByID = `-- name: GetExamReportByID :one
+SELECT id, exam_document_id, patient_id, uploaded_by_user_id, category, title, modality, body_site, performed_at, facility_name, interpreting_doctor, report_text, conclusion, extraction_method, confidence, created_at, updated_at
+FROM exam_reports
+WHERE id = $1
+`
+
+func (q *Queries) GetExamReportByID(ctx context.Context, id uuid.UUID) (ExamReport, error) {
+	row := q.db.QueryRow(ctx, getExamReportByID, id)
+	var i ExamReport
+	err := row.Scan(
+		&i.ID,
+		&i.ExamDocumentID,
+		&i.PatientID,
+		&i.UploadedByUserID,
+		&i.Category,
+		&i.Title,
+		&i.Modality,
+		&i.BodySite,
+		&i.PerformedAt,
+		&i.FacilityName,
+		&i.InterpretingDoctor,
+		&i.ReportText,
+		&i.Conclusion,
+		&i.ExtractionMethod,
+		&i.Confidence,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -152,6 +303,58 @@ func (q *Queries) ListExamDocumentsByPatientID(ctx context.Context, arg ListExam
 			&i.Confidence,
 			&i.ExtractedText,
 			&i.ErrorMessage,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listExamReportsByPatientID = `-- name: ListExamReportsByPatientID :many
+SELECT id, exam_document_id, patient_id, uploaded_by_user_id, category, title, modality, body_site, performed_at, facility_name, interpreting_doctor, report_text, conclusion, extraction_method, confidence, created_at, updated_at
+FROM exam_reports
+WHERE patient_id = $1
+ORDER BY performed_at DESC NULLS LAST, created_at DESC
+LIMIT $2 OFFSET $3
+`
+
+type ListExamReportsByPatientIDParams struct {
+	PatientID uuid.UUID `json:"patient_id"`
+	Limit     int32     `json:"limit"`
+	Offset    int32     `json:"offset"`
+}
+
+func (q *Queries) ListExamReportsByPatientID(ctx context.Context, arg ListExamReportsByPatientIDParams) ([]ExamReport, error) {
+	rows, err := q.db.Query(ctx, listExamReportsByPatientID, arg.PatientID, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ExamReport
+	for rows.Next() {
+		var i ExamReport
+		if err := rows.Scan(
+			&i.ID,
+			&i.ExamDocumentID,
+			&i.PatientID,
+			&i.UploadedByUserID,
+			&i.Category,
+			&i.Title,
+			&i.Modality,
+			&i.BodySite,
+			&i.PerformedAt,
+			&i.FacilityName,
+			&i.InterpretingDoctor,
+			&i.ReportText,
+			&i.Conclusion,
+			&i.ExtractionMethod,
+			&i.Confidence,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {

@@ -152,6 +152,72 @@ func (r *ExamsRepository) MarkFailed(ctx context.Context, id uuid.UUID, errorMes
 	return &document, nil
 }
 
+func (r *ExamsRepository) CreateReport(ctx context.Context, report *exams.ExamReport) error {
+	if report == nil {
+		return ErrRepositoryFailure
+	}
+	if err := report.NormalizeAndValidate(); err != nil {
+		return err
+	}
+
+	row, err := r.queries.CreateExamReport(ctx, examsqlc.CreateExamReportParams{
+		ID:                 report.ID,
+		ExamDocumentID:     FromNullableUUIDToPgUUID(report.ExamDocumentID),
+		PatientID:          report.PatientID,
+		UploadedByUserID:   report.UploadedByUserID,
+		Category:           string(report.Category),
+		Title:              FromNullableStringToPgText(report.Title),
+		Modality:           FromNullableStringToPgText(report.Modality),
+		BodySite:           FromNullableStringToPgText(report.BodySite),
+		PerformedAt:        FromNullableTimestamptzToPgTimestamptz(report.PerformedAt),
+		FacilityName:       FromNullableStringToPgText(report.FacilityName),
+		InterpretingDoctor: FromNullableStringToPgText(report.InterpretingDoctor),
+		ReportText:         report.ReportText,
+		Conclusion:         FromNullableStringToPgText(report.Conclusion),
+		ExtractionMethod:   FromNullableStringToPgText(report.ExtractionMethod),
+		Confidence:         nullableFloat64ToPgFloat8(report.Confidence),
+		CreatedAt:          FromRequiredTimestamptzToPgTimestamptz(report.CreatedAt),
+		UpdatedAt:          FromRequiredTimestamptzToPgTimestamptz(report.UpdatedAt),
+	})
+	if err != nil {
+		return err
+	}
+
+	*report = mapExamReportRow(row)
+	return nil
+}
+
+func (r *ExamsRepository) FindReportByDocumentID(ctx context.Context, documentID uuid.UUID) (*exams.ExamReport, error) {
+	row, err := r.queries.GetExamReportByDocumentID(ctx, FromNullableUUIDToPgUUID(&documentID))
+	if err != nil {
+		if IsPgNotFound(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	report := mapExamReportRow(row)
+	return &report, nil
+}
+
+func (r *ExamsRepository) ListReportsByPatient(ctx context.Context, patientID uuid.UUID, limit, offset int) ([]exams.ExamReport, error) {
+	rows, err := r.queries.ListExamReportsByPatientID(ctx, examsqlc.ListExamReportsByPatientIDParams{
+		PatientID: patientID,
+		Limit:     int32(limit),
+		Offset:    int32(offset),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	reports := make([]exams.ExamReport, 0, len(rows))
+	for _, row := range rows {
+		reports = append(reports, mapExamReportRow(row))
+	}
+
+	return reports, nil
+}
+
 func mapExamDocumentRow(row examsqlc.ExamDocument) exams.ExamDocument {
 	return exams.ExamDocument{
 		ID:               row.ID,
@@ -168,6 +234,28 @@ func mapExamDocumentRow(row examsqlc.ExamDocument) exams.ExamDocument {
 		ErrorMessage:     FromPgTextToNullableString(row.ErrorMessage),
 		CreatedAt:        row.CreatedAt.Time,
 		UpdatedAt:        row.UpdatedAt.Time,
+	}
+}
+
+func mapExamReportRow(row examsqlc.ExamReport) exams.ExamReport {
+	return exams.ExamReport{
+		ID:                 row.ID,
+		ExamDocumentID:     FromPgUUIDToNullableUUID(row.ExamDocumentID),
+		PatientID:          row.PatientID,
+		UploadedByUserID:   row.UploadedByUserID,
+		Category:           exams.ExamType(row.Category),
+		Title:              FromPgTextToNullableString(row.Title),
+		Modality:           FromPgTextToNullableString(row.Modality),
+		BodySite:           FromPgTextToNullableString(row.BodySite),
+		PerformedAt:        FromPgTimestamptzToNullableTimestamptz(row.PerformedAt),
+		FacilityName:       FromPgTextToNullableString(row.FacilityName),
+		InterpretingDoctor: FromPgTextToNullableString(row.InterpretingDoctor),
+		ReportText:         row.ReportText,
+		Conclusion:         FromPgTextToNullableString(row.Conclusion),
+		ExtractionMethod:   FromPgTextToNullableString(row.ExtractionMethod),
+		Confidence:         pgFloat8ToNullableFloat64(row.Confidence),
+		CreatedAt:          row.CreatedAt.Time,
+		UpdatedAt:          row.UpdatedAt.Time,
 	}
 }
 

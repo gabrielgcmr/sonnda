@@ -8,12 +8,17 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
 	CreateExamDocument(ctx context.Context, arg CreateExamDocumentParams) (ExamDocument, error)
+	CreateExamReport(ctx context.Context, arg CreateExamReportParams) (ExamReport, error)
 	GetExamDocumentByID(ctx context.Context, id uuid.UUID) (ExamDocument, error)
+	GetExamReportByDocumentID(ctx context.Context, examDocumentID pgtype.UUID) (ExamReport, error)
+	GetExamReportByID(ctx context.Context, id uuid.UUID) (ExamReport, error)
 	ListExamDocumentsByPatientID(ctx context.Context, arg ListExamDocumentsByPatientIDParams) ([]ExamDocument, error)
+	ListExamReportsByPatientID(ctx context.Context, arg ListExamReportsByPatientIDParams) ([]ExamReport, error)
 	UpdateExamDocumentClassified(ctx context.Context, arg UpdateExamDocumentClassifiedParams) (ExamDocument, error)
 	UpdateExamDocumentFailed(ctx context.Context, arg UpdateExamDocumentFailedParams) (ExamDocument, error)
 	UpdateExamDocumentProcessing(ctx context.Context, arg UpdateExamDocumentProcessingParams) (ExamDocument, error)

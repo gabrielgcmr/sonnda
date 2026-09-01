@@ -26,6 +26,17 @@ var clinicalSignals = []string{
 	"ressonancia",
 	"ultrassonografia",
 	"radiografia",
+	"exame",
+	"laudo",
+	"mamografia",
+	"biopsia",
+	"patologia",
+	"citologia",
+	"hematologia",
+	"microbiologia",
+	"genetica",
+	"tamanho",
+	"volume",
 }
 
 func normalizeText(text string) string {
