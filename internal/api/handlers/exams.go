@@ -6,11 +6,14 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
+	"time"
 
 	"github.com/gabrielgcmr/sonnda/internal/api/helpers"
 	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
 	authorization "github.com/gabrielgcmr/sonnda/internal/application/services/authorization"
 	examsvc "github.com/gabrielgcmr/sonnda/internal/application/services/exams"
+	labsvc "github.com/gabrielgcmr/sonnda/internal/application/services/labs"
 	labsuc "github.com/gabrielgcmr/sonnda/internal/application/usecase/labs"
 	domaindoc "github.com/gabrielgcmr/sonnda/internal/domain/documenttext"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/exams"
@@ -140,11 +143,18 @@ func (h *ExamsHandler) UploadExamDocument(c *gin.Context) {
 		return
 	}
 
-	if h.textExtractor != nil {
-		if routed := h.extractAndRoute(c, output.ID, upload); routed != nil {
-			output = routed.document
+	routed := h.extractAndRoute(c, output.ID, upload)
+	if routed == nil {
+		routed = h.routeFromMetadata(c, output.ID)
+	}
+	if routed != nil {
+		output = routed.document
+		if h.isLaboratoryDocument(output) {
+			if labReport := h.createLabReportIfNeeded(c, output, upload); labReport != nil {
+				h.createExamReportFromLab(c, output, labReport)
+			}
+		} else {
 			h.createExamReportIfPossible(c, output, routed.extracted)
-			h.createLabReportIfNeeded(c, output, upload)
 		}
 	}
 
@@ -176,15 +186,38 @@ func (h *ExamsHandler) createExamReportIfPossible(c *gin.Context, document *exam
 	}
 }
 
-func (h *ExamsHandler) createLabReportIfNeeded(c *gin.Context, document *examsvc.ExamDocumentOutput, upload *uploadedExamFile) {
-	if h.createLabUC == nil || document == nil || document.ExamType == nil {
-		return
-	}
-	if *document.ExamType != exams.ExamTypeLaboratory {
+func (h *ExamsHandler) createExamReportFromLab(c *gin.Context, document *examsvc.ExamDocumentOutput, labReport *labsvc.LabReportOutput) {
+	if document == nil || labReport == nil {
 		return
 	}
 
-	_, err := h.createLabUC.Execute(c.Request.Context(), labsuc.CreateLabReportFromDocumentInput{
+	text := buildLabReportText(labReport)
+	if strings.TrimSpace(text) == "" {
+		return
+	}
+
+	method := "lab_document_ai"
+	_, err := h.svc.CreateReportFromText(c.Request.Context(), examsvc.CreateExamReportFromTextInput{
+		ExamDocumentID:   document.ID,
+		PatientID:        document.PatientID,
+		UploadedByUserID: document.UploadedByUserID,
+		Category:         exams.ExamTypeLaboratory,
+		ReportText:       text,
+		ExtractionMethod: method,
+		Confidence:       document.Confidence,
+	})
+	if err != nil {
+		// Labs estruturado ja foi salvo; texto generico pode ser recriado depois.
+		return
+	}
+}
+
+func (h *ExamsHandler) createLabReportIfNeeded(c *gin.Context, document *examsvc.ExamDocumentOutput, upload *uploadedExamFile) *labsvc.LabReportOutput {
+	if h.createLabUC == nil || document == nil || !h.isLaboratoryDocument(document) {
+		return nil
+	}
+
+	labReport, err := h.createLabUC.Execute(c.Request.Context(), labsuc.CreateLabReportFromDocumentInput{
 		PatientID:        document.PatientID,
 		ExamDocumentID:   &document.ID,
 		DocumentURI:      upload.storageURI,
@@ -193,8 +226,13 @@ func (h *ExamsHandler) createLabReportIfNeeded(c *gin.Context, document *examsvc
 	})
 	if err != nil {
 		// Laudo textual ja existe; labs estruturado pode ser reprocessado depois.
-		return
+		return nil
 	}
+	return labReport
+}
+
+func (h *ExamsHandler) isLaboratoryDocument(document *examsvc.ExamDocumentOutput) bool {
+	return document != nil && document.ExamType != nil && *document.ExamType == exams.ExamTypeLaboratory
 }
 
 type uploadedExamFile struct {
@@ -319,6 +357,10 @@ type routedExamDocument struct {
 }
 
 func (h *ExamsHandler) extractAndRoute(c *gin.Context, documentID uuid.UUID, upload *uploadedExamFile) *routedExamDocument {
+	if h.textExtractor == nil {
+		return nil
+	}
+
 	extracted, err := h.textExtractor.Extract(c.Request.Context(), domaindoc.ExtractInput{
 		LocalPath:        upload.localPath,
 		MimeType:         upload.mimeType,
@@ -343,4 +385,90 @@ func (h *ExamsHandler) extractAndRoute(c *gin.Context, documentID uuid.UUID, upl
 		document:  output,
 		extracted: extracted,
 	}
+}
+
+func (h *ExamsHandler) routeFromMetadata(c *gin.Context, documentID uuid.UUID) *routedExamDocument {
+	output, err := h.svc.RouteDocument(c.Request.Context(), examsvc.RouteExamDocumentInput{
+		ID:               documentID,
+		ExtractionMethod: "metadata",
+	})
+	if err != nil {
+		// O upload ja existe; classificacao pode ser refeita depois.
+		return nil
+	}
+	if output == nil {
+		return nil
+	}
+	return &routedExamDocument{document: output}
+}
+
+func buildLabReportText(report *labsvc.LabReportOutput) string {
+	if report == nil {
+		return ""
+	}
+
+	var builder strings.Builder
+	writeLine := func(parts ...string) {
+		line := strings.TrimSpace(strings.Join(parts, " "))
+		if line == "" {
+			return
+		}
+		builder.WriteString(line)
+		builder.WriteByte('\n')
+	}
+
+	writeLine("Exame laboratorial")
+	writeOptionalLine(&builder, "Paciente", report.PatientName)
+	writeOptionalLine(&builder, "Laboratorio", report.LabName)
+	writeOptionalLine(&builder, "Solicitante", report.RequestingDoctor)
+	writeDateLine(&builder, "Data do laudo", report.ReportDate)
+
+	for _, result := range report.TestResults {
+		builder.WriteByte('\n')
+		writeLine(result.TestName)
+		writeOptionalLine(&builder, "Material", result.Material)
+		writeOptionalLine(&builder, "Metodo", result.Method)
+		writeDateLine(&builder, "Coletado em", result.CollectedAt)
+		writeDateLine(&builder, "Liberado em", result.ReleaseAt)
+
+		for _, item := range result.Items {
+			writeLine(formatLabItem(item))
+		}
+	}
+
+	return strings.TrimSpace(builder.String())
+}
+
+func writeOptionalLine(builder *strings.Builder, label string, value *string) {
+	if value == nil || strings.TrimSpace(*value) == "" {
+		return
+	}
+	builder.WriteString(label)
+	builder.WriteString(": ")
+	builder.WriteString(strings.TrimSpace(*value))
+	builder.WriteByte('\n')
+}
+
+func writeDateLine(builder *strings.Builder, label string, value *time.Time) {
+	if value == nil {
+		return
+	}
+	builder.WriteString(label)
+	builder.WriteString(": ")
+	builder.WriteString(value.Format("02/01/2006"))
+	builder.WriteByte('\n')
+}
+
+func formatLabItem(item labsvc.TestItemOutput) string {
+	parts := []string{"-", strings.TrimSpace(item.ParameterName)}
+	if item.ResultValue != nil && strings.TrimSpace(*item.ResultValue) != "" {
+		parts = append(parts, strings.TrimSpace(*item.ResultValue))
+	}
+	if item.ResultUnit != nil && strings.TrimSpace(*item.ResultUnit) != "" {
+		parts = append(parts, strings.TrimSpace(*item.ResultUnit))
+	}
+	if item.ReferenceText != nil && strings.TrimSpace(*item.ReferenceText) != "" {
+		parts = append(parts, "(Referencia:", strings.TrimSpace(*item.ReferenceText)+")")
+	}
+	return strings.Join(parts, " ")
 }

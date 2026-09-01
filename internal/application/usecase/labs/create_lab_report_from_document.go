@@ -82,7 +82,7 @@ func (u *createLabReportFromDocumentUseCase) Execute(ctx context.Context, input 
 
 	fingerprint := generateLabFingerprint(input.PatientID, report)
 
-	exists, err := u.labsRepo.ExistsBySignature(ctx, input.PatientID, fingerprint)
+	existing, err := u.labsRepo.FindBySignature(ctx, input.PatientID, fingerprint)
 	if err != nil {
 		return nil, &apperr.AppError{
 			Kind:    apperr.INFRA_DATABASE_ERROR,
@@ -90,11 +90,8 @@ func (u *createLabReportFromDocumentUseCase) Execute(ctx context.Context, input 
 			Cause:   err,
 		}
 	}
-	if exists {
-		return nil, &apperr.AppError{
-			Kind:    apperr.RESOURCE_ALREADY_EXISTS,
-			Message: "laudo já existe",
-		}
+	if existing != nil {
+		return toOutput(existing), nil
 	}
 
 	report.Fingerprint = &fingerprint

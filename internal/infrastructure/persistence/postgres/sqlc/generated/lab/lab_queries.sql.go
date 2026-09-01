@@ -346,6 +346,77 @@ func (q *Queries) GetLabReportByID(ctx context.Context, id uuid.UUID) (GetLabRep
 	return i, err
 }
 
+const getLabReportByPatientAndFingerprint = `-- name: GetLabReportByPatientAndFingerprint :one
+SELECT
+    id,
+    patient_id,
+    exam_document_id,
+    patient_name,
+    patient_dob,
+    lab_name,
+    lab_phone,
+    insurance_provider,
+    requesting_doctor,
+    technical_manager,
+    report_date,
+    raw_text,
+    uploaded_by_user_id,
+    fingerprint,
+    created_at,
+    updated_at
+FROM lab_reports
+WHERE patient_id = $1
+  AND fingerprint = $2
+`
+
+type GetLabReportByPatientAndFingerprintParams struct {
+	PatientID   uuid.UUID   `json:"patient_id"`
+	Fingerprint pgtype.Text `json:"fingerprint"`
+}
+
+type GetLabReportByPatientAndFingerprintRow struct {
+	ID                uuid.UUID          `json:"id"`
+	PatientID         uuid.UUID          `json:"patient_id"`
+	ExamDocumentID    pgtype.UUID        `json:"exam_document_id"`
+	PatientName       pgtype.Text        `json:"patient_name"`
+	PatientDob        pgtype.Timestamptz `json:"patient_dob"`
+	LabName           pgtype.Text        `json:"lab_name"`
+	LabPhone          pgtype.Text        `json:"lab_phone"`
+	InsuranceProvider pgtype.Text        `json:"insurance_provider"`
+	RequestingDoctor  pgtype.Text        `json:"requesting_doctor"`
+	TechnicalManager  pgtype.Text        `json:"technical_manager"`
+	ReportDate        pgtype.Timestamptz `json:"report_date"`
+	RawText           pgtype.Text        `json:"raw_text"`
+	UploadedByUserID  uuid.UUID          `json:"uploaded_by_user_id"`
+	Fingerprint       pgtype.Text        `json:"fingerprint"`
+	CreatedAt         pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) GetLabReportByPatientAndFingerprint(ctx context.Context, arg GetLabReportByPatientAndFingerprintParams) (GetLabReportByPatientAndFingerprintRow, error) {
+	row := q.db.QueryRow(ctx, getLabReportByPatientAndFingerprint, arg.PatientID, arg.Fingerprint)
+	var i GetLabReportByPatientAndFingerprintRow
+	err := row.Scan(
+		&i.ID,
+		&i.PatientID,
+		&i.ExamDocumentID,
+		&i.PatientName,
+		&i.PatientDob,
+		&i.LabName,
+		&i.LabPhone,
+		&i.InsuranceProvider,
+		&i.RequestingDoctor,
+		&i.TechnicalManager,
+		&i.ReportDate,
+		&i.RawText,
+		&i.UploadedByUserID,
+		&i.Fingerprint,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getLabResultsByReportID = `-- name: GetLabResultsByReportID :one
 SELECT
     id,

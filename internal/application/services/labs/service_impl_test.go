@@ -60,6 +60,9 @@ func (r *fakeLabsRepo) Delete(ctx context.Context, id uuid.UUID) error { panic("
 func (r *fakeLabsRepo) FindByID(ctx context.Context, reportID uuid.UUID) (*labs.LabReport, error) {
 	panic("unused")
 }
+func (r *fakeLabsRepo) FindBySignature(ctx context.Context, patientID uuid.UUID, fingerprint string) (*labs.LabReport, error) {
+	panic("unused")
+}
 func (r *fakeLabsRepo) ListLabs(ctx context.Context, patientID uuid.UUID, limit, offset int) ([]labs.LabReport, error) {
 	return r.listRes, r.listErr
 }

@@ -71,3 +71,18 @@ func TestHeuristicExamRouter_UsesFilenameAsSignal(t *testing.T) {
 		t.Fatalf("expected needs_review for filename-only match, got %s", result.Status)
 	}
 }
+
+func TestHeuristicExamRouter_UsesLaboratoryFilenameAsSignal(t *testing.T) {
+	router := NewHeuristicExamRouter()
+
+	result := router.Route(ExamRouteInput{
+		OriginalFilename: "hemograma-completo.pdf",
+	})
+
+	if result.ExamType != exams.ExamTypeLaboratory {
+		t.Fatalf("expected laboratory, got %s", result.ExamType)
+	}
+	if result.Status != exams.DocumentStatusNeedsReview {
+		t.Fatalf("expected needs_review for filename-only match, got %s", result.Status)
+	}
+}

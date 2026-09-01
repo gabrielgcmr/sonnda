@@ -4,10 +4,13 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
+	"time"
 
 	helpers "github.com/gabrielgcmr/sonnda/internal/api/helpers"
 	examsvc "github.com/gabrielgcmr/sonnda/internal/application/services/exams"
+	labsvc "github.com/gabrielgcmr/sonnda/internal/application/services/labs"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/user"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -147,5 +150,47 @@ func TestListExamDocuments_UsesQueryPagination(t *testing.T) {
 	}
 	if svc.offset != 50 {
 		t.Fatalf("expected offset 50, got %d", svc.offset)
+	}
+}
+
+func TestBuildLabReportText_FormatsStructuredResults(t *testing.T) {
+	reportDate := time.Date(2026, time.August, 31, 0, 0, 0, 0, time.UTC)
+	patientName := "Gabriel Cactus Moreno Reboucas"
+	labName := "Laboratorio Exemplo"
+	unit := "g/dL"
+	value := "15,1"
+	reference := "13,5 a 17,5"
+
+	text := buildLabReportText(&labsvc.LabReportOutput{
+		PatientName: &patientName,
+		LabName:     &labName,
+		ReportDate:  &reportDate,
+		TestResults: []labsvc.TestResultOutput{
+			{
+				TestName: "HEMOGRAMA",
+				Items: []labsvc.TestItemOutput{
+					{
+						ParameterName: "Hemoglobina",
+						ResultValue:   &value,
+						ResultUnit:    &unit,
+						ReferenceText: &reference,
+					},
+				},
+			},
+		},
+	})
+
+	expectedParts := []string{
+		"Exame laboratorial",
+		"Paciente: Gabriel Cactus Moreno Reboucas",
+		"Laboratorio: Laboratorio Exemplo",
+		"Data do laudo: 31/08/2026",
+		"HEMOGRAMA",
+		"- Hemoglobina 15,1 g/dL (Referencia: 13,5 a 17,5)",
+	}
+	for _, part := range expectedParts {
+		if !strings.Contains(text, part) {
+			t.Fatalf("expected text to contain %q, got:\n%s", part, text)
+		}
 	}
 }

@@ -31,6 +31,7 @@ type Querier interface {
 	// Getters
 	// ============================================================
 	GetLabReportByID(ctx context.Context, id uuid.UUID) (GetLabReportByIDRow, error)
+	GetLabReportByPatientAndFingerprint(ctx context.Context, arg GetLabReportByPatientAndFingerprintParams) (GetLabReportByPatientAndFingerprintRow, error)
 	GetLabResultsByReportID(ctx context.Context, labReportID uuid.UUID) (GetLabResultsByReportIDRow, error)
 	// ============================================================
 	// Timeline

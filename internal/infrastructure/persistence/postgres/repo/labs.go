@@ -115,6 +115,76 @@ func (l *LabsRepository) ExistsBySignature(ctx context.Context, patientID uuid.U
 	return exists, err
 }
 
+// FindBySignature implements [repository.LabsRepository].
+func (l *LabsRepository) FindBySignature(ctx context.Context, patientID uuid.UUID, fingerprint string) (*labs.LabReport, error) {
+	reportRow, err := l.queries.GetLabReportByPatientAndFingerprint(ctx, labsqlc.GetLabReportByPatientAndFingerprintParams{
+		PatientID:   patientID,
+		Fingerprint: FromRequiredStringToPgText(fingerprint),
+	})
+	if err != nil {
+		if IsPgNotFound(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	resultsRows, err := l.queries.ListLabResultsByReportID(ctx, reportRow.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	var testResults []labs.LabResult
+	for _, resultRow := range resultsRows {
+		itemsRows, err := l.queries.ListLabResultItemsByResultID(ctx, resultRow.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		var items []labs.LabResultItem
+		for _, itemRow := range itemsRows {
+			items = append(items, labs.LabResultItem{
+				ID:            itemRow.ID,
+				LabResultID:   itemRow.LabResultID,
+				ParameterName: itemRow.ParameterName,
+				ResultValue:   FromPgTextToNullableString(itemRow.ResultValue),
+				ResultUnit:    FromPgTextToNullableString(itemRow.ResultUnit),
+				ReferenceText: FromPgTextToNullableString(itemRow.ReferenceText),
+			})
+		}
+
+		testResults = append(testResults, labs.LabResult{
+			ID:          resultRow.ID,
+			LabReportID: resultRow.LabReportID,
+			TestName:    resultRow.TestName,
+			Material:    FromPgTextToNullableString(resultRow.Material),
+			Method:      FromPgTextToNullableString(resultRow.Method),
+			CollectedAt: FromPgTimestamptzToNullableTimestamptz(resultRow.CollectedAt),
+			ReleaseAt:   FromPgTimestamptzToNullableTimestamptz(resultRow.ReleaseAt),
+			Items:       items,
+		})
+	}
+
+	return &labs.LabReport{
+		ID:                reportRow.ID,
+		PatientID:         reportRow.PatientID,
+		ExamDocumentID:    FromPgUUIDToNullableUUID(reportRow.ExamDocumentID),
+		PatientName:       FromPgTextToNullableString(reportRow.PatientName),
+		PatientDOB:        FromPgTimestamptzToNullableTimestamptz(reportRow.PatientDob),
+		LabName:           FromPgTextToNullableString(reportRow.LabName),
+		LabPhone:          FromPgTextToNullableString(reportRow.LabPhone),
+		InsuranceProvider: FromPgTextToNullableString(reportRow.InsuranceProvider),
+		RequestingDoctor:  FromPgTextToNullableString(reportRow.RequestingDoctor),
+		TechnicalManager:  FromPgTextToNullableString(reportRow.TechnicalManager),
+		ReportDate:        FromPgTimestamptzToNullableTimestamptz(reportRow.ReportDate),
+		Fingerprint:       FromPgTextToNullableString(reportRow.Fingerprint),
+		RawText:           FromPgTextToNullableString(reportRow.RawText),
+		TestResults:       testResults,
+		CreatedAt:         reportRow.CreatedAt.Time,
+		UpdatedAt:         reportRow.UpdatedAt.Time,
+		UploadedBy:        reportRow.UploadedByUserID,
+	}, nil
+}
+
 // FindByID implements [repository.LabsRepository].
 func (l *LabsRepository) FindByID(ctx context.Context, reportID uuid.UUID) (*labs.LabReport, error) {
 	reportRow, err := l.queries.GetLabReportByID(ctx, reportID)

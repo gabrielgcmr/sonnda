@@ -13,6 +13,7 @@ type Labs interface {
 	// CRUD basico
 	Create(ctx context.Context, report *labs.LabReport) error
 	FindByID(ctx context.Context, reportID uuid.UUID) (*labs.LabReport, error)
+	FindBySignature(ctx context.Context, patientID uuid.UUID, fingerprint string) (*labs.LabReport, error)
 	ExistsBySignature(ctx context.Context, patientID uuid.UUID, fingerprint string) (bool, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 

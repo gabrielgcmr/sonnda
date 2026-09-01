@@ -116,6 +116,28 @@ SELECT EXISTS(
     AND fingerprint = $2
 );
 
+-- name: GetLabReportByPatientAndFingerprint :one
+SELECT
+    id,
+    patient_id,
+    exam_document_id,
+    patient_name,
+    patient_dob,
+    lab_name,
+    lab_phone,
+    insurance_provider,
+    requesting_doctor,
+    technical_manager,
+    report_date,
+    raw_text,
+    uploaded_by_user_id,
+    fingerprint,
+    created_at,
+    updated_at
+FROM lab_reports
+WHERE patient_id = $1
+  AND fingerprint = $2;
+
 -- ============================================================
 -- List
 -- ============================================================
