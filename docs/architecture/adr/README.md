@@ -5,8 +5,10 @@ Este README referencia os ADRs quando necessário, mas **não substitui** esses 
 
 ## ADRs
 
-- `docs/architecture/adr/ADR-005-repository-value-vs-service-pointer.md`
-- `docs/architecture/adr/ADR-006-error-handling-contract.md`
+- `docs/architecture/adr/ADR-001-repositorio-com-valor-vs-ponteiro.md`
+- `docs/architecture/adr/ADR-002-error-handling-contrato.md`
+- `docs/architecture/adr/ADR-003-estratégia-auth.md`
+- `docs/architecture/adr/ADR-004-parser-deterministico-exames-laboratoriais.md`
 
 
 ---
