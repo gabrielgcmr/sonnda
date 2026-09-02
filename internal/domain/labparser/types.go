@@ -10,6 +10,13 @@ const (
 	ParseStatusUnparsed ParseStatus = "unparsed"
 )
 
+type ExamType string
+
+const (
+	ExamTypeUnknown  ExamType = "unknown"
+	ExamTypeHemogram ExamType = "hemogram"
+)
+
 type ParseInput struct {
 	RawText      string
 	ExamTypeHint string
@@ -18,7 +25,7 @@ type ParseInput struct {
 type ParseOutput struct {
 	RawText        string
 	NormalizedText string
-	ExamType       string
+	ExamType       ExamType
 	Results        []ParsedLabResult
 }
 
