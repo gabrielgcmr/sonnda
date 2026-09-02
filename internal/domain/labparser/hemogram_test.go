@@ -221,3 +221,104 @@ func TestHemogramParser_Parse(t *testing.T) {
 		t.Fatalf("expected 2 parsed results, got %d", len(output.Results))
 	}
 }
+
+func TestHemogramParser_ParseNameValueBlocks(t *testing.T) {
+	parser := NewHemogramParser()
+	output, err := parser.Parse(context.Background(), ParseInput{
+		RawText: `ERITROGRAMA
+Hemácias
+Hematócrito
+Hemoglobina
+VCM
+HCM
+CHCM
+RDW
+
+Valores de Referência:
+
+4,98 milhões/ mm³
+44,8 %
+15,1 g/dL
+90,0 fl
+30,3 pg
+33,7 g/dL
+13,1 %`,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	assertParsedResult(t, output.Results, "rbc", 4.98, "milhões/ mm³")
+	assertParsedResult(t, output.Results, "hematocrit", 44.8, "%")
+	assertParsedResult(t, output.Results, "hemoglobin", 15.1, "g/dL")
+	assertParsedResult(t, output.Results, "mcv", 90.0, "fl")
+	assertParsedResult(t, output.Results, "mch", 30.3, "pg")
+	assertParsedResult(t, output.Results, "mchc", 33.7, "g/dL")
+	assertParsedResult(t, output.Results, "rdw", 13.1, "%")
+}
+
+func TestHemogramParser_ParseLeukogramNameValueBlocks(t *testing.T) {
+	parser := NewHemogramParser()
+	output, err := parser.Parse(context.Background(), ParseInput{
+		RawText: `LEUCOGRAMA
+Leucócitos
+Neutrófilos
+Promielocitos
+Mielocitos
+Metamielocitos
+Bastões
+Segmentados
+Eosinofilos
+Basofilos
+Linfócitos típicos
+Linfócitos atípicos
+Monócitos
+Blastos
+
+8.600 /mm³
+Percentual
+66,0 %
+0,0 %
+0,0 %
+0,0 %
+0,0 %
+66,0 %
+4,0 %
+0,0 %
+24,0 %
+0,0 %
+6,0 %
+0,0 %`,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	assertParsedResult(t, output.Results, "leukocytes", 8600, "/mm³")
+	assertParsedResult(t, output.Results, "neutrophils", 66.0, "%")
+	assertParsedResult(t, output.Results, "bands", 0.0, "%")
+	assertParsedResult(t, output.Results, "lymphocytes", 24.0, "%")
+	assertParsedResult(t, output.Results, "monocytes", 6.0, "%")
+}
+
+func assertParsedResult(t *testing.T, results []ParsedLabResult, code string, value float64, unit string) {
+	t.Helper()
+
+	for _, result := range results {
+		if result.Code != code {
+			continue
+		}
+		if result.Status != ParseStatusParsed {
+			t.Fatalf("expected %s to be parsed, got %s", code, result.Status)
+		}
+		if result.Value == nil || *result.Value != value {
+			t.Fatalf("expected %s value %v, got %#v", code, value, result.Value)
+		}
+		if result.Unit == nil || *result.Unit != unit {
+			t.Fatalf("expected %s unit %q, got %#v", code, unit, result.Unit)
+		}
+		return
+	}
+
+	t.Fatalf("expected parsed result with code %q, got %#v", code, results)
+}
