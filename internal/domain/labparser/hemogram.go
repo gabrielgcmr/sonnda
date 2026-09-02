@@ -35,7 +35,10 @@ func (p *HemogramParser) Parse(ctx context.Context, input ParseInput) (*ParseOut
 	return output, nil
 }
 
-var hemogramLinePattern = regexp.MustCompile(`^\s*-?\s*(.+?)\s+([0-9OoIl.,]+)\s+(.+?)\s*$`)
+var (
+	hemogramLinePattern       = regexp.MustCompile(`^\s*-?\s*(.+?)\s+([0-9OoIl.,]+)\s+(.+?)\s*$`)
+	hemogramLineNoUnitPattern = regexp.MustCompile(`^\s*-?\s*(.+?)\s+([0-9OoIl.,]+)\s*$`)
+)
 
 func ParseHemogramLine(rawLine string) (ParsedLabResult, bool) {
 	line := NormalizeWhitespace(rawLine)
@@ -48,14 +51,23 @@ func ParseHemogramLine(rawLine string) (ParsedLabResult, bool) {
 	body, rawReference := splitReference(line)
 	matches := hemogramLinePattern.FindStringSubmatch(body)
 	if len(matches) != 4 {
-		return ParsedLabResult{}, false
+		matches = hemogramLineNoUnitPattern.FindStringSubmatch(body)
+		if len(matches) != 3 {
+			return ParsedLabResult{}, false
+		}
 	}
 
 	originalName := strings.TrimSpace(matches[1])
 	rawValue := strings.TrimSpace(matches[2])
-	unit := strings.TrimSpace(matches[3])
+	var unit string
+	if len(matches) == 4 {
+		unit = strings.TrimSpace(matches[3])
+	}
 	value, valueErr := ParseBrazilianDecimal(rawValue)
 	code, codeOK := ResolveAnalyteCode(originalName)
+	if !codeOK && unit == "" {
+		return ParsedLabResult{}, false
+	}
 
 	result := ParsedLabResult{
 		Code:         code,
@@ -77,7 +89,7 @@ func ParseHemogramLine(rawLine string) (ParsedLabResult, bool) {
 		result.ReferenceMax = reference.Max
 	}
 
-	if !codeOK || valueErr != nil {
+	if !codeOK || valueErr != nil || unit == "" {
 		result.Status = ParseStatusPartial
 	}
 
@@ -87,12 +99,15 @@ func ParseHemogramLine(rawLine string) (ParsedLabResult, bool) {
 func splitReference(line string) (body string, rawReference string) {
 	start := strings.Index(line, "(")
 	end := strings.LastIndex(line, ")")
-	if start < 0 || end <= start {
+	if start < 0 {
 		return strings.TrimSpace(line), ""
 	}
 
 	body = strings.TrimSpace(line[:start])
-	reference := strings.TrimSpace(line[start+1 : end])
+	reference := strings.TrimSpace(line[start+1:])
+	if end > start {
+		reference = strings.TrimSpace(line[start+1 : end])
+	}
 	normalized := NormalizeForMatch(reference)
 	switch {
 	case strings.HasPrefix(normalized, "referencia "):

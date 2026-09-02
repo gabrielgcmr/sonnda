@@ -74,6 +74,106 @@ func TestParseHemogramLine_WithoutReference(t *testing.T) {
 	}
 }
 
+func TestParseHemogramLine_FocusesNameValueAndUnit(t *testing.T) {
+	tests := []struct {
+		name      string
+		line      string
+		wantCode  string
+		wantValue float64
+		wantUnit  string
+	}{
+		{
+			name:      "rbc",
+			line:      "Hemácias 4,98 milhões/ mm³",
+			wantCode:  "rbc",
+			wantValue: 4.98,
+			wantUnit:  "milhões/ mm³",
+		},
+		{
+			name:      "hematocrit",
+			line:      "Hematócrito 44,8 %",
+			wantCode:  "hematocrit",
+			wantValue: 44.8,
+			wantUnit:  "%",
+		},
+		{
+			name:      "leukocytes",
+			line:      "Leucócitos 8.600 /mm³",
+			wantCode:  "leukocytes",
+			wantValue: 8600,
+			wantUnit:  "/mm³",
+		},
+		{
+			name:      "platelets",
+			line:      "Plaquetas 453.000 /mm³",
+			wantCode:  "platelets",
+			wantValue: 453000,
+			wantUnit:  "/mm³",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, ok := ParseHemogramLine(tt.line)
+			if !ok {
+				t.Fatal("expected line to parse")
+			}
+			if got.Status != ParseStatusParsed {
+				t.Fatalf("expected parsed, got %s", got.Status)
+			}
+			if got.Code != tt.wantCode {
+				t.Fatalf("expected code %q, got %q", tt.wantCode, got.Code)
+			}
+			if got.Value == nil || *got.Value != tt.wantValue {
+				t.Fatalf("expected value %v, got %#v", tt.wantValue, got.Value)
+			}
+			if got.Unit == nil || *got.Unit != tt.wantUnit {
+				t.Fatalf("expected unit %q, got %#v", tt.wantUnit, got.Unit)
+			}
+		})
+	}
+}
+
+func TestParseHemogramLine_MalformedReferenceDoesNotBreakNameValue(t *testing.T) {
+	got, ok := ParseHemogramLine("- Hemoglobina 15,1 g/dL (Referencia: 13,5 a 17,5 g/dL")
+	if !ok {
+		t.Fatal("expected line to parse")
+	}
+
+	if got.Status != ParseStatusParsed {
+		t.Fatalf("expected parsed, got %s", got.Status)
+	}
+	if got.Code != "hemoglobin" {
+		t.Fatalf("expected hemoglobin, got %q", got.Code)
+	}
+	if got.Value == nil || *got.Value != 15.1 {
+		t.Fatalf("expected value 15.1, got %#v", got.Value)
+	}
+	if got.Unit == nil || *got.Unit != "g/dL" {
+		t.Fatalf("expected unit g/dL, got %#v", got.Unit)
+	}
+}
+
+func TestParseHemogramLine_KnownAnalyteWithoutUnitIsPartial(t *testing.T) {
+	got, ok := ParseHemogramLine("Plaquetas 453.000")
+	if !ok {
+		t.Fatal("expected line to parse")
+	}
+
+	if got.Status != ParseStatusPartial {
+		t.Fatalf("expected partial, got %s", got.Status)
+	}
+	if got.Code != "platelets" {
+		t.Fatalf("expected platelets, got %q", got.Code)
+	}
+	if got.Value == nil || *got.Value != 453000 {
+		t.Fatalf("expected value 453000, got %#v", got.Value)
+	}
+	if got.Unit != nil {
+		t.Fatalf("expected nil unit, got %#v", got.Unit)
+	}
+}
+
 func TestParseHemogramLine_ComplexReferenceKeepsRawReference(t *testing.T) {
 	got, ok := ParseHemogramLine("- Neutrófilos 66,0 % (Referencia: 50 a 70 2000 a 7000)")
 	if !ok {
