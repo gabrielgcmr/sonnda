@@ -1,0 +1,123 @@
+package labparser
+
+import (
+	"context"
+	"testing"
+)
+
+func TestParseHemogramLine_WithReference(t *testing.T) {
+	got, ok := ParseHemogramLine("- Hemoglobina 15,1 g/dL (Referencia: 13,5 a 17,5 g/dL)")
+	if !ok {
+		t.Fatal("expected line to parse")
+	}
+
+	if got.Status != ParseStatusParsed {
+		t.Fatalf("expected parsed, got %s", got.Status)
+	}
+	if got.Code != "hemoglobin" {
+		t.Fatalf("expected hemoglobin, got %q", got.Code)
+	}
+	if got.OriginalName != "Hemoglobina" {
+		t.Fatalf("expected original name preserved, got %q", got.OriginalName)
+	}
+	if got.Value == nil || *got.Value != 15.1 {
+		t.Fatalf("expected value 15.1, got %#v", got.Value)
+	}
+	if got.Unit == nil || *got.Unit != "g/dL" {
+		t.Fatalf("expected unit g/dL, got %#v", got.Unit)
+	}
+	if got.ReferenceMin == nil || *got.ReferenceMin != 13.5 {
+		t.Fatalf("expected reference min 13.5, got %#v", got.ReferenceMin)
+	}
+	if got.ReferenceMax == nil || *got.ReferenceMax != 17.5 {
+		t.Fatalf("expected reference max 17.5, got %#v", got.ReferenceMax)
+	}
+	if got.RawReference == nil || *got.RawReference != "13,5 a 17,5 g/dL" {
+		t.Fatalf("expected raw reference preserved, got %#v", got.RawReference)
+	}
+}
+
+func TestParseHemogramLine_ThousandsValue(t *testing.T) {
+	got, ok := ParseHemogramLine("- Plaquetas 453.000 /mm3 (Referencia: 150.000 a 450.000/mm3)")
+	if !ok {
+		t.Fatal("expected line to parse")
+	}
+
+	if got.Code != "platelets" {
+		t.Fatalf("expected platelets, got %q", got.Code)
+	}
+	if got.Value == nil || *got.Value != 453000 {
+		t.Fatalf("expected value 453000, got %#v", got.Value)
+	}
+	if got.ReferenceMin == nil || *got.ReferenceMin != 150000 {
+		t.Fatalf("expected reference min 150000, got %#v", got.ReferenceMin)
+	}
+	if got.ReferenceMax == nil || *got.ReferenceMax != 450000 {
+		t.Fatalf("expected reference max 450000, got %#v", got.ReferenceMax)
+	}
+}
+
+func TestParseHemogramLine_WithoutReference(t *testing.T) {
+	got, ok := ParseHemogramLine("- VPM 8,2 /fl")
+	if !ok {
+		t.Fatal("expected line to parse")
+	}
+
+	if got.Status != ParseStatusParsed {
+		t.Fatalf("expected parsed, got %s", got.Status)
+	}
+	if got.Code != "mpv" {
+		t.Fatalf("expected mpv, got %q", got.Code)
+	}
+	if got.RawReference != nil {
+		t.Fatalf("expected nil reference, got %#v", got.RawReference)
+	}
+}
+
+func TestParseHemogramLine_ComplexReferenceKeepsRawReference(t *testing.T) {
+	got, ok := ParseHemogramLine("- Neutrófilos 66,0 % (Referencia: 50 a 70 2000 a 7000)")
+	if !ok {
+		t.Fatal("expected line to parse")
+	}
+
+	if got.Code != "neutrophils" {
+		t.Fatalf("expected neutrophils, got %q", got.Code)
+	}
+	if got.ReferenceMin != nil || got.ReferenceMax != nil {
+		t.Fatalf("expected complex reference without min/max, got min=%#v max=%#v", got.ReferenceMin, got.ReferenceMax)
+	}
+	if got.RawReference == nil || *got.RawReference != "50 a 70 2000 a 7000" {
+		t.Fatalf("expected raw reference preserved, got %#v", got.RawReference)
+	}
+}
+
+func TestParseHemogramLine_UnknownAnalyteIsPartial(t *testing.T) {
+	got, ok := ParseHemogramLine("- Campo Novo 123 mg/dL")
+	if !ok {
+		t.Fatal("expected line to parse")
+	}
+
+	if got.Status != ParseStatusPartial {
+		t.Fatalf("expected partial, got %s", got.Status)
+	}
+	if got.Code != "" {
+		t.Fatalf("expected empty code, got %q", got.Code)
+	}
+}
+
+func TestHemogramParser_Parse(t *testing.T) {
+	parser := NewHemogramParser()
+	output, err := parser.Parse(context.Background(), ParseInput{
+		RawText: "HEMOGRAMA\n- Hemoglobina 15,1 g/dL (Referencia: 13,5 a 17,5 g/dL)\n- VPM 8,2 /fl",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if output.ExamType != ExamTypeHemogram {
+		t.Fatalf("expected hemogram, got %s", output.ExamType)
+	}
+	if len(output.Results) != 2 {
+		t.Fatalf("expected 2 parsed results, got %d", len(output.Results))
+	}
+}
