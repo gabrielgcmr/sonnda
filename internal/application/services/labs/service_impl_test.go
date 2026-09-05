@@ -53,6 +53,9 @@ type fakeLabsRepo struct {
 }
 
 func (r *fakeLabsRepo) Create(ctx context.Context, report *labs.LabReport) error { panic("unused") }
+func (r *fakeLabsRepo) AttachDocument(ctx context.Context, reportID, patientID, documentID uuid.UUID) error {
+	panic("unused")
+}
 func (r *fakeLabsRepo) ExistsBySignature(ctx context.Context, patientID uuid.UUID, fingerprint string) (bool, error) {
 	panic("unused")
 }

@@ -91,23 +91,64 @@ func (u *createLabReportFromDocumentUseCase) Execute(ctx context.Context, input 
 		}
 	}
 	if existing != nil {
-		return toOutput(existing), nil
+		return u.reuseExisting(ctx, input, existing)
 	}
 
 	report.Fingerprint = &fingerprint
 	if err := u.labsRepo.Create(ctx, report); err != nil {
-		var appErr *apperr.AppError
-		if errors.As(err, &appErr) && appErr != nil {
-			return nil, appErr
+		if errors.Is(err, labs.ErrLabReportAlreadyExists) {
+			// Outro upload pode ter concluido entre a consulta e a gravacao.
+			existing, findErr := u.labsRepo.FindBySignature(ctx, input.PatientID, fingerprint)
+			if findErr != nil {
+				return nil, labPersistenceError(findErr)
+			}
+			if existing != nil {
+				return u.reuseExisting(ctx, input, existing)
+			}
 		}
-		return nil, &apperr.AppError{
-			Kind:    apperr.INFRA_DATABASE_ERROR,
-			Message: "falha técnica",
-			Cause:   err,
-		}
+		return nil, labPersistenceError(err)
 	}
 
 	return toOutput(report), nil
+}
+
+func (u *createLabReportFromDocumentUseCase) reuseExisting(ctx context.Context, input CreateLabReportFromDocumentInput, existing *labs.LabReport) (*labsvc.LabReportOutput, error) {
+	if input.ExamDocumentID == nil {
+		return toOutput(existing), nil
+	}
+	if existing.ExamDocumentID != nil {
+		if *existing.ExamDocumentID != *input.ExamDocumentID {
+			return nil, apperr.AlreadyExists("exame ja cadastrado em outro documento")
+		}
+		return toOutput(existing), nil
+	}
+
+	// Exames antigos de /labs podem ainda nao ter documento vinculado.
+	if err := u.labsRepo.AttachDocument(ctx, existing.ID, input.PatientID, *input.ExamDocumentID); err != nil {
+		return nil, labPersistenceError(err)
+	}
+	linked, err := u.labsRepo.FindByID(ctx, existing.ID)
+	if err != nil {
+		return nil, labPersistenceError(err)
+	}
+	if linked == nil {
+		return nil, apperr.NotFound("exame nao encontrado")
+	}
+	return toOutput(linked), nil
+}
+
+func labPersistenceError(err error) error {
+	var appErr *apperr.AppError
+	if errors.As(err, &appErr) {
+		return appErr
+	}
+	if errors.Is(err, labs.ErrLabReportAlreadyExists) {
+		return apperr.AlreadyExists("exame ja cadastrado")
+	}
+	if errors.Is(err, labs.ErrDocumentLinkConflict) {
+		return apperr.Conflict("nao foi possivel vincular o documento ao exame")
+	}
+	return &apperr.AppError{Kind: apperr.INFRA_DATABASE_ERROR, Message: "falha ao salvar exame", Cause: err}
 }
 
 func (u *createLabReportFromDocumentUseCase) validateInput(input CreateLabReportFromDocumentInput) error {
@@ -115,6 +156,9 @@ func (u *createLabReportFromDocumentUseCase) validateInput(input CreateLabReport
 
 	if input.PatientID == uuid.Nil {
 		violations = append(violations, apperr.Violation{Field: "patient_id", Reason: "required"})
+	}
+	if input.ExamDocumentID != nil && *input.ExamDocumentID == uuid.Nil {
+		violations = append(violations, apperr.Violation{Field: "exam_document_id", Reason: "invalid"})
 	}
 	if input.UploadedByUserID == uuid.Nil {
 		violations = append(violations, apperr.Violation{Field: "uploaded_by_user_id", Reason: "required"})

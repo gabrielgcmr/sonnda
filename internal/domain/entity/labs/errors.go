@@ -11,6 +11,7 @@ var (
 	ErrInvalidInput           = errors.New("invalid input")
 	ErrMissingId              = errors.New("missing id")
 	ErrLabReportAlreadyExists = errors.New("lab report already exists")
+	ErrDocumentLinkConflict   = errors.New("lab report document link conflict")
 	ErrInvalidPatientID       = errors.New("patient id is required")
 	ErrInvalidUploadedByUser  = errors.New("uploaded by user id is required")
 	ErrInvalidTestName        = errors.New("test name is required")

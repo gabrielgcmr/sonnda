@@ -2,6 +2,7 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -151,7 +152,23 @@ func (h *ExamsHandler) UploadExamDocument(c *gin.Context) {
 	if routed != nil {
 		output = routed.document
 		if h.isLaboratoryDocument(output) {
-			if labReport := h.createLabReportIfNeeded(c, output, upload); labReport != nil {
+			labReport, err := h.createLabReportIfNeeded(c, output, upload)
+			if err != nil {
+				message := "falha no processamento laboratorial"
+				var appErr *apperr.AppError
+				if errors.As(err, &appErr) {
+					message = appErr.Message
+				}
+				// O upload fica disponivel, mas nao aparenta ter sido processado.
+				if _, markErr := h.svc.MarkFailed(c.Request.Context(), examsvc.MarkExamDocumentFailedInput{
+					ID: output.ID, ErrorMessage: message,
+				}); markErr != nil {
+					err = apperr.Internal("falha ao registrar erro do exame", errors.Join(err, markErr))
+				}
+				presenter.ErrorResponder(c, err)
+				return
+			}
+			if labReport != nil {
 				h.createExamDocumentTextFromLab(c, output, labReport)
 			}
 		} else {
@@ -213,23 +230,21 @@ func (h *ExamsHandler) createExamDocumentTextFromLab(c *gin.Context, document *e
 	}
 }
 
-func (h *ExamsHandler) createLabReportIfNeeded(c *gin.Context, document *examsvc.ExamDocumentOutput, upload *uploadedExamFile) *labsvc.LabReportOutput {
-	if h.createLabUC == nil || document == nil || !h.isLaboratoryDocument(document) {
-		return nil
+func (h *ExamsHandler) createLabReportIfNeeded(c *gin.Context, document *examsvc.ExamDocumentOutput, upload *uploadedExamFile) (*labsvc.LabReportOutput, error) {
+	if document == nil || !h.isLaboratoryDocument(document) {
+		return nil, nil
+	}
+	if h.createLabUC == nil {
+		return nil, apperr.Internal("processamento laboratorial indisponivel", nil)
 	}
 
-	labReport, err := h.createLabUC.Execute(c.Request.Context(), labsuc.CreateLabReportFromDocumentInput{
+	return h.createLabUC.Execute(c.Request.Context(), labsuc.CreateLabReportFromDocumentInput{
 		PatientID:        document.PatientID,
 		ExamDocumentID:   &document.ID,
 		DocumentURI:      upload.storageURI,
 		MimeType:         upload.mimeType,
 		UploadedByUserID: document.UploadedByUserID,
 	})
-	if err != nil {
-		// Laudo textual ja existe; labs estruturado pode ser reprocessado depois.
-		return nil
-	}
-	return labReport
 }
 
 func (h *ExamsHandler) isLaboratoryDocument(document *examsvc.ExamDocumentOutput) bool {

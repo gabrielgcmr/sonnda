@@ -12,6 +12,8 @@ import (
 type Labs interface {
 	// CRUD basico
 	Create(ctx context.Context, report *labs.LabReport) error
+	// Vincula exames antigos sem substituir um documento existente.
+	AttachDocument(ctx context.Context, reportID, patientID, documentID uuid.UUID) error
 	FindByID(ctx context.Context, reportID uuid.UUID) (*labs.LabReport, error)
 	FindBySignature(ctx context.Context, patientID uuid.UUID, fingerprint string) (*labs.LabReport, error)
 	ExistsBySignature(ctx context.Context, patientID uuid.UUID, fingerprint string) (bool, error)

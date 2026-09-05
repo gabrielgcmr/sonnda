@@ -1,0 +1,1 @@
+Essas migrations foram deprecadas, atualmente usamos as migrations em /supabase.

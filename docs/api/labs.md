@@ -30,6 +30,19 @@ curl -i "https://api.sonnda.com.br/v1/patients/018f3a2a-4c1a-7c5a-9d9e-2b7d8d9c3
 
 ## Upload de laudo (POST /v1/patients/:id/labs)
 
+O upload unificado em `POST /v1/patients/:id/exames` usa a mesma persistencia
+quando o documento e classificado como laboratorio:
+
+- `lab_reports`, `lab_results` e `lab_result_items` sao salvos em uma transacao.
+- Um laudo antigo sem `exam_document_id` recebe o vinculo com o novo documento.
+- Uma repeticao com o mesmo documento e a mesma assinatura reutiliza o laudo.
+- Um laudo ja vinculado a outro documento retorna HTTP `409`, preservando o original.
+- Se o processamento laboratorial falhar, a rota unificada retorna o erro e marca
+  o novo `exam_document` como `failed`. O arquivo enviado fica preservado.
+
+A deteccao de duplicados continua usando a assinatura dos resultados extraidos.
+Esta mudanca nao corrige automaticamente documentos antigos sem vinculo.
+
 Upload multipart com campo `file` (PDF/JPEG/PNG).
 
 **Exemplo (curl):**

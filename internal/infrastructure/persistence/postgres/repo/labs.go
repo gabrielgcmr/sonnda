@@ -4,6 +4,8 @@ package repo
 
 import (
 	"context"
+	"errors"
+	"time"
 
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/labs"
 	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
@@ -11,6 +13,7 @@ import (
 	labsqlc "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/sqlc/generated/lab"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 type LabsRepository struct {
@@ -33,8 +36,32 @@ func (l *LabsRepository) Create(ctx context.Context, report *labs.LabReport) err
 		return ErrRepositoryFailure
 	}
 
-	// Create the lab report
-	reportRow, err := l.queries.CreateLabReport(ctx, labsqlc.CreateLabReportParams{
+	tx, err := l.client.BeginTx(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		// O rollback precisa funcionar mesmo se a requisicao foi cancelada.
+		cleanupCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
+		defer cancel()
+		_ = tx.Rollback(cleanupCtx)
+	}()
+	queries := l.queries.WithTx(tx)
+
+	if report.ExamDocumentID != nil {
+		valid, err := queries.LabDocumentBelongsToPatient(ctx, labsqlc.LabDocumentBelongsToPatientParams{
+			ID: *report.ExamDocumentID, PatientID: report.PatientID,
+		})
+		if err != nil {
+			return err
+		}
+		if !valid {
+			return labs.ErrDocumentLinkConflict
+		}
+	}
+
+	// Laudo, resultados e itens sao gravados juntos.
+	reportRow, err := queries.CreateLabReport(ctx, labsqlc.CreateLabReportParams{
 		ID:                report.ID,
 		PatientID:         report.PatientID,
 		ExamDocumentID:    FromNullableUUIDToPgUUID(report.ExamDocumentID),
@@ -51,12 +78,12 @@ func (l *LabsRepository) Create(ctx context.Context, report *labs.LabReport) err
 		Fingerprint:       FromNullableStringToPgText(report.Fingerprint),
 	})
 	if err != nil {
-		return err
+		return mapLabWriteError(err)
 	}
 
 	// Create test results and their items
 	for _, tr := range report.TestResults {
-		_, err := l.queries.CreateLabResult(ctx, labsqlc.CreateLabResultParams{
+		_, err := queries.CreateLabResult(ctx, labsqlc.CreateLabResultParams{
 			ID:          tr.ID,
 			LabReportID: reportRow.ID,
 			TestName:    tr.TestName,
@@ -70,9 +97,9 @@ func (l *LabsRepository) Create(ctx context.Context, report *labs.LabReport) err
 		}
 
 		for _, item := range tr.Items {
-			_, err := l.queries.CreateLabResultItem(ctx, labsqlc.CreateLabResultItemParams{
+			_, err := queries.CreateLabResultItem(ctx, labsqlc.CreateLabResultItemParams{
 				ID:            item.ID,
-				LabResultID:   item.LabResultID,
+				LabResultID:   tr.ID,
 				ParameterName: item.ParameterName,
 				ResultValue:   FromNullableStringToPgText(item.ResultValue),
 				ResultUnit:    FromNullableStringToPgText(item.ResultUnit),
@@ -84,7 +111,31 @@ func (l *LabsRepository) Create(ctx context.Context, report *labs.LabReport) err
 		}
 	}
 
+	return tx.Commit(ctx)
+}
+
+func (l *LabsRepository) AttachDocument(ctx context.Context, reportID, patientID, documentID uuid.UUID) error {
+	rows, err := l.queries.AttachLabReportDocument(ctx, labsqlc.AttachLabReportDocumentParams{
+		ReportID: reportID, PatientID: patientID, DocumentID: documentID,
+	})
+	if err != nil {
+		return mapLabWriteError(err)
+	}
+	if rows == 0 {
+		return labs.ErrDocumentLinkConflict
+	}
 	return nil
+}
+
+func mapLabWriteError(err error) error {
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+		switch pgErr.ConstraintName {
+		case "idx_lab_reports_fingerprint", "idx_lab_reports_exam_document":
+			return errors.Join(labs.ErrLabReportAlreadyExists, err)
+		}
+	}
+	return err
 }
 
 // Delete implements [repository.LabsRepository].

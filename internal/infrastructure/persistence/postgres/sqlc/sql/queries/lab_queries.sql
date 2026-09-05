@@ -1,3 +1,20 @@
+-- internal/infrastructure/persistence/postgres/sqlc/sql/queries/lab_queries.sql
+
+-- name: LabDocumentBelongsToPatient :one
+SELECT EXISTS (
+    SELECT 1 FROM exam_documents WHERE id = $1 AND patient_id = $2
+);
+
+-- name: AttachLabReportDocument :execrows
+UPDATE lab_reports AS l
+SET exam_document_id = d.id, updated_at = now()
+FROM exam_documents AS d
+WHERE l.id = sqlc.arg(report_id)
+  AND l.patient_id = sqlc.arg(patient_id)
+  AND d.id = sqlc.arg(document_id)
+  AND d.patient_id = l.patient_id
+  AND (l.exam_document_id IS NULL OR l.exam_document_id = d.id);
+
 -- ============================================================
 -- Creators
 -- ============================================================

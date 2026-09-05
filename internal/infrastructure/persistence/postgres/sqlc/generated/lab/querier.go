@@ -11,6 +11,7 @@ import (
 )
 
 type Querier interface {
+	AttachLabReportDocument(ctx context.Context, arg AttachLabReportDocumentParams) (int64, error)
 	// ============================================================
 	// Creators
 	// ============================================================
@@ -33,6 +34,8 @@ type Querier interface {
 	GetLabReportByID(ctx context.Context, id uuid.UUID) (GetLabReportByIDRow, error)
 	GetLabReportByPatientAndFingerprint(ctx context.Context, arg GetLabReportByPatientAndFingerprintParams) (GetLabReportByPatientAndFingerprintRow, error)
 	GetLabResultsByReportID(ctx context.Context, labReportID uuid.UUID) (GetLabResultsByReportIDRow, error)
+	// internal/infrastructure/persistence/postgres/sqlc/sql/queries/lab_queries.sql
+	LabDocumentBelongsToPatient(ctx context.Context, arg LabDocumentBelongsToPatientParams) (bool, error)
 	// ============================================================
 	// Timeline
 	// ============================================================

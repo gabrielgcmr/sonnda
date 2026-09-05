@@ -12,6 +12,31 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const attachLabReportDocument = `-- name: AttachLabReportDocument :execrows
+UPDATE lab_reports AS l
+SET exam_document_id = d.id, updated_at = now()
+FROM exam_documents AS d
+WHERE l.id = $1
+  AND l.patient_id = $2
+  AND d.id = $3
+  AND d.patient_id = l.patient_id
+  AND (l.exam_document_id IS NULL OR l.exam_document_id = d.id)
+`
+
+type AttachLabReportDocumentParams struct {
+	ReportID   uuid.UUID `json:"report_id"`
+	PatientID  uuid.UUID `json:"patient_id"`
+	DocumentID uuid.UUID `json:"document_id"`
+}
+
+func (q *Queries) AttachLabReportDocument(ctx context.Context, arg AttachLabReportDocumentParams) (int64, error) {
+	result, err := q.db.Exec(ctx, attachLabReportDocument, arg.ReportID, arg.PatientID, arg.DocumentID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const createLabReport = `-- name: CreateLabReport :one
 
 INSERT INTO lab_reports (
@@ -451,6 +476,26 @@ func (q *Queries) GetLabResultsByReportID(ctx context.Context, labReportID uuid.
 		&i.ReleaseAt,
 	)
 	return i, err
+}
+
+const labDocumentBelongsToPatient = `-- name: LabDocumentBelongsToPatient :one
+
+SELECT EXISTS (
+    SELECT 1 FROM exam_documents WHERE id = $1 AND patient_id = $2
+)
+`
+
+type LabDocumentBelongsToPatientParams struct {
+	ID        uuid.UUID `json:"id"`
+	PatientID uuid.UUID `json:"patient_id"`
+}
+
+// internal/infrastructure/persistence/postgres/sqlc/sql/queries/lab_queries.sql
+func (q *Queries) LabDocumentBelongsToPatient(ctx context.Context, arg LabDocumentBelongsToPatientParams) (bool, error) {
+	row := q.db.QueryRow(ctx, labDocumentBelongsToPatient, arg.ID, arg.PatientID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
 }
 
 const listLabItemTimelineByPatientAndParameter = `-- name: ListLabItemTimelineByPatientAndParameter :many
