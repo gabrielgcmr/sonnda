@@ -12,8 +12,8 @@ import (
 	"time"
 
 	labsvc "github.com/gabrielgcmr/sonnda/internal/application/services/labs"
-	domainai "github.com/gabrielgcmr/sonnda/internal/domain/ai"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/labs"
+	"github.com/gabrielgcmr/sonnda/internal/domain/labextraction"
 	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 
@@ -27,7 +27,7 @@ type CreateLabReportFromDocumentUseCase interface {
 type createLabReportFromDocumentUseCase struct {
 	patientRepo repository.Patient
 	labsRepo    repository.Labs
-	extractor   domainai.DocumentExtractorService
+	extractor   labextraction.LabReportExtractor
 }
 
 var _ CreateLabReportFromDocumentUseCase = (*createLabReportFromDocumentUseCase)(nil)
@@ -35,7 +35,7 @@ var _ CreateLabReportFromDocumentUseCase = (*createLabReportFromDocumentUseCase)
 func NewCreateLabReportFromDocument(
 	patientRepo repository.Patient,
 	labsRepo repository.Labs,
-	extractor domainai.DocumentExtractorService,
+	extractor labextraction.LabReportExtractor,
 ) CreateLabReportFromDocumentUseCase {
 	return &createLabReportFromDocumentUseCase{
 		patientRepo: patientRepo,
@@ -150,11 +150,12 @@ func normalizeMimeType(raw string) string {
 func (u *createLabReportFromDocumentUseCase) mapExtractedToDomain(
 	patientID uuid.UUID,
 	uploadedByUserID uuid.UUID,
-	extracted *domainai.ExtractedLabReport,
+	extracted *labextraction.ExtractedLabReport,
 ) (*labs.LabReport, error) {
 	if extracted == nil {
 		return nil, labs.ErrInvalidInput
 	}
+	extracted.Normalize()
 
 	report, err := labs.NewLabReport(patientID.String(), uploadedByUserID.String())
 	if err != nil {

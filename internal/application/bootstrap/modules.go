@@ -4,7 +4,7 @@
 package bootstrap
 
 import (
-	domainai "github.com/gabrielgcmr/sonnda/internal/domain/ai"
+	"github.com/gabrielgcmr/sonnda/internal/domain/labextraction"
 	domainstorage "github.com/gabrielgcmr/sonnda/internal/domain/storage"
 	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
 )
@@ -18,13 +18,13 @@ type Modules struct {
 
 func NewModules(
 	dbClient *postgress.Client,
-	docExtractor domainai.DocumentExtractorService,
+	labExtractor labextraction.LabReportExtractor,
 	storage domainstorage.FileStorageService,
 ) *Modules {
 	return &Modules{
 		User:    NewUserModule(dbClient),
 		Patient: NewPatientModule(dbClient),
-		Labs:    NewLabsModule(dbClient, docExtractor, storage),
-		Exams:   NewExamsModule(dbClient, docExtractor, storage),
+		Labs:    NewLabsModule(dbClient, labExtractor, storage),
+		Exams:   NewExamsModule(dbClient, labExtractor, storage),
 	}
 }

@@ -48,7 +48,7 @@ A arquitetura segue uma abordagem em camadas com baixo acoplamento e clara separ
   - **Entity (`internal/domain/entity`)**: Entidades de negócio centrais.
   - **Repository (`internal/domain/repository`)**: Interfaces de repositórios do domínio.
   - **Storage (`internal/domain/storage`)**: Interfaces de armazenamento de arquivos (abstrações).
-  - **AI (`internal/domain/ai`)**: Interfaces para integrações de IA/ML (abstrações).
+  - **Lab Extraction (`internal/domain/labextraction`)**: Contrato para extração estruturada de laudos laboratoriais.
 
 - **Application (`internal/application`)**: Orquestração e preocupações transversais.
   - **Use cases (`internal/application/usecase`)**: Fluxos de negócio compostos a partir de modelos do domínio.

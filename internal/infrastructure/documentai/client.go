@@ -1,12 +1,12 @@
-// internal/infrastructure/ai/client.go
-package ai
+// internal/infrastructure/documentai/client.go
+package documentai
 
 import (
 	"context"
 	"fmt"
 	"os"
 
-	documentai "cloud.google.com/go/documentai/apiv1"
+	documentaiclient "cloud.google.com/go/documentai/apiv1"
 	"cloud.google.com/go/documentai/apiv1/documentaipb"
 	"google.golang.org/api/option"
 )
@@ -15,7 +15,7 @@ import (
 // Ele não conhece nenhum domínio (labs, examImage, etc.):
 // recebe um processorID e uma URI do GCS e devolve o Document cru.
 type Client struct {
-	client    *documentai.DocumentProcessorClient
+	client    *documentaiclient.DocumentProcessorClient
 	projectID string
 	location  string
 }
@@ -36,7 +36,7 @@ func NewClient(
 		}
 	}
 
-	c, err := documentai.NewDocumentProcessorClient(ctx, opts...)
+	c, err := documentaiclient.NewDocumentProcessorClient(ctx, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("erro ao criar cliente do Document AI: %w", err)
 	}

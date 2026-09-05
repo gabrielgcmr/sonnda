@@ -19,8 +19,8 @@ import (
 
 	"github.com/gabrielgcmr/sonnda/internal/api"
 	apimw "github.com/gabrielgcmr/sonnda/internal/api/middleware"
-	"github.com/gabrielgcmr/sonnda/internal/infrastructure/ai"
 	authinfra "github.com/gabrielgcmr/sonnda/internal/infrastructure/auth"
+	documentaiinfra "github.com/gabrielgcmr/sonnda/internal/infrastructure/documentai"
 	filestorage "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/filestorage"
 	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
 )
@@ -74,13 +74,13 @@ func main() {
 	defer storageService.Close()
 
 	//6.2 Document AI Service
-	docAIClient, err := ai.NewClient(ctx, cfg.Storage.GCPProjectID, cfg.Storage.GCPLocation, gcpOpts...)
+	docAIClient, err := documentaiinfra.NewClient(ctx, cfg.Storage.GCPProjectID, cfg.Storage.GCPLocation, gcpOpts...)
 	if err != nil {
 		logInfraFatal("falha ao criar DocAI client", err)
 	}
 	defer docAIClient.Close()
 
-	docExtractor := ai.NewDocumentAIAdapter(
+	docExtractor := documentaiinfra.NewDocumentAIAdapter(
 		*docAIClient,
 		cfg.Storage.GCPExtractLabsProcessorID,
 	)

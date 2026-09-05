@@ -1,15 +1,13 @@
-// internal/infrastructure/ai/mapper.go
-package ai
+// internal/infrastructure/documentai/mapper.go
+package documentai
 
 import (
 	"strings"
 
-	domainai "github.com/gabrielgcmr/sonnda/internal/domain/ai"
+	"github.com/gabrielgcmr/sonnda/internal/domain/labextraction"
 
 	"cloud.google.com/go/documentai/apiv1/documentaipb"
 )
-
-// mapDocumentToExtractedLabReport e helpers ficam no mesmo pacote labs
 
 func extractEntityText(doc *documentaipb.Document, entity *documentaipb.Document_Entity) string {
 	if entity.GetMentionText() != "" {
@@ -50,8 +48,8 @@ func extractEntityValue(doc *documentaipb.Document, ent *documentaipb.Document_E
 	return strings.TrimSpace(extractEntityText(doc, ent))
 }
 
-func mapDocumentToExtractedLabs(doc *documentaipb.Document) *domainai.ExtractedLabReport {
-	out := &domainai.ExtractedLabReport{}
+func mapDocumentToExtractedLabs(doc *documentaipb.Document) *labextraction.ExtractedLabReport {
+	out := &labextraction.ExtractedLabReport{}
 
 	// Se quiser guardar o texto inteiro do laudo
 	if txt := doc.GetText(); txt != "" {
@@ -104,8 +102,8 @@ func mapDocumentToExtractedLabs(doc *documentaipb.Document) *domainai.ExtractedL
 
 }
 
-func mapTestResult(doc *documentaipb.Document, ent *documentaipb.Document_Entity) domainai.ExtractedTestResult {
-	var tr domainai.ExtractedTestResult
+func mapTestResult(doc *documentaipb.Document, ent *documentaipb.Document_Entity) labextraction.ExtractedTestResult {
+	var tr labextraction.ExtractedTestResult
 
 	for _, prop := range ent.GetProperties() {
 		switch prop.GetType() {
@@ -136,8 +134,8 @@ func mapTestResult(doc *documentaipb.Document, ent *documentaipb.Document_Entity
 	return tr
 }
 
-func mapTestItem(doc *documentaipb.Document, ent *documentaipb.Document_Entity) domainai.ExtractedTestItem {
-	var item domainai.ExtractedTestItem
+func mapTestItem(doc *documentaipb.Document, ent *documentaipb.Document_Entity) labextraction.ExtractedTestItem {
+	var item labextraction.ExtractedTestItem
 
 	for _, prop := range ent.GetProperties() {
 		switch prop.GetType() {

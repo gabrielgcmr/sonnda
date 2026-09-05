@@ -35,7 +35,7 @@ Simple instructions for coding agents working on this repo.
   - **Entity (`internal/domain/entity`)**: Core business entities.
   - **Repository (`internal/domain/repository`)**: Domain repository interfaces.
   - **Storage (`internal/domain/storage`)**: Storage interfaces (file storage abstractions).
-  - **AI (`internal/domain/ai`)**: AI/ML interfaces (abstractions for document processing).
+  - **Lab Extraction (`internal/domain/labextraction`)**: contract for structured lab report extraction.
 - **Application (`internal/application`)**: Where orchestration and cross-cutting concerns live.
   - **Use cases (`internal/application/usecase`)**: Business flows composed from domain models/ports.
   - **Services (`internal/application/services`)**: Application services that coordinate repositories/integrations.
@@ -49,7 +49,7 @@ Simple instructions for coding agents working on this repo.
 - **Infrastructure (`internal/infrastructure`)**: Concrete implementations and outbound integrations.
   - **Persistence (`internal/infrastructure/persistence`)**: Database repositories, cache, file storage.
   - **Auth (`internal/infrastructure/auth`)**: Authentication/authorization implementations.
-  - **AI (`internal/infrastructure/ai`)**: AI integrations (Google Cloud Document AI).
+  - **Document AI (`internal/infrastructure/documentai`)**: current Google Cloud Document AI integration.
 - **Kernel (`internal/kernel`)**: Cross-cutting concerns.
   - **Error contract (`internal/kernel/apperr`)**: Centralized `AppError` codes/messages; handlers must convert via HTTP layer helpers.
   - **Observability (`internal/kernel/observability`)**: Logging setup (slog), request-scoped logger injection.

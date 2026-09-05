@@ -14,7 +14,7 @@ O backend segue um modelo em camadas simples, com baixo acoplamento e separaçã
 
 - **Domain (`internal/domain`)**  
   Modelos do domínio, regras de negócio e invariantes.  
-  - Entities em `internal/domain/entity`; repositories em `internal/domain/repository`; storage abstractions em `internal/domain/storage`; AI abstractions em `internal/domain/ai`.
+  - Entities em `internal/domain/entity`; repositories em `internal/domain/repository`; storage abstractions em `internal/domain/storage`; contrato de extracao laboratorial em `internal/domain/labextraction`.
 
 - **Application (`internal/application`)**  
   Orquestração e cross-cutting concerns.  
@@ -29,7 +29,7 @@ O backend segue um modelo em camadas simples, com baixo acoplamento e separaçã
   Implementações concretas de persistência e integrações externas.  
   - **Persistence (`internal/infrastructure/persistence`)**: repositórios (sqlc/pgx), cache.
   - **Auth (`internal/infrastructure/auth`)**: Supabase auth provider.
-  - **AI (`internal/infrastructure/ai`)**: Google Cloud Document AI adapter.
+  - **Document AI (`internal/infrastructure/documentai`)**: implementacao atual de extracao laboratorial via Google Cloud Document AI.
 
 - **Kernel (`internal/kernel`)**  
   Preocupações transversais (cross-cutting concerns).  
