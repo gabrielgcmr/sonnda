@@ -9,6 +9,7 @@ Este README referencia os ADRs quando necessário, mas **não substitui** esses 
 - `docs/architecture/adr/ADR-002-error-handling-contrato.md`
 - `docs/architecture/adr/ADR-003-estratégia-auth.md`
 - `docs/architecture/adr/ADR-004-parser-deterministico-exames-laboratoriais.md`
+- `docs/architecture/adr/ADR-005-extracao-semantica-exames-laboratoriais.md`
 
 
 ---

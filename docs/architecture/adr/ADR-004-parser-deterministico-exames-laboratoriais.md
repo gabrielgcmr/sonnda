@@ -1,7 +1,7 @@
 <!-- docs/architecture/adr/ADR-004-parser-deterministico-exames-laboratoriais.md -->
 # ADR-004 - Parser deterministico para exames laboratoriais comuns
 
-**Status:** Aceito  
+**Status:** Substituida pela ADR-005  
 **Data:** 2026-09-02  
 **Contexto:** Sonnda API - ingestao de exames laboratoriais via rota unificada de exames
 
@@ -22,6 +22,8 @@ Isso cria uma oportunidade: usar OCR barato seguido de regras explicitas para tr
 ## Decisao
 
 Adotar um parser deterministico para exames laboratoriais comuns, inicialmente focado em hemograma e depois EAS.
+
+**Revisao em 2026-09-05:** esta decisao foi substituida pela ADR-005. Durante a implementacao inicial, mesmo recortes pequenos como hemograma e glicose/glicemia exigiram muitas regras, aliases e ajustes de layout/OCR. A abordagem se mostrou pouco escalavel para a variedade esperada de exames laboratoriais. O parser deterministico deixa de ser a estrategia principal de extracao laboratorial.
 
 O pipeline alvo passa a ser:
 
