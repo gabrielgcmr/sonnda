@@ -296,6 +296,12 @@ revisao separadamente; a atualizacao da ADR nao implementa essas etapas.
 **Concluida quando:** contrato, exemplos e testes de formato puderem ser revisados
 sem credenciais, chamadas externas ou mudancas no banco.
 
+**Entrega da etapa 1 (2026-09-05):** entrada `ExtractLabReportInput`, interface
+`LabReportTextExtractor`, schema JSON v1 e fixtures sinteticas implementados em
+`internal/domain/labextraction`. O README do pacote documenta a correspondencia
+com o banco e a utilizacao de `samples/`. Os testes validam o contrato e as saidas
+esperadas; avaliacao semantica dos arquivos locais e integracao com LLM seguem pendentes.
+
 ### Etapa 2 - Implementacao do extrator Gemini
 
 **Objetivo:** transformar texto em `ExtractedLabReport` usando o modelo candidato.

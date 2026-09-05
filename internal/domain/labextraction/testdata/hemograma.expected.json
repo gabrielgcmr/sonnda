@@ -1,0 +1,25 @@
+{
+  "patient_name": null,
+  "patient_dob": null,
+  "lab_name": null,
+  "lab_phone": null,
+  "insurance_provider": null,
+  "requesting_doctor": null,
+  "technical_manager": null,
+  "report_date": null,
+  "tests": [
+    {
+      "test_name": "HEMOGRAMA",
+      "material": "Sangue total",
+      "method": null,
+      "collected_at": null,
+      "release_at": null,
+      "items": [
+        { "parameter_name": "Hemoglobina", "result_value": "14,2", "result_unit": "g/dL", "reference_text": null },
+        { "parameter_name": "Plaquetas", "result_value": "245.000", "result_unit": "/mm3", "reference_text": null },
+        { "parameter_name": "Neutrofilos", "result_value": "60,0", "result_unit": "%", "reference_text": null },
+        { "parameter_name": "Neutrofilos", "result_value": "4.200", "result_unit": "/mm3", "reference_text": null }
+      ]
+    }
+  ]
+}

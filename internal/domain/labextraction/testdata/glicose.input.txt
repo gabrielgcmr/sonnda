@@ -1,0 +1,7 @@
+LABORATORIO EXEMPLO
+Data do laudo: 01/09/2026
+GLICEMIA DE JEJUM
+Material: Soro
+Coleta: 01/09/2026 08:15:00
+Glicemia de jejum: 99 mg/dL
+Valores de referencia: 70 a 99 mg/dL

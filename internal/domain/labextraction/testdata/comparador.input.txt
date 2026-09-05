@@ -1,0 +1,3 @@
+BETA-HCG
+Material: Soro
+Beta-HCG: < 5 mUI/mL

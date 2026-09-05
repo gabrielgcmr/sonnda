@@ -1,0 +1,22 @@
+{
+  "patient_name": null,
+  "patient_dob": null,
+  "lab_name": null,
+  "lab_phone": null,
+  "insurance_provider": null,
+  "requesting_doctor": null,
+  "technical_manager": null,
+  "report_date": null,
+  "tests": [
+    {
+      "test_name": "BETA-HCG",
+      "material": "Soro",
+      "method": null,
+      "collected_at": null,
+      "release_at": null,
+      "items": [
+        { "parameter_name": "Beta-HCG", "result_value": "< 5", "result_unit": "mUI/mL", "reference_text": null }
+      ]
+    }
+  ]
+}

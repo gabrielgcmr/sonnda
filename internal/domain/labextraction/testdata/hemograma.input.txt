@@ -1,0 +1,7 @@
+HEMOGRAMA
+Material: Sangue total
+Hemoglobina: 14,2 g/dL
+Plaquetas: 245.000 /mm3
+LEUCOGRAMA
+Analito       Percentual    Absoluto
+Neutrofilos   60,0 %        4.200 /mm3

@@ -1,3 +1,4 @@
+// internal/domain/labextraction/lab_dto.go
 package labextraction
 
 import "strings"
@@ -28,45 +29,46 @@ type ExtractionMetadata struct {
 
 // ExtractedTestItem representa um item estruturado vindo do extrator semantico.
 type ExtractedTestItem struct {
-	ParameterName string
-	ResultValue   *string
-	ResultUnit    *string
-	ReferenceText *string
-	RawText       *string
-	Status        ExtractionStatus
-	Confidence    *float64
-	Warnings      []ExtractionWarning
+	ParameterName string              `json:"parameter_name"`
+	ResultValue   *string             `json:"result_value"`
+	ResultUnit    *string             `json:"result_unit"`
+	ReferenceText *string             `json:"reference_text"`
+	RawText       *string             `json:"-"`
+	Status        ExtractionStatus    `json:"-"`
+	Confidence    *float64            `json:"-"`
+	Warnings      []ExtractionWarning `json:"-"`
 }
 
 // ExtractedTestResult representa um exame ou painel estruturado.
 type ExtractedTestResult struct {
-	TestName    string
-	Material    *string
-	Method      *string
-	CollectedAt *string
-	ReleaseAt   *string
-	RawText     *string
-	Status      ExtractionStatus
-	Confidence  *float64
-	Warnings    []ExtractionWarning
-	Items       []ExtractedTestItem
+	TestName    string              `json:"test_name"`
+	Material    *string             `json:"material"`
+	Method      *string             `json:"method"`
+	CollectedAt *string             `json:"collected_at"`
+	ReleaseAt   *string             `json:"release_at"`
+	RawText     *string             `json:"-"`
+	Status      ExtractionStatus    `json:"-"`
+	Confidence  *float64            `json:"-"`
+	Warnings    []ExtractionWarning `json:"-"`
+	Items       []ExtractedTestItem `json:"items"`
 }
 
 // ExtractedLabReport e o contrato interno da extracao laboratorial.
 type ExtractedLabReport struct {
-	Metadata ExtractionMetadata
+	// Metadados tecnicos e texto original sao preenchidos pelo backend.
+	Metadata ExtractionMetadata `json:"-"`
 
-	PatientName       *string
-	PatientDOB        *string
-	LabName           *string
-	LabPhone          *string
-	InsuranceProvider *string
-	RequestingDoctor  *string
-	TechnicalManager  *string
-	ReportDate        *string
-	RawText           *string
+	PatientName       *string `json:"patient_name"`
+	PatientDOB        *string `json:"patient_dob"`
+	LabName           *string `json:"lab_name"`
+	LabPhone          *string `json:"lab_phone"`
+	InsuranceProvider *string `json:"insurance_provider"`
+	RequestingDoctor  *string `json:"requesting_doctor"`
+	TechnicalManager  *string `json:"technical_manager"`
+	ReportDate        *string `json:"report_date"`
+	RawText           *string `json:"-"`
 
-	Tests []ExtractedTestResult
+	Tests []ExtractedTestResult `json:"tests"`
 }
 
 func (r *ExtractedLabReport) Normalize() {

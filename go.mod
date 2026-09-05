@@ -15,6 +15,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/oapi-codegen/runtime v1.1.2
 	github.com/redis/go-redis/v9 v9.17.3
+	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2
 	google.golang.org/api v0.262.0
 )
 

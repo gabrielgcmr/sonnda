@@ -1,0 +1,11 @@
+{
+  "patient_name": null,
+  "patient_dob": null,
+  "lab_name": null,
+  "lab_phone": null,
+  "insurance_provider": null,
+  "requesting_doctor": null,
+  "technical_manager": null,
+  "report_date": null,
+  "tests": []
+}

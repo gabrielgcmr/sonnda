@@ -1,0 +1,8 @@
+[
+  { "name": "glicose", "structured": true },
+  { "name": "hemograma", "structured": true },
+  { "name": "qualitativo", "structured": true },
+  { "name": "comparador", "structured": true },
+  { "name": "atestado", "structured": false },
+  { "name": "pedido_exames", "structured": false }
+]
