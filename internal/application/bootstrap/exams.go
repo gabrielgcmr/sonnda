@@ -1,3 +1,4 @@
+// internal/application/bootstrap/exams.go
 package bootstrap
 
 import (
@@ -7,9 +8,9 @@ import (
 	labsuc "github.com/gabrielgcmr/sonnda/internal/application/usecase/labs"
 	"github.com/gabrielgcmr/sonnda/internal/domain/labextraction"
 	domainstorage "github.com/gabrielgcmr/sonnda/internal/domain/storage"
-	documenttextinfra "github.com/gabrielgcmr/sonnda/internal/infrastructure/documenttext"
 	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
 	"github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/repo"
+	textextractioninfra "github.com/gabrielgcmr/sonnda/internal/infrastructure/textextraction"
 )
 
 type ExamsModule struct {
@@ -29,7 +30,7 @@ func NewExamsModule(
 
 	svc := examsvc.New(patientRepo, examsRepo)
 	createLabUC := labsuc.NewCreateLabReportFromDocument(patientRepo, labsRepo, labExtractor)
-	textExtractor := documenttextinfra.NewCommandExtractor()
+	textExtractor := textextractioninfra.NewCommandExtractor()
 	authz := authorization.New(patientRepo, accessRepo, profRepo)
 
 	return &ExamsModule{

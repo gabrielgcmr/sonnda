@@ -13,12 +13,12 @@ import (
 
 type Querier interface {
 	CreateExamDocument(ctx context.Context, arg CreateExamDocumentParams) (ExamDocument, error)
-	CreateExamReport(ctx context.Context, arg CreateExamReportParams) (ExamReport, error)
+	CreateExamDocumentText(ctx context.Context, arg CreateExamDocumentTextParams) (ExamDocumentText, error)
 	GetExamDocumentByID(ctx context.Context, id uuid.UUID) (ExamDocument, error)
-	GetExamReportByDocumentID(ctx context.Context, examDocumentID pgtype.UUID) (ExamReport, error)
-	GetExamReportByID(ctx context.Context, id uuid.UUID) (ExamReport, error)
+	GetExamDocumentTextByDocumentID(ctx context.Context, examDocumentID pgtype.UUID) (ExamDocumentText, error)
+	GetExamDocumentTextByID(ctx context.Context, id uuid.UUID) (ExamDocumentText, error)
+	ListExamDocumentTextsByPatientID(ctx context.Context, arg ListExamDocumentTextsByPatientIDParams) ([]ExamDocumentText, error)
 	ListExamDocumentsByPatientID(ctx context.Context, arg ListExamDocumentsByPatientIDParams) ([]ExamDocument, error)
-	ListExamReportsByPatientID(ctx context.Context, arg ListExamReportsByPatientIDParams) ([]ExamReport, error)
 	UpdateExamDocumentClassified(ctx context.Context, arg UpdateExamDocumentClassifiedParams) (ExamDocument, error)
 	UpdateExamDocumentFailed(ctx context.Context, arg UpdateExamDocumentFailedParams) (ExamDocument, error)
 	UpdateExamDocumentProcessing(ctx context.Context, arg UpdateExamDocumentProcessingParams) (ExamDocument, error)

@@ -1,3 +1,4 @@
+// internal/infrastructure/persistence/postgres/repo/exams.go
 package repo
 
 import (
@@ -152,43 +153,43 @@ func (r *ExamsRepository) MarkFailed(ctx context.Context, id uuid.UUID, errorMes
 	return &document, nil
 }
 
-func (r *ExamsRepository) CreateReport(ctx context.Context, report *exams.ExamReport) error {
-	if report == nil {
+func (r *ExamsRepository) CreateDocumentText(ctx context.Context, documentText *exams.ExamDocumentText) error {
+	if documentText == nil {
 		return ErrRepositoryFailure
 	}
-	if err := report.NormalizeAndValidate(); err != nil {
+	if err := documentText.NormalizeAndValidate(); err != nil {
 		return err
 	}
 
-	row, err := r.queries.CreateExamReport(ctx, examsqlc.CreateExamReportParams{
-		ID:                 report.ID,
-		ExamDocumentID:     FromNullableUUIDToPgUUID(report.ExamDocumentID),
-		PatientID:          report.PatientID,
-		UploadedByUserID:   report.UploadedByUserID,
-		Category:           string(report.Category),
-		Title:              FromNullableStringToPgText(report.Title),
-		Modality:           FromNullableStringToPgText(report.Modality),
-		BodySite:           FromNullableStringToPgText(report.BodySite),
-		PerformedAt:        FromNullableTimestamptzToPgTimestamptz(report.PerformedAt),
-		FacilityName:       FromNullableStringToPgText(report.FacilityName),
-		InterpretingDoctor: FromNullableStringToPgText(report.InterpretingDoctor),
-		ReportText:         report.ReportText,
-		Conclusion:         FromNullableStringToPgText(report.Conclusion),
-		ExtractionMethod:   FromNullableStringToPgText(report.ExtractionMethod),
-		Confidence:         nullableFloat64ToPgFloat8(report.Confidence),
-		CreatedAt:          FromRequiredTimestamptzToPgTimestamptz(report.CreatedAt),
-		UpdatedAt:          FromRequiredTimestamptzToPgTimestamptz(report.UpdatedAt),
+	row, err := r.queries.CreateExamDocumentText(ctx, examsqlc.CreateExamDocumentTextParams{
+		ID:                 documentText.ID,
+		ExamDocumentID:     FromNullableUUIDToPgUUID(documentText.ExamDocumentID),
+		PatientID:          documentText.PatientID,
+		UploadedByUserID:   documentText.UploadedByUserID,
+		Category:           string(documentText.Category),
+		Title:              FromNullableStringToPgText(documentText.Title),
+		Modality:           FromNullableStringToPgText(documentText.Modality),
+		BodySite:           FromNullableStringToPgText(documentText.BodySite),
+		PerformedAt:        FromNullableTimestamptzToPgTimestamptz(documentText.PerformedAt),
+		FacilityName:       FromNullableStringToPgText(documentText.FacilityName),
+		InterpretingDoctor: FromNullableStringToPgText(documentText.InterpretingDoctor),
+		Text:               documentText.Text,
+		Conclusion:         FromNullableStringToPgText(documentText.Conclusion),
+		ExtractionMethod:   FromNullableStringToPgText(documentText.ExtractionMethod),
+		Confidence:         nullableFloat64ToPgFloat8(documentText.Confidence),
+		CreatedAt:          FromRequiredTimestamptzToPgTimestamptz(documentText.CreatedAt),
+		UpdatedAt:          FromRequiredTimestamptzToPgTimestamptz(documentText.UpdatedAt),
 	})
 	if err != nil {
 		return err
 	}
 
-	*report = mapExamReportRow(row)
+	*documentText = mapExamDocumentTextRow(row)
 	return nil
 }
 
-func (r *ExamsRepository) FindReportByDocumentID(ctx context.Context, documentID uuid.UUID) (*exams.ExamReport, error) {
-	row, err := r.queries.GetExamReportByDocumentID(ctx, FromNullableUUIDToPgUUID(&documentID))
+func (r *ExamsRepository) FindDocumentTextByDocumentID(ctx context.Context, documentID uuid.UUID) (*exams.ExamDocumentText, error) {
+	row, err := r.queries.GetExamDocumentTextByDocumentID(ctx, FromNullableUUIDToPgUUID(&documentID))
 	if err != nil {
 		if IsPgNotFound(err) {
 			return nil, nil
@@ -196,12 +197,12 @@ func (r *ExamsRepository) FindReportByDocumentID(ctx context.Context, documentID
 		return nil, err
 	}
 
-	report := mapExamReportRow(row)
-	return &report, nil
+	documentText := mapExamDocumentTextRow(row)
+	return &documentText, nil
 }
 
-func (r *ExamsRepository) ListReportsByPatient(ctx context.Context, patientID uuid.UUID, limit, offset int) ([]exams.ExamReport, error) {
-	rows, err := r.queries.ListExamReportsByPatientID(ctx, examsqlc.ListExamReportsByPatientIDParams{
+func (r *ExamsRepository) ListDocumentTextsByPatient(ctx context.Context, patientID uuid.UUID, limit, offset int) ([]exams.ExamDocumentText, error) {
+	rows, err := r.queries.ListExamDocumentTextsByPatientID(ctx, examsqlc.ListExamDocumentTextsByPatientIDParams{
 		PatientID: patientID,
 		Limit:     int32(limit),
 		Offset:    int32(offset),
@@ -210,12 +211,12 @@ func (r *ExamsRepository) ListReportsByPatient(ctx context.Context, patientID uu
 		return nil, err
 	}
 
-	reports := make([]exams.ExamReport, 0, len(rows))
+	documentTexts := make([]exams.ExamDocumentText, 0, len(rows))
 	for _, row := range rows {
-		reports = append(reports, mapExamReportRow(row))
+		documentTexts = append(documentTexts, mapExamDocumentTextRow(row))
 	}
 
-	return reports, nil
+	return documentTexts, nil
 }
 
 func mapExamDocumentRow(row examsqlc.ExamDocument) exams.ExamDocument {
@@ -237,8 +238,8 @@ func mapExamDocumentRow(row examsqlc.ExamDocument) exams.ExamDocument {
 	}
 }
 
-func mapExamReportRow(row examsqlc.ExamReport) exams.ExamReport {
-	return exams.ExamReport{
+func mapExamDocumentTextRow(row examsqlc.ExamDocumentText) exams.ExamDocumentText {
+	return exams.ExamDocumentText{
 		ID:                 row.ID,
 		ExamDocumentID:     FromPgUUIDToNullableUUID(row.ExamDocumentID),
 		PatientID:          row.PatientID,
@@ -250,7 +251,7 @@ func mapExamReportRow(row examsqlc.ExamReport) exams.ExamReport {
 		PerformedAt:        FromPgTimestamptzToNullableTimestamptz(row.PerformedAt),
 		FacilityName:       FromPgTextToNullableString(row.FacilityName),
 		InterpretingDoctor: FromPgTextToNullableString(row.InterpretingDoctor),
-		ReportText:         row.ReportText,
+		Text:               row.Text,
 		Conclusion:         FromPgTextToNullableString(row.Conclusion),
 		ExtractionMethod:   FromPgTextToNullableString(row.ExtractionMethod),
 		Confidence:         pgFloat8ToNullableFloat64(row.Confidence),

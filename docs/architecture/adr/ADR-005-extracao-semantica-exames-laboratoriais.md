@@ -179,7 +179,7 @@ Mesmo com extrator semantico, a aplicacao deve preservar texto bruto e aplicar v
 1. Remover o pacote experimental `internal/domain/labparser`.
 2. Consolidar o contrato interno de extracao laboratorial.
 3. Garantir que `POST /v1/patients/:id/exames` usa o mesmo caminho estruturado de labs para documentos laboratoriais.
-4. Persistir vinculo entre `exam_documents`, `exam_reports` e `lab_reports`.
+4. Persistir vinculo entre `exam_documents`, `exam_document_texts` e `lab_reports`.
 5. Exibir no Flutter os itens laboratoriais estruturados quando existirem.
 6. Adicionar validacoes deterministicas leves apos a extracao.
 7. Adicionar observabilidade para taxa de sucesso, falha parcial e documentos que precisam revisao.

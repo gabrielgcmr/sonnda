@@ -1,3 +1,4 @@
+// internal/domain/entity/exams/exam_document_text.go
 package exams
 
 import (
@@ -7,7 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type ExamReport struct {
+type ExamDocumentText struct {
 	ID                 uuid.UUID  `json:"id"`
 	ExamDocumentID     *uuid.UUID `json:"exam_document_id,omitempty"`
 	PatientID          uuid.UUID  `json:"patient_id"`
@@ -19,7 +20,7 @@ type ExamReport struct {
 	PerformedAt        *time.Time `json:"performed_at,omitempty"`
 	FacilityName       *string    `json:"facility_name,omitempty"`
 	InterpretingDoctor *string    `json:"interpreting_doctor,omitempty"`
-	ReportText         string     `json:"report_text"`
+	Text               string     `json:"text"`
 	Conclusion         *string    `json:"conclusion,omitempty"`
 	ExtractionMethod   *string    `json:"extraction_method,omitempty"`
 	Confidence         *float64   `json:"confidence,omitempty"`
@@ -27,13 +28,13 @@ type ExamReport struct {
 	UpdatedAt          time.Time  `json:"updated_at"`
 }
 
-func NewExamReport(
+func NewExamDocumentText(
 	examDocumentID *uuid.UUID,
 	patientID uuid.UUID,
 	uploadedByUserID uuid.UUID,
 	category ExamType,
-	reportText string,
-) (*ExamReport, error) {
+	text string,
+) (*ExamDocumentText, error) {
 	if patientID == uuid.Nil {
 		return nil, ErrInvalidPatientID
 	}
@@ -42,30 +43,30 @@ func NewExamReport(
 	}
 
 	now := time.Now().UTC()
-	report := &ExamReport{
+	documentText := &ExamDocumentText{
 		ID:               uuid.Must(uuid.NewV7()),
 		ExamDocumentID:   examDocumentID,
 		PatientID:        patientID,
 		UploadedByUserID: uploadedByUserID,
 		Category:         category,
-		ReportText:       reportText,
+		Text:             text,
 		CreatedAt:        now,
 		UpdatedAt:        now,
 	}
 
-	if err := report.NormalizeAndValidate(); err != nil {
+	if err := documentText.NormalizeAndValidate(); err != nil {
 		return nil, err
 	}
 
-	return report, nil
+	return documentText, nil
 }
 
-func (r *ExamReport) NormalizeAndValidate() error {
+func (r *ExamDocumentText) NormalizeAndValidate() error {
 	if r == nil {
-		return ErrInvalidExamReport
+		return ErrInvalidExamDocumentText
 	}
 
-	r.ReportText = strings.TrimSpace(r.ReportText)
+	r.Text = strings.TrimSpace(r.Text)
 	r.Title = trimToNil(r.Title)
 	r.Modality = trimToNil(r.Modality)
 	r.BodySite = trimToNil(r.BodySite)
@@ -80,8 +81,8 @@ func (r *ExamReport) NormalizeAndValidate() error {
 	if !r.Category.Valid() {
 		return ErrInvalidExamType
 	}
-	if r.ReportText == "" {
-		return ErrInvalidReportText
+	if r.Text == "" {
+		return ErrInvalidText
 	}
 	if r.Confidence != nil && (*r.Confidence < 0 || *r.Confidence > 1) {
 		return ErrInvalidConfidence

@@ -1,3 +1,4 @@
+// internal/application/services/exams/document_text_metadata.go
 package examsvc
 
 import (
@@ -5,25 +6,25 @@ import (
 	"strings"
 )
 
-type reportMetadata struct {
+type documentTextMetadata struct {
 	Title      *string
 	Modality   *string
 	BodySite   *string
 	Conclusion *string
 }
 
-func inferReportMetadata(reportText string) reportMetadata {
-	title := inferReportTitle(reportText)
-	return reportMetadata{
+func inferDocumentTextMetadata(text string) documentTextMetadata {
+	title := inferDocumentTextTitle(text)
+	return documentTextMetadata{
 		Title:      title,
-		Modality:   inferModality(title, reportText),
-		BodySite:   inferBodySite(title, reportText),
-		Conclusion: extractConclusion(reportText),
+		Modality:   inferModality(title, text),
+		BodySite:   inferBodySite(title, text),
+		Conclusion: extractConclusion(text),
 	}
 }
 
-func inferReportTitle(reportText string) *string {
-	for _, line := range reportLines(reportText) {
+func inferDocumentTextTitle(text string) *string {
+	for _, line := range documentTextLines(text) {
 		normalized := normalizeRouteText(line)
 		if looksLikeExamTitle(normalized) {
 			return &line
@@ -108,8 +109,8 @@ func inferBodySite(title *string, reportText string) *string {
 	return nil
 }
 
-func extractConclusion(reportText string) *string {
-	lines := reportLines(reportText)
+func extractConclusion(text string) *string {
+	lines := documentTextLines(text)
 	for index, line := range lines {
 		normalized := normalizeRouteText(strings.TrimSuffix(line, ":"))
 		if normalized != "opiniao" && normalized != "conclusao" && normalized != "impressao diagnostica" {
@@ -163,7 +164,7 @@ func isSectionHeader(normalizedLine string) bool {
 	return false
 }
 
-func reportLines(text string) []string {
+func documentTextLines(text string) []string {
 	rawLines := regexp.MustCompile(`\r?\n`).Split(text, -1)
 	lines := make([]string, 0, len(rawLines))
 	for _, line := range rawLines {

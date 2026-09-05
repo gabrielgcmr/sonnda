@@ -1,4 +1,5 @@
-package documenttext
+// internal/domain/textextraction/extractor.go
+package textextraction
 
 import "context"
 

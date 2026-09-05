@@ -1,3 +1,4 @@
+// internal/domain/entity/exams/errors.go
 package exams
 
 import "errors"
@@ -11,6 +12,6 @@ var (
 	ErrInvalidStatus           = errors.New("invalid exam document status")
 	ErrInvalidExamType         = errors.New("invalid exam type")
 	ErrInvalidConfidence       = errors.New("confidence must be between 0 and 1")
-	ErrInvalidExamReport       = errors.New("invalid exam report")
-	ErrInvalidReportText       = errors.New("report text is required")
+	ErrInvalidExamDocumentText = errors.New("invalid exam document text")
+	ErrInvalidText             = errors.New("text is required")
 )

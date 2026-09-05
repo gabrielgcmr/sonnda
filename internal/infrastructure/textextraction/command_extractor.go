@@ -1,4 +1,5 @@
-package documenttext
+// internal/infrastructure/textextraction/command_extractor.go
+package textextraction
 
 import (
 	"context"
@@ -8,20 +9,20 @@ import (
 	"strings"
 	"time"
 
-	domaindoc "github.com/gabrielgcmr/sonnda/internal/domain/documenttext"
+	domaintext "github.com/gabrielgcmr/sonnda/internal/domain/textextraction"
 )
 
 type CommandExtractor struct {
 	timeout time.Duration
 }
 
-var _ domaindoc.Extractor = (*CommandExtractor)(nil)
+var _ domaintext.Extractor = (*CommandExtractor)(nil)
 
 func NewCommandExtractor() *CommandExtractor {
 	return &CommandExtractor{timeout: 20 * time.Second}
 }
 
-func (e *CommandExtractor) Extract(ctx context.Context, input domaindoc.ExtractInput) (*domaindoc.ExtractOutput, error) {
+func (e *CommandExtractor) Extract(ctx context.Context, input domaintext.ExtractInput) (*domaintext.ExtractOutput, error) {
 	if strings.TrimSpace(input.LocalPath) == "" {
 		return nil, errors.New("local path is required")
 	}
@@ -36,22 +37,22 @@ func (e *CommandExtractor) Extract(ctx context.Context, input domaindoc.ExtractI
 	}
 }
 
-func (e *CommandExtractor) extractPDF(ctx context.Context, localPath string) (*domaindoc.ExtractOutput, error) {
+func (e *CommandExtractor) extractPDF(ctx context.Context, localPath string) (*domaintext.ExtractOutput, error) {
 	text, err := e.run(ctx, "pdftotext", localPath, "-")
 	if err != nil {
 		return nil, err
 	}
-	if !domaindoc.IsUsableText(text) {
+	if !domaintext.IsUsableText(text) {
 		return nil, errors.New("pdf text is not usable")
 	}
 
-	return &domaindoc.ExtractOutput{
+	return &domaintext.ExtractOutput{
 		Text:   text,
 		Method: "pdf_text",
 	}, nil
 }
 
-func (e *CommandExtractor) extractImage(ctx context.Context, localPath string) (*domaindoc.ExtractOutput, error) {
+func (e *CommandExtractor) extractImage(ctx context.Context, localPath string) (*domaintext.ExtractOutput, error) {
 	text, err := e.run(ctx, "tesseract", localPath, "stdout", "-l", "por+eng")
 	if err != nil {
 		// Alguns ambientes nao possuem os idiomas instalados.
@@ -60,11 +61,11 @@ func (e *CommandExtractor) extractImage(ctx context.Context, localPath string) (
 	if err != nil {
 		return nil, err
 	}
-	if !domaindoc.IsUsableText(text) {
+	if !domaintext.IsUsableText(text) {
 		return nil, errors.New("ocr text is not usable")
 	}
 
-	return &domaindoc.ExtractOutput{
+	return &domaintext.ExtractOutput{
 		Text:   text,
 		Method: "ocr",
 	}, nil

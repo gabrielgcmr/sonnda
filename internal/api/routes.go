@@ -1,4 +1,5 @@
 // internal/api/routes.go
+// internal/api/routes.go
 package api
 
 import (
@@ -98,7 +99,8 @@ func SetupRoutes(
 			exams := patients.Group("/:id/exames")
 			{
 				exams.GET("", deps.ExamsHandler.ListExamDocuments)
-				exams.GET("/reports", deps.ExamsHandler.ListExamReports)
+				exams.GET("/document-texts", deps.ExamsHandler.ListExamDocumentTexts)
+				exams.GET("/reports", deps.ExamsHandler.ListExamDocumentTexts)
 				exams.POST("", deps.ExamsHandler.UploadExamDocument)
 			}
 

@@ -1,4 +1,5 @@
-package documenttext
+// internal/domain/textextraction/quality.go
+package textextraction
 
 import "strings"
 

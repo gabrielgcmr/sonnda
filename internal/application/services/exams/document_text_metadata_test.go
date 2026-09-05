@@ -1,3 +1,4 @@
+// internal/application/services/exams/document_text_metadata_test.go
 package examsvc
 
 import (
@@ -5,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestInferReportMetadata_UrinaryUltrasound(t *testing.T) {
+func TestInferDocumentTextMetadata_UrinaryUltrasound(t *testing.T) {
 	text := `CENTROMEB
 
 ULTRASSONOGRAFIA DO APARELHO URINARIO
@@ -20,7 +21,7 @@ OPINIAO:
 - Achados sugestivos de nefrolitiase nao obstrutiva a direita.
 - Cisto renal a direita.`
 
-	metadata := inferReportMetadata(text)
+	metadata := inferDocumentTextMetadata(text)
 
 	if metadata.Title == nil || *metadata.Title != "ULTRASSONOGRAFIA DO APARELHO URINARIO" {
 		t.Fatalf("unexpected title: %v", metadata.Title)

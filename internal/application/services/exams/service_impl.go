@@ -1,3 +1,4 @@
+// internal/application/services/exams/service_impl.go
 package examsvc
 
 import (
@@ -166,7 +167,7 @@ func (s *service) MarkFailed(ctx context.Context, input MarkExamDocumentFailedIn
 	return mapDomainDocumentToOutput(document), nil
 }
 
-func (s *service) CreateReportFromText(ctx context.Context, input CreateExamReportFromTextInput) (*ExamReportOutput, error) {
+func (s *service) CreateDocumentTextFromText(ctx context.Context, input CreateExamDocumentTextFromTextInput) (*ExamDocumentTextOutput, error) {
 	if input.ExamDocumentID == uuid.Nil {
 		return nil, apperr.Validation("entrada invalida", apperr.Violation{Field: "exam_document_id", Reason: "required"})
 	}
@@ -177,36 +178,36 @@ func (s *service) CreateReportFromText(ctx context.Context, input CreateExamRepo
 		return nil, apperr.Validation("entrada invalida", apperr.Violation{Field: "uploaded_by_user_id", Reason: "required"})
 	}
 
-	if existing, err := s.examsRepo.FindReportByDocumentID(ctx, input.ExamDocumentID); err != nil {
-		return nil, mapRepoError("exams.find_report_by_document_id", err)
+	if existing, err := s.examsRepo.FindDocumentTextByDocumentID(ctx, input.ExamDocumentID); err != nil {
+		return nil, mapRepoError("exams.find_document_text_by_document_id", err)
 	} else if existing != nil {
-		return mapDomainReportToOutput(existing), nil
+		return mapDomainDocumentTextToOutput(existing), nil
 	}
 
-	report, err := exams.NewExamReport(&input.ExamDocumentID, input.PatientID, input.UploadedByUserID, input.Category, input.ReportText)
+	documentText, err := exams.NewExamDocumentText(&input.ExamDocumentID, input.PatientID, input.UploadedByUserID, input.Category, input.Text)
 	if err != nil {
-		return nil, apperr.Validation("entrada invalida", apperr.Violation{Field: "exam_report", Reason: err.Error()})
+		return nil, apperr.Validation("entrada invalida", apperr.Violation{Field: "exam_document_text", Reason: err.Error()})
 	}
 
-	metadata := inferReportMetadata(input.ReportText)
-	report.Title = metadata.Title
-	report.Modality = metadata.Modality
-	report.BodySite = metadata.BodySite
-	report.Conclusion = metadata.Conclusion
-	report.ExtractionMethod = stringToOptional(input.ExtractionMethod)
-	report.Confidence = input.Confidence
-	if err := report.NormalizeAndValidate(); err != nil {
-		return nil, apperr.Validation("entrada invalida", apperr.Violation{Field: "exam_report", Reason: err.Error()})
+	metadata := inferDocumentTextMetadata(input.Text)
+	documentText.Title = metadata.Title
+	documentText.Modality = metadata.Modality
+	documentText.BodySite = metadata.BodySite
+	documentText.Conclusion = metadata.Conclusion
+	documentText.ExtractionMethod = stringToOptional(input.ExtractionMethod)
+	documentText.Confidence = input.Confidence
+	if err := documentText.NormalizeAndValidate(); err != nil {
+		return nil, apperr.Validation("entrada invalida", apperr.Violation{Field: "exam_document_text", Reason: err.Error()})
 	}
 
-	if err := s.examsRepo.CreateReport(ctx, report); err != nil {
-		return nil, mapRepoError("exams.create_report", err)
+	if err := s.examsRepo.CreateDocumentText(ctx, documentText); err != nil {
+		return nil, mapRepoError("exams.create_document_text", err)
 	}
 
-	return mapDomainReportToOutput(report), nil
+	return mapDomainDocumentTextToOutput(documentText), nil
 }
 
-func (s *service) ListReportsByPatient(ctx context.Context, patientID uuid.UUID, limit, offset int) ([]ExamReportOutput, error) {
+func (s *service) ListDocumentTextsByPatient(ctx context.Context, patientID uuid.UUID, limit, offset int) ([]ExamDocumentTextOutput, error) {
 	if patientID == uuid.Nil {
 		return nil, apperr.Validation("entrada invalida", apperr.Violation{Field: "patient_id", Reason: "required"})
 	}
@@ -219,14 +220,14 @@ func (s *service) ListReportsByPatient(ctx context.Context, patientID uuid.UUID,
 		return nil, patientNotFound()
 	}
 
-	reports, err := s.examsRepo.ListReportsByPatient(ctx, patientID, limit, offset)
+	documentTexts, err := s.examsRepo.ListDocumentTextsByPatient(ctx, patientID, limit, offset)
 	if err != nil {
-		return nil, mapRepoError("exams.list_reports_by_patient", err)
+		return nil, mapRepoError("exams.list_document_texts_by_patient", err)
 	}
 
-	out := make([]ExamReportOutput, 0, len(reports))
-	for _, report := range reports {
-		out = append(out, *mapDomainReportToOutput(&report))
+	out := make([]ExamDocumentTextOutput, 0, len(documentTexts))
+	for _, documentText := range documentTexts {
+		out = append(out, *mapDomainDocumentTextToOutput(&documentText))
 	}
 
 	return out, nil
@@ -250,25 +251,25 @@ func mapDomainDocumentToOutput(document *exams.ExamDocument) *ExamDocumentOutput
 	}
 }
 
-func mapDomainReportToOutput(report *exams.ExamReport) *ExamReportOutput {
-	return &ExamReportOutput{
-		ID:                 report.ID,
-		ExamDocumentID:     report.ExamDocumentID,
-		PatientID:          report.PatientID,
-		UploadedByUserID:   report.UploadedByUserID,
-		Category:           report.Category,
-		Title:              report.Title,
-		Modality:           report.Modality,
-		BodySite:           report.BodySite,
-		PerformedAt:        report.PerformedAt,
-		FacilityName:       report.FacilityName,
-		InterpretingDoctor: report.InterpretingDoctor,
-		ReportText:         report.ReportText,
-		Conclusion:         report.Conclusion,
-		ExtractionMethod:   report.ExtractionMethod,
-		Confidence:         report.Confidence,
-		CreatedAt:          report.CreatedAt,
-		UpdatedAt:          report.UpdatedAt,
+func mapDomainDocumentTextToOutput(documentText *exams.ExamDocumentText) *ExamDocumentTextOutput {
+	return &ExamDocumentTextOutput{
+		ID:                 documentText.ID,
+		ExamDocumentID:     documentText.ExamDocumentID,
+		PatientID:          documentText.PatientID,
+		UploadedByUserID:   documentText.UploadedByUserID,
+		Category:           documentText.Category,
+		Title:              documentText.Title,
+		Modality:           documentText.Modality,
+		BodySite:           documentText.BodySite,
+		PerformedAt:        documentText.PerformedAt,
+		FacilityName:       documentText.FacilityName,
+		InterpretingDoctor: documentText.InterpretingDoctor,
+		Text:               documentText.Text,
+		Conclusion:         documentText.Conclusion,
+		ExtractionMethod:   documentText.ExtractionMethod,
+		Confidence:         documentText.Confidence,
+		CreatedAt:          documentText.CreatedAt,
+		UpdatedAt:          documentText.UpdatedAt,
 	}
 }
 

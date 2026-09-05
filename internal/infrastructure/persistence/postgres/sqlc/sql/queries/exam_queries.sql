@@ -63,8 +63,8 @@ SET
 WHERE id = $1
 RETURNING *;
 
--- name: CreateExamReport :one
-INSERT INTO exam_reports (
+-- name: CreateExamDocumentText :one
+INSERT INTO exam_document_texts (
     id,
     exam_document_id,
     patient_id,
@@ -76,7 +76,7 @@ INSERT INTO exam_reports (
     performed_at,
     facility_name,
     interpreting_doctor,
-    report_text,
+    text,
     conclusion,
     extraction_method,
     confidence,
@@ -88,19 +88,19 @@ INSERT INTO exam_reports (
 )
 RETURNING *;
 
--- name: GetExamReportByID :one
+-- name: GetExamDocumentTextByID :one
 SELECT *
-FROM exam_reports
+FROM exam_document_texts
 WHERE id = $1;
 
--- name: GetExamReportByDocumentID :one
+-- name: GetExamDocumentTextByDocumentID :one
 SELECT *
-FROM exam_reports
+FROM exam_document_texts
 WHERE exam_document_id = $1;
 
--- name: ListExamReportsByPatientID :many
+-- name: ListExamDocumentTextsByPatientID :many
 SELECT *
-FROM exam_reports
+FROM exam_document_texts
 WHERE patient_id = $1
 ORDER BY performed_at DESC NULLS LAST, created_at DESC
 LIMIT $2 OFFSET $3;

@@ -1,4 +1,5 @@
-package documenttext
+// internal/domain/textextraction/quality_test.go
+package textextraction
 
 import "testing"
 

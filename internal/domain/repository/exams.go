@@ -1,3 +1,4 @@
+// internal/domain/repository/exams.go
 package repository
 
 import (
@@ -22,7 +23,7 @@ type Exams interface {
 		extractedText *string,
 	) (*exams.ExamDocument, error)
 	MarkFailed(ctx context.Context, id uuid.UUID, errorMessage string) (*exams.ExamDocument, error)
-	CreateReport(ctx context.Context, report *exams.ExamReport) error
-	FindReportByDocumentID(ctx context.Context, documentID uuid.UUID) (*exams.ExamReport, error)
-	ListReportsByPatient(ctx context.Context, patientID uuid.UUID, limit, offset int) ([]exams.ExamReport, error)
+	CreateDocumentText(ctx context.Context, documentText *exams.ExamDocumentText) error
+	FindDocumentTextByDocumentID(ctx context.Context, documentID uuid.UUID) (*exams.ExamDocumentText, error)
+	ListDocumentTextsByPatient(ctx context.Context, patientID uuid.UUID, limit, offset int) ([]exams.ExamDocumentText, error)
 }

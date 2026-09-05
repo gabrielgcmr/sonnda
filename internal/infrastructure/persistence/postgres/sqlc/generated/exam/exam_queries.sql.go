@@ -88,8 +88,8 @@ func (q *Queries) CreateExamDocument(ctx context.Context, arg CreateExamDocument
 	return i, err
 }
 
-const createExamReport = `-- name: CreateExamReport :one
-INSERT INTO exam_reports (
+const createExamDocumentText = `-- name: CreateExamDocumentText :one
+INSERT INTO exam_document_texts (
     id,
     exam_document_id,
     patient_id,
@@ -101,7 +101,7 @@ INSERT INTO exam_reports (
     performed_at,
     facility_name,
     interpreting_doctor,
-    report_text,
+    text,
     conclusion,
     extraction_method,
     confidence,
@@ -111,10 +111,10 @@ INSERT INTO exam_reports (
     $1, $2, $3, $4, $5, $6, $7, $8, $9,
     $10, $11, $12, $13, $14, $15, $16, $17
 )
-RETURNING id, exam_document_id, patient_id, uploaded_by_user_id, category, title, modality, body_site, performed_at, facility_name, interpreting_doctor, report_text, conclusion, extraction_method, confidence, created_at, updated_at
+RETURNING id, exam_document_id, patient_id, uploaded_by_user_id, category, title, modality, body_site, performed_at, facility_name, interpreting_doctor, text, conclusion, extraction_method, confidence, created_at, updated_at
 `
 
-type CreateExamReportParams struct {
+type CreateExamDocumentTextParams struct {
 	ID                 uuid.UUID          `json:"id"`
 	ExamDocumentID     pgtype.UUID        `json:"exam_document_id"`
 	PatientID          uuid.UUID          `json:"patient_id"`
@@ -126,7 +126,7 @@ type CreateExamReportParams struct {
 	PerformedAt        pgtype.Timestamptz `json:"performed_at"`
 	FacilityName       pgtype.Text        `json:"facility_name"`
 	InterpretingDoctor pgtype.Text        `json:"interpreting_doctor"`
-	ReportText         string             `json:"report_text"`
+	Text               string             `json:"text"`
 	Conclusion         pgtype.Text        `json:"conclusion"`
 	ExtractionMethod   pgtype.Text        `json:"extraction_method"`
 	Confidence         pgtype.Float8      `json:"confidence"`
@@ -134,8 +134,8 @@ type CreateExamReportParams struct {
 	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
 }
 
-func (q *Queries) CreateExamReport(ctx context.Context, arg CreateExamReportParams) (ExamReport, error) {
-	row := q.db.QueryRow(ctx, createExamReport,
+func (q *Queries) CreateExamDocumentText(ctx context.Context, arg CreateExamDocumentTextParams) (ExamDocumentText, error) {
+	row := q.db.QueryRow(ctx, createExamDocumentText,
 		arg.ID,
 		arg.ExamDocumentID,
 		arg.PatientID,
@@ -147,14 +147,14 @@ func (q *Queries) CreateExamReport(ctx context.Context, arg CreateExamReportPara
 		arg.PerformedAt,
 		arg.FacilityName,
 		arg.InterpretingDoctor,
-		arg.ReportText,
+		arg.Text,
 		arg.Conclusion,
 		arg.ExtractionMethod,
 		arg.Confidence,
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
-	var i ExamReport
+	var i ExamDocumentText
 	err := row.Scan(
 		&i.ID,
 		&i.ExamDocumentID,
@@ -167,7 +167,7 @@ func (q *Queries) CreateExamReport(ctx context.Context, arg CreateExamReportPara
 		&i.PerformedAt,
 		&i.FacilityName,
 		&i.InterpretingDoctor,
-		&i.ReportText,
+		&i.Text,
 		&i.Conclusion,
 		&i.ExtractionMethod,
 		&i.Confidence,
@@ -205,15 +205,15 @@ func (q *Queries) GetExamDocumentByID(ctx context.Context, id uuid.UUID) (ExamDo
 	return i, err
 }
 
-const getExamReportByDocumentID = `-- name: GetExamReportByDocumentID :one
-SELECT id, exam_document_id, patient_id, uploaded_by_user_id, category, title, modality, body_site, performed_at, facility_name, interpreting_doctor, report_text, conclusion, extraction_method, confidence, created_at, updated_at
-FROM exam_reports
+const getExamDocumentTextByDocumentID = `-- name: GetExamDocumentTextByDocumentID :one
+SELECT id, exam_document_id, patient_id, uploaded_by_user_id, category, title, modality, body_site, performed_at, facility_name, interpreting_doctor, text, conclusion, extraction_method, confidence, created_at, updated_at
+FROM exam_document_texts
 WHERE exam_document_id = $1
 `
 
-func (q *Queries) GetExamReportByDocumentID(ctx context.Context, examDocumentID pgtype.UUID) (ExamReport, error) {
-	row := q.db.QueryRow(ctx, getExamReportByDocumentID, examDocumentID)
-	var i ExamReport
+func (q *Queries) GetExamDocumentTextByDocumentID(ctx context.Context, examDocumentID pgtype.UUID) (ExamDocumentText, error) {
+	row := q.db.QueryRow(ctx, getExamDocumentTextByDocumentID, examDocumentID)
+	var i ExamDocumentText
 	err := row.Scan(
 		&i.ID,
 		&i.ExamDocumentID,
@@ -226,7 +226,7 @@ func (q *Queries) GetExamReportByDocumentID(ctx context.Context, examDocumentID 
 		&i.PerformedAt,
 		&i.FacilityName,
 		&i.InterpretingDoctor,
-		&i.ReportText,
+		&i.Text,
 		&i.Conclusion,
 		&i.ExtractionMethod,
 		&i.Confidence,
@@ -236,15 +236,15 @@ func (q *Queries) GetExamReportByDocumentID(ctx context.Context, examDocumentID 
 	return i, err
 }
 
-const getExamReportByID = `-- name: GetExamReportByID :one
-SELECT id, exam_document_id, patient_id, uploaded_by_user_id, category, title, modality, body_site, performed_at, facility_name, interpreting_doctor, report_text, conclusion, extraction_method, confidence, created_at, updated_at
-FROM exam_reports
+const getExamDocumentTextByID = `-- name: GetExamDocumentTextByID :one
+SELECT id, exam_document_id, patient_id, uploaded_by_user_id, category, title, modality, body_site, performed_at, facility_name, interpreting_doctor, text, conclusion, extraction_method, confidence, created_at, updated_at
+FROM exam_document_texts
 WHERE id = $1
 `
 
-func (q *Queries) GetExamReportByID(ctx context.Context, id uuid.UUID) (ExamReport, error) {
-	row := q.db.QueryRow(ctx, getExamReportByID, id)
-	var i ExamReport
+func (q *Queries) GetExamDocumentTextByID(ctx context.Context, id uuid.UUID) (ExamDocumentText, error) {
+	row := q.db.QueryRow(ctx, getExamDocumentTextByID, id)
+	var i ExamDocumentText
 	err := row.Scan(
 		&i.ID,
 		&i.ExamDocumentID,
@@ -257,7 +257,7 @@ func (q *Queries) GetExamReportByID(ctx context.Context, id uuid.UUID) (ExamRepo
 		&i.PerformedAt,
 		&i.FacilityName,
 		&i.InterpretingDoctor,
-		&i.ReportText,
+		&i.Text,
 		&i.Conclusion,
 		&i.ExtractionMethod,
 		&i.Confidence,
@@ -265,6 +265,58 @@ func (q *Queries) GetExamReportByID(ctx context.Context, id uuid.UUID) (ExamRepo
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const listExamDocumentTextsByPatientID = `-- name: ListExamDocumentTextsByPatientID :many
+SELECT id, exam_document_id, patient_id, uploaded_by_user_id, category, title, modality, body_site, performed_at, facility_name, interpreting_doctor, text, conclusion, extraction_method, confidence, created_at, updated_at
+FROM exam_document_texts
+WHERE patient_id = $1
+ORDER BY performed_at DESC NULLS LAST, created_at DESC
+LIMIT $2 OFFSET $3
+`
+
+type ListExamDocumentTextsByPatientIDParams struct {
+	PatientID uuid.UUID `json:"patient_id"`
+	Limit     int32     `json:"limit"`
+	Offset    int32     `json:"offset"`
+}
+
+func (q *Queries) ListExamDocumentTextsByPatientID(ctx context.Context, arg ListExamDocumentTextsByPatientIDParams) ([]ExamDocumentText, error) {
+	rows, err := q.db.Query(ctx, listExamDocumentTextsByPatientID, arg.PatientID, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ExamDocumentText
+	for rows.Next() {
+		var i ExamDocumentText
+		if err := rows.Scan(
+			&i.ID,
+			&i.ExamDocumentID,
+			&i.PatientID,
+			&i.UploadedByUserID,
+			&i.Category,
+			&i.Title,
+			&i.Modality,
+			&i.BodySite,
+			&i.PerformedAt,
+			&i.FacilityName,
+			&i.InterpretingDoctor,
+			&i.Text,
+			&i.Conclusion,
+			&i.ExtractionMethod,
+			&i.Confidence,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listExamDocumentsByPatientID = `-- name: ListExamDocumentsByPatientID :many
@@ -303,58 +355,6 @@ func (q *Queries) ListExamDocumentsByPatientID(ctx context.Context, arg ListExam
 			&i.Confidence,
 			&i.ExtractedText,
 			&i.ErrorMessage,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listExamReportsByPatientID = `-- name: ListExamReportsByPatientID :many
-SELECT id, exam_document_id, patient_id, uploaded_by_user_id, category, title, modality, body_site, performed_at, facility_name, interpreting_doctor, report_text, conclusion, extraction_method, confidence, created_at, updated_at
-FROM exam_reports
-WHERE patient_id = $1
-ORDER BY performed_at DESC NULLS LAST, created_at DESC
-LIMIT $2 OFFSET $3
-`
-
-type ListExamReportsByPatientIDParams struct {
-	PatientID uuid.UUID `json:"patient_id"`
-	Limit     int32     `json:"limit"`
-	Offset    int32     `json:"offset"`
-}
-
-func (q *Queries) ListExamReportsByPatientID(ctx context.Context, arg ListExamReportsByPatientIDParams) ([]ExamReport, error) {
-	rows, err := q.db.Query(ctx, listExamReportsByPatientID, arg.PatientID, arg.Limit, arg.Offset)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ExamReport
-	for rows.Next() {
-		var i ExamReport
-		if err := rows.Scan(
-			&i.ID,
-			&i.ExamDocumentID,
-			&i.PatientID,
-			&i.UploadedByUserID,
-			&i.Category,
-			&i.Title,
-			&i.Modality,
-			&i.BodySite,
-			&i.PerformedAt,
-			&i.FacilityName,
-			&i.InterpretingDoctor,
-			&i.ReportText,
-			&i.Conclusion,
-			&i.ExtractionMethod,
-			&i.Confidence,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {

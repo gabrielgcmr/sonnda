@@ -30,7 +30,7 @@ CREATE INDEX idx_exam_documents_patient_created_at ON exam_documents(patient_id,
 CREATE INDEX idx_exam_documents_status ON exam_documents(status);
 CREATE INDEX idx_exam_documents_exam_type ON exam_documents(exam_type);
 
-CREATE TABLE exam_reports (
+CREATE TABLE exam_document_texts (
     id                  UUID PRIMARY KEY,
     exam_document_id    UUID UNIQUE REFERENCES exam_documents(id) ON DELETE SET NULL,
     patient_id          UUID NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
@@ -42,21 +42,21 @@ CREATE TABLE exam_reports (
     performed_at        TIMESTAMP WITH TIME ZONE,
     facility_name       TEXT,
     interpreting_doctor TEXT,
-    report_text         TEXT NOT NULL,
+    text                TEXT NOT NULL,
     conclusion          TEXT,
     extraction_method   TEXT,
     confidence          DOUBLE PRECISION,
     created_at          TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
     updated_at          TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
 
-    CONSTRAINT chk_exam_reports_category CHECK (
+    CONSTRAINT chk_exam_document_texts_category CHECK (
         category IN ('laboratory', 'imaging', 'unknown')
     ),
-    CONSTRAINT chk_exam_reports_confidence CHECK (
+    CONSTRAINT chk_exam_document_texts_confidence CHECK (
         confidence IS NULL OR (confidence >= 0 AND confidence <= 1)
     )
 );
 
-CREATE INDEX idx_exam_reports_patient ON exam_reports(patient_id);
-CREATE INDEX idx_exam_reports_patient_created_at ON exam_reports(patient_id, created_at DESC);
-CREATE INDEX idx_exam_reports_category ON exam_reports(category);
+CREATE INDEX idx_exam_document_texts_patient ON exam_document_texts(patient_id);
+CREATE INDEX idx_exam_document_texts_patient_created_at ON exam_document_texts(patient_id, created_at DESC);
+CREATE INDEX idx_exam_document_texts_category ON exam_document_texts(category);

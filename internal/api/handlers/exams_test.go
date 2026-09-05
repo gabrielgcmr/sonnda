@@ -1,3 +1,4 @@
+// internal/api/handlers/exams_test.go
 package handlers
 
 import (
@@ -17,11 +18,11 @@ import (
 )
 
 type fakeExamsService struct {
-	listByPatientCalled bool
-	listReportsCalled   bool
-	patientID           uuid.UUID
-	limit               int
-	offset              int
+	listByPatientCalled     bool
+	listDocumentTextsCalled bool
+	patientID               uuid.UUID
+	limit                   int
+	offset                  int
 }
 
 func (f *fakeExamsService) Create(ctx context.Context, input examsvc.CreateExamDocumentInput) (*examsvc.ExamDocumentOutput, error) {
@@ -48,16 +49,16 @@ func (f *fakeExamsService) MarkFailed(ctx context.Context, input examsvc.MarkExa
 	return nil, nil
 }
 
-func (f *fakeExamsService) CreateReportFromText(ctx context.Context, input examsvc.CreateExamReportFromTextInput) (*examsvc.ExamReportOutput, error) {
+func (f *fakeExamsService) CreateDocumentTextFromText(ctx context.Context, input examsvc.CreateExamDocumentTextFromTextInput) (*examsvc.ExamDocumentTextOutput, error) {
 	return nil, nil
 }
 
-func (f *fakeExamsService) ListReportsByPatient(ctx context.Context, patientID uuid.UUID, limit, offset int) ([]examsvc.ExamReportOutput, error) {
-	f.listReportsCalled = true
+func (f *fakeExamsService) ListDocumentTextsByPatient(ctx context.Context, patientID uuid.UUID, limit, offset int) ([]examsvc.ExamDocumentTextOutput, error) {
+	f.listDocumentTextsCalled = true
 	f.patientID = patientID
 	f.limit = limit
 	f.offset = offset
-	return []examsvc.ExamReportOutput{}, nil
+	return []examsvc.ExamDocumentTextOutput{}, nil
 }
 
 func TestListExamDocuments_UsesServiceWithDefaultPagination(t *testing.T) {
@@ -96,7 +97,7 @@ func TestListExamDocuments_UsesServiceWithDefaultPagination(t *testing.T) {
 	}
 }
 
-func TestListExamReports_UsesService(t *testing.T) {
+func TestListExamDocumentTexts_UsesService(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	svc := &fakeExamsService{}
@@ -107,10 +108,10 @@ func TestListExamReports_UsesService(t *testing.T) {
 		helpers.SetCurrentUser(c, &user.User{ID: uuid.Must(uuid.NewV7()), AccountType: user.AccountTypeBasicCare})
 		c.Next()
 	})
-	r.GET("/patients/:id/exames/reports", h.ListExamReports)
+	r.GET("/patients/:id/exames/document-texts", h.ListExamDocumentTexts)
 
 	id := uuid.Must(uuid.NewV7())
-	req := httptest.NewRequest(http.MethodGet, "/patients/"+id.String()+"/exames/reports", nil)
+	req := httptest.NewRequest(http.MethodGet, "/patients/"+id.String()+"/exames/document-texts", nil)
 	resp := httptest.NewRecorder()
 
 	r.ServeHTTP(resp, req)
@@ -118,8 +119,8 @@ func TestListExamReports_UsesService(t *testing.T) {
 	if resp.Code != http.StatusOK {
 		t.Fatalf("expected status %d, got %d", http.StatusOK, resp.Code)
 	}
-	if !svc.listReportsCalled {
-		t.Fatal("expected ListReportsByPatient to be called")
+	if !svc.listDocumentTextsCalled {
+		t.Fatal("expected ListDocumentTextsByPatient to be called")
 	}
 }
 
@@ -153,7 +154,7 @@ func TestListExamDocuments_UsesQueryPagination(t *testing.T) {
 	}
 }
 
-func TestBuildLabReportText_FormatsStructuredResults(t *testing.T) {
+func TestBuildLabText_FormatsStructuredResults(t *testing.T) {
 	reportDate := time.Date(2026, time.August, 31, 0, 0, 0, 0, time.UTC)
 	patientName := "Gabriel Cactus Moreno Reboucas"
 	labName := "Laboratorio Exemplo"

@@ -1,3 +1,4 @@
+// internal/application/services/exams/dto.go
 package examsvc
 
 import (
@@ -26,12 +27,12 @@ type MarkExamDocumentFailedInput struct {
 	ErrorMessage string
 }
 
-type CreateExamReportFromTextInput struct {
+type CreateExamDocumentTextFromTextInput struct {
 	ExamDocumentID   uuid.UUID
 	PatientID        uuid.UUID
 	UploadedByUserID uuid.UUID
 	Category         exams.ExamType
-	ReportText       string
+	Text             string
 	ExtractionMethod string
 	Confidence       *float64
 }
@@ -52,7 +53,7 @@ type ExamDocumentOutput struct {
 	UpdatedAt        time.Time            `json:"updated_at"`
 }
 
-type ExamReportOutput struct {
+type ExamDocumentTextOutput struct {
 	ID                 uuid.UUID      `json:"id"`
 	ExamDocumentID     *uuid.UUID     `json:"exam_document_id,omitempty"`
 	PatientID          uuid.UUID      `json:"patient_id"`
@@ -64,7 +65,7 @@ type ExamReportOutput struct {
 	PerformedAt        *time.Time     `json:"performed_at,omitempty"`
 	FacilityName       *string        `json:"facility_name,omitempty"`
 	InterpretingDoctor *string        `json:"interpreting_doctor,omitempty"`
-	ReportText         string         `json:"report_text"`
+	Text               string         `json:"text"`
 	Conclusion         *string        `json:"conclusion,omitempty"`
 	ExtractionMethod   *string        `json:"extraction_method,omitempty"`
 	Confidence         *float64       `json:"confidence,omitempty"`

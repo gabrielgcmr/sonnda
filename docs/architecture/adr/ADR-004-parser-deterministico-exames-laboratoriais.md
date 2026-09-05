@@ -39,7 +39,7 @@ arquivo
   -> dados estruturados no banco
 ```
 
-Para laboratorios, o sistema deve priorizar dados estruturados em vez de exibir apenas `report_text`.
+Para laboratorios, o sistema deve priorizar dados estruturados em vez de exibir apenas `text`.
 
 O texto bruto extraido continua sendo armazenado para auditoria, reprocessamento e fallback de leitura humana. O parser nunca deve depender da posicao fixa de linhas no PDF; ele deve ser baseado em conteudo e sinais textuais.
 
@@ -167,7 +167,7 @@ Rejeitado como caminho principal nesta etapa.
 
 Apesar de ser mais flexivel, aumenta custo, latencia e dificuldade de auditoria. Continua sendo opcao futura para fallback quando OCR + parser deterministico falharem.
 
-### Salvar apenas texto corrido em `exam_reports`
+### Salvar apenas texto corrido em `exam_document_texts`
 
 Rejeitado para laboratorio.
 

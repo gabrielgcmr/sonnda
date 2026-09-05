@@ -1,3 +1,4 @@
+// internal/application/services/exams/service.go
 package examsvc
 
 import (
@@ -12,6 +13,6 @@ type Service interface {
 	ListByPatient(ctx context.Context, patientID uuid.UUID, limit, offset int) ([]ExamDocumentOutput, error)
 	RouteDocument(ctx context.Context, input RouteExamDocumentInput) (*ExamDocumentOutput, error)
 	MarkFailed(ctx context.Context, input MarkExamDocumentFailedInput) (*ExamDocumentOutput, error)
-	CreateReportFromText(ctx context.Context, input CreateExamReportFromTextInput) (*ExamReportOutput, error)
-	ListReportsByPatient(ctx context.Context, patientID uuid.UUID, limit, offset int) ([]ExamReportOutput, error)
+	CreateDocumentTextFromText(ctx context.Context, input CreateExamDocumentTextFromTextInput) (*ExamDocumentTextOutput, error)
+	ListDocumentTextsByPatient(ctx context.Context, patientID uuid.UUID, limit, offset int) ([]ExamDocumentTextOutput, error)
 }

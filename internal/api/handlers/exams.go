@@ -1,3 +1,4 @@
+// internal/api/handlers/exams.go
 package handlers
 
 import (
@@ -15,10 +16,10 @@ import (
 	examsvc "github.com/gabrielgcmr/sonnda/internal/application/services/exams"
 	labsvc "github.com/gabrielgcmr/sonnda/internal/application/services/labs"
 	labsuc "github.com/gabrielgcmr/sonnda/internal/application/usecase/labs"
-	domaindoc "github.com/gabrielgcmr/sonnda/internal/domain/documenttext"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/exams"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/rbac"
 	domainstorage "github.com/gabrielgcmr/sonnda/internal/domain/storage"
+	domaintext "github.com/gabrielgcmr/sonnda/internal/domain/textextraction"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -28,7 +29,7 @@ type ExamsHandler struct {
 	svc           examsvc.Service
 	createLabUC   labsuc.CreateLabReportFromDocumentUseCase
 	storage       domainstorage.FileStorageService
-	textExtractor domaindoc.Extractor
+	textExtractor domaintext.Extractor
 	authz         authorization.Authorizer
 }
 
@@ -36,7 +37,7 @@ func NewExams(
 	svc examsvc.Service,
 	createLabUC labsuc.CreateLabReportFromDocumentUseCase,
 	storageClient domainstorage.FileStorageService,
-	textExtractor domaindoc.Extractor,
+	textExtractor domaintext.Extractor,
 	authz authorization.Authorizer,
 ) *ExamsHandler {
 	return &ExamsHandler{
@@ -77,7 +78,7 @@ func (h *ExamsHandler) ListExamDocuments(c *gin.Context) {
 	c.JSON(http.StatusOK, list)
 }
 
-func (h *ExamsHandler) ListExamReports(c *gin.Context) {
+func (h *ExamsHandler) ListExamDocumentTexts(c *gin.Context) {
 	currentUser := helpers.MustGetCurrentUser(c)
 
 	patientID, ok := parsePatientIDParam(c, "id")
@@ -97,7 +98,7 @@ func (h *ExamsHandler) ListExamReports(c *gin.Context) {
 		return
 	}
 
-	list, err := h.svc.ListReportsByPatient(c.Request.Context(), patientID, limit, offset)
+	list, err := h.svc.ListDocumentTextsByPatient(c.Request.Context(), patientID, limit, offset)
 	if err != nil {
 		presenter.ErrorResponder(c, err)
 		return
@@ -151,17 +152,17 @@ func (h *ExamsHandler) UploadExamDocument(c *gin.Context) {
 		output = routed.document
 		if h.isLaboratoryDocument(output) {
 			if labReport := h.createLabReportIfNeeded(c, output, upload); labReport != nil {
-				h.createExamReportFromLab(c, output, labReport)
+				h.createExamDocumentTextFromLab(c, output, labReport)
 			}
 		} else {
-			h.createExamReportIfPossible(c, output, routed.extracted)
+			h.createExamDocumentTextIfPossible(c, output, routed.extracted)
 		}
 	}
 
 	c.JSON(http.StatusCreated, output)
 }
 
-func (h *ExamsHandler) createExamReportIfPossible(c *gin.Context, document *examsvc.ExamDocumentOutput, extracted *domaindoc.ExtractOutput) {
+func (h *ExamsHandler) createExamDocumentTextIfPossible(c *gin.Context, document *examsvc.ExamDocumentOutput, extracted *domaintext.ExtractOutput) {
 	if document == nil || extracted == nil {
 		return
 	}
@@ -171,22 +172,22 @@ func (h *ExamsHandler) createExamReportIfPossible(c *gin.Context, document *exam
 		category = *document.ExamType
 	}
 
-	_, err := h.svc.CreateReportFromText(c.Request.Context(), examsvc.CreateExamReportFromTextInput{
+	_, err := h.svc.CreateDocumentTextFromText(c.Request.Context(), examsvc.CreateExamDocumentTextFromTextInput{
 		ExamDocumentID:   document.ID,
 		PatientID:        document.PatientID,
 		UploadedByUserID: document.UploadedByUserID,
 		Category:         category,
-		ReportText:       extracted.Text,
+		Text:             extracted.Text,
 		ExtractionMethod: extracted.Method,
 		Confidence:       document.Confidence,
 	})
 	if err != nil {
-		// O texto fica em exam_documents; retry pode criar exam_reports depois.
+		// O texto fica em exam_documents; retry pode criar exam_document_texts depois.
 		return
 	}
 }
 
-func (h *ExamsHandler) createExamReportFromLab(c *gin.Context, document *examsvc.ExamDocumentOutput, labReport *labsvc.LabReportOutput) {
+func (h *ExamsHandler) createExamDocumentTextFromLab(c *gin.Context, document *examsvc.ExamDocumentOutput, labReport *labsvc.LabReportOutput) {
 	if document == nil || labReport == nil {
 		return
 	}
@@ -197,12 +198,12 @@ func (h *ExamsHandler) createExamReportFromLab(c *gin.Context, document *examsvc
 	}
 
 	method := "lab_document_ai"
-	_, err := h.svc.CreateReportFromText(c.Request.Context(), examsvc.CreateExamReportFromTextInput{
+	_, err := h.svc.CreateDocumentTextFromText(c.Request.Context(), examsvc.CreateExamDocumentTextFromTextInput{
 		ExamDocumentID:   document.ID,
 		PatientID:        document.PatientID,
 		UploadedByUserID: document.UploadedByUserID,
 		Category:         exams.ExamTypeLaboratory,
-		ReportText:       text,
+		Text:             text,
 		ExtractionMethod: method,
 		Confidence:       document.Confidence,
 	})
@@ -353,7 +354,7 @@ func (h *ExamsHandler) handleExamFileUpload(c *gin.Context, patientID uuid.UUID)
 
 type routedExamDocument struct {
 	document  *examsvc.ExamDocumentOutput
-	extracted *domaindoc.ExtractOutput
+	extracted *domaintext.ExtractOutput
 }
 
 func (h *ExamsHandler) extractAndRoute(c *gin.Context, documentID uuid.UUID, upload *uploadedExamFile) *routedExamDocument {
@@ -361,7 +362,7 @@ func (h *ExamsHandler) extractAndRoute(c *gin.Context, documentID uuid.UUID, upl
 		return nil
 	}
 
-	extracted, err := h.textExtractor.Extract(c.Request.Context(), domaindoc.ExtractInput{
+	extracted, err := h.textExtractor.Extract(c.Request.Context(), domaintext.ExtractInput{
 		LocalPath:        upload.localPath,
 		MimeType:         upload.mimeType,
 		OriginalFilename: upload.originalFilename,
