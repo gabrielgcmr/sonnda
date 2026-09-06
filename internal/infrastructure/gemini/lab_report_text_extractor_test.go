@@ -230,6 +230,15 @@ func TestProviderSchemaStripsUnsupportedValidationKeywords(t *testing.T) {
 	}) {
 		t.Fatal("provider schema lost required fields")
 	}
+	properties, ok := providerSchema["properties"].(map[string]any)
+	if !ok {
+		t.Fatal("provider schema lost properties")
+	}
+	for _, key := range []string{"patient_name", "patient_dob", "lab_name", "tests"} {
+		if _, ok := properties[key]; !ok {
+			t.Fatalf("provider schema lost property %s", key)
+		}
+	}
 }
 
 func containsSchemaKey(value any, key string) bool {

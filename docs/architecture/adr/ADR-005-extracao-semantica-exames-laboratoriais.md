@@ -189,7 +189,7 @@ A decisao de usar extracao semantica continua aceita. Este complemento especific
 uma LLM que recebe texto como implementacao alvo, no lugar do Document AI que
 processa o arquivo original. Nao substitui esta ADR nem retoma o parser deterministico.
 
-Gemini 2.5 Flash-Lite e o candidato inicial para avaliacao. O modelo deve ser
+Gemini 3.5 Flash-Lite e o candidato inicial para avaliacao. O modelo deve ser
 configuravel, e sua adocao depende de confirmar disponibilidade, suporte ao schema
 e qualidade nos exames de teste durante a implementacao. Precos e taxas estimadas
 de acerto nao sao garantias nem criterios ja comprovados por esta decisao.
@@ -332,6 +332,14 @@ nao suportadas, enquanto a validacao final permanece no backend. O adaptador tra
 erro do cliente, ausencia de candidato, bloqueio, truncamento, texto vazio, JSON
 invalido e JSON fora do schema. Resposta valida sem itens estruturados retorna
 `needs_review` com aviso. Nenhuma rota foi alterada; avaliacao real segue na 2.3.
+
+**Entrega parcial 2.3 (2026-09-05):** comando local `cmd/lab-extraction-eval`
+criado para avaliar o Gemini real a partir de texto ja extraido. O comando carrega
+somente a configuracao do Gemini, chama `LabReportTextExtractor`, imprime o JSON
+extraido e opcionalmente compara com um `.expected.json`. Ele nao altera banco,
+rotas ou arquivos enviados pelo app. A homologacao da etapa 2.3 ainda exige rodar
+amostras sinteticas ou anonimizadas com credencial real e registrar divergencias,
+latencia e consumo observado.
 
 ### Etapa 3 - Preparacao e preservacao do texto
 

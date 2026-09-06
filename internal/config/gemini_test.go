@@ -22,7 +22,7 @@ func TestGeminiConfigDefaultsWithoutCredentials(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cfg.APIKey != "" || cfg.Model != "gemini-2.5-flash-lite" || cfg.Timeout != 30*time.Second || cfg.MaxInputBytes != 131072 || cfg.MaxOutputTokens != 8192 {
+	if cfg.APIKey != "" || cfg.Model != "gemini-3.5-flash-lite" || cfg.Timeout != 30*time.Second || cfg.MaxInputBytes != 131072 || cfg.MaxOutputTokens != 8192 {
 		t.Fatal("unexpected Gemini defaults")
 	}
 }

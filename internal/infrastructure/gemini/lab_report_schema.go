@@ -47,28 +47,33 @@ func loadLabReportSchemas() (map[string]any, *jsonschema.Schema, error) {
 	if err != nil {
 		return nil, nil, fmt.Errorf("compile lab report schema: %w", err)
 	}
-	providerSchema, ok := toProviderSchema(document).(map[string]any)
+	providerSchema, ok := toProviderSchema(document, "").(map[string]any)
 	if !ok {
 		return nil, nil, fmt.Errorf("provider lab report schema is invalid")
 	}
 	return providerSchema, localSchema, nil
 }
 
-func toProviderSchema(value any) any {
+func toProviderSchema(value any, parentKey string) any {
 	switch typed := value.(type) {
 	case map[string]any:
 		next := make(map[string]any, len(typed))
 		for key, child := range typed {
-			if _, ok := supportedProviderSchemaKeys[key]; !ok {
+			if parentKey != "properties" {
+				if _, ok := supportedProviderSchemaKeys[key]; !ok {
+					continue
+				}
+			}
+			if key == "$schema" {
 				continue
 			}
-			next[key] = toProviderSchema(child)
+			next[key] = toProviderSchema(child, key)
 		}
 		return next
 	case []any:
 		next := make([]any, 0, len(typed))
 		for _, child := range typed {
-			next = append(next, toProviderSchema(child))
+			next = append(next, toProviderSchema(child, parentKey))
 		}
 		return next
 	default:

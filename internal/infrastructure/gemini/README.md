@@ -15,7 +15,7 @@ O cliente seleciona explicitamente `BackendGeminiAPI`, sem alternar para Vertex 
 | Variavel | Padrao | Finalidade |
 | --- | --- | --- |
 | `GEMINI_API_KEY` | Vazio | Credencial somente no backend |
-| `GEMINI_MODEL` | `gemini-2.5-flash-lite` | Modelo candidato, configuravel |
+| `GEMINI_MODEL` | `gemini-3.5-flash-lite` | Modelo candidato, configuravel |
 | `GEMINI_TIMEOUT` | `30s` | Prazo por chamada, no formato de duracao Go |
 | `GEMINI_MAX_INPUT_BYTES` | `131072` | Soma dos bytes UTF-8 de texto, instrucao e schema JSON |
 | `GEMINI_MAX_OUTPUT_TOKENS` | `8192` | Limite de geracao enviado ao SDK |
@@ -73,3 +73,20 @@ Testes cobrem configuracao, limites, preservacao de texto/opcoes, timeout,
 cancelamento, propagacao de erros, prompt, schema enviado ao provedor, validacao
 local e interpretacao de respostas simuladas. A validacao com o modelo real esta
 pendente da etapa 2.3; nenhum arquivo de `samples/` e enviado por esses testes.
+
+## Avaliacao manual
+
+A etapa 2.3 usa o comando local `cmd/lab-extraction-eval` para chamar o Gemini
+real com arquivos `.txt`. Ele nao integra rotas nem banco.
+
+```powershell
+go run ./cmd/lab-extraction-eval -input samples/labs/glicose.txt
+```
+
+Com esperado:
+
+```powershell
+go run ./cmd/lab-extraction-eval -input samples/labs/glicose.txt -expected samples/labs/glicose.expected.json
+```
+
+Usar amostras sinteticas ou anonimizadas na avaliacao inicial.

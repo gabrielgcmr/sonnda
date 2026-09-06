@@ -13,13 +13,27 @@ import (
 )
 
 type CommandExtractor struct {
-	timeout time.Duration
+	timeout           time.Duration
+	requireUsableText bool
+}
+
+type CommandExtractorOptions struct {
+	Timeout           time.Duration
+	RequireUsableText bool
 }
 
 var _ domaintext.Extractor = (*CommandExtractor)(nil)
 
 func NewCommandExtractor() *CommandExtractor {
-	return &CommandExtractor{timeout: 20 * time.Second}
+	return &CommandExtractor{timeout: 20 * time.Second, requireUsableText: true}
+}
+
+func NewCommandExtractorWithOptions(options CommandExtractorOptions) *CommandExtractor {
+	timeout := options.Timeout
+	if timeout <= 0 {
+		timeout = 20 * time.Second
+	}
+	return &CommandExtractor{timeout: timeout, requireUsableText: options.RequireUsableText}
 }
 
 func (e *CommandExtractor) Extract(ctx context.Context, input domaintext.ExtractInput) (*domaintext.ExtractOutput, error) {
@@ -38,17 +52,17 @@ func (e *CommandExtractor) Extract(ctx context.Context, input domaintext.Extract
 }
 
 func (e *CommandExtractor) extractPDF(ctx context.Context, localPath string) (*domaintext.ExtractOutput, error) {
-	text, err := e.run(ctx, "pdftotext", localPath, "-")
+	text, err := e.run(ctx, "pdftotext", "-raw", localPath, "-")
 	if err != nil {
 		return nil, err
 	}
-	if !domaintext.IsUsableText(text) {
+	if e.requireUsableText && !domaintext.IsUsableText(text) {
 		return nil, errors.New("pdf text is not usable")
 	}
 
 	return &domaintext.ExtractOutput{
 		Text:   text,
-		Method: "pdf_text",
+		Method: "pdf_text_raw",
 	}, nil
 }
 
@@ -61,7 +75,7 @@ func (e *CommandExtractor) extractImage(ctx context.Context, localPath string) (
 	if err != nil {
 		return nil, err
 	}
-	if !domaintext.IsUsableText(text) {
+	if e.requireUsableText && !domaintext.IsUsableText(text) {
 		return nil, errors.New("ocr text is not usable")
 	}
 

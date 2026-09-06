@@ -17,6 +17,10 @@ type GeminiConfig struct {
 	MaxOutputTokens int32
 }
 
+func LoadGemini() (GeminiConfig, error) {
+	return loadGeminiConfig()
+}
+
 func loadGeminiConfig() (GeminiConfig, error) {
 	timeout, err := time.ParseDuration(getEnvOrDefault("GEMINI_TIMEOUT", "30s"))
 	if err != nil {
@@ -32,7 +36,7 @@ func loadGeminiConfig() (GeminiConfig, error) {
 	}
 	cfg := GeminiConfig{
 		APIKey:          getEnv("GEMINI_API_KEY"),
-		Model:           getEnvOrDefault("GEMINI_MODEL", "gemini-2.5-flash-lite"),
+		Model:           getEnvOrDefault("GEMINI_MODEL", "gemini-3.5-flash-lite"),
 		Timeout:         timeout,
 		MaxInputBytes:   inputLimit,
 		MaxOutputTokens: int32(outputLimit),

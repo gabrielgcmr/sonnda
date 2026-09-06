@@ -11,6 +11,14 @@ func TestIsUsableText_AcceptsClinicalText(t *testing.T) {
 	}
 }
 
+func TestIsUsableText_AcceptsAccentedLabText(t *testing.T) {
+	text := "Registro do laboratório no conselho. Hemograma completo com hemácias, leucócitos e plaquetas. Material sangue total coletado em tubo EDTA."
+
+	if !IsUsableText(text) {
+		t.Fatal("expected accented lab text to be usable")
+	}
+}
+
 func TestIsUsableText_RejectsShortText(t *testing.T) {
 	if IsUsableText("tomografia") {
 		t.Fatal("expected short text to be rejected")
