@@ -127,6 +127,19 @@ func (s *service) RouteDocument(ctx context.Context, input RouteExamDocumentInpu
 		OriginalFilename: document.OriginalFilename,
 	})
 
+	var reviewMessage *string
+	if input.ProcessingError != nil {
+		route.Status = exams.DocumentStatusNeedsReview
+		message := input.ProcessingError.Message
+		reviewMessage = &message
+	} else if route.Status == exams.DocumentStatusNeedsReview {
+		message := "Nao foi possivel identificar o tipo de exame com seguranca. O documento precisa de revisao."
+		if strings.TrimSpace(input.ExtractedText) == "" {
+			message = "Nao foi possivel ler o texto do documento. Tente enviar uma foto mais nitida ou o PDF original."
+		}
+		reviewMessage = &message
+	}
+
 	updated, err := s.examsRepo.MarkClassified(
 		ctx,
 		input.ID,
@@ -135,6 +148,7 @@ func (s *service) RouteDocument(ctx context.Context, input RouteExamDocumentInpu
 		&extractionMethod,
 		&route.Confidence,
 		&input.ExtractedText,
+		reviewMessage,
 	)
 	if err != nil {
 		return nil, mapRepoError("exams.mark_classified", err)

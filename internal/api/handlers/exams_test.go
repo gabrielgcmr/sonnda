@@ -73,6 +73,13 @@ func (f *fakeExamsService) RouteDocument(ctx context.Context, input examsvc.Rout
 	examType := exams.ExamTypeLaboratory
 	method := input.ExtractionMethod
 	confidence := 0.90
+	status := exams.DocumentStatusProcessed
+	var reviewMessage *string
+	if input.ProcessingError != nil {
+		status = exams.DocumentStatusNeedsReview
+		message := input.ProcessingError.Message
+		reviewMessage = &message
+	}
 	return &examsvc.ExamDocumentOutput{
 		ID:               input.ID,
 		PatientID:        f.createdInput.PatientID,
@@ -80,7 +87,8 @@ func (f *fakeExamsService) RouteDocument(ctx context.Context, input examsvc.Rout
 		StorageURI:       f.createdInput.StorageURI,
 		OriginalFilename: f.createdInput.OriginalFilename,
 		MimeType:         f.createdInput.MimeType,
-		Status:           exams.DocumentStatusProcessed,
+		Status:           status,
+		ErrorMessage:     reviewMessage,
 		ExamType:         &examType,
 		ExtractionMethod: &method,
 		Confidence:       &confidence,

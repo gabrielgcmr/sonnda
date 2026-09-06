@@ -2,9 +2,11 @@
 package handlers
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -22,6 +24,7 @@ import (
 	domainstorage "github.com/gabrielgcmr/sonnda/internal/domain/storage"
 	domaintext "github.com/gabrielgcmr/sonnda/internal/domain/textextraction"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
+	applog "github.com/gabrielgcmr/sonnda/internal/kernel/observability"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -113,6 +116,7 @@ func (h *ExamsHandler) ListExamDocumentTexts(c *gin.Context) {
 // field: file (PDF/JPEG/PNG)
 func (h *ExamsHandler) UploadExamDocument(c *gin.Context) {
 	currentUser := helpers.MustGetCurrentUser(c)
+	log := applog.FromContext(c.Request.Context())
 
 	patientID, ok := parsePatientIDParam(c, "id")
 	if !ok {
@@ -128,6 +132,11 @@ func (h *ExamsHandler) UploadExamDocument(c *gin.Context) {
 
 	upload, err := h.handleExamFileUpload(c, patientID)
 	if err != nil {
+		log.Warn("exam_upload_failed",
+			slog.String("patient_id", patientID.String()),
+			slog.String("user_id", currentUser.ID.String()),
+			slog.Any("err", err),
+		)
 		presenter.ErrorResponder(c, err)
 		return
 	}
@@ -141,17 +150,46 @@ func (h *ExamsHandler) UploadExamDocument(c *gin.Context) {
 		MimeType:         upload.mimeType,
 	})
 	if err != nil {
+		log.Error("exam_document_create_failed",
+			slog.String("patient_id", patientID.String()),
+			slog.String("user_id", currentUser.ID.String()),
+			slog.String("filename", upload.originalFilename),
+			slog.String("mime_type", upload.mimeType),
+			slog.Any("err", err),
+		)
 		presenter.ErrorResponder(c, err)
 		return
 	}
 
-	routed := h.extractAndRoute(c, output.ID, upload)
+	log.Info("exam_document_uploaded",
+		slog.String("document_id", output.ID.String()),
+		slog.String("patient_id", patientID.String()),
+		slog.String("user_id", currentUser.ID.String()),
+		slog.String("filename", upload.originalFilename),
+		slog.String("mime_type", upload.mimeType),
+	)
+
+	routed, processingErr := h.extractAndRoute(c, output.ID, upload)
 	if routed == nil {
-		routed = h.routeFromMetadata(c, output.ID)
+		log.Warn("exam_document_fallback_to_metadata",
+			slog.String("document_id", output.ID.String()),
+			slog.String("patient_id", patientID.String()),
+			slog.String("filename", upload.originalFilename),
+			slog.String("mime_type", upload.mimeType),
+		)
+		routed = h.routeFromMetadata(c, output.ID, processingErr)
 	}
 	if routed != nil {
 		output = routed.document
-		if h.isLaboratoryDocument(output) {
+		log.Info("exam_document_routed",
+			slog.String("document_id", output.ID.String()),
+			slog.String("patient_id", patientID.String()),
+			slog.String("status", string(output.Status)),
+			slog.String("exam_type", examTypeForLog(output.ExamType)),
+			slog.String("extraction_method", optionalStringForLog(output.ExtractionMethod)),
+			slog.Float64("confidence", optionalFloat64ForLog(output.Confidence)),
+		)
+		if processingErr == nil && h.isLaboratoryDocument(output) {
 			labReport, err := h.createLabReportIfNeeded(c, output, upload)
 			if err != nil {
 				message := "falha no processamento laboratorial"
@@ -159,10 +197,24 @@ func (h *ExamsHandler) UploadExamDocument(c *gin.Context) {
 				if errors.As(err, &appErr) {
 					message = appErr.Message
 				}
+				log.Error("exam_lab_processing_failed",
+					slog.String("document_id", output.ID.String()),
+					slog.String("patient_id", output.PatientID.String()),
+					slog.String("filename", upload.originalFilename),
+					slog.String("mime_type", upload.mimeType),
+					slog.String("status", string(output.Status)),
+					slog.String("exam_type", examTypeForLog(output.ExamType)),
+					slog.Any("err", err),
+				)
 				// O upload fica disponivel, mas nao aparenta ter sido processado.
 				if _, markErr := h.svc.MarkFailed(c.Request.Context(), examsvc.MarkExamDocumentFailedInput{
 					ID: output.ID, ErrorMessage: message,
 				}); markErr != nil {
+					log.Error("exam_lab_processing_mark_failed_failed",
+						slog.String("document_id", output.ID.String()),
+						slog.String("patient_id", output.PatientID.String()),
+						slog.Any("err", markErr),
+					)
 					err = apperr.Internal("falha ao registrar erro do exame", errors.Join(err, markErr))
 				}
 				presenter.ErrorResponder(c, err)
@@ -174,6 +226,13 @@ func (h *ExamsHandler) UploadExamDocument(c *gin.Context) {
 		} else {
 			h.createExamDocumentTextIfPossible(c, output, routed.extracted)
 		}
+	} else {
+		log.Warn("exam_document_routing_unavailable",
+			slog.String("document_id", output.ID.String()),
+			slog.String("patient_id", patientID.String()),
+			slog.String("filename", upload.originalFilename),
+			slog.String("mime_type", upload.mimeType),
+		)
 	}
 
 	c.JSON(http.StatusCreated, output)
@@ -199,6 +258,13 @@ func (h *ExamsHandler) createExamDocumentTextIfPossible(c *gin.Context, document
 		Confidence:       document.Confidence,
 	})
 	if err != nil {
+		applog.FromContext(c.Request.Context()).Warn("exam_document_text_create_failed",
+			slog.String("document_id", document.ID.String()),
+			slog.String("patient_id", document.PatientID.String()),
+			slog.String("category", string(category)),
+			slog.String("extraction_method", extracted.Method),
+			slog.Any("err", err),
+		)
 		// O texto fica em exam_documents; retry pode criar exam_document_texts depois.
 		return
 	}
@@ -235,6 +301,12 @@ func (h *ExamsHandler) createExamDocumentTextFromLab(c *gin.Context, document *e
 		Confidence:       document.Confidence,
 	})
 	if err != nil {
+		applog.FromContext(c.Request.Context()).Warn("exam_lab_document_text_create_failed",
+			slog.String("document_id", document.ID.String()),
+			slog.String("patient_id", document.PatientID.String()),
+			slog.String("extraction_method", method),
+			slog.Any("err", err),
+		)
 		// Labs estruturado ja foi salvo; texto generico pode ser recriado depois.
 		return
 	}
@@ -382,9 +454,16 @@ type routedExamDocument struct {
 	extracted *domaintext.ExtractOutput
 }
 
-func (h *ExamsHandler) extractAndRoute(c *gin.Context, documentID uuid.UUID, upload *uploadedExamFile) *routedExamDocument {
+func (h *ExamsHandler) extractAndRoute(c *gin.Context, documentID uuid.UUID, upload *uploadedExamFile) (*routedExamDocument, *apperr.AppError) {
+	log := applog.FromContext(c.Request.Context())
+
 	if h.textExtractor == nil {
-		return nil
+		log.Warn("exam_text_extractor_unavailable",
+			slog.String("document_id", documentID.String()),
+			slog.String("filename", upload.originalFilename),
+			slog.String("mime_type", upload.mimeType),
+		)
+		return nil, apperr.Internal("A leitura automatica esta indisponivel. O arquivo foi salvo e precisa de revisao.", nil)
 	}
 
 	extracted, err := h.textExtractor.Extract(c.Request.Context(), domaintext.ExtractInput{
@@ -393,9 +472,30 @@ func (h *ExamsHandler) extractAndRoute(c *gin.Context, documentID uuid.UUID, upl
 		OriginalFilename: upload.originalFilename,
 	})
 	if err != nil {
-		// Sem fallback caro nesta etapa; o documento fica como uploaded.
-		return nil
+		log.Warn("exam_text_extraction_failed",
+			slog.String("document_id", documentID.String()),
+			slog.String("filename", upload.originalFilename),
+			slog.String("mime_type", upload.mimeType),
+			slog.Any("err", err),
+		)
+		message := "Nao foi possivel ler o texto do documento. Tente enviar uma foto mais nitida ou o PDF original."
+		if errors.Is(err, context.DeadlineExceeded) {
+			message = "A leitura do documento excedeu o tempo limite. O arquivo foi salvo. Tente enviar novamente ou usar o PDF original."
+		}
+		return nil, apperr.Internal(message, err)
 	}
+	if extracted == nil || strings.TrimSpace(extracted.Text) == "" {
+		return nil, apperr.Internal("Nao foi encontrado texto legivel no documento. Tente enviar uma foto mais nitida ou o PDF original.", nil)
+	}
+
+	log.Info("exam_text_extracted",
+		slog.String("document_id", documentID.String()),
+		slog.String("filename", upload.originalFilename),
+		slog.String("mime_type", upload.mimeType),
+		slog.String("extraction_method", extracted.Method),
+		slog.Int("text_length", len(strings.TrimSpace(extracted.Text))),
+		slog.Int("normalized_text_length", len(strings.TrimSpace(extracted.NormalizedText))),
+	)
 
 	output, err := h.svc.RouteDocument(c.Request.Context(), examsvc.RouteExamDocumentInput{
 		ID:               documentID,
@@ -403,29 +503,77 @@ func (h *ExamsHandler) extractAndRoute(c *gin.Context, documentID uuid.UUID, upl
 		ExtractionMethod: extracted.Method,
 	})
 	if err != nil {
+		log.Warn("exam_document_route_failed",
+			slog.String("document_id", documentID.String()),
+			slog.String("filename", upload.originalFilename),
+			slog.String("mime_type", upload.mimeType),
+			slog.String("extraction_method", extracted.Method),
+			slog.Any("err", err),
+		)
 		// Upload ja foi salvo; reprocessamento pode ocorrer depois.
-		return nil
+		return nil, apperr.Internal("Nao foi possivel concluir a classificacao do exame. O arquivo foi salvo e precisa de revisao.", err)
+	}
+	if output == nil {
+		return nil, apperr.Internal("Nao foi possivel concluir a classificacao do exame. O arquivo foi salvo e precisa de revisao.", nil)
 	}
 
 	return &routedExamDocument{
 		document:  output,
 		extracted: extracted,
-	}
+	}, nil
 }
 
-func (h *ExamsHandler) routeFromMetadata(c *gin.Context, documentID uuid.UUID) *routedExamDocument {
+func (h *ExamsHandler) routeFromMetadata(c *gin.Context, documentID uuid.UUID, processingErr *apperr.AppError) *routedExamDocument {
+	log := applog.FromContext(c.Request.Context())
+
 	output, err := h.svc.RouteDocument(c.Request.Context(), examsvc.RouteExamDocumentInput{
 		ID:               documentID,
 		ExtractionMethod: "metadata",
+		ProcessingError:  processingErr,
 	})
 	if err != nil {
+		log.Warn("exam_document_metadata_route_failed",
+			slog.String("document_id", documentID.String()),
+			slog.Any("err", err),
+		)
 		// O upload ja existe; classificacao pode ser refeita depois.
 		return nil
 	}
 	if output == nil {
+		log.Warn("exam_document_metadata_route_empty",
+			slog.String("document_id", documentID.String()),
+		)
 		return nil
 	}
+	log.Info("exam_document_metadata_routed",
+		slog.String("document_id", documentID.String()),
+		slog.String("status", string(output.Status)),
+		slog.String("exam_type", examTypeForLog(output.ExamType)),
+		slog.String("extraction_method", optionalStringForLog(output.ExtractionMethod)),
+		slog.Float64("confidence", optionalFloat64ForLog(output.Confidence)),
+	)
 	return &routedExamDocument{document: output}
+}
+
+func examTypeForLog(examType *exams.ExamType) string {
+	if examType == nil {
+		return ""
+	}
+	return string(*examType)
+}
+
+func optionalStringForLog(value *string) string {
+	if value == nil {
+		return ""
+	}
+	return *value
+}
+
+func optionalFloat64ForLog(value *float64) float64 {
+	if value == nil {
+		return 0
+	}
+	return *value
 }
 
 func buildLabReportText(report *labsvc.LabReportOutput) string {

@@ -1,3 +1,4 @@
+-- internal/infrastructure/persistence/postgres/sqlc/sql/queries/exam_queries.sql
 -- name: CreateExamDocument :one
 INSERT INTO exam_documents (
     id,
@@ -49,7 +50,7 @@ SET
     extraction_method = $4,
     confidence = $5,
     extracted_text = $6,
-    error_message = NULL,
+    error_message = $8,
     updated_at = $7
 WHERE id = $1
 RETURNING *;

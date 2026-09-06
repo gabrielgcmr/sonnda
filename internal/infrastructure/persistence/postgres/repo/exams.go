@@ -115,6 +115,7 @@ func (r *ExamsRepository) MarkClassified(
 	extractionMethod *string,
 	confidence *float64,
 	extractedText *string,
+	errorMessage *string,
 ) (*exams.ExamDocument, error) {
 	row, err := r.queries.UpdateExamDocumentClassified(ctx, examsqlc.UpdateExamDocumentClassifiedParams{
 		ID:               id,
@@ -123,6 +124,7 @@ func (r *ExamsRepository) MarkClassified(
 		ExtractionMethod: FromNullableStringToPgText(extractionMethod),
 		Confidence:       nullableFloat64ToPgFloat8(confidence),
 		ExtractedText:    FromNullableStringToPgText(extractedText),
+		ErrorMessage:     FromNullableStringToPgText(errorMessage),
 		UpdatedAt:        FromRequiredTimestamptzToPgTimestamptz(time.Now().UTC()),
 	})
 	if err != nil {

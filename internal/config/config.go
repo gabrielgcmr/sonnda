@@ -9,4 +9,5 @@ type Config struct {
 	Storage  StorageConfig
 	CORS     CORSConfig
 	Gemini   GeminiConfig
+	OCR      OCRConfig
 }

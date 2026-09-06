@@ -2,9 +2,22 @@
 package textextraction
 
 import (
+	"context"
+	"errors"
 	"image"
+	"path/filepath"
 	"testing"
+	"time"
 )
+
+func TestExpiredOCRDeadlineIsPreserved(t *testing.T) {
+	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(-time.Second))
+	defer cancel()
+	_, err := NewCommandExtractor().extractImage(ctx, filepath.Join(t.TempDir(), "missing.jpg"))
+	if !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("expected deadline exceeded instead of empty OCR text, got %v", err)
+	}
+}
 
 func TestScoreOCRTextPrefersClinicalLabText(t *testing.T) {
 	noisy := "meee eee rr iii eT an BOBIMDFTIOS 35"

@@ -88,6 +88,9 @@ func (e *CommandExtractor) extractImage(ctx context.Context, localPath string) (
 		return nil, err
 	}
 	if e.requireUsableText && !domaintext.IsUsableText(text) {
+		if ocrCtx.Err() != nil {
+			return nil, ocrCtx.Err()
+		}
 		return nil, errors.New("ocr text is not usable")
 	}
 
@@ -109,6 +112,9 @@ func (e *CommandExtractor) extractImageWithRotations(ctx context.Context, localP
 
 	bestRotation, bestRotationText, bestRotationScore, lastErr := e.selectRotation(ctx, rotations)
 	if bestRotationText == "" {
+		if ctx.Err() != nil {
+			return "", "", ctx.Err()
+		}
 		if lastErr != nil {
 			return "", "", lastErr
 		}

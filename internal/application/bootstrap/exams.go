@@ -6,6 +6,7 @@ import (
 	authorization "github.com/gabrielgcmr/sonnda/internal/application/services/authorization"
 	examsvc "github.com/gabrielgcmr/sonnda/internal/application/services/exams"
 	labsuc "github.com/gabrielgcmr/sonnda/internal/application/usecase/labs"
+	"github.com/gabrielgcmr/sonnda/internal/config"
 	"github.com/gabrielgcmr/sonnda/internal/domain/labextraction"
 	domainstorage "github.com/gabrielgcmr/sonnda/internal/domain/storage"
 	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
@@ -21,6 +22,7 @@ func NewExamsModule(
 	dbClient *postgress.Client,
 	labExtractor labextraction.LabReportExtractor,
 	storage domainstorage.FileStorageService,
+	ocrConfig config.OCRConfig,
 ) *ExamsModule {
 	patientRepo := repo.NewPatientRepository(dbClient)
 	accessRepo := repo.NewPatientAccessRepository(dbClient)
@@ -30,7 +32,10 @@ func NewExamsModule(
 
 	svc := examsvc.New(patientRepo, examsRepo)
 	createLabUC := labsuc.NewCreateLabReportFromDocument(patientRepo, labsRepo, labExtractor)
-	textExtractor := textextractioninfra.NewCommandExtractor()
+	textExtractor := textextractioninfra.NewCommandExtractorWithOptions(textextractioninfra.CommandExtractorOptions{
+		Timeout:           ocrConfig.Timeout,
+		RequireUsableText: true,
+	})
 	authz := authorization.New(patientRepo, accessRepo, profRepo)
 
 	return &ExamsModule{

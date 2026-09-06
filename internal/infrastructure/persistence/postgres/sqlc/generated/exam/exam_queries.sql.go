@@ -51,6 +51,7 @@ type CreateExamDocumentParams struct {
 	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
 }
 
+// internal/infrastructure/persistence/postgres/sqlc/sql/queries/exam_queries.sql
 func (q *Queries) CreateExamDocument(ctx context.Context, arg CreateExamDocumentParams) (ExamDocument, error) {
 	row := q.db.QueryRow(ctx, createExamDocument,
 		arg.ID,
@@ -376,7 +377,7 @@ SET
     extraction_method = $4,
     confidence = $5,
     extracted_text = $6,
-    error_message = NULL,
+    error_message = $8,
     updated_at = $7
 WHERE id = $1
 RETURNING id, patient_id, uploaded_by_user_id, storage_uri, original_filename, mime_type, status, exam_type, extraction_method, confidence, extracted_text, error_message, created_at, updated_at
@@ -390,6 +391,7 @@ type UpdateExamDocumentClassifiedParams struct {
 	Confidence       pgtype.Float8      `json:"confidence"`
 	ExtractedText    pgtype.Text        `json:"extracted_text"`
 	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
+	ErrorMessage     pgtype.Text        `json:"error_message"`
 }
 
 func (q *Queries) UpdateExamDocumentClassified(ctx context.Context, arg UpdateExamDocumentClassifiedParams) (ExamDocument, error) {
@@ -401,6 +403,7 @@ func (q *Queries) UpdateExamDocumentClassified(ctx context.Context, arg UpdateEx
 		arg.Confidence,
 		arg.ExtractedText,
 		arg.UpdatedAt,
+		arg.ErrorMessage,
 	)
 	var i ExamDocument
 	err := row.Scan(

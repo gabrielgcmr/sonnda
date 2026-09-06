@@ -12,6 +12,10 @@ func Load() (*Config, error) {
 	_ = godotenv.Load()
 
 	appCfg := loadAppConfig()
+	ocrCfg, err := loadOCRConfig()
+	if err != nil {
+		return nil, err
+	}
 	geminiCfg, err := loadGeminiConfig()
 	if err != nil {
 		return nil, err
@@ -25,6 +29,7 @@ func Load() (*Config, error) {
 		Storage:  loadStorageConfig(),
 		CORS:     loadCORSConfig(appCfg.Env),
 		Gemini:   geminiCfg,
+		OCR:      ocrCfg,
 	}
 
 	var violations []apperr.Violation

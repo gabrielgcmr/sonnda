@@ -12,6 +12,7 @@ import (
 )
 
 type Querier interface {
+	// internal/infrastructure/persistence/postgres/sqlc/sql/queries/exam_queries.sql
 	CreateExamDocument(ctx context.Context, arg CreateExamDocumentParams) (ExamDocument, error)
 	CreateExamDocumentText(ctx context.Context, arg CreateExamDocumentTextParams) (ExamDocumentText, error)
 	GetExamDocumentByID(ctx context.Context, id uuid.UUID) (ExamDocument, error)

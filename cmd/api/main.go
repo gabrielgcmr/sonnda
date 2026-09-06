@@ -96,7 +96,7 @@ func main() {
 	}
 
 	//7. Módulos
-	modules := bootstrap.NewModules(dbClient, docExtractor, storageService)
+	modules := bootstrap.NewModules(dbClient, docExtractor, storageService, cfg.OCR)
 
 	//8 Middlewares
 	//8.1 API

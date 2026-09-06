@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/exams"
+	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 	"github.com/google/uuid"
 )
 
@@ -20,6 +21,7 @@ type RouteExamDocumentInput struct {
 	ID               uuid.UUID
 	ExtractedText    string
 	ExtractionMethod string
+	ProcessingError  *apperr.AppError
 }
 
 type MarkExamDocumentFailedInput struct {

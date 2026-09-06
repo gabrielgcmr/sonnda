@@ -21,6 +21,7 @@ type Exams interface {
 		extractionMethod *string,
 		confidence *float64,
 		extractedText *string,
+		errorMessage *string,
 	) (*exams.ExamDocument, error)
 	MarkFailed(ctx context.Context, id uuid.UUID, errorMessage string) (*exams.ExamDocument, error)
 	CreateDocumentText(ctx context.Context, documentText *exams.ExamDocumentText) error
