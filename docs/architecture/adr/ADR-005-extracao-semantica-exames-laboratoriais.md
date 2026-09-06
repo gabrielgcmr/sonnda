@@ -318,6 +318,12 @@ valores, unidades, omissoes e itens inventados com resultados esperados. Registr
 divergencias, latencia e consumo observado; nao aceitar apenas JSON bem formado.
 Sem credenciais ou avaliacao real, a etapa permanece pendente de homologacao.
 
+**Entrega 2.1 (2026-09-05):** cliente de transporte em `internal/infrastructure/gemini`
+e configuracao `cfg.Gemini` implementados, com modelo, timeout, limite de entrada
+em bytes, limite de saida em tokens e gerador substituivel nos testes. Nenhuma rota
+foi alterada. O adaptador que implementara `LabReportTextExtractor`, o prompt e a
+validacao da resposta pertencem a entrega 2.2; a avaliacao real, a entrega 2.3.
+
 ### Etapa 3 - Preparacao e preservacao do texto
 
 **Objetivo:** fornecer texto utilizavel ao extrator sem perder a origem.

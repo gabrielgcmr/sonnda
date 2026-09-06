@@ -17,6 +17,7 @@ require (
 	github.com/redis/go-redis/v9 v9.17.3
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2
 	google.golang.org/api v0.262.0
+	google.golang.org/genai v1.71.0
 )
 
 require (
@@ -33,6 +34,8 @@ require (
 	github.com/go-openapi/swag v0.23.0 // indirect
 	github.com/go-sql-driver/mysql v1.9.3 // indirect
 	github.com/google/cel-go v0.26.1 // indirect
+	github.com/google/go-cmp v0.7.0 // indirect
+	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect

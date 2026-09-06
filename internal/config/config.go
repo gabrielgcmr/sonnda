@@ -8,4 +8,5 @@ type Config struct {
 	Auth     AuthConfig
 	Storage  StorageConfig
 	CORS     CORSConfig
+	Gemini   GeminiConfig
 }

@@ -12,6 +12,10 @@ func Load() (*Config, error) {
 	_ = godotenv.Load()
 
 	appCfg := loadAppConfig()
+	geminiCfg, err := loadGeminiConfig()
+	if err != nil {
+		return nil, err
+	}
 
 	cfg := &Config{
 		App:      appCfg,
@@ -20,6 +24,7 @@ func Load() (*Config, error) {
 		Auth:     loadAuthConfig(),
 		Storage:  loadStorageConfig(),
 		CORS:     loadCORSConfig(appCfg.Env),
+		Gemini:   geminiCfg,
 	}
 
 	var violations []apperr.Violation
