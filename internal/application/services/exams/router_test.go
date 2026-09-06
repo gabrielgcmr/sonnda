@@ -1,3 +1,4 @@
+// internal/application/services/exams/router_test.go
 package examsvc
 
 import (
@@ -39,6 +40,45 @@ func TestHeuristicExamRouter_RoutesImagingReport(t *testing.T) {
 	}
 	if result.Confidence < 0.70 {
 		t.Fatalf("expected confidence >= 0.70, got %.2f", result.Confidence)
+	}
+}
+
+func TestHeuristicExamRouter_RoutesUltrasoundAsImagingEvenWithMeasurements(t *testing.T) {
+	router := NewHeuristicExamRouter()
+
+	result := router.Route(ExamRouteInput{
+		ExtractedText: "ULTRASSONOGRAFIA DO APARELHO URINARIO\nAnalise: calculo renal medindo 0,5 cm. Cisto simples medindo 2,23 x 2,65 x 2,12 cm.",
+	})
+
+	if result.ExamType != exams.ExamTypeImaging {
+		t.Fatalf("expected imaging, got %s", result.ExamType)
+	}
+}
+
+func TestHeuristicExamRouter_RoutesMedicalCertificateAsUnknown(t *testing.T) {
+	router := NewHeuristicExamRouter()
+
+	result := router.Route(ExamRouteInput{
+		ExtractedText: "ATESTADO MEDICO\nPaciente devera ficar afastado de suas atividades por 04 dias. CID: J18.9",
+	})
+
+	if result.ExamType != exams.ExamTypeUnknown {
+		t.Fatalf("expected unknown, got %s", result.ExamType)
+	}
+	if result.Status != exams.DocumentStatusNeedsReview {
+		t.Fatalf("expected needs_review, got %s", result.Status)
+	}
+}
+
+func TestHeuristicExamRouter_RoutesExamRequestAsUnknownEvenWithLabNames(t *testing.T) {
+	router := NewHeuristicExamRouter()
+
+	result := router.Route(ExamRouteInput{
+		ExtractedText: "Pedido de exames\nSolicito: hemograma completo, glicemia de jejum e creatinina.",
+	})
+
+	if result.ExamType != exams.ExamTypeUnknown {
+		t.Fatalf("expected unknown, got %s", result.ExamType)
 	}
 }
 

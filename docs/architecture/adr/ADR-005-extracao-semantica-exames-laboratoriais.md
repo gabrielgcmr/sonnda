@@ -341,6 +341,14 @@ rotas ou arquivos enviados pelo app. A homologacao da etapa 2.3 ainda exige roda
 amostras sinteticas ou anonimizadas com credencial real e registrar divergencias,
 latencia e consumo observado.
 
+**Ajuste de custo da etapa 2.3 (2026-09-06):** a avaliacao local passou a usar o
+classificador heuristico antes de chamar Gemini. Documentos classificados como
+`imaging` ou `unknown`, como laudos de ultrassonografia, atestados e pedidos sem
+evidencia de resultado laboratorial, pulam a chamada ao fornecedor. A flag
+`-force-lab` permite chamar o extrator manualmente para investigar o prompt, mas
+nao deve representar o fluxo padrao. O prompt tambem foi reforcado para retornar
+`tests: []` quando documentos nao laboratoriais forem enviados por engano.
+
 ### Etapa 3 - Preparacao e preservacao do texto
 
 **Objetivo:** fornecer texto utilizavel ao extrator sem perder a origem.

@@ -24,6 +24,16 @@ Execute com um arquivo `.txt`:
 go run ./cmd/lab-extraction-eval -input samples/labs/glicose.txt
 ```
 
+Antes de chamar o Gemini, o comando usa o classificador local de documentos. Se o
+texto parecer laudo de imagem, atestado, pedido ou outro documento nao laboratorial,
+a chamada e pulada para evitar custo.
+
+Para testar o prompt manualmente mesmo assim:
+
+```powershell
+go run ./cmd/lab-extraction-eval -input samples/text/LuzUSG.txt -force-lab
+```
+
 Para comparar com um JSON esperado:
 
 ```powershell
@@ -31,6 +41,9 @@ go run ./cmd/lab-extraction-eval `
   -input samples/labs/glicose.txt `
   -expected samples/labs/glicose.expected.json
 ```
+
+Quando o gate local pula a chamada, `-expected` nao e comparado porque nao ha
+resposta do extrator laboratorial.
 
 A saida principal vai para `stdout` como JSON no contrato de `ExtractedLabReport`.
 Mensagens de erro ou comparacao vao para `stderr`.

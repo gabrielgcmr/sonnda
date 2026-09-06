@@ -32,6 +32,7 @@ Retorne somente JSON valido compativel com o schema fornecido. Nao use markdown.
 
 Regras:
 - Extraia apenas resultados laboratoriais explicitamente presentes no texto.
+- Laudos de imagem, atestados, pedidos de exame, receitas e prescricoes nao sao resultados laboratoriais; nesses casos retorne metadados null e tests vazio.
 - Preserve nomes originais de exames, paineis e parametros.
 - Preserve valores como texto: 15,1; 453.000; < 5; Negativo.
 - Preserve unidades originais, sem conversao.

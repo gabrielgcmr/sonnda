@@ -39,6 +39,11 @@ Ele recebe `ExtractLabReportInput{Text: texto}`, chama o cliente Gemini com prom
 especifico para exames laboratoriais e valida a resposta contra o schema local de
 `internal/domain/labextraction`.
 
+O custo deve ser protegido antes deste adaptador: use o classificador local de
+documentos e chame Gemini apenas quando o documento for `laboratory`. O prompt ainda
+tem uma segunda barreira para retornar `tests: []` em laudos de imagem, atestados,
+pedidos, receitas e prescricoes, mas essa barreira nao evita custo.
+
 O schema enviado ao provedor e derivado do schema local, removendo palavras-chave
 de validacao que nao fazem parte do subconjunto suportado pelo SDK. O schema local
 continua sendo a validacao final antes de converter a resposta para

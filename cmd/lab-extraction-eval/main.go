@@ -8,9 +8,12 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 	"reflect"
 
+	examsvc "github.com/gabrielgcmr/sonnda/internal/application/services/exams"
 	"github.com/gabrielgcmr/sonnda/internal/config"
+	"github.com/gabrielgcmr/sonnda/internal/domain/entity/exams"
 	"github.com/gabrielgcmr/sonnda/internal/domain/labextraction"
 	"github.com/gabrielgcmr/sonnda/internal/infrastructure/gemini"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
@@ -20,23 +23,35 @@ import (
 func main() {
 	var inputPath string
 	var expectedPath string
+	var forceLab bool
 	flag.StringVar(&inputPath, "input", "", "path to extracted lab text fixture")
 	flag.StringVar(&expectedPath, "expected", "", "optional path to expected JSON")
+	flag.BoolVar(&forceLab, "force-lab", false, "call Gemini even when the local route is not laboratory")
 	flag.Parse()
 
 	if inputPath == "" {
 		exitWithError(2, errors.New("missing required -input"))
 	}
 
+	text, err := os.ReadFile(inputPath)
+	if err != nil {
+		exitWithError(1, fmt.Errorf("read input: %w", err))
+	}
+
+	route := examsvc.NewHeuristicExamRouter().Route(examsvc.ExamRouteInput{
+		ExtractedText:    string(text),
+		MimeType:         "text/plain",
+		OriginalFilename: filepath.Base(inputPath),
+	})
+	if route.ExamType != exams.ExamTypeLaboratory && !forceLab {
+		writeSkip(route)
+		return
+	}
+
 	_ = godotenv.Load()
 	cfg, err := config.LoadGemini()
 	if err != nil {
 		exitWithConfigError(err)
-	}
-
-	text, err := os.ReadFile(inputPath)
-	if err != nil {
-		exitWithError(1, fmt.Errorf("read input: %w", err))
 	}
 
 	ctx := context.Background()
@@ -72,6 +87,30 @@ func main() {
 		os.Exit(2)
 	}
 	fmt.Fprintln(os.Stderr, "eval ok: generated JSON matches expected JSON")
+}
+
+func writeSkip(route examsvc.ExamRouteResult) {
+	output := struct {
+		Skipped        bool                 `json:"skipped"`
+		Reason         string               `json:"reason"`
+		ExamType       exams.ExamType       `json:"exam_type"`
+		Status         exams.DocumentStatus `json:"status"`
+		Confidence     float64              `json:"confidence"`
+		MatchedSignals []string             `json:"matched_signals,omitempty"`
+	}{
+		Skipped:        true,
+		Reason:         "local_gate_not_laboratory",
+		ExamType:       route.ExamType,
+		Status:         route.Status,
+		Confidence:     route.Confidence,
+		MatchedSignals: route.MatchedSignals,
+	}
+	encoded, err := json.MarshalIndent(output, "", "  ")
+	if err != nil {
+		exitWithError(1, fmt.Errorf("encode skip output: %w", err))
+	}
+	fmt.Println(string(encoded))
+	fmt.Fprintln(os.Stderr, "Gemini call skipped; use -force-lab to bypass the local gate.")
 }
 
 func compareJSON(generated []byte, expectedPath string) (bool, error) {

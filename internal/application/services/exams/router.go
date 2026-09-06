@@ -1,3 +1,4 @@
+// internal/application/services/exams/router.go
 package examsvc
 
 import (
@@ -40,6 +41,20 @@ func (r *HeuristicExamRouter) Route(input ExamRouteInput) ExamRouteResult {
 
 	labScore, labSignals := scoreSignals(text, laboratorySignals)
 	imagingScore, imagingSignals := scoreSignals(text, imagingSignals)
+	nonResultScore, nonResultSignals := scoreSignals(text, nonLaboratoryResultSignals)
+
+	if nonResultScore > 0 && !hasLaboratoryResultEvidence(text) {
+		confidence := 0.45
+		if hasExtractedText {
+			confidence = 0.65
+		}
+		return ExamRouteResult{
+			ExamType:       exams.ExamTypeUnknown,
+			Status:         exams.DocumentStatusNeedsReview,
+			Confidence:     confidence,
+			MatchedSignals: nonResultSignals,
+		}
+	}
 
 	if labScore == 0 && imagingScore == 0 {
 		return ExamRouteResult{
@@ -103,6 +118,8 @@ var laboratorySignals = []weightedSignal{
 	{term: "valores de referencia", weight: 4},
 	{term: "material: sangue", weight: 3},
 	{term: "material soro", weight: 2},
+	{term: "data coleta", weight: 2},
+	{term: "data da coleta", weight: 2},
 	{term: "metodo:", weight: 1},
 	{term: "resultado unidade referencia", weight: 4},
 }
@@ -129,6 +146,33 @@ var imagingSignals = []weightedSignal{
 	{term: "sequencias ponderadas", weight: 4},
 }
 
+var nonLaboratoryResultSignals = []weightedSignal{
+	{term: "atestado medico", weight: 5},
+	{term: "afastado de suas atividades", weight: 5},
+	{term: "cid:", weight: 4},
+	{term: "pedido de exame", weight: 4},
+	{term: "pedido de exames", weight: 4},
+	{term: "solicitacao de exame", weight: 4},
+	{term: "solicitacao de exames", weight: 4},
+	{term: "requisicao de exame", weight: 4},
+	{term: "requisicao de exames", weight: 4},
+	{term: "solicito:", weight: 3},
+	{term: "prescricao", weight: 3},
+}
+
+var laboratoryResultEvidenceSignals = []weightedSignal{
+	{term: "valor de referencia", weight: 4},
+	{term: "valores de referencia", weight: 4},
+	{term: "resultado unidade referencia", weight: 4},
+	{term: "data coleta", weight: 2},
+	{term: "data da coleta", weight: 2},
+	{term: "material: sangue", weight: 2},
+	{term: "material sangue", weight: 2},
+	{term: "material: soro", weight: 2},
+	{term: "material soro", weight: 2},
+	{term: "liberado em", weight: 2},
+}
+
 func scoreSignals(text string, signals []weightedSignal) (int, []string) {
 	score := 0
 	matched := make([]string, 0)
@@ -139,6 +183,11 @@ func scoreSignals(text string, signals []weightedSignal) (int, []string) {
 		}
 	}
 	return score, matched
+}
+
+func hasLaboratoryResultEvidence(text string) bool {
+	score, _ := scoreSignals(text, laboratoryResultEvidenceSignals)
+	return score >= 2
 }
 
 func confidenceForScores(winnerScore, loserScore int, hasExtractedText bool) float64 {
@@ -163,6 +212,12 @@ func statusForConfidence(confidence float64) exams.DocumentStatus {
 func normalizeRouteText(text string) string {
 	text = strings.ToLower(strings.TrimSpace(text))
 	replacer := strings.NewReplacer(
+		"á", "a", "à", "a", "â", "a", "ã", "a", "ä", "a",
+		"é", "e", "è", "e", "ê", "e", "ë", "e",
+		"í", "i", "ì", "i", "î", "i", "ï", "i",
+		"ó", "o", "ò", "o", "ô", "o", "õ", "o", "ö", "o",
+		"ú", "u", "ù", "u", "û", "u", "ü", "u",
+		"ç", "c",
 		"á", "a", "à", "a", "â", "a", "ã", "a", "ä", "a",
 		"é", "e", "è", "e", "ê", "e", "ë", "e",
 		"í", "i", "ì", "i", "î", "i", "ï", "i",
