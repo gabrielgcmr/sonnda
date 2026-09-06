@@ -87,6 +87,7 @@ func extractOne(ctx context.Context, extractor domaintext.Extractor, rootPath, i
 		return err
 	}
 	if outputDir == "" {
+		fmt.Fprintf(os.Stderr, "method: %s\n", output.Method)
 		fmt.Print(output.Text)
 		return nil
 	}
