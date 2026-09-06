@@ -324,6 +324,15 @@ em bytes, limite de saida em tokens e gerador substituivel nos testes. Nenhuma r
 foi alterada. O adaptador que implementara `LabReportTextExtractor`, o prompt e a
 validacao da resposta pertencem a entrega 2.2; a avaliacao real, a entrega 2.3.
 
+**Entrega 2.2 (2026-09-05):** adaptador `LabReportTextExtractor` implementado em
+`internal/infrastructure/gemini`, recebendo texto, enviando prompt e schema ao
+cliente Gemini, validando a resposta com o schema local e convertendo para
+`ExtractedLabReport`. O schema enviado ao provedor remove palavras-chave locais
+nao suportadas, enquanto a validacao final permanece no backend. O adaptador trata
+erro do cliente, ausencia de candidato, bloqueio, truncamento, texto vazio, JSON
+invalido e JSON fora do schema. Resposta valida sem itens estruturados retorna
+`needs_review` com aviso. Nenhuma rota foi alterada; avaliacao real segue na 2.3.
+
 ### Etapa 3 - Preparacao e preservacao do texto
 
 **Objetivo:** fornecer texto utilizavel ao extrator sem perder a origem.
