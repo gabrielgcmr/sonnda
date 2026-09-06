@@ -25,5 +25,7 @@ Converter um arquivo e imprimir no terminal:
 go run ./cmd/extract-text -input "samples/exam/exemplo.pdf"
 ```
 
-PDF nativo usa `pdftotext -raw`. Imagem `.jpg`, `.jpeg` ou `.png` usa `tesseract`.
+PDF nativo usa `pdftotext -raw`. Imagem `.jpg`, `.jpeg` ou `.png` usa `tesseract`;
+para fotos, o comando testa rotacoes de 0, 90, 180 e 270 graus e escolhe a melhor
+leitura por sinais simples de OCR.
 PDF escaneado sem camada de texto ainda nao e convertido para imagem nesta etapa.

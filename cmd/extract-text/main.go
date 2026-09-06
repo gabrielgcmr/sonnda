@@ -107,7 +107,7 @@ func extractOne(ctx context.Context, extractor domaintext.Extractor, rootPath, i
 
 func outputTextPath(rootPath, inputPath, outputDir string) (string, error) {
 	relativePath, err := filepath.Rel(rootPath, inputPath)
-	if err != nil || strings.HasPrefix(relativePath, "..") {
+	if err != nil || relativePath == "." || strings.HasPrefix(relativePath, "..") {
 		relativePath = filepath.Base(inputPath)
 	}
 	ext := filepath.Ext(relativePath)
