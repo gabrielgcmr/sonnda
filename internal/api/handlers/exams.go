@@ -194,7 +194,7 @@ func (h *ExamsHandler) createExamDocumentTextIfPossible(c *gin.Context, document
 		PatientID:        document.PatientID,
 		UploadedByUserID: document.UploadedByUserID,
 		Category:         category,
-		Text:             extracted.Text,
+		Text:             documentTextForDisplay(extracted),
 		ExtractionMethod: extracted.Method,
 		Confidence:       document.Confidence,
 	})
@@ -202,6 +202,16 @@ func (h *ExamsHandler) createExamDocumentTextIfPossible(c *gin.Context, document
 		// O texto fica em exam_documents; retry pode criar exam_document_texts depois.
 		return
 	}
+}
+
+func documentTextForDisplay(extracted *domaintext.ExtractOutput) string {
+	if extracted == nil {
+		return ""
+	}
+	if strings.TrimSpace(extracted.NormalizedText) != "" {
+		return extracted.NormalizedText
+	}
+	return extracted.Text
 }
 
 func (h *ExamsHandler) createExamDocumentTextFromLab(c *gin.Context, document *examsvc.ExamDocumentOutput, labReport *labsvc.LabReportOutput) {

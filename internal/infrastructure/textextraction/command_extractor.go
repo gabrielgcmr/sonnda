@@ -69,8 +69,9 @@ func (e *CommandExtractor) extractPDF(ctx context.Context, localPath string) (*d
 	}
 
 	return &domaintext.ExtractOutput{
-		Text:   text,
-		Method: "pdf_text_raw",
+		Text:           text,
+		NormalizedText: domaintext.NormalizeForSemanticExtraction(text),
+		Method:         "pdf_text_raw",
 	}, nil
 }
 
@@ -91,8 +92,9 @@ func (e *CommandExtractor) extractImage(ctx context.Context, localPath string) (
 	}
 
 	return &domaintext.ExtractOutput{
-		Text:   text,
-		Method: method,
+		Text:           text,
+		NormalizedText: domaintext.NormalizeForSemanticExtraction(text),
+		Method:         method,
 	}, nil
 }
 

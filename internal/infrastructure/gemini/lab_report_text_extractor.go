@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/gabrielgcmr/sonnda/internal/domain/labextraction"
+	domaintext "github.com/gabrielgcmr/sonnda/internal/domain/textextraction"
 	"github.com/santhosh-tekuri/jsonschema/v6"
 	"google.golang.org/genai"
 )
@@ -70,8 +71,9 @@ func (e *LabReportTextExtractor) ExtractLabReport(ctx context.Context, input lab
 	if err := input.Validate(); err != nil {
 		return nil, err
 	}
+	semanticText := domaintext.NormalizeForSemanticExtraction(input.Text)
 	response, err := e.client.Generate(ctx, GenerateRequest{
-		Text:              input.Text,
+		Text:              semanticText,
 		SystemInstruction: labReportSystemInstruction,
 		JSONSchema:        e.providerSchema,
 	})

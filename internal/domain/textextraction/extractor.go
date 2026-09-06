@@ -10,8 +10,11 @@ type ExtractInput struct {
 }
 
 type ExtractOutput struct {
-	Text   string
-	Method string
+	// Text preserva a saida bruta do extrator para auditoria.
+	Text string
+	// NormalizedText contem apenas correcoes seguras para uso na aplicacao.
+	NormalizedText string
+	Method         string
 }
 
 type Extractor interface {

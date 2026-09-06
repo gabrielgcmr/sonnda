@@ -155,6 +155,15 @@ func (f *fakeTextExtractor) Extract(ctx context.Context, input domaintext.Extrac
 	}, nil
 }
 
+func TestDocumentTextForDisplayUsesNormalizedTextAndKeepsRawFallback(t *testing.T) {
+	if got := documentTextForDisplay(&domaintext.ExtractOutput{Text: "Hematocrito 43,8 \uFF05", NormalizedText: "Hematocrito 43,8 %"}); got != "Hematocrito 43,8 %" {
+		t.Fatalf("normalized display text = %q", got)
+	}
+	if got := documentTextForDisplay(&domaintext.ExtractOutput{Text: "Hematocrito 43,8 \uFF05"}); got != "Hematocrito 43,8 \uFF05" {
+		t.Fatalf("raw fallback text = %q", got)
+	}
+}
+
 type fakeCreateLabReportUC struct {
 	called bool
 	input  labsuc.CreateLabReportFromDocumentInput

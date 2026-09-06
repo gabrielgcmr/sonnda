@@ -95,6 +95,30 @@ func TestLabReportTextExtractorUsesPromptSchemaAndMapsResponse(t *testing.T) {
 	}
 }
 
+func TestLabReportTextExtractorNormalizesPercentForGeminiAndKeepsRawText(t *testing.T) {
+	input := labextraction.ExtractLabReportInput{Text: "Hematocrito 43,8 \uFF05"}
+	var capturedText string
+	client := labReportExtractorTestClient(t, generatorFunc(func(_ context.Context, _ string, contents []*genai.Content, _ *genai.GenerateContentConfig) (*genai.GenerateContentResponse, error) {
+		capturedText = contents[0].Parts[0].Text
+		return geminiTextResponse(readExpectedLabJSON(t, "glicose.expected.json")), nil
+	}))
+	extractor, err := NewLabReportTextExtractor(client)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	report, err := extractor.ExtractLabReport(context.Background(), input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if capturedText != "Hematocrito 43,8 %" {
+		t.Fatalf("Gemini input = %q", capturedText)
+	}
+	if report.RawText == nil || *report.RawText != input.Text {
+		t.Fatalf("raw text = %v, want %q", report.RawText, input.Text)
+	}
+}
+
 func TestLabReportTextExtractorAcceptsNoStructuredResultsWithReviewStatus(t *testing.T) {
 	client := labReportExtractorTestClient(t, generatorFunc(func(context.Context, string, []*genai.Content, *genai.GenerateContentConfig) (*genai.GenerateContentResponse, error) {
 		return geminiTextResponse(readExpectedLabJSON(t, "atestado.expected.json")), nil
