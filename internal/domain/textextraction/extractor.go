@@ -5,6 +5,7 @@ import "context"
 
 type ExtractInput struct {
 	LocalPath        string
+	DocumentURI      string
 	MimeType         string
 	OriginalFilename string
 }

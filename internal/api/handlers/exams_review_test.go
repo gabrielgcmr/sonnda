@@ -16,6 +16,7 @@ import (
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/exams"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/user"
 	domaintext "github.com/gabrielgcmr/sonnda/internal/domain/textextraction"
+	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -37,6 +38,7 @@ func TestUploadExamDocumentExplainsOCRReview(t *testing.T) {
 		{"failure", reviewTextExtractor{errors.New("private OCR detail")}, "ler o texto"},
 		{"nil output", reviewTextExtractor{}, "texto legivel"},
 		{"unavailable", nil, "indisponivel"},
+		{"all attempts failed", reviewTextExtractor{apperr.Internal("Falha apos duas tentativas. O arquivo precisa de revisao.", errors.New("private OCR detail"))}, "duas tentativas"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			svc := &fakeExamsService{}

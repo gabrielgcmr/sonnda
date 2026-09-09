@@ -8,7 +8,8 @@ import (
 )
 
 type OCRConfig struct {
-	Timeout time.Duration
+	Timeout         time.Duration
+	FallbackTimeout time.Duration
 }
 
 func loadOCRConfig() (OCRConfig, error) {
@@ -16,5 +17,9 @@ func loadOCRConfig() (OCRConfig, error) {
 	if err != nil || timeout <= 0 {
 		return OCRConfig{}, apperr.Validation("invalid configuration", apperr.Violation{Field: "OCR_TIMEOUT", Reason: "must_be_positive_duration"})
 	}
-	return OCRConfig{Timeout: timeout}, nil
+	fallbackTimeout, err := time.ParseDuration(getEnvOrDefault("OCR_FALLBACK_TIMEOUT", "60s"))
+	if err != nil || fallbackTimeout <= 0 {
+		return OCRConfig{}, apperr.Validation("invalid configuration", apperr.Violation{Field: "OCR_FALLBACK_TIMEOUT", Reason: "must_be_positive_duration"})
+	}
+	return OCRConfig{Timeout: timeout, FallbackTimeout: fallbackTimeout}, nil
 }

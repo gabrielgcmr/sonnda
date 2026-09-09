@@ -468,6 +468,7 @@ func (h *ExamsHandler) extractAndRoute(c *gin.Context, documentID uuid.UUID, upl
 
 	extracted, err := h.textExtractor.Extract(c.Request.Context(), domaintext.ExtractInput{
 		LocalPath:        upload.localPath,
+		DocumentURI:      upload.storageURI,
 		MimeType:         upload.mimeType,
 		OriginalFilename: upload.originalFilename,
 	})
@@ -479,6 +480,10 @@ func (h *ExamsHandler) extractAndRoute(c *gin.Context, documentID uuid.UUID, upl
 			slog.Any("err", err),
 		)
 		message := "Nao foi possivel ler o texto do documento. Tente enviar uma foto mais nitida ou o PDF original."
+		var appErr *apperr.AppError
+		if errors.As(err, &appErr) {
+			return nil, appErr
+		}
 		if errors.Is(err, context.DeadlineExceeded) {
 			message = "A leitura do documento excedeu o tempo limite. O arquivo foi salvo. Tente enviar novamente ou usar o PDF original."
 		}

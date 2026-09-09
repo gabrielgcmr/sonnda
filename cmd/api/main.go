@@ -96,7 +96,8 @@ func main() {
 	}
 
 	//7. Módulos
-	modules := bootstrap.NewModules(dbClient, docExtractor, storageService, cfg.OCR)
+	fallbackOCR := documentaiinfra.NewTextExtractor(docAIClient, cfg.Storage.GCPExtractLabsProcessorID, cfg.OCR.FallbackTimeout)
+	modules := bootstrap.NewModules(dbClient, docExtractor, storageService, cfg.OCR, fallbackOCR)
 
 	//8 Middlewares
 	//8.1 API
