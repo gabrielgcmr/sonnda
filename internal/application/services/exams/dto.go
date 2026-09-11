@@ -35,6 +35,7 @@ type CreateExamDocumentTextFromTextInput struct {
 	UploadedByUserID uuid.UUID
 	Category         exams.ExamType
 	Text             string
+	PerformedAt      *time.Time
 	ExtractionMethod string
 	Confidence       *float64
 }

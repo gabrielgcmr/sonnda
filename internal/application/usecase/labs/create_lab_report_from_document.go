@@ -79,6 +79,7 @@ func (u *createLabReportFromDocumentUseCase) Execute(ctx context.Context, input 
 		return nil, u.mapDomainError(err)
 	}
 	report.ExamDocumentID = input.ExamDocumentID
+	applyConfirmedCollectionDate(report, input.CollectionDate)
 
 	fingerprint := generateLabFingerprint(input.PatientID, report)
 
@@ -265,6 +266,38 @@ func (u *createLabReportFromDocumentUseCase) mapExtractedToDomain(
 	report.UpdatedAt = time.Now().UTC()
 
 	return report, nil
+}
+
+func applyConfirmedCollectionDate(report *labs.LabReport, confirmedDate *time.Time) {
+	if report == nil || confirmedDate == nil {
+		return
+	}
+
+	date := time.Date(
+		confirmedDate.Year(),
+		confirmedDate.Month(),
+		confirmedDate.Day(),
+		0,
+		0,
+		0,
+		0,
+		time.UTC,
+	)
+	for i := range report.TestResults {
+		extractedDate := report.TestResults[i].CollectedAt
+		if extractedDate != nil && sameCalendarDate(*extractedDate, date) {
+			continue
+		}
+		report.TestResults[i].CollectedAt = &date
+	}
+}
+
+func sameCalendarDate(left, right time.Time) bool {
+	left = left.UTC()
+	right = right.UTC()
+	return left.Year() == right.Year() &&
+		left.Month() == right.Month() &&
+		left.Day() == right.Day()
 }
 
 func (u *createLabReportFromDocumentUseCase) mapDomainError(err error) error {

@@ -208,6 +208,7 @@ func (s *service) CreateDocumentTextFromText(ctx context.Context, input CreateEx
 	documentText.Modality = metadata.Modality
 	documentText.BodySite = metadata.BodySite
 	documentText.Conclusion = metadata.Conclusion
+	documentText.PerformedAt = input.PerformedAt
 	documentText.ExtractionMethod = stringToOptional(input.ExtractionMethod)
 	documentText.Confidence = input.Confidence
 	if err := documentText.NormalizeAndValidate(); err != nil {

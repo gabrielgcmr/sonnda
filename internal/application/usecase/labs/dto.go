@@ -1,6 +1,11 @@
+// internal/application/usecase/labs/dto.go
 package labsuc
 
-import "github.com/google/uuid"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type CreateLabReportFromDocumentInput struct {
 	PatientID        uuid.UUID
@@ -8,4 +13,5 @@ type CreateLabReportFromDocumentInput struct {
 	DocumentURI      string
 	MimeType         string
 	UploadedByUserID uuid.UUID
+	CollectionDate   *time.Time
 }

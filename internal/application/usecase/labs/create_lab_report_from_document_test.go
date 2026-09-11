@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/labs"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patient"
@@ -141,5 +142,29 @@ func TestCreateLabReportDocumentLinks(t *testing.T) {
 				t.Fatalf("unexpected attach: %v", repo.attached)
 			}
 		})
+	}
+}
+
+func TestApplyConfirmedCollectionDate(t *testing.T) {
+	extractedDifferentDate := time.Date(2026, time.September, 10, 8, 30, 0, 0, time.UTC)
+	extractedSameDate := time.Date(2026, time.September, 16, 8, 30, 0, 0, time.UTC)
+	confirmedDate := time.Date(2026, time.September, 16, 0, 0, 0, 0, time.FixedZone("BRT", -3*60*60))
+	report := &labs.LabReport{TestResults: []labs.LabResult{
+		{CollectedAt: &extractedDifferentDate},
+		{CollectedAt: &extractedSameDate},
+		{},
+	}}
+
+	applyConfirmedCollectionDate(report, &confirmedDate)
+
+	wantConfirmed := time.Date(2026, time.September, 16, 0, 0, 0, 0, time.UTC)
+	if got := report.TestResults[0].CollectedAt; got == nil || !got.Equal(wantConfirmed) {
+		t.Fatalf("different extracted date = %v, want %v", got, wantConfirmed)
+	}
+	if got := report.TestResults[1].CollectedAt; got == nil || !got.Equal(extractedSameDate) {
+		t.Fatalf("same extracted date should preserve time: got %v, want %v", got, extractedSameDate)
+	}
+	if got := report.TestResults[2].CollectedAt; got == nil || !got.Equal(wantConfirmed) {
+		t.Fatalf("missing extracted date = %v, want %v", got, wantConfirmed)
 	}
 }

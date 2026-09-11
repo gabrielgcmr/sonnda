@@ -113,6 +113,7 @@ func (f *fakeExamsService) CreateDocumentTextFromText(ctx context.Context, input
 		UploadedByUserID: input.UploadedByUserID,
 		Category:         input.Category,
 		Text:             input.Text,
+		PerformedAt:      input.PerformedAt,
 		ExtractionMethod: &input.ExtractionMethod,
 		Confidence:       input.Confidence,
 		CreatedAt:        now,
@@ -169,6 +170,26 @@ func TestDocumentTextForDisplayUsesNormalizedTextAndKeepsRawFallback(t *testing.
 	}
 	if got := documentTextForDisplay(&domaintext.ExtractOutput{Text: "Hematocrito 43,8 \uFF05"}); got != "Hematocrito 43,8 \uFF05" {
 		t.Fatalf("raw fallback text = %q", got)
+	}
+}
+
+func TestParseExamCollectionDate(t *testing.T) {
+	date, err := parseExamCollectionDate("2026-09-16")
+	if err != nil || date == nil {
+		t.Fatalf("valid date returned date=%v err=%v", date, err)
+	}
+	want := time.Date(2026, time.September, 16, 0, 0, 0, 0, time.UTC)
+	if !date.Equal(want) {
+		t.Fatalf("date = %v, want %v", date, want)
+	}
+
+	empty, err := parseExamCollectionDate(" ")
+	if err != nil || empty != nil {
+		t.Fatalf("optional empty date returned date=%v err=%v", empty, err)
+	}
+
+	if _, err := parseExamCollectionDate("16/09/2026"); err == nil {
+		t.Fatal("expected invalid API date format to fail")
 	}
 }
 
@@ -313,7 +334,14 @@ func TestUploadExamDocument_WhenClassifiedAsLab_UsesStructuredLabPipeline(t *tes
 	svc := &fakeExamsService{}
 	h := NewExams(svc, createLabUC, storage, textExtractor, allowAllAuthorizer{})
 
-	body, contentType := multipartBody(t, "file", "hemograma.pdf", "application/pdf", []byte("%PDF-1.7\nfake"))
+	body, contentType := multipartBodyWithFields(
+		t,
+		"file",
+		"hemograma.pdf",
+		"application/pdf",
+		[]byte("%PDF-1.7\nfake"),
+		map[string]string{"collection_date": "2026-09-16"},
+	)
 
 	r := gin.New()
 	r.Use(func(c *gin.Context) {
@@ -349,11 +377,18 @@ func TestUploadExamDocument_WhenClassifiedAsLab_UsesStructuredLabPipeline(t *tes
 	if createLabUC.input.MimeType != "application/pdf" {
 		t.Fatalf("expected mime type application/pdf, got %q", createLabUC.input.MimeType)
 	}
+	wantCollectionDate := time.Date(2026, time.September, 16, 0, 0, 0, 0, time.UTC)
+	if createLabUC.input.CollectionDate == nil || !createLabUC.input.CollectionDate.Equal(wantCollectionDate) {
+		t.Fatalf("expected collection date %v, got %v", wantCollectionDate, createLabUC.input.CollectionDate)
+	}
 	if !svc.createDocumentTextCalled {
 		t.Fatal("expected structured lab output to also create exam document text")
 	}
 	if svc.documentTextInput.Category != exams.ExamTypeLaboratory {
 		t.Fatalf("expected document text category laboratory, got %q", svc.documentTextInput.Category)
+	}
+	if svc.documentTextInput.PerformedAt == nil || !svc.documentTextInput.PerformedAt.Equal(wantCollectionDate) {
+		t.Fatalf("expected document text date %v, got %v", wantCollectionDate, svc.documentTextInput.PerformedAt)
 	}
 	if !strings.Contains(svc.documentTextInput.Text, "- Hemoglobina 15,1 g/dL") {
 		t.Fatalf("expected document text to include structured lab item, got:\n%s", svc.documentTextInput.Text)
@@ -444,6 +479,16 @@ func TestBuildLabText_FormatsStructuredResults(t *testing.T) {
 
 func multipartBody(t *testing.T, fieldName, filename, contentType string, contents []byte) (*bytes.Buffer, string) {
 	t.Helper()
+	return multipartBodyWithFields(t, fieldName, filename, contentType, contents, nil)
+}
+
+func multipartBodyWithFields(
+	t *testing.T,
+	fieldName, filename, contentType string,
+	contents []byte,
+	fields map[string]string,
+) (*bytes.Buffer, string) {
+	t.Helper()
 
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
@@ -457,6 +502,11 @@ func multipartBody(t *testing.T, fieldName, filename, contentType string, conten
 	}
 	if _, err := part.Write(contents); err != nil {
 		t.Fatalf("failed to write multipart body: %v", err)
+	}
+	for name, value := range fields {
+		if err := writer.WriteField(name, value); err != nil {
+			t.Fatalf("failed to write multipart field %s: %v", name, err)
+		}
 	}
 	if err := writer.Close(); err != nil {
 		t.Fatalf("failed to close multipart writer: %v", err)

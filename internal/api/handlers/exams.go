@@ -114,6 +114,7 @@ func (h *ExamsHandler) ListExamDocumentTexts(c *gin.Context) {
 // UploadExamDocument saves the original exam document for later routing.
 // POST /v1/patients/:id/exames
 // field: file (PDF/JPEG/PNG)
+// field: collection_date (optional YYYY-MM-DD; confirmed by the patient)
 func (h *ExamsHandler) UploadExamDocument(c *gin.Context) {
 	currentUser := helpers.MustGetCurrentUser(c)
 	log := applog.FromContext(c.Request.Context())
@@ -128,6 +129,12 @@ func (h *ExamsHandler) UploadExamDocument(c *gin.Context) {
 			presenter.ErrorResponder(c, err)
 			return
 		}
+	}
+
+	collectionDate, err := parseExamCollectionDate(c.PostForm("collection_date"))
+	if err != nil {
+		presenter.ErrorResponder(c, err)
+		return
 	}
 
 	upload, err := h.handleExamFileUpload(c, patientID)
@@ -190,7 +197,7 @@ func (h *ExamsHandler) UploadExamDocument(c *gin.Context) {
 			slog.Float64("confidence", optionalFloat64ForLog(output.Confidence)),
 		)
 		if processingErr == nil && h.isLaboratoryDocument(output) {
-			labReport, err := h.createLabReportIfNeeded(c, output, upload)
+			labReport, err := h.createLabReportIfNeeded(c, output, upload, collectionDate)
 			if err != nil {
 				message := "falha no processamento laboratorial"
 				var appErr *apperr.AppError
@@ -221,10 +228,10 @@ func (h *ExamsHandler) UploadExamDocument(c *gin.Context) {
 				return
 			}
 			if labReport != nil {
-				h.createExamDocumentTextFromLab(c, output, labReport)
+				h.createExamDocumentTextFromLab(c, output, labReport, collectionDate)
 			}
 		} else {
-			h.createExamDocumentTextIfPossible(c, output, routed.extracted)
+			h.createExamDocumentTextIfPossible(c, output, routed.extracted, collectionDate)
 		}
 	} else {
 		log.Warn("exam_document_routing_unavailable",
@@ -238,7 +245,12 @@ func (h *ExamsHandler) UploadExamDocument(c *gin.Context) {
 	c.JSON(http.StatusCreated, output)
 }
 
-func (h *ExamsHandler) createExamDocumentTextIfPossible(c *gin.Context, document *examsvc.ExamDocumentOutput, extracted *domaintext.ExtractOutput) {
+func (h *ExamsHandler) createExamDocumentTextIfPossible(
+	c *gin.Context,
+	document *examsvc.ExamDocumentOutput,
+	extracted *domaintext.ExtractOutput,
+	collectionDate *time.Time,
+) {
 	if document == nil || extracted == nil {
 		return
 	}
@@ -254,6 +266,7 @@ func (h *ExamsHandler) createExamDocumentTextIfPossible(c *gin.Context, document
 		UploadedByUserID: document.UploadedByUserID,
 		Category:         category,
 		Text:             documentTextForDisplay(extracted),
+		PerformedAt:      collectionDate,
 		ExtractionMethod: extracted.Method,
 		Confidence:       document.Confidence,
 	})
@@ -280,7 +293,12 @@ func documentTextForDisplay(extracted *domaintext.ExtractOutput) string {
 	return extracted.Text
 }
 
-func (h *ExamsHandler) createExamDocumentTextFromLab(c *gin.Context, document *examsvc.ExamDocumentOutput, labReport *labsvc.LabReportOutput) {
+func (h *ExamsHandler) createExamDocumentTextFromLab(
+	c *gin.Context,
+	document *examsvc.ExamDocumentOutput,
+	labReport *labsvc.LabReportOutput,
+	collectionDate *time.Time,
+) {
 	if document == nil || labReport == nil {
 		return
 	}
@@ -297,6 +315,7 @@ func (h *ExamsHandler) createExamDocumentTextFromLab(c *gin.Context, document *e
 		UploadedByUserID: document.UploadedByUserID,
 		Category:         exams.ExamTypeLaboratory,
 		Text:             text,
+		PerformedAt:      collectionDate,
 		ExtractionMethod: method,
 		Confidence:       document.Confidence,
 	})
@@ -312,7 +331,12 @@ func (h *ExamsHandler) createExamDocumentTextFromLab(c *gin.Context, document *e
 	}
 }
 
-func (h *ExamsHandler) createLabReportIfNeeded(c *gin.Context, document *examsvc.ExamDocumentOutput, upload *uploadedExamFile) (*labsvc.LabReportOutput, error) {
+func (h *ExamsHandler) createLabReportIfNeeded(
+	c *gin.Context,
+	document *examsvc.ExamDocumentOutput,
+	upload *uploadedExamFile,
+	collectionDate *time.Time,
+) (*labsvc.LabReportOutput, error) {
 	if document == nil || !h.isLaboratoryDocument(document) {
 		return nil, nil
 	}
@@ -326,7 +350,24 @@ func (h *ExamsHandler) createLabReportIfNeeded(c *gin.Context, document *examsvc
 		DocumentURI:      upload.storageURI,
 		MimeType:         upload.mimeType,
 		UploadedByUserID: document.UploadedByUserID,
+		CollectionDate:   collectionDate,
 	})
+}
+
+func parseExamCollectionDate(raw string) (*time.Time, error) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return nil, nil
+	}
+
+	date, err := time.Parse("2006-01-02", raw)
+	if err != nil {
+		return nil, apperr.Validation(
+			"data da coleta invalida",
+			apperr.Violation{Field: "collection_date", Reason: "must_be_yyyy_mm_dd"},
+		)
+	}
+	return &date, nil
 }
 
 func (h *ExamsHandler) isLaboratoryDocument(document *examsvc.ExamDocumentOutput) bool {
