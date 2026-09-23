@@ -29,7 +29,8 @@ func StatusFromCode(code apperr.ErrorKind) int {
 		return http.StatusUnauthorized // 401
 
 	// AUTHZ
-	case apperr.ACCESS_DENIED,
+	case apperr.PROFILE_NOT_FOUND,
+		apperr.ACCESS_DENIED,
 		apperr.ACTION_NOT_ALLOWED:
 		return http.StatusForbidden // 403
 

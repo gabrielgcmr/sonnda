@@ -67,3 +67,8 @@ func DomainRuleViolation(msg string, violations ...Violation) *AppError {
 		Violations: violations,
 	}
 }
+
+// ProfileNotFound identifies an authenticated identity without an application profile.
+func ProfileNotFound() *AppError {
+	return &AppError{Kind: PROFILE_NOT_FOUND, Message: "cadastro necessário"}
+}

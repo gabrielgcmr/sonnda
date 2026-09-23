@@ -39,3 +39,15 @@ Além dos campos padrão (`type`, `title`, `status`, `detail`, `instance`), a So
   ]
 }
 ```
+
+## Perfil da aplicação ausente
+
+`GET /v1/me` e as rotas que exigem cadastro retornam HTTP `403` com
+`code: "PROFILE_NOT_FOUND"` quando o token é válido, mas não existe perfil local.
+Os clientes devem manter a sessão e abrir o onboarding somente para esse código.
+Um `404` genérico, `ACCESS_DENIED`, falha de rede ou erro de servidor não significa
+perfil ausente e deve permitir tentar novamente, sem logout automático.
+
+`POST /v1/me` exige apenas autenticação e cria o perfil. Depois de receber `201`,
+o cliente pode liberar a aplicação. O Supabase Auth é responsável pela sessão;
+a API é a fonte do perfil e das validações do cadastro.

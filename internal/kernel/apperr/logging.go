@@ -1,3 +1,4 @@
+// internal/kernel/apperr/logging.go
 package apperr
 
 import (
@@ -37,6 +38,7 @@ func LogLevelOf(err error) slog.Level {
 		AUTH_TOKEN_INVALID,
 		AUTH_TOKEN_EXPIRED,
 		ACCESS_DENIED,
+		PROFILE_NOT_FOUND,
 		ACTION_NOT_ALLOWED,
 		VALIDATION_FAILED,
 		NOT_FOUND,

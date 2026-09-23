@@ -1,57 +1,57 @@
-Fluxo “Authorization Code + PKCE” (o certo em 2026)
+1. Unificar primeiro o contrato com a API
+No [ProfileApi mobile](C:/Users/gabri/Dev/sonnda/sonnda-mobile/lib/features/account/profile/profile_api.dart), o perfil vem diretamente da tabela users. No [web](C:/Users/gabri/Dev/sonnda/sonnda-web/src/features/auth/api/profile.ts), vem de /v1/me.
+Minha recomendação é manter autenticação pelo Supabase e carregar o perfil pela API nos dois. Assim, a mesma regra de perfil ausente, os mesmos campos e as mesmas validações atendem ambos.
+Também padronizaria os estados:
+- Carregando sessão/perfil.
+- Não autenticado.
+- Autenticado sem perfil.
+- Autenticado com perfil.
+- Falha ao carregar perfil, com possibilidade de tentar novamente.
+Hoje, o mobile permite entrar com uma sessão existente; o web também exige perfil para acessar pacientes. Essa diferença precisa ser uma decisão de produto explícita.
+2. Adotar a organização por feature do mobile no web
+Uma estrutura comum poderia ser:
+app/
+  router/
+  layouts/
+  providers/
 
-1️⃣ Usuário acessa /login
-2️⃣ Seu backend redireciona para o IdP
-3️⃣ Usuário faz login no IdP (senha, MFA, Google, etc.)
-4️⃣ IdP redireciona de volta com um code
-5️⃣ Seu backend troca o code por tokens
-6️⃣ Seu backend cria sessão/cookie
-7️⃣ Usuário navega normalmente (SSR + HTMX)
+features/
+  auth/
+    login/
+    register/
+    auth_routes.*
+  account/
+    profile/
+    onboarding/
+    account_routes.*
+  patient/
+    search/
+    create/
+    workspace/
+    patient_routes.*
 
-👉 Depois do login:
+components/
+  ui/
 
-você não usa token no frontend
+services/
+  api/
+  integrations/
+  storage/
 
-o site funciona como web clássico com cookie
-
-
-_____________
-
-
-Posso sugerir melhorias em dois níveis: “jeito correto” (refactor mais estruturado) e “jeito simples” (ajustes mínimos), já alinhadas com o que vi em config.go.
-
-Melhorias recomendadas (correto vs. simples)
-
-GOOGLE_APPLICATION_CREDENTIALS está lido e não usado
-
-Jeito correto: adicionar ao Config (ex.: GoogleCredentialsPath) e validar conforme ambiente; ou mover a validação para o cliente do GCP.
-Jeito simples: remover a variável local (hoje ela está “unused” e isso quebra build em Go).
-normalizeHost quebra se vier com https://
-
-Jeito correto: usar net/url + net.SplitHostPort para extrair o host com segurança (e aceitar host com esquema/porta).
-Validação de enums (APP_ENV, LOG_LEVEL, LOG_FORMAT)
-
-Jeito correto: Validate() no Config retornando *apperr.AppError com INVALID_ENUM_VALUE e lista de opções válidas.
-Jeito simples: se inválido, cair no default e logar um aviso (se o logger já estiver disponível).
-Centralizar env keys e obrigatórios
-
-Jeito correto: constantes para chaves + helper requireEnv(keys...) que retorna mapa/struct e acumula faltantes.
-Jeito simples: mover as strings para const e manter o bloco atual de missing.
-Redis e GCP/Firebase espalhados
-
-Jeito correto: colocar REDIS_URL e GOOGLE_APPLICATION_CREDENTIALS no Config e repassar para os adapters, evitando os.Getenv fora do config.
-Jeito simples: manter o Redis como está, mas ao menos validar REDIS_URL no Load() quando o app usa Redis.
-Estrutura do Config
-
-Jeito correto: sub-structs (GCP, Firebase, App, Log, DB) para clareza e menos duplicação (ex.: FirebaseProjectID vindo de GCPProjectID).
-Jeito simples: manter struct plano, mas documentar (comentário) o que é derivado.
-Testes
-
-Jeito correto: testes table-driven para Load() com t.Setenv cobrindo defaults e validações.
-Jeito simples: um teste mínimo garantindo que falha quando faltam variáveis obrigatórias.
-Se você quiser, eu implemento a versão “correta” ou “simples” e ajusto chamadas (ex.: redis client).
-
-Assumptions / Open questions
-
-GOOGLE_APPLICATION_CREDENTIALS é obrigatório sempre ou apenas em dev/local?
-DOCAI_LABS_PROCESSOR_ID e Firebase web keys são sempre necessários no backend, ou só em fluxos específicos?
+config/
+utils/
+Cada projeto cria apenas as pastas que utiliza. Flutter continua com widgets e controllers; React continua com componentes, hooks e context.
+Também manteria sua decisão anterior: não separar page e view quando uma apenas encaminha para a outra. Extraia componentes quando houver reutilização ou complexidade que justifique a divisão.
+3. Resolver a dependência indireta do mobile em app
+As features já não importam app diretamente, mas ainda existe este caminho:
+feature → AppDrawer → app/providers/theme_controller
+O [teste de arquitetura](C:/Users/gabri/Dev/sonnda/sonnda-mobile/test/architecture_test.dart) permite uma exceção para AppDrawer.
+A solução mais consistente é o app compor o drawer e fornecer às telas o widget ou as ações necessárias. Isso segue a ideia já presente no AppLayout do web e permite remover a exceção.
+4. Padronizar modelos e erros
+No mobile, criaria um modelo Patient e concentraria a interpretação de erros HTTP no ApiClient. Hoje, PatientApi incorpora response.body à mensagem de erro.
+Usaria o mesmo contrato nos dois clientes: status, code, detail, erros de campos e identificador de rastreamento. Falha de conexão também precisa ser distinguida de uma resposta HTTP de erro.
+No web, revisaria UserProfile: ele aceita campos alternativos como role, user_role e profile_type, além de propriedades arbitrárias. O contrato real de /v1/me deve definir quais campos existem.
+Eu faria em duas etapas:
+1. Ajuste simples: mover páginas e rotas do web para as features, alinhar nomes e atualizar as regras de arquitetura.
+2. Alinhamento funcional: unificar perfil, estados de autenticação, modelos e tratamento de erros; depois ajustar a composição do drawer.
+Minha premissa é que a mesma conta deve ter os mesmos requisitos de acesso nos dois aplicativos. Caso o onboarding diferente seja intencional, preservamos essa diferença. Não alterei arquivos nesta comparação.

@@ -66,7 +66,7 @@ func (m *RegistrationMiddleware) RequireRegisteredUser() gin.HandlerFunc {
 
 		if u == nil {
 			// Autenticado no provider, mas sem cadastro local
-			presenter.ErrorResponder(c, apperr.Forbidden("cadastro necessário"))
+			presenter.ErrorResponder(c, apperr.ProfileNotFound())
 			return
 		}
 

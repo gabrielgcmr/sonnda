@@ -37,7 +37,7 @@ func IsUnauthorized(err error) bool {
 }
 
 func IsForbidden(err error) bool {
-	return HasCode(err, ACCESS_DENIED, ACTION_NOT_ALLOWED)
+	return HasCode(err, ACCESS_DENIED, ACTION_NOT_ALLOWED, PROFILE_NOT_FOUND)
 }
 
 func IsConflict(err error) bool {
