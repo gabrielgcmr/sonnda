@@ -12,6 +12,7 @@ import (
 )
 
 type Modules struct {
+	Account *AccountModule
 	User    *UserModule
 	Patient *PatientModule
 	Labs    *LabsModule
@@ -26,6 +27,7 @@ func NewModules(
 	fallback domaintext.Extractor,
 ) *Modules {
 	return &Modules{
+		Account: NewAccountModule(dbClient),
 		User:    NewUserModule(dbClient),
 		Patient: NewPatientModule(dbClient),
 		Labs:    NewLabsModule(dbClient, labExtractor, storage),

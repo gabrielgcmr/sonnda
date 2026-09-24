@@ -22,8 +22,13 @@ O backend segue um modelo em camadas simples, com baixo acoplamento e separaçã
   - Bootstrapping (injeção de dependências) em `internal/application/bootstrap`.
 
 - **API (`internal/api`)**  
-  Implementações de adapters HTTP (inbound).  
-  - Handlers em `internal/api/handlers`; rotas em `internal/api/routes`; middlewares em `internal/api/middleware`; presenter em `internal/api/presenter`.
+  Implementações compartilhadas de adapters HTTP (inbound).  
+  - Rotas em `internal/api/routes`; middlewares transversais em `internal/api/middleware`; presenter em `internal/api/presenter`.
+
+- **Features (`internal/features`)**  
+  Fluxos orientados a contexto de negócio.  
+  - `auth` valida identidades externas e expõe `RequireBearer`.
+  - `account` resolve o perfil local e expõe `RequireRegisteredUser`.
 
 - **Infrastructure (`internal/infrastructure`)**  
   Implementações concretas de persistência e integrações externas.  

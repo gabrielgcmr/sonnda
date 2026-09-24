@@ -1,42 +1,32 @@
-1. Unificar primeiro o contrato com a API
-No [ProfileApi mobile](C:/Users/gabri/Dev/sonnda/sonnda-mobile/lib/features/account/profile/profile_api.dart), o perfil vem diretamente da tabela users. No [web](C:/Users/gabri/Dev/sonnda/sonnda-web/src/features/auth/api/profile.ts), vem de /v1/me.
-Minha recomendação é manter autenticação pelo Supabase e carregar o perfil pela API nos dois. Assim, a mesma regra de perfil ausente, os mesmos campos e as mesmas validações atendem ambos.
-Também padronizaria os estados:
-- Carregando sessão/perfil.
-- Não autenticado.
-- Autenticado sem perfil.
-- Autenticado com perfil.
-- Falha ao carregar perfil, com possibilidade de tentar novamente.
-Hoje, o mobile permite entrar com uma sessão existente; o web também exige perfil para acessar pacientes. Essa diferença precisa ser uma decisão de produto explícita.
-2. Adotar a organização por feature do mobile no web
+Preciso Adotar a organização por feature do mobile no web
 Uma estrutura comum poderia ser:
 app/
-  router/
-  layouts/
-  providers/
+-  router/
+-  layouts/
+-  providers/
 
 features/
-  auth/
-    login/
-    register/
-    auth_routes.*
-  account/
-    profile/
-    onboarding/
-    account_routes.*
-  patient/
-    search/
-    create/
-    records/
-    patient_routes.*
+-  auth/
+--    login/
+--    register/
+--    auth_routes.*
+-  account/
+--    profile/
+--    onboarding/
+--    account_routes.*
+-  patient/
+--    search/
+--    create/
+--    records/
+--    patient_routes.*
 
 components/
-  ui/
+-  ui/
 
 services/
-  api/
-  integrations/
-  storage/
+- api/
+-  integrations/
+-  storage/
 
 config/
 utils/

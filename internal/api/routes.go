@@ -7,20 +7,21 @@ import (
 
 	"github.com/gabrielgcmr/sonnda/internal/api/handlers"
 
-	"github.com/gabrielgcmr/sonnda/internal/api/middleware"
 	openapispec "github.com/gabrielgcmr/sonnda/internal/api/openapi"
 	openapigen "github.com/gabrielgcmr/sonnda/internal/api/openapi/generated"
+	"github.com/gabrielgcmr/sonnda/internal/features/account"
+	"github.com/gabrielgcmr/sonnda/internal/features/auth"
 
 	"github.com/gin-gonic/gin"
 )
 
 type APIDependencies struct {
-	AuthMiddleware         *middleware.AuthMiddleware
-	RegistrationMiddleware *middleware.RegistrationMiddleware
-	UserHandler            *handlers.UserHandler
-	PatientHandler         *handlers.PatientHandler
-	LabsHandler            *handlers.LabsHandler
-	ExamsHandler           *handlers.ExamsHandler
+	Auth           *auth.Middleware
+	Account        *account.Middleware
+	UserHandler    *handlers.UserHandler
+	PatientHandler *handlers.PatientHandler
+	LabsHandler    *handlers.LabsHandler
+	ExamsHandler   *handlers.ExamsHandler
 }
 
 type RootInfo struct {
@@ -49,14 +50,16 @@ func SetupRoutes(
 	// Aqui o cara provou que é dono do e-mail, mas talvez não tenha cadastro no banco.
 	// ---------------------------------------------------------------------
 
-	auth := v1.Group("")
-	auth.Use(deps.AuthMiddleware.RequireBearer())
+	auth := deps.Auth
+	account := deps.Account
+	authRoutes := v1.Group("")
+	authRoutes.Use(auth.RequireBearer())
 	{
 		// Criação de usuário (Onboarding)
 		// OpenAPI: POST /v1/me
-		auth.POST("/me", deps.UserHandler.CreateUser)
+		authRoutes.POST("/me", deps.UserHandler.CreateUser)
 		// Legacy: keep /v1/users for backwards-compat
-		auth.POST("/users", deps.UserHandler.CreateUser)
+		authRoutes.POST("/users", deps.UserHandler.CreateUser)
 	}
 
 	// ---------------------------------------------------------------------
@@ -66,8 +69,8 @@ func SetupRoutes(
 
 	registered := v1.Group("")
 	registered.Use(
-		deps.AuthMiddleware.RequireBearer(),
-		deps.RegistrationMiddleware.RequireRegisteredUser())
+		auth.RequireBearer(),
+		account.RequireRegisteredUser())
 	{
 		//Perfil de usuário
 		me := registered.Group("/me")

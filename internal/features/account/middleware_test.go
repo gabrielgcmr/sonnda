@@ -1,5 +1,5 @@
-// internal/api/middleware/registration_test.go
-package middleware
+// internal/features/account/middleware_test.go
+package account
 
 import (
 	"context"
@@ -52,7 +52,7 @@ func TestRegistrationAccess(t *testing.T) {
 						helpers.SetIdentity(c, &identity.Identity{Issuer: "test", Subject: "user-1"})
 					}
 				})
-				registration := NewRegistrationMiddleware(registrationRepo{profile: tc.profile, err: tc.err})
+				registration := NewMiddleware(registrationRepo{profile: tc.profile, err: tc.err})
 				reached := false
 				router.GET(path, registration.RequireRegisteredUser(), func(c *gin.Context) {
 					reached = true

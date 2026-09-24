@@ -3,7 +3,6 @@ package bootstrap
 
 import (
 	"github.com/gabrielgcmr/sonnda/internal/api/handlers"
-	"github.com/gabrielgcmr/sonnda/internal/api/middleware"
 	professionalsvc "github.com/gabrielgcmr/sonnda/internal/application/services/professional"
 	usersvc "github.com/gabrielgcmr/sonnda/internal/application/services/user"
 	registrationuc "github.com/gabrielgcmr/sonnda/internal/application/usecase/registration"
@@ -12,8 +11,7 @@ import (
 )
 
 type UserModule struct {
-	Handler                *handlers.UserHandler
-	RegistrationMiddleware *middleware.RegistrationMiddleware
+	Handler *handlers.UserHandler
 }
 
 func NewUserModule(db *postgress.Client) *UserModule {
@@ -26,10 +24,8 @@ func NewUserModule(db *postgress.Client) *UserModule {
 	regUC := registrationuc.New(userRepo, userSvc, profSvc)
 
 	handler := handlers.NewUserHandler(regUC, userSvc)
-	regMiddleware := middleware.NewRegistrationMiddleware(userRepo)
 
 	return &UserModule{
-		Handler:                handler,
-		RegistrationMiddleware: regMiddleware,
+		Handler: handler,
 	}
 }

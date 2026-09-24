@@ -14,11 +14,11 @@ import (
 
 	"github.com/gabrielgcmr/sonnda/internal/application/bootstrap"
 	"github.com/gabrielgcmr/sonnda/internal/config"
+	"github.com/gabrielgcmr/sonnda/internal/features/auth"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/observability"
 
 	"github.com/gabrielgcmr/sonnda/internal/api"
-	apimw "github.com/gabrielgcmr/sonnda/internal/api/middleware"
 	authinfra "github.com/gabrielgcmr/sonnda/internal/infrastructure/auth"
 	documentaiinfra "github.com/gabrielgcmr/sonnda/internal/infrastructure/documentai"
 	filestorage "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/filestorage"
@@ -101,8 +101,7 @@ func main() {
 
 	//8 Middlewares
 	//8.1 API
-	apiAuthMW := apimw.NewAuthMiddleware(apiAuthProvider.AuthenticateBearerToken)
-	apiRegMW := modules.User.RegistrationMiddleware
+	authMiddleware := auth.NewMiddleware(apiAuthProvider.AuthenticateBearerToken)
 
 	//10. Cria o router HTTP
 	ginMode := gin.DebugMode
@@ -118,12 +117,12 @@ func main() {
 		Logger:     appLogger,
 		CORSConfig: cfg.CORS,
 		Deps: &api.APIDependencies{
-			AuthMiddleware:         apiAuthMW,
-			RegistrationMiddleware: apiRegMW,
-			UserHandler:            modules.User.Handler,
-			PatientHandler:         modules.Patient.Handler,
-			LabsHandler:            modules.Labs.Handler,
-			ExamsHandler:           modules.Exams.Handler,
+			Auth:           authMiddleware,
+			Account:        modules.Account.Middleware,
+			UserHandler:    modules.User.Handler,
+			PatientHandler: modules.Patient.Handler,
+			LabsHandler:    modules.Labs.Handler,
+			ExamsHandler:   modules.Exams.Handler,
 		},
 	})
 
