@@ -14,13 +14,13 @@ import (
 	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/identity"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/user"
-	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
+	"github.com/gabrielgcmr/sonnda/internal/features/account"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 	"github.com/gin-gonic/gin"
 )
 
 type registrationRepo struct {
-	repository.User
+	account.Repository
 	profile *user.User
 	err     error
 }

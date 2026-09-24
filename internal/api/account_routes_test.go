@@ -174,7 +174,7 @@ func assertAccountProblem(t *testing.T, response *httptest.ResponseRecorder, cod
 }
 
 type accountUserRepository struct {
-	repository.User
+	account.Repository
 	profile   *user.User
 	lookupErr error
 }

@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/user"
-	"github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/repo"
+	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 )
 
@@ -46,21 +46,21 @@ func mapRepoError(op string, err error) error {
 	}
 
 	switch {
-	case errors.Is(err, repo.ErrUserAlreadyExists):
+	case errors.Is(err, ErrUserAlreadyExists):
 		return &apperr.AppError{
 			Kind:    apperr.RESOURCE_ALREADY_EXISTS,
 			Message: "usuário já cadastrado",
 			Cause:   err,
 		}
 
-	case errors.Is(err, repo.ErrUserNotFound):
+	case errors.Is(err, ErrUserNotFound):
 		return &apperr.AppError{
 			Kind:    apperr.NOT_FOUND,
 			Message: "usuário não encontrado",
 			Cause:   err,
 		}
 
-	case errors.Is(err, repo.ErrRepositoryFailure):
+	case errors.Is(err, repository.ErrRepositoryFailure):
 		return &apperr.AppError{
 			Kind:    apperr.INFRA_DATABASE_ERROR,
 			Message: "falha técnica",

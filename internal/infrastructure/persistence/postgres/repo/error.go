@@ -1,9 +1,10 @@
-// internal/adapters/outbound/persistence/postgres/repository/error.go
+// internal/infrastructure/persistence/postgres/repo/error.go
 package repo
 
 import (
 	"errors"
 
+	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 )
@@ -14,10 +15,7 @@ import (
 
 var (
 	//Common
-	ErrRepositoryFailure = errors.New("repository failure")
-	//User
-	ErrUserAlreadyExists = errors.New("user already exists")
-	ErrUserNotFound      = errors.New("user not found")
+	ErrRepositoryFailure = repository.ErrRepositoryFailure
 	//Professional
 	ErrProfessionalAlreadyExists = errors.New("professional already exists")
 	ErrProfessionalNotFound      = errors.New("professional not found")

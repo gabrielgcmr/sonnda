@@ -5,6 +5,7 @@ import (
 	professionalsvc "github.com/gabrielgcmr/sonnda/internal/application/services/professional"
 	"github.com/gabrielgcmr/sonnda/internal/features/account"
 	accounthttp "github.com/gabrielgcmr/sonnda/internal/features/account/http"
+	accountpostgres "github.com/gabrielgcmr/sonnda/internal/features/account/postgres"
 	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
 	"github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/repo"
 )
@@ -15,7 +16,7 @@ type AccountModule struct {
 }
 
 func NewAccountModule(db *postgress.Client) *AccountModule {
-	userRepo := repo.New(db)
+	userRepo := accountpostgres.New(db.Pool())
 	profRepo := repo.NewProfessionalRepository(db)
 	patientAccessRepo := repo.NewPatientAccessRepository(db)
 

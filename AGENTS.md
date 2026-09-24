@@ -33,7 +33,9 @@ Simple instructions for coding agents working on this repo.
 - The architecture is migrating incrementally from global layers to business contexts under `internal/features`, preserving separation of concerns.
 - **Features (`internal/features`)**: Context-specific application flows.
   - **Account (`internal/features/account`)**: Profile services, onboarding, DTOs and error mapping; HTTP handler and middleware live in `account/http`.
-  - Account entities and repository interfaces remain in `internal/domain`; concrete repositories and sqlc remain in `internal/infrastructure` during this migration.
+  - Account owns its repository interface and user persistence errors in `account/repository.go`; its Postgres adapter lives in `account/postgres`.
+  - User entities remain in `internal/domain/entity/user`; the shared database client and generated sqlc code remain in `internal/infrastructure` during this migration.
+  - The shared persistence failure sentinel belongs to `internal/domain/repository/errors.go`; account application code must not import concrete Postgres repositories.
   - `internal/application/bootstrap/account.go` composes the account handler and middleware in a single `AccountModule`.
   - Add account behavior to this feature, not to the former global user service, registration use case or user handler paths.
   - Other contexts keep their existing organization until explicitly migrated.

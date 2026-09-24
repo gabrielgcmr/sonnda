@@ -7,7 +7,6 @@ import (
 
 	professionalsvc "github.com/gabrielgcmr/sonnda/internal/application/services/professional"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/user"
-	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 )
 
@@ -16,14 +15,14 @@ type Onboarding interface {
 }
 
 type onboarding struct {
-	userRepo repository.User
+	userRepo Repository
 	userSvc  Service
 	profSvc  professionalsvc.Service
 }
 
 var _ Onboarding = (*onboarding)(nil)
 
-func NewOnboarding(userRepo repository.User, userSvc Service, profSvc professionalsvc.Service) Onboarding {
+func NewOnboarding(userRepo Repository, userSvc Service, profSvc professionalsvc.Service) Onboarding {
 	return &onboarding{
 		userRepo: userRepo,
 		userSvc:  userSvc,

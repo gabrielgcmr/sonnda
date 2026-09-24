@@ -1,16 +1,24 @@
-// internal/domain/repository/user.go
-// internal/domain/user_repository.go
-package repository
+// internal/features/account/repository.go
+package account
 
 import (
 	"context"
+	"errors"
 
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/user"
 
 	"github.com/google/uuid"
 )
 
-type User interface {
+var (
+	ErrUserAlreadyExists = errors.New("user already exists")
+	ErrUserNotFound      = errors.New("user not found")
+)
+
+// Repository persists account profiles. Lookups return (nil, nil) when absent;
+// updates and deletions return ErrUserNotFound when the target no longer exists.
+// Infrastructure failures wrap repository.ErrRepositoryFailure and their cause.
+type Repository interface {
 	// CRUD basico
 	Create(ctx context.Context, u *user.User) error
 	Update(ctx context.Context, u *user.User) error

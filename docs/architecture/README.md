@@ -30,6 +30,7 @@ O backend está migrando de camadas globais para contextos em `internal/features
   - `auth` valida identidades externas e expõe `RequireBearer`.
   - `account` reúne serviços de perfil, onboarding, DTOs e mapeamento de erros.
   - `account/http` contém o handler de perfil e o middleware que resolve o usuário local e expõe `RequireRegisteredUser`.
+  - `account/repository.go` define a interface de persistência; `account/postgres` implementa esse contrato usando o SQLC existente.
 
 - **Infrastructure (`internal/infrastructure`)**  
   Implementações concretas de persistência e integrações externas.  
@@ -50,7 +51,7 @@ O backend está migrando de camadas globais para contextos em `internal/features
 
 Essas camadas representam **limites conceituais**, não apenas organização de pastas.
 
-## Migração de account — etapa 1
+## Migração de account — etapas 1 e 2
 
 ```text
 internal/features/account/
@@ -60,6 +61,10 @@ internal/features/account/
 ├── error_map.go
 ├── onboarding.go
 ├── onboarding_dto.go
+├── repository.go
+├── postgres/
+│   ├── repository.go
+│   └── repository_test.go
 └── http/
     ├── handler.go
     ├── middleware.go
@@ -75,15 +80,24 @@ dos helpers e presenter compartilhados.
 usando a mesma instância do repositório de usuários. `UserModule` foi incorporado
 a esse módulo. As rotas continuam compostas em `internal/api/routes.go`.
 
-Nesta etapa, entidades de usuário, interfaces de repositório, implementações
-Postgres e código sqlc mantêm seus caminhos atuais. Também permanecem a consulta
-de pacientes acessíveis e a dependência de profissionais do onboarding. O
-mapeamento de erros ainda conhece os erros do repositório legado; a separação
-dessas dependências fica para as próximas etapas.
+A segunda etapa trouxe a interface `account.Repository` e o adaptador
+`account/postgres.Repository` para a feature. O bootstrap fornece o pool ao
+adaptador, que usa o SQLC já gerado, sem importar o pacote de repositórios legado.
+Os erros de conflito e usuário ausente pertencem ao contrato de account. A falha
+genérica de persistência pertence a `internal/domain/repository/errors.go`; o
+pacote legado mantém uma referência ao mesmo erro para preservar a compatibilidade.
+O mapeamento de erros da aplicação deixa de importar a implementação Postgres.
+
+As entidades de usuário, interfaces de acesso a pacientes, conexão compartilhada
+e código sqlc mantêm seus caminhos atuais. A consulta de pacientes acessíveis e a
+dependência de profissionais do onboarding ficam para as próximas etapas. Não há
+migração de entidades nem de queries nesta etapa.
 
 Não houve mudança de contrato HTTP, OpenAPI, banco ou regras de negócio. Os testes
 em `internal/api/account_routes_test.go` verificam os fluxos pelas rotas reais,
 com serviços de account e repositórios em memória.
+Os testes do adaptador verificam parâmetros, conversões e erros com uma
+implementação em memória da interface de queries do SQLC, sem acessar banco real.
 
 ---
 
@@ -116,7 +130,7 @@ com serviços de account e repositórios em memória.
 
 - SQL definido em `internal/infrastructure/persistence/postgres/sqlc/sql`.
 - `sqlc` gera código em `internal/infrastructure/persistence/postgres/sqlc/generated`.
-- Repositórios em `internal/infrastructure/persistence/postgres/repo` encapsulam o acesso ao banco.
+- Repositórios de account ficam em `internal/features/account/postgres`; os demais continuam em `internal/infrastructure/persistence/postgres/repo`.
 - Banco principal: PostgreSQL (Supabase).
 - Soft delete usa `deleted_at`; consultas filtram `deleted_at IS NULL`.
 

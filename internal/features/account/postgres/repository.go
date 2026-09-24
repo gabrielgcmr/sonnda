@@ -1,94 +1,95 @@
-// internal/infrastructure/persistence/postgres/repo/user.go
-package repo
+// internal/features/account/postgres/repository.go
+package accountpostgres
 
 import (
 	"context"
 	"errors"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/user"
 	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
-	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
+	"github.com/gabrielgcmr/sonnda/internal/features/account"
 	usersqlc "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/sqlc/generated/user"
 )
 
-var _ repository.User = (*User)(nil)
+var _ account.Repository = (*Repository)(nil)
 
-type User struct {
-	client  *postgress.Client
-	queries *usersqlc.Queries
+type Repository struct {
+	queries usersqlc.Querier
 }
 
-func New(client *postgress.Client) *User {
-	return &User{
-		client:  client,
-		queries: usersqlc.New(client.Pool()),
+func New(db usersqlc.DBTX) *Repository {
+	return &Repository{
+		queries: usersqlc.New(db),
 	}
 }
 
-// Create implements [repository.User].
-func (r *User) Create(ctx context.Context, u *user.User) error {
+// Create implements [account.Repository].
+func (r *Repository) Create(ctx context.Context, u *user.User) error {
 	params := usersqlc.CreateUserParams{
 		ID:          u.ID,
 		AuthIssuer:  u.AuthIssuer,
 		AuthSubject: u.AuthSubject,
 		Email:       u.Email,
 		FullName:    u.FullName,
-		BirthDate:   FromRequiredDateToPgDate(u.BirthDate),
+		BirthDate:   pgtype.Date{Time: u.BirthDate, Valid: true},
 		Cpf:         u.CPF,
 		Phone:       u.Phone,
 		AccountType: string(u.AccountType),
-		CreatedAt:   FromRequiredTimestamptzToPgTimestamptz(u.CreatedAt),
-		UpdatedAt:   FromRequiredTimestamptzToPgTimestamptz(u.UpdatedAt),
+		CreatedAt:   pgtype.Timestamptz{Time: u.CreatedAt, Valid: true},
+		UpdatedAt:   pgtype.Timestamptz{Time: u.UpdatedAt, Valid: true},
 	}
 
 	if err := r.queries.CreateUser(ctx, params); err != nil {
-		if IsUniqueViolationError(err) {
-			return ErrUserAlreadyExists
+		if isUniqueViolation(err) {
+			return account.ErrUserAlreadyExists
 		}
-		return errors.Join(ErrRepositoryFailure, err)
+		return errors.Join(repository.ErrRepositoryFailure, err)
 	}
 
 	// NÇœo sobrescreve a entidade; app-source-of-truth mantÇ¸m valores do domÇðnio.
 	return nil
 }
 
-// Delete implements [repository.User].
-func (r *User) SoftDelete(ctx context.Context, id uuid.UUID) error {
+// SoftDelete implements [account.Repository].
+func (r *Repository) SoftDelete(ctx context.Context, id uuid.UUID) error {
 	rows, err := r.queries.SoftDeleteUser(ctx, id)
 	if err != nil {
-		return errors.Join(ErrRepositoryFailure, err)
+		return errors.Join(repository.ErrRepositoryFailure, err)
 	}
 	if rows == 0 {
-		return ErrUserNotFound
+		return account.ErrUserNotFound
 	}
 	return nil
 }
 
-func (r *User) Delete(ctx context.Context, id uuid.UUID) error {
+func (r *Repository) Delete(ctx context.Context, id uuid.UUID) error {
 	rows, err := r.queries.DeleteUser(ctx, id)
 	if err != nil {
-		return errors.Join(ErrRepositoryFailure, err)
+		return errors.Join(repository.ErrRepositoryFailure, err)
 	}
 	if rows == 0 {
-		return ErrUserNotFound
+		return account.ErrUserNotFound
 	}
 	return nil
 }
 
-// FindByAuthIdentity implements [repository.User].
-func (r *User) FindByAuthIdentity(ctx context.Context, issuer string, subject string) (*user.User, error) {
+// FindByAuthIdentity implements [account.Repository].
+func (r *Repository) FindByAuthIdentity(ctx context.Context, issuer string, subject string) (*user.User, error) {
 
 	row, err := r.queries.FindUserByAuthIdentity(ctx, usersqlc.FindUserByAuthIdentityParams{
 		AuthIssuer:  issuer,
 		AuthSubject: subject,
 	})
 	if err != nil {
-		if IsPgNotFound(err) {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
-		return nil, errors.Join(ErrRepositoryFailure, err)
+		return nil, errors.Join(repository.ErrRepositoryFailure, err)
 	}
 
 	return &user.User{
@@ -106,14 +107,14 @@ func (r *User) FindByAuthIdentity(ctx context.Context, issuer string, subject st
 	}, nil
 }
 
-// FindByCPF implements [repository.User].
-func (r *User) FindByCPF(ctx context.Context, cpf string) (*user.User, error) {
+// FindByCPF implements [account.Repository].
+func (r *Repository) FindByCPF(ctx context.Context, cpf string) (*user.User, error) {
 	row, err := r.queries.FindUserByCPF(ctx, cpf)
 	if err != nil {
-		if IsPgNotFound(err) {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
-		return nil, errors.Join(ErrRepositoryFailure, err)
+		return nil, errors.Join(repository.ErrRepositoryFailure, err)
 	}
 
 	return &user.User{
@@ -131,14 +132,14 @@ func (r *User) FindByCPF(ctx context.Context, cpf string) (*user.User, error) {
 	}, nil
 }
 
-// FindByID implements [repository.User].
-func (r *User) FindByID(ctx context.Context, id uuid.UUID) (*user.User, error) {
+// FindByID implements [account.Repository].
+func (r *Repository) FindByID(ctx context.Context, id uuid.UUID) (*user.User, error) {
 	row, err := r.queries.FindUserByID(ctx, id)
 	if err != nil {
-		if IsPgNotFound(err) {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
-		return nil, errors.Join(ErrRepositoryFailure, err)
+		return nil, errors.Join(repository.ErrRepositoryFailure, err)
 	}
 
 	return &user.User{
@@ -156,26 +157,25 @@ func (r *User) FindByID(ctx context.Context, id uuid.UUID) (*user.User, error) {
 	}, nil
 }
 
-// Update implements [repository.User].
-func (r *User) Update(ctx context.Context, u *user.User) error {
-	birthDate := u.BirthDate
+// Update implements [account.Repository].
+func (r *Repository) Update(ctx context.Context, u *user.User) error {
 	row, err := r.queries.UpdateUser(ctx, usersqlc.UpdateUserParams{
 		ID:        u.ID,
 		Email:     u.Email,
 		FullName:  u.FullName,
-		BirthDate: FromNullableDateToPgDate(&birthDate),
+		BirthDate: pgtype.Date{Time: u.BirthDate, Valid: true},
 		Cpf:       u.CPF,
 		Phone:     u.Phone,
-		UpdatedAt: FromRequiredTimestamptzToPgTimestamptz(u.UpdatedAt),
+		UpdatedAt: pgtype.Timestamptz{Time: u.UpdatedAt, Valid: true},
 	})
 	if err != nil {
-		if IsPgNotFound(err) {
-			return ErrUserNotFound
+		if errors.Is(err, pgx.ErrNoRows) {
+			return account.ErrUserNotFound
 		}
-		if IsUniqueViolationError(err) {
-			return ErrUserAlreadyExists
+		if isUniqueViolation(err) {
+			return account.ErrUserAlreadyExists
 		}
-		return errors.Join(ErrRepositoryFailure, err)
+		return errors.Join(repository.ErrRepositoryFailure, err)
 	}
 
 	u.ID = row.ID
@@ -189,13 +189,13 @@ func (r *User) Update(ctx context.Context, u *user.User) error {
 	return nil
 }
 
-func (r *User) FindByEmail(ctx context.Context, email string) (*user.User, error) {
+func (r *Repository) FindByEmail(ctx context.Context, email string) (*user.User, error) {
 	row, err := r.queries.FindUserByEmail(ctx, email)
 	if err != nil {
-		if IsPgNotFound(err) {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
-		return nil, errors.Join(ErrRepositoryFailure, err)
+		return nil, errors.Join(repository.ErrRepositoryFailure, err)
 	}
 
 	return &user.User{
@@ -211,4 +211,9 @@ func (r *User) FindByEmail(ctx context.Context, email string) (*user.User, error
 		CreatedAt:   row.CreatedAt.Time,
 		UpdatedAt:   row.UpdatedAt.Time,
 	}, nil
+}
+
+func isUniqueViolation(err error) bool {
+	var pgErr *pgconn.PgError
+	return errors.As(err, &pgErr) && pgErr.Code == "23505"
 }

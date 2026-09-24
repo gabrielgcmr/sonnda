@@ -8,16 +8,16 @@ import (
 	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/identity"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/user"
-	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
+	"github.com/gabrielgcmr/sonnda/internal/features/account"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 	"github.com/gin-gonic/gin"
 )
 
 type Middleware struct {
-	userRepo repository.User
+	userRepo account.Repository
 }
 
-func NewMiddleware(userRepo repository.User) *Middleware {
+func NewMiddleware(userRepo account.Repository) *Middleware {
 	return &Middleware{userRepo: userRepo}
 }
 
