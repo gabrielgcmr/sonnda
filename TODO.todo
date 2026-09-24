@@ -27,7 +27,7 @@ features/
   patient/
     search/
     create/
-    workspace/
+    records/
     patient_routes.*
 
 components/
@@ -42,11 +42,7 @@ config/
 utils/
 Cada projeto cria apenas as pastas que utiliza. Flutter continua com widgets e controllers; React continua com componentes, hooks e context.
 Também manteria sua decisão anterior: não separar page e view quando uma apenas encaminha para a outra. Extraia componentes quando houver reutilização ou complexidade que justifique a divisão.
-3. Resolver a dependência indireta do mobile em app
-As features já não importam app diretamente, mas ainda existe este caminho:
-feature → AppDrawer → app/providers/theme_controller
-O [teste de arquitetura](C:/Users/gabri/Dev/sonnda/sonnda-mobile/test/architecture_test.dart) permite uma exceção para AppDrawer.
-A solução mais consistente é o app compor o drawer e fornecer às telas o widget ou as ações necessárias. Isso segue a ideia já presente no AppLayout do web e permite remover a exceção.
+
 4. Padronizar modelos e erros
 No mobile, criaria um modelo Patient e concentraria a interpretação de erros HTTP no ApiClient. Hoje, PatientApi incorpora response.body à mensagem de erro.
 Usaria o mesmo contrato nos dois clientes: status, code, detail, erros de campos e identificador de rastreamento. Falha de conexão também precisa ser distinguida de uma resposta HTTP de erro.

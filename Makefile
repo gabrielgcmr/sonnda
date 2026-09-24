@@ -7,12 +7,12 @@ MAIN     := ./cmd/api
 VERSION ?= 1.0.0
 LDFLAGS := -s -w -X github.com/gabrielgcmr/sonnda/cmd/api.version=$(VERSION)
 SQLC_SPEC := internal/infrastructure/persistence/postgres/sqlc/sqlc.yaml
-OPENAPI_SPEC := internal/api/openapi/openapi.yaml
+OPENAPI_SPEC := openapi.yaml
 
 # ==============================================================================
 # 🎯 TARGETS PRINCIPAIS
 # ==============================================================================
-.PHONY: all dev dev-air build clean generate test help openapi-validate oapi-codegen tools-air
+.PHONY: all dev dev-air build clean generate test help openapi-validate openapi-embed oapi-codegen tools-air
 
 all: build
 
@@ -67,11 +67,14 @@ OAPI_CODEGEN_OUTPUT  := internal/api/openapi/generated/oapi.gen.go
 OAPI_CODEGEN_PACKAGE := openapi
 OAPI_CODEGEN_GENERATE := types,gin
 
+openapi-embed:
+	go generate ./internal/api/openapi
+
 oapi-codegen:
 	@mkdir -p $(dir $(OAPI_CODEGEN_OUTPUT))
 	go tool oapi-codegen -generate $(OAPI_CODEGEN_GENERATE) -package $(OAPI_CODEGEN_PACKAGE) -o $(OAPI_CODEGEN_OUTPUT) $(OAPI_CODEGEN_INPUT)
 
-generate: sqlc oapi-codegen
+generate: sqlc openapi-embed oapi-codegen
 
 # ==============================================================================
 # 🐘 DOCKER
@@ -94,6 +97,7 @@ help:
 	@echo "  build       - Gera o binário de produção"
 	@echo "  clean       - Limpa pastas geradas"
 	@echo "  generate    - Gera código (sqlc + oapi-codegen)"
+	@echo "  openapi-embed - Gera o asset OpenAPI embutido"
 	@echo "  openapi-validate - Valida o OpenAPI local"
 	@echo "  tools-air   - Instala o Air em ./bin"
 	@echo "  docker-up   - Sobe o docker"

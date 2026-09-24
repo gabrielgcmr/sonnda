@@ -36,7 +36,7 @@ A Sonnda resolve um problema recorrente na pratica clinica: pacientes precisam c
 
 Fonte de verdade do contrato HTTP da API.
 
-- Spec: `internal/api/openapi/openapi.yaml` (embutido no binario e servido em `/openapi.yaml`).
+- Spec: `openapi.yaml` (embutido no binario e servido em `/openapi.yaml`).
 - Codigo gerado: `internal/api/openapi/generated/oapi.gen.go`.
 - Erros HTTP: RFC 9457 (Problem Details) via `application/problem+json`.
 
@@ -132,12 +132,12 @@ Estrutura atual do projeto:
 ├── cmd/
 │   └── server/
 │       └── main.go                 # Ponto de entrada da aplicação
+├── openapi.yaml                    # Fonte de verdade do contrato HTTP
 ├── docs/
 │   ├── README.md
 │   ├── api/                        # Documentação de endpoints
 │   │   ├── auth.md
 │   │   ├── labs.md
-│   │   ├── openapi.yaml
 │   │   ├── patient.md
 │   │   ├── user.md
 │   │   └── README.md
@@ -156,7 +156,7 @@ Estrutura atual do projeto:
 │   ├── api/                        # [LEGADO - sendo migrado]
 │   │   ├── routes.go
 │   │   ├── openapi/
-│   │   │   ├── openapi.yaml        # Fonte de verdade (embutido)
+│   │   │   ├── openapi_spec_gen.go # Asset gerado a partir da raiz
 │   │   │   └── generated/          # Código gerado via oapi-codegen
 │   │   │       └── oapi.gen.go
 │   │   ├── handlers/
