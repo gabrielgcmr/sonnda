@@ -1,5 +1,4 @@
 // internal/infrastructure/persistence/postgres/repo/patient.go
-// internal/adapters/outbound/data/postgres/repository/patient.go
 package repo
 
 import (

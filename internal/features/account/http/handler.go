@@ -1,5 +1,5 @@
-// internal/api/handlers/user.go
-package handlers
+// internal/features/account/http/handler.go
+package accounthttp
 
 import (
 	"context"
@@ -13,35 +13,34 @@ import (
 	helpers "github.com/gabrielgcmr/sonnda/internal/api/helpers"
 	openapi "github.com/gabrielgcmr/sonnda/internal/api/openapi/generated"
 	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
-	usersvc "github.com/gabrielgcmr/sonnda/internal/application/services/user"
-	registrationuc "github.com/gabrielgcmr/sonnda/internal/application/usecase/registration"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/user"
+	"github.com/gabrielgcmr/sonnda/internal/features/account"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 )
 
 type userService interface {
-	Update(ctx context.Context, input usersvc.UserUpdateInput) (*user.User, error)
+	Update(ctx context.Context, input account.UserUpdateInput) (*user.User, error)
 	Delete(ctx context.Context, userID uuid.UUID) error
-	ListMyPatients(ctx context.Context, userID uuid.UUID, limit, offset int) (*usersvc.MyPatientsOutput, error)
+	ListMyPatients(ctx context.Context, userID uuid.UUID, limit, offset int) (*account.MyPatientsOutput, error)
 }
 
-type UserHandler struct {
-	regUC   registrationuc.UseCase
-	userSvc userService
+type Handler struct {
+	onboarding account.Onboarding
+	userSvc    userService
 }
 
-func NewUserHandler(
-	regUC registrationuc.UseCase,
+func NewHandler(
+	onboarding account.Onboarding,
 	userSvc userService,
 
-) *UserHandler {
-	return &UserHandler{
-		regUC:   regUC,
-		userSvc: userSvc,
+) *Handler {
+	return &Handler{
+		onboarding: onboarding,
+		userSvc:    userSvc,
 	}
 }
 
-func (h *UserHandler) CreateUser(c *gin.Context) {
+func (h *Handler) CreateUser(c *gin.Context) {
 	identity, ok := helpers.GetIdentity(c)
 	if !ok {
 		presenter.ErrorResponder(c, apperr.Unauthorized("autenticação necessária"))
@@ -70,7 +69,7 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 	}
 	email := strings.TrimSpace(*identity.Email)
 
-	input := registrationuc.RegisterInput{
+	input := account.RegisterInput{
 		Issuer:      identity.Issuer,
 		Subject:     identity.Subject,
 		Email:       email,
@@ -81,7 +80,7 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 		Phone:       req.Phone,
 	}
 
-	created, err := h.regUC.Register(c.Request.Context(), input)
+	created, err := h.onboarding.Register(c.Request.Context(), input)
 	if err != nil {
 		presenter.ErrorResponder(c, err)
 		return
@@ -90,12 +89,12 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 	c.JSON(http.StatusCreated, created)
 }
 
-func (h *UserHandler) GetUser(c *gin.Context) {
+func (h *Handler) GetUser(c *gin.Context) {
 	currentUser := helpers.MustGetCurrentUser(c)
 	c.JSON(http.StatusOK, currentUser)
 }
 
-func (h *UserHandler) UpdateUser(c *gin.Context) {
+func (h *Handler) UpdateUser(c *gin.Context) {
 	currentUser := helpers.MustGetCurrentUser(c)
 
 	var req openapi.UpdateUserRequest
@@ -104,7 +103,7 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	input := usersvc.UserUpdateInput{
+	input := account.UserUpdateInput{
 		UserID: currentUser.ID,
 		CPF:    req.Cpf,
 		Phone:  req.Phone,
@@ -127,7 +126,7 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 	c.JSON(http.StatusOK, updated)
 }
 
-func (h *UserHandler) HardDeleteUser(c *gin.Context) {
+func (h *Handler) HardDeleteUser(c *gin.Context) {
 	currentUser := helpers.MustGetCurrentUser(c)
 
 	if err := h.userSvc.Delete(c.Request.Context(), currentUser.ID); err != nil {
@@ -139,7 +138,7 @@ func (h *UserHandler) HardDeleteUser(c *gin.Context) {
 
 }
 
-func (h *UserHandler) ListMyPatients(c *gin.Context) {
+func (h *Handler) ListMyPatients(c *gin.Context) {
 	currentUser := helpers.MustGetCurrentUser(c)
 
 	// Parse query params

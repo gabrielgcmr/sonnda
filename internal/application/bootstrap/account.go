@@ -2,17 +2,29 @@
 package bootstrap
 
 import (
+	professionalsvc "github.com/gabrielgcmr/sonnda/internal/application/services/professional"
 	"github.com/gabrielgcmr/sonnda/internal/features/account"
+	accounthttp "github.com/gabrielgcmr/sonnda/internal/features/account/http"
 	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
 	"github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/repo"
 )
 
 type AccountModule struct {
-	Middleware *account.Middleware
+	Handler    *accounthttp.Handler
+	Middleware *accounthttp.Middleware
 }
 
 func NewAccountModule(db *postgress.Client) *AccountModule {
+	userRepo := repo.New(db)
+	profRepo := repo.NewProfessionalRepository(db)
+	patientAccessRepo := repo.NewPatientAccessRepository(db)
+
+	service := account.NewService(userRepo, patientAccessRepo)
+	professionalService := professionalsvc.New(profRepo)
+	onboarding := account.NewOnboarding(userRepo, service, professionalService)
+
 	return &AccountModule{
-		Middleware: account.NewMiddleware(repo.New(db)),
+		Handler:    accounthttp.NewHandler(onboarding, service),
+		Middleware: accounthttp.NewMiddleware(userRepo),
 	}
 }

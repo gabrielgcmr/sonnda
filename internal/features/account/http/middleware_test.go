@@ -1,5 +1,5 @@
-// internal/features/account/middleware_test.go
-package account
+// internal/features/account/http/middleware_test.go
+package accounthttp
 
 import (
 	"context"

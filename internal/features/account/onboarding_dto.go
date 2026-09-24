@@ -1,5 +1,5 @@
-// internal/application/usecase/registration/dto.go
-package registration
+// internal/features/account/onboarding_dto.go
+package account
 
 import (
 	"time"

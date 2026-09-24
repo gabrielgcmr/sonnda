@@ -1,5 +1,4 @@
 // internal/infrastructure/persistence/postgres/repo/professional.go
-// internal/adapters/outbound/storage/data/postgres/repository/professional.go
 package repo
 
 import (

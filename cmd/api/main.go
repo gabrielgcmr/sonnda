@@ -119,7 +119,7 @@ func main() {
 		Deps: &api.APIDependencies{
 			Auth:           authMiddleware,
 			Account:        modules.Account.Middleware,
-			UserHandler:    modules.User.Handler,
+			AccountHandler: modules.Account.Handler,
 			PatientHandler: modules.Patient.Handler,
 			LabsHandler:    modules.Labs.Handler,
 			ExamsHandler:   modules.Exams.Handler,

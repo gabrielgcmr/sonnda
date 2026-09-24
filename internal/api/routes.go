@@ -1,5 +1,4 @@
 // internal/api/routes.go
-// internal/api/routes.go
 package api
 
 import (
@@ -9,7 +8,7 @@ import (
 
 	openapispec "github.com/gabrielgcmr/sonnda/internal/api/openapi"
 	openapigen "github.com/gabrielgcmr/sonnda/internal/api/openapi/generated"
-	"github.com/gabrielgcmr/sonnda/internal/features/account"
+	accounthttp "github.com/gabrielgcmr/sonnda/internal/features/account/http"
 	"github.com/gabrielgcmr/sonnda/internal/features/auth"
 
 	"github.com/gin-gonic/gin"
@@ -17,8 +16,8 @@ import (
 
 type APIDependencies struct {
 	Auth           *auth.Middleware
-	Account        *account.Middleware
-	UserHandler    *handlers.UserHandler
+	Account        *accounthttp.Middleware
+	AccountHandler *accounthttp.Handler
 	PatientHandler *handlers.PatientHandler
 	LabsHandler    *handlers.LabsHandler
 	ExamsHandler   *handlers.ExamsHandler
@@ -57,9 +56,9 @@ func SetupRoutes(
 	{
 		// Criação de usuário (Onboarding)
 		// OpenAPI: POST /v1/me
-		authRoutes.POST("/me", deps.UserHandler.CreateUser)
+		authRoutes.POST("/me", deps.AccountHandler.CreateUser)
 		// Legacy: keep /v1/users for backwards-compat
-		authRoutes.POST("/users", deps.UserHandler.CreateUser)
+		authRoutes.POST("/users", deps.AccountHandler.CreateUser)
 	}
 
 	// ---------------------------------------------------------------------
@@ -75,10 +74,10 @@ func SetupRoutes(
 		//Perfil de usuário
 		me := registered.Group("/me")
 		{
-			me.GET("", deps.UserHandler.GetUser)
-			me.PUT("", deps.UserHandler.UpdateUser)
-			me.DELETE("", deps.UserHandler.HardDeleteUser)
-			me.GET("/patients", deps.UserHandler.ListMyPatients)
+			me.GET("", deps.AccountHandler.GetUser)
+			me.PUT("", deps.AccountHandler.UpdateUser)
+			me.DELETE("", deps.AccountHandler.HardDeleteUser)
+			me.GET("/patients", deps.AccountHandler.ListMyPatients)
 		}
 
 		//Pacientes

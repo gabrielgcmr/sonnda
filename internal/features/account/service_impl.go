@@ -1,5 +1,5 @@
-// internal/application/services/user/service_impl.go
-package usersvc
+// internal/features/account/service_impl.go
+package account
 
 import (
 	"context"
@@ -19,7 +19,7 @@ type service struct {
 
 var _ Service = (*service)(nil)
 
-func New(userRepo repository.User, patientAccessRepo repository.PatientAccessRepo) Service {
+func NewService(userRepo repository.User, patientAccessRepo repository.PatientAccessRepo) Service {
 	return &service{
 		userRepo:          userRepo,
 		patientAccessRepo: patientAccessRepo,

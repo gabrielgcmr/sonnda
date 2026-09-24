@@ -1,5 +1,5 @@
-// internal/application/services/user/error_map.go
-package usersvc
+// internal/features/account/error_map.go
+package account
 
 import (
 	"errors"

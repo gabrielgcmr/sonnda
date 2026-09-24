@@ -1,7 +1,7 @@
 <!-- docs/architecture/README.md -->
 # Architecture
 
-Descrição da arquitetura da Sonnda API em camadas, fluxos principais e decisões relevantes.
+Descrição da arquitetura da Sonnda API, sua migração gradual por contexto, fluxos principais e decisões relevantes.
 
 Este documento descreve **como a arquitetura está organizada**.  
 As decisões não óbvias (o *porquê*) são registradas separadamente em ADRs.
@@ -10,7 +10,7 @@ As decisões não óbvias (o *porquê*) são registradas separadamente em ADRs.
 
 ## Visão geral
 
-O backend segue um modelo em camadas simples, com baixo acoplamento e separação clara de responsabilidades, aplicado de forma pragmática em Go.
+O backend está migrando de camadas globais para contextos em `internal/features`, mantendo a separação entre domínio, aplicação, HTTP e persistência. Os contextos ainda não migrados permanecem nas camadas existentes.
 
 - **Domain (`internal/domain`)**  
   Modelos do domínio, regras de negócio e invariantes.  
@@ -18,7 +18,7 @@ O backend segue um modelo em camadas simples, com baixo acoplamento e separaçã
 
 - **Application (`internal/application`)**  
   Orquestração e cross-cutting concerns.  
-  - Use cases em `internal/application/usecase`; services em `internal/application/services`.  
+  - Use cases em `internal/application/usecase`; services em `internal/application/services` para os contextos ainda não migrados.
   - Bootstrapping (injeção de dependências) em `internal/application/bootstrap`.
 
 - **API (`internal/api`)**  
@@ -28,7 +28,8 @@ O backend segue um modelo em camadas simples, com baixo acoplamento e separaçã
 - **Features (`internal/features`)**  
   Fluxos orientados a contexto de negócio.  
   - `auth` valida identidades externas e expõe `RequireBearer`.
-  - `account` resolve o perfil local e expõe `RequireRegisteredUser`.
+  - `account` reúne serviços de perfil, onboarding, DTOs e mapeamento de erros.
+  - `account/http` contém o handler de perfil e o middleware que resolve o usuário local e expõe `RequireRegisteredUser`.
 
 - **Infrastructure (`internal/infrastructure`)**  
   Implementações concretas de persistência e integrações externas.  
@@ -48,6 +49,41 @@ O backend segue um modelo em camadas simples, com baixo acoplamento e separaçã
   - **Observability (`internal/kernel/observability`)**: logging baseado em slog, logger por request.
 
 Essas camadas representam **limites conceituais**, não apenas organização de pastas.
+
+## Migração de account — etapa 1
+
+```text
+internal/features/account/
+├── service.go
+├── service_impl.go
+├── dto.go
+├── error_map.go
+├── onboarding.go
+├── onboarding_dto.go
+└── http/
+    ├── handler.go
+    ├── middleware.go
+    └── middleware_test.go
+```
+
+O código antes distribuído entre `api/handlers/user.go`, `application/services/user`
+e `application/usecase/registration` agora pertence a `account`. O pacote de
+aplicação não depende de Gin; o transporte HTTP depende dos serviços de account e
+dos helpers e presenter compartilhados.
+
+`bootstrap/account.go` monta um único `AccountModule`, com handler e middleware
+usando a mesma instância do repositório de usuários. `UserModule` foi incorporado
+a esse módulo. As rotas continuam compostas em `internal/api/routes.go`.
+
+Nesta etapa, entidades de usuário, interfaces de repositório, implementações
+Postgres e código sqlc mantêm seus caminhos atuais. Também permanecem a consulta
+de pacientes acessíveis e a dependência de profissionais do onboarding. O
+mapeamento de erros ainda conhece os erros do repositório legado; a separação
+dessas dependências fica para as próximas etapas.
+
+Não houve mudança de contrato HTTP, OpenAPI, banco ou regras de negócio. Os testes
+em `internal/api/account_routes_test.go` verificam os fluxos pelas rotas reais,
+com serviços de account e repositórios em memória.
 
 ---
 
@@ -107,6 +143,7 @@ Essas camadas representam **limites conceituais**, não apenas organização de 
 ## Bootstrap e rotas
 
 - Bootstrap faz o wiring (repos, services e handlers) em `internal/application/bootstrap`.
+- `AccountModule` reúne handler de perfil/onboarding e middleware de usuário registrado.
 - As rotas HTTP vivem em `internal/api/routes.go` (API REST).  
 - Níveis de acesso:
   - público

@@ -1,4 +1,5 @@
-package usersvc
+// internal/features/account/dto.go
+package account
 
 import (
 	"time"

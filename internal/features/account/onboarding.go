@@ -1,38 +1,37 @@
-// internal/application/usecase/registration/registration.go
-package registration
+// internal/features/account/onboarding.go
+package account
 
 import (
 	"context"
 	"errors"
 
 	professionalsvc "github.com/gabrielgcmr/sonnda/internal/application/services/professional"
-	usersvc "github.com/gabrielgcmr/sonnda/internal/application/services/user"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/user"
 	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 )
 
-type UseCase interface {
+type Onboarding interface {
 	Register(ctx context.Context, input RegisterInput) (*user.User, error)
 }
 
-type usecase struct {
+type onboarding struct {
 	userRepo repository.User
-	userSvc  usersvc.Service
+	userSvc  Service
 	profSvc  professionalsvc.Service
 }
 
-var _ UseCase = (*usecase)(nil)
+var _ Onboarding = (*onboarding)(nil)
 
-func New(userRepo repository.User, userSvc usersvc.Service, profSvc professionalsvc.Service) *usecase {
-	return &usecase{
+func NewOnboarding(userRepo repository.User, userSvc Service, profSvc professionalsvc.Service) Onboarding {
+	return &onboarding{
 		userRepo: userRepo,
 		userSvc:  userSvc,
 		profSvc:  profSvc,
 	}
 }
 
-func (u *usecase) Register(ctx context.Context, input RegisterInput) (*user.User, error) {
+func (u *onboarding) Register(ctx context.Context, input RegisterInput) (*user.User, error) {
 	if input.AccountType == user.AccountTypeProfessional {
 		return nil, apperr.DomainRuleViolation("criação de profissional ainda não está implementada no MVP")
 	}
@@ -46,7 +45,7 @@ func (u *usecase) Register(ctx context.Context, input RegisterInput) (*user.User
 		return nil, apperr.AlreadyExists("usuário já cadastrado")
 	}
 
-	createdUser, err := u.userSvc.Create(ctx, usersvc.UserCreateInput{
+	createdUser, err := u.userSvc.Create(ctx, UserCreateInput{
 		Issuer:      input.Issuer,
 		Subject:     input.Subject,
 		Email:       input.Email,

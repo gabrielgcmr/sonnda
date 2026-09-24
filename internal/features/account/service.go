@@ -1,4 +1,5 @@
-package usersvc
+// internal/features/account/service.go
+package account
 
 import (
 	"context"

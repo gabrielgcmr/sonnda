@@ -30,7 +30,13 @@ Simple instructions for coding agents working on this repo.
   - Docker + docker-compose (containerization)
 
 ## Arquitetura
-- The architecture follows a layered approach with low coupling and clear separation of concerns:
+- The architecture is migrating incrementally from global layers to business contexts under `internal/features`, preserving separation of concerns.
+- **Features (`internal/features`)**: Context-specific application flows.
+  - **Account (`internal/features/account`)**: Profile services, onboarding, DTOs and error mapping; HTTP handler and middleware live in `account/http`.
+  - Account entities and repository interfaces remain in `internal/domain`; concrete repositories and sqlc remain in `internal/infrastructure` during this migration.
+  - `internal/application/bootstrap/account.go` composes the account handler and middleware in a single `AccountModule`.
+  - Add account behavior to this feature, not to the former global user service, registration use case or user handler paths.
+  - Other contexts keep their existing organization until explicitly migrated.
 - **Domain (`internal/domain`)**: Core business models and rules (infrastructure and HTTP agnostic).
   - **Entity (`internal/domain/entity`)**: Core business entities.
   - **Repository (`internal/domain/repository`)**: Domain repository interfaces.
@@ -75,6 +81,7 @@ This project uses a **centralized error contract** based on `AppError`.
 - Domain **never** imports HTTP, Gin, or `apperr`.
 - Handlers and middlewares **must call**: `presenter.WriteError(c, err)` or similar helper from the presenter layer.
 - HTTP error presentation is centralized in: `internal/api/presenter`.
+- Feature HTTP handlers and middleware must use `presenter.ErrorResponder(c, err)` and retain the shared access/error logging policy.
 
 ---
 

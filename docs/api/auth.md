@@ -13,10 +13,10 @@ O contrato de endpoints, schemas e erros fica no OpenAPI: `/openapi.yaml`.
 
 ## Arquivos-chave
 
-| Camada | Arquivo |
-|---|---|
-| Feature auth | `internal/features/auth/middleware.go` |
-| Feature account | `internal/features/account/middleware.go` |
+| Camada            | Arquivo                                                    |
+| ----------------- | ---------------------------------------------------------- |
+| Feature auth      | `internal/features/auth/middleware.go`                     |
+| Feature account   | `internal/features/account/http/middleware.go`             |
 | Provider Supabase | `internal/infrastructure/auth/supabase_bearer_provider.go` |
 
 ## Configuração (env)

@@ -1,5 +1,4 @@
 // internal/infrastructure/persistence/postgres/repo/labs.go
-// internal/adapters/outbound/data/postgres/labs.go
 package repo
 
 import (
