@@ -59,12 +59,19 @@ const (
 	Full GetV1PatientsIdLabsParamsExpand = "full"
 )
 
-// AccountPatientSummary defines model for AccountPatientSummary.
-type AccountPatientSummary struct {
-	AvatarUrl    *string            `json:"avatar_url,omitempty"`
-	FullName     string             `json:"full_name"`
-	Id           openapi_types.UUID `json:"id"`
-	RelationType string             `json:"relation_type"`
+// AccessiblePatientSummary defines model for AccessiblePatientSummary.
+type AccessiblePatientSummary struct {
+	AvatarUrl *string            `json:"avatar_url"`
+	FullName  string             `json:"full_name"`
+	Id        openapi_types.UUID `json:"id"`
+}
+
+// AccessiblePatientsResponse defines model for AccessiblePatientsResponse.
+type AccessiblePatientsResponse struct {
+	Limit    int                        `json:"limit"`
+	Offset   int                        `json:"offset"`
+	Patients []AccessiblePatientSummary `json:"patients"`
+	Total    int64                      `json:"total"`
 }
 
 // CreatePatientRequest defines model for CreatePatientRequest.
@@ -176,14 +183,6 @@ type LabUploadResponse map[string]interface{}
 // results ou test_results, retorna LabReportFullList.
 type LabsList struct {
 	union json.RawMessage
-}
-
-// MyPatientsResponse defines model for MyPatientsResponse.
-type MyPatientsResponse struct {
-	Limit    int                     `json:"limit"`
-	Offset   int                     `json:"offset"`
-	Patients []AccountPatientSummary `json:"patients"`
-	Total    int64                   `json:"total"`
 }
 
 // Patient Representação simplificada do paciente.
@@ -595,7 +594,7 @@ type ServerInterface interface {
 	// Atualizar perfil do usuário atual
 	// (PUT /v1/me)
 	PutV1Me(c *gin.Context)
-	// Listar pacientes do usuário atual
+	// Listar pacientes acessíveis pela conta atual
 	// (GET /v1/me/patients)
 	GetV1MePatients(c *gin.Context, params GetV1MePatientsParams)
 	// Listar pacientes

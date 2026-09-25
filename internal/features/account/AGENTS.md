@@ -10,7 +10,7 @@
 - Application code depends on `Repository`, never on the Postgres adapter or the legacy concrete repositories. Generic persistence failures use `internal/domain/repository.ErrRepositoryFailure`.
 - Keep `User`, `AccountType`, their validation rules and tests in `domain/` (package `accountdomain`), without an extra `entity/` directory.
 - The domain package must not import account application services, HTTP, Gin, `apperr` or infrastructure. Other contexts may import it directly for account models.
-- Patient access interfaces and adapters live in `internal/features/patient/access`; the shared database client and generated sqlc code remain in `internal/infrastructure`.
-- Onboarding registers accounts without a separate professional profile or professional service. The accessible-patient listing remains in account until it moves to `patient/access` in a later stage.
+- Patient access services, HTTP handlers, interfaces and adapters live in `internal/features/patient/access`; account must not depend on them.
+- Onboarding registers accounts without a separate professional profile or professional service.
 - Account types are account data, not permissions. Patient access is limited to ownership or active grants checked by `internal/features/patient/access`.
-- Keep `/v1/me`, the `/v1/users` creation alias and `/v1/me/patients` behavior compatible during structural moves.
+- Keep `/v1/me` and the `/v1/users` creation alias compatible during structural moves. The `/v1/me/patients` route belongs to `patient/access`.

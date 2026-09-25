@@ -6,24 +6,19 @@ import (
 	"errors"
 
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
-	patientaccess "github.com/gabrielgcmr/sonnda/internal/features/patient/access"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 
 	"github.com/google/uuid"
 )
 
 type service struct {
-	userRepo          Repository
-	patientAccessRepo patientaccess.Repository
+	userRepo Repository
 }
 
 var _ Service = (*service)(nil)
 
-func NewService(userRepo Repository, patientAccessRepo patientaccess.Repository) Service {
-	return &service{
-		userRepo:          userRepo,
-		patientAccessRepo: patientAccessRepo,
-	}
+func NewService(userRepo Repository) Service {
+	return &service{userRepo: userRepo}
 }
 
 func (s *service) Create(ctx context.Context, input UserCreateInput) (*accountdomain.User, error) {
@@ -117,41 +112,4 @@ func (s *service) SoftDelete(ctx context.Context, userID uuid.UUID) error {
 	}
 
 	return nil
-}
-
-func (s *service) ListMyPatients(ctx context.Context, userID uuid.UUID, limit, offset int) (*MyPatientsOutput, error) {
-	// Validar parâmetros
-	if limit <= 0 {
-		limit = 20
-	}
-	if limit > 100 {
-		limit = 100
-	}
-	if offset < 0 {
-		offset = 0
-	}
-
-	// Buscar pacientes acessíveis
-	patients, total, err := s.patientAccessRepo.ListAccessiblePatientsByUser(ctx, userID, limit, offset)
-	if err != nil {
-		return nil, mapRepoError("patientAccessRepo.ListAccessiblePatientsByUser", err)
-	}
-
-	// Mapear para DTO
-	summaries := make([]PatientSummary, len(patients))
-	for i, p := range patients {
-		summaries[i] = PatientSummary{
-			ID:           p.PatientID,
-			FullName:     p.FullName,
-			AvatarURL:    p.AvatarURL,
-			RelationType: p.RelationType,
-		}
-	}
-
-	return &MyPatientsOutput{
-		Patients: summaries,
-		Total:    total,
-		Limit:    limit,
-		Offset:   offset,
-	}, nil
 }

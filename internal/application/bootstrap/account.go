@@ -5,7 +5,6 @@ import (
 	"github.com/gabrielgcmr/sonnda/internal/features/account"
 	accounthttp "github.com/gabrielgcmr/sonnda/internal/features/account/http"
 	accountpostgres "github.com/gabrielgcmr/sonnda/internal/features/account/postgres"
-	accesspostgres "github.com/gabrielgcmr/sonnda/internal/features/patient/access/postgres"
 	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
 )
 
@@ -16,9 +15,8 @@ type AccountModule struct {
 
 func NewAccountModule(db *postgress.Client) *AccountModule {
 	userRepo := accountpostgres.New(db.Pool())
-	patientAccessRepo := accesspostgres.NewRepository(db)
 
-	service := account.NewService(userRepo, patientAccessRepo)
+	service := account.NewService(userRepo)
 	onboarding := account.NewOnboarding(userRepo, service)
 
 	return &AccountModule{

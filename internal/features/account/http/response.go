@@ -3,7 +3,6 @@ package accounthttp
 
 import (
 	openapi "github.com/gabrielgcmr/sonnda/internal/api/openapi/generated"
-	"github.com/gabrielgcmr/sonnda/internal/features/account"
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
@@ -21,23 +20,5 @@ func userResponse(user *accountdomain.User) openapi.User {
 		Phone:       user.Phone,
 		CreatedAt:   user.CreatedAt,
 		UpdatedAt:   user.UpdatedAt,
-	}
-}
-
-func patientsResponse(result *account.MyPatientsOutput) openapi.MyPatientsResponse {
-	patients := make([]openapi.AccountPatientSummary, len(result.Patients))
-	for i, patient := range result.Patients {
-		patients[i] = openapi.AccountPatientSummary{
-			Id:           patient.ID,
-			FullName:     patient.FullName,
-			AvatarUrl:    patient.AvatarURL,
-			RelationType: patient.RelationType,
-		}
-	}
-	return openapi.MyPatientsResponse{
-		Patients: patients,
-		Total:    result.Total,
-		Limit:    result.Limit,
-		Offset:   result.Offset,
 	}
 }

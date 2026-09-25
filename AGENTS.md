@@ -34,12 +34,12 @@ Simple instructions for coding agents working on this repo.
 - **Features (`internal/features`)**: Context-specific application flows.
   - **Account (`internal/features/account`)**: Profile services, onboarding, DTOs and error mapping; HTTP handler and middleware live in `account/http`.
   - **Patient profile (`internal/features/patient/profile`)**: Patient registration services, DTOs, error mapping and repository contract; its domain model lives in `profile/domain`, HTTP handler in `profile/http`, and Postgres adapter in `profile/postgres`.
-  - **Patient access (`internal/features/patient/access`)**: Account-to-patient grants, relationship metadata, repository contracts and persistence. Access determines whether an account is linked to a patient; it does not define action-level authorization.
+  - **Patient access (`internal/features/patient/access`)**: Account-to-patient grants, accessible-patient listing, relationship metadata, application and HTTP services, repository contracts and persistence. Access determines whether an account is linked to a patient; it does not define action-level authorization.
   - Account owns its repository interface and user persistence errors in `account/repository.go`; its Postgres adapter lives in `account/postgres`.
   - User entities and account types belong to `internal/features/account/domain` (package `accountdomain`). Other contexts may import this pure domain package without depending on account application services.
   - The shared database client and generated sqlc code remain in `internal/infrastructure` during this migration.
   - The shared persistence failure sentinel belongs to `internal/domain/repository/errors.go`; account application code must not import concrete Postgres repositories.
-  - `internal/application/bootstrap/account.go` composes the account handler and middleware in a single `AccountModule`.
+  - `internal/application/bootstrap/account.go` composes the account handler and middleware in a single `AccountModule`; patient access is composed independently in `PatientAccessModule`.
   - Add account behavior to this feature, not to the former global user service, registration use case or user handler paths.
   - Other contexts keep their existing organization until explicitly migrated.
 - **Domain (`internal/domain`)**: Core business models and rules (infrastructure and HTTP agnostic).

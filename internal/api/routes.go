@@ -10,18 +10,20 @@ import (
 	openapigen "github.com/gabrielgcmr/sonnda/internal/api/openapi/generated"
 	accounthttp "github.com/gabrielgcmr/sonnda/internal/features/account/http"
 	authhttp "github.com/gabrielgcmr/sonnda/internal/features/auth/http"
+	accesshttp "github.com/gabrielgcmr/sonnda/internal/features/patient/access/http"
 	profilehttp "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/http"
 
 	"github.com/gin-gonic/gin"
 )
 
 type APIDependencies struct {
-	Auth           *authhttp.Middleware
-	Account        *accounthttp.Middleware
-	AccountHandler *accounthttp.Handler
-	PatientHandler *profilehttp.Handler
-	LabsHandler    *handlers.LabsHandler
-	ExamsHandler   *handlers.ExamsHandler
+	Auth                 *authhttp.Middleware
+	Account              *accounthttp.Middleware
+	AccountHandler       *accounthttp.Handler
+	PatientAccessHandler *accesshttp.Handler
+	PatientHandler       *profilehttp.Handler
+	LabsHandler          *handlers.LabsHandler
+	ExamsHandler         *handlers.ExamsHandler
 }
 
 type RootInfo struct {
@@ -78,7 +80,7 @@ func SetupRoutes(
 			me.GET("", deps.AccountHandler.GetUser)
 			me.PUT("", deps.AccountHandler.UpdateUser)
 			me.DELETE("", deps.AccountHandler.HardDeleteUser)
-			me.GET("/patients", deps.AccountHandler.ListMyPatients)
+			me.GET("/patients", deps.PatientAccessHandler.ListForCurrentAccount)
 		}
 
 		//Pacientes

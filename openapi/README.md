@@ -6,7 +6,8 @@ a versão servida pela API é um bundle sem referências a arquivos externos.
 
 Account é o primeiro contexto extraído:
 
-- `paths/account.yaml`: operações de `/v1/me` e `/v1/me/patients`.
+- `paths/account.yaml`: operações de perfil em `/v1/me`.
+- `paths/patient-access.yaml`: listagem de `/v1/me/patients`.
 - `components/schemas/account.yaml`: `CreateUserRequest`, `UpdateUserRequest` e `User`.
 
 Os demais contratos e componentes compartilhados continuam no arquivo principal.

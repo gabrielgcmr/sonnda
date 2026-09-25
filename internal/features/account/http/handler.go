@@ -4,7 +4,6 @@ package accounthttp
 import (
 	"context"
 	"net/http"
-	"strconv"
 	"strings"
 
 	authhttp "github.com/gabrielgcmr/sonnda/internal/features/auth/http"
@@ -22,7 +21,6 @@ import (
 type userService interface {
 	Update(ctx context.Context, input account.UserUpdateInput) (*accountdomain.User, error)
 	Delete(ctx context.Context, userID uuid.UUID) error
-	ListMyPatients(ctx context.Context, userID uuid.UUID, limit, offset int) (*account.MyPatientsOutput, error)
 }
 
 type Handler struct {
@@ -137,30 +135,4 @@ func (h *Handler) HardDeleteUser(c *gin.Context) {
 
 	c.Status(http.StatusNoContent)
 
-}
-
-func (h *Handler) ListMyPatients(c *gin.Context) {
-	currentUser := helpers.MustGetCurrentUser(c)
-
-	// Parse query params
-	limit := 20
-	offset := 0
-	if l := c.Query("limit"); l != "" {
-		if parsed, err := strconv.Atoi(l); err == nil && parsed > 0 {
-			limit = parsed
-		}
-	}
-	if o := c.Query("offset"); o != "" {
-		if parsed, err := strconv.Atoi(o); err == nil && parsed >= 0 {
-			offset = parsed
-		}
-	}
-
-	result, err := h.userSvc.ListMyPatients(c.Request.Context(), currentUser.ID, limit, offset)
-	if err != nil {
-		presenter.ErrorResponder(c, err)
-		return
-	}
-
-	c.JSON(http.StatusOK, patientsResponse(result))
 }

@@ -1,0 +1,34 @@
+# openapi/components/schemas/patient-access.yaml
+AccessiblePatientSummary:
+  type: object
+  additionalProperties: false
+  required: [id, full_name]
+  properties:
+    id:
+      type: string
+      format: uuid
+    full_name:
+      type: string
+    avatar_url:
+      type: string
+      nullable: true
+AccessiblePatientsResponse:
+  type: object
+  additionalProperties: false
+  required: [patients, total, limit, offset]
+  properties:
+    patients:
+      type: array
+      items:
+        $ref: "../../../openapi.yaml#/components/schemas/AccessiblePatientSummary"
+    total:
+      type: integer
+      format: int64
+      minimum: 0
+    limit:
+      type: integer
+      minimum: 1
+      maximum: 100
+    offset:
+      type: integer
+      minimum: 0

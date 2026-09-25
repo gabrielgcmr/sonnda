@@ -1,4 +1,5 @@
 // internal/application/bootstrap/modules.go
+// internal/application/bootstrap/modules.go
 package bootstrap
 
 import (
@@ -10,10 +11,11 @@ import (
 )
 
 type Modules struct {
-	Account *AccountModule
-	Patient *PatientModule
-	Labs    *LabsModule
-	Exams   *ExamsModule
+	Account       *AccountModule
+	Patient       *PatientModule
+	PatientAccess *PatientAccessModule
+	Labs          *LabsModule
+	Exams         *ExamsModule
 }
 
 func NewModules(
@@ -24,9 +26,10 @@ func NewModules(
 	fallback domaintext.Extractor,
 ) *Modules {
 	return &Modules{
-		Account: NewAccountModule(dbClient),
-		Patient: NewPatientModule(dbClient),
-		Labs:    NewLabsModule(dbClient, labExtractor, storage),
-		Exams:   NewExamsModule(dbClient, labExtractor, storage, ocrConfig, fallback),
+		Account:       NewAccountModule(dbClient),
+		Patient:       NewPatientModule(dbClient),
+		PatientAccess: NewPatientAccessModule(dbClient),
+		Labs:          NewLabsModule(dbClient, labExtractor, storage),
+		Exams:         NewExamsModule(dbClient, labExtractor, storage, ocrConfig, fallback),
 	}
 }

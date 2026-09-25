@@ -67,7 +67,7 @@ paths:
   /v1/me:
     $ref: "./openapi/paths/account.yaml#/me"
   /v1/me/patients:
-    $ref: "./openapi/paths/account.yaml#/patients"
+    $ref: "./openapi/paths/patient-access.yaml#/current-account-patients"
   # patients
   /v1/patients:
     post:
@@ -379,10 +379,10 @@ components:
       required: [id]
     User:
       $ref: "./openapi/components/schemas/account.yaml#/User"
-    AccountPatientSummary:
-      $ref: "./openapi/components/schemas/account.yaml#/AccountPatientSummary"
-    MyPatientsResponse:
-      $ref: "./openapi/components/schemas/account.yaml#/MyPatientsResponse"
+    AccessiblePatientSummary:
+      $ref: "./openapi/components/schemas/patient-access.yaml#/AccessiblePatientSummary"
+    AccessiblePatientsResponse:
+      $ref: "./openapi/components/schemas/patient-access.yaml#/AccessiblePatientsResponse"
     Patient:
       type: object
       description: Representação simplificada do paciente.

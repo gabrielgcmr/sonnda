@@ -19,7 +19,6 @@ import (
 	accounthttp "github.com/gabrielgcmr/sonnda/internal/features/account/http"
 	authdomain "github.com/gabrielgcmr/sonnda/internal/features/auth/domain"
 	authhttp "github.com/gabrielgcmr/sonnda/internal/features/auth/http"
-	patientaccess "github.com/gabrielgcmr/sonnda/internal/features/patient/access"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/gin-gonic/gin"
@@ -63,15 +62,6 @@ func TestAccountRoutesLifecycle(t *testing.T) {
 				t.Fatalf("update was not persisted: %+v", current)
 			}
 
-			response = accountRequest(t, router, http.MethodGet, "/v1/me/patients?limit=150&offset=2", "", http.StatusOK)
-			var patients account.MyPatientsOutput
-			if err := json.Unmarshal(response.Body.Bytes(), &patients); err != nil {
-				t.Fatal(err)
-			}
-			if patients.Limit != 100 || patients.Offset != 2 || patients.Total != 0 || patients.Patients == nil {
-				t.Fatalf("unexpected patient list: %+v", patients)
-			}
-
 			response = accountRequest(t, router, http.MethodDelete, "/v1/me", "", http.StatusNoContent)
 			if response.Body.Len() != 0 || repo.profile != nil {
 				t.Fatal("deletion must remove the profile and return an empty response")
@@ -112,7 +102,6 @@ func TestAccountRoutesPreserveErrors(t *testing.T) {
 		{http.MethodGet, "/v1/me"},
 		{http.MethodPut, "/v1/me"},
 		{http.MethodDelete, "/v1/me"},
-		{http.MethodGet, "/v1/me/patients"},
 	} {
 		response := httptest.NewRecorder()
 		router.ServeHTTP(response, httptest.NewRequest(route.method, route.path, nil))
@@ -125,7 +114,7 @@ func TestAccountRoutesPreserveErrors(t *testing.T) {
 
 func newAccountRouter(repo *accountUserRepository) *gin.Engine {
 	gin.SetMode(gin.TestMode)
-	service := account.NewService(repo, accountPatientAccessRepository{})
+	service := account.NewService(repo)
 	onboarding := account.NewOnboarding(repo, service)
 	authMiddleware := authhttp.NewMiddleware(func(context.Context, string) (*authdomain.Identity, error) {
 		email := "ana@example.test"
@@ -133,9 +122,10 @@ func newAccountRouter(repo *accountUserRepository) *gin.Engine {
 	})
 	router := gin.New()
 	api.SetupRoutes(router, &api.APIDependencies{
-		Auth:           authMiddleware,
-		Account:        accounthttp.NewMiddleware(repo),
-		AccountHandler: accounthttp.NewHandler(onboarding, service),
+		Auth:                 authMiddleware,
+		Account:              accounthttp.NewMiddleware(repo),
+		AccountHandler:       accounthttp.NewHandler(onboarding, service),
+		PatientAccessHandler: newPatientAccessTestHandler(),
 	})
 	return router
 }
@@ -249,12 +239,4 @@ func (r *accountUserRepository) Delete(_ context.Context, id uuid.UUID) error {
 		r.profile = nil
 	}
 	return nil
-}
-
-type accountPatientAccessRepository struct {
-	patientaccess.Repository
-}
-
-func (accountPatientAccessRepository) ListAccessiblePatientsByUser(context.Context, uuid.UUID, int, int) ([]patientaccess.AccessiblePatient, int64, error) {
-	return []patientaccess.AccessiblePatient{}, 0, nil
 }

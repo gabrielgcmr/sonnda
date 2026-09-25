@@ -32,6 +32,7 @@ O backend está migrando de camadas globais para contextos em `internal/features
   - `account/domain` contém `User`, `AccountType` e suas regras de validação, no pacote `accountdomain`.
   - `account/http` contém o handler de perfil e o middleware que resolve o usuário local e expõe `RequireRegisteredUser`.
   - `account/repository.go` define a interface de persistência; `account/postgres` implementa esse contrato usando o SQLC existente.
+  - `patient/access` contém o checker, a listagem de pacientes acessíveis e os contratos de vínculo; seu handler HTTP atende `/v1/me/patients`.
 
 - **Infrastructure (`internal/infrastructure`)**  
   Implementações concretas de persistência e integrações externas.  
@@ -96,19 +97,20 @@ O mapeamento de erros da aplicação deixa de importar a implementação Postgre
 As entidades `User` e `AccountType`, seus parâmetros, erros de validação e testes
 agora pertencem a `account/domain`, sem uma subpasta `entity`. Esse pacote mantém
 as regras de domínio independentes de serviços de aplicação, HTTP, `apperr` e
-infraestrutura. Pacientes e autorização importam `accountdomain` diretamente;
+infraestrutura. Os contextos de paciente importam `accountdomain` diretamente;
 essa dependência entre contextos continua explícita, sem depender dos serviços
 de account. A normalização de CPF continua usando o domínio compartilhado
 `demographics`.
 
-As interfaces de acesso a pacientes, conexão compartilhada e código sqlc mantêm
-seus caminhos atuais. A consulta de pacientes acessíveis fica para as próximas
-etapas. O onboarding não depende mais de um serviço ou perfil profissional
+As interfaces e a listagem de acesso a pacientes pertencem a `patient/access`.
+`account` não depende mais do repositório de acesso. A conexão compartilhada e o
+código sqlc permanecem em infraestrutura. O onboarding não depende mais de um serviço ou perfil profissional
 separado; registra os tipos de conta existentes pelo serviço de account. O
 cadastro HTTP continua criando `basic_care`, conforme o contrato atual.
 Não há migração de queries nesta etapa.
 
-Não houve mudança de contrato HTTP, OpenAPI, banco ou regras de negócio. Os testes
+Não houve mudança de banco ou regras de concessão. O contrato da listagem deixa
+de expor `relation_type`. Os testes
 em `internal/api/account_routes_test.go` verificam os fluxos pelas rotas reais,
 com serviços de account e repositórios em memória.
 Os testes do adaptador verificam parâmetros, conversões e erros com uma
@@ -203,6 +205,9 @@ O pacote `internal/features/patient/access` centraliza a checagem de acesso por
 vínculo. `RequireAccess` permite acesso ao dono do paciente ou
 a um usuário com vínculo ativo; os demais recebem 403. Pacientes, exames e
 laudos compartilham essa regra.
+
+A mesma feature atende `GET /v1/me/patients`. A rota permanece estável, enquanto
+o serviço, o handler e os DTOs deixam de pertencer a `account`.
 
 As políticas por ação e profissão foram removidas, junto com a entidade, serviço
 e repositório antigos de profissionais. `AccountType` permanece como dado da

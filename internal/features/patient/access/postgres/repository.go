@@ -40,13 +40,19 @@ func (p *Repository) ListAccessiblePatientsByUser(ctx context.Context, granteeID
 		Offset:    int32(offset),
 	})
 	if err != nil {
-		return nil, 0, fmt.Errorf("failed to list accessible patients: %w", err)
+		return nil, 0, errors.Join(
+			domainrepository.ErrRepositoryFailure,
+			fmt.Errorf("list accessible patients: %w", err),
+		)
 	}
 
 	// Buscar count total
 	total, err := p.queries.CountAccessiblePatientsByUser(ctx, pgtype.UUID{Bytes: granteeID, Valid: true})
 	if err != nil {
-		return nil, 0, fmt.Errorf("failed to count accessible patients: %w", err)
+		return nil, 0, errors.Join(
+			domainrepository.ErrRepositoryFailure,
+			fmt.Errorf("count accessible patients: %w", err),
+		)
 	}
 
 	// Mapear para DTO
@@ -106,7 +112,10 @@ func (p *Repository) Upsert(ctx context.Context, access *accessdomain.PatientAcc
 		GrantedBy:    grantedBy,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to upsert patient access: %w", err)
+		return errors.Join(
+			domainrepository.ErrRepositoryFailure,
+			fmt.Errorf("upsert patient access: %w", err),
+		)
 	}
 
 	return nil
