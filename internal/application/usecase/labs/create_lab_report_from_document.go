@@ -15,6 +15,7 @@ import (
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/labs"
 	"github.com/gabrielgcmr/sonnda/internal/domain/labextraction"
 	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
+	patientprofile "github.com/gabrielgcmr/sonnda/internal/features/patient/profile"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 
 	"github.com/google/uuid"
@@ -25,7 +26,7 @@ type CreateLabReportFromDocumentUseCase interface {
 }
 
 type createLabReportFromDocumentUseCase struct {
-	patientRepo repository.Patient
+	patientRepo patientprofile.Repository
 	labsRepo    repository.Labs
 	extractor   labextraction.LabReportExtractor
 }
@@ -33,7 +34,7 @@ type createLabReportFromDocumentUseCase struct {
 var _ CreateLabReportFromDocumentUseCase = (*createLabReportFromDocumentUseCase)(nil)
 
 func NewCreateLabReportFromDocument(
-	patientRepo repository.Patient,
+	patientRepo patientprofile.Repository,
 	labsRepo repository.Labs,
 	extractor labextraction.LabReportExtractor,
 ) CreateLabReportFromDocumentUseCase {

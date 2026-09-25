@@ -11,6 +11,7 @@ import (
 	"github.com/gabrielgcmr/sonnda/internal/domain/labextraction"
 	domainstorage "github.com/gabrielgcmr/sonnda/internal/domain/storage"
 	domaintext "github.com/gabrielgcmr/sonnda/internal/domain/textextraction"
+	patientpostgres "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/postgres"
 	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
 	"github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/repo"
 	textextractioninfra "github.com/gabrielgcmr/sonnda/internal/infrastructure/textextraction"
@@ -27,7 +28,7 @@ func NewExamsModule(
 	ocrConfig config.OCRConfig,
 	fallback domaintext.Extractor,
 ) *ExamsModule {
-	patientRepo := repo.NewPatientRepository(dbClient)
+	patientRepo := patientpostgres.NewRepository(dbClient)
 	accessRepo := repo.NewPatientAccessRepository(dbClient)
 	examsRepo := repo.NewExamsRepository(dbClient)
 	labsRepo := repo.NewLabsRepository(dbClient)

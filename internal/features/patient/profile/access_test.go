@@ -1,5 +1,5 @@
-// internal/application/services/patient/access_test.go
-package patientsvc
+// internal/features/patient/profile/access_test.go
+package patientprofile
 
 import (
 	"context"

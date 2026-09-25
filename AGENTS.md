@@ -13,7 +13,7 @@ Simple instructions for coding agents working on this repo.
 - Follow the existing error-handling and logging architecture described below.
 - Always start every source file you create or modify with a one-line header comment containing the workspace-relative path to that file, formatted as "path/to/file". 
    - Use the language's comment syntax (Go/TS/JS: //, HTML/Markdown: <!-- -->, CSS: /* */). 
-   - Example: // internal/application/services/patient/service.go. 
+   - Example: // internal/features/patient/profile/service.go.
    - Skip only when the format does not support comments or the file is auto-generated.
 
 ## Stack
@@ -33,6 +33,7 @@ Simple instructions for coding agents working on this repo.
 - The architecture is migrating incrementally from global layers to business contexts under `internal/features`, preserving separation of concerns.
 - **Features (`internal/features`)**: Context-specific application flows.
   - **Account (`internal/features/account`)**: Profile services, onboarding, DTOs and error mapping; HTTP handler and middleware live in `account/http`.
+  - **Patient profile (`internal/features/patient/profile`)**: Patient registration services, DTOs, error mapping and repository contract; its HTTP handler lives in `profile/http` and its Postgres adapter in `profile/postgres`. Patient entities remain in the legacy domain layer during migration stage 2.
   - Account owns its repository interface and user persistence errors in `account/repository.go`; its Postgres adapter lives in `account/postgres`.
   - User entities and account types belong to `internal/features/account/domain` (package `accountdomain`). Other contexts may import this pure domain package without depending on account application services.
   - The shared database client and generated sqlc code remain in `internal/infrastructure` during this migration.

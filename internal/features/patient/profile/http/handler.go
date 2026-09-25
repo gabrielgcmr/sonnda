@@ -1,8 +1,9 @@
-// internal/api/handlers/patient.go
-package handlers
+// internal/features/patient/profile/http/handler.go
+package profilehttp
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -10,10 +11,11 @@ import (
 	"github.com/google/uuid"
 
 	openapi "github.com/gabrielgcmr/sonnda/internal/api/openapi/generated"
-	patientsvc "github.com/gabrielgcmr/sonnda/internal/application/services/patient"
+	"github.com/gabrielgcmr/sonnda/internal/domain/entity/demographics"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patient"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patientaccess"
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
+	patientprofile "github.com/gabrielgcmr/sonnda/internal/features/patient/profile"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 	applog "github.com/gabrielgcmr/sonnda/internal/kernel/observability"
 
@@ -24,14 +26,14 @@ import (
 )
 
 type patientService interface {
-	Create(ctx context.Context, currentUser *accountdomain.User, input patientsvc.CreateInput) (*patient.Patient, error)
+	Create(ctx context.Context, currentUser *accountdomain.User, input patientprofile.CreateInput) (*patient.Patient, error)
 	Get(ctx context.Context, currentUser *accountdomain.User, id uuid.UUID) (*patient.Patient, error)
-	Update(ctx context.Context, currentUser *accountdomain.User, id uuid.UUID, input patientsvc.UpdateInput) (*patient.Patient, error)
+	Update(ctx context.Context, currentUser *accountdomain.User, id uuid.UUID, input patientprofile.UpdateInput) (*patient.Patient, error)
 	HardDelete(ctx context.Context, currentUser *accountdomain.User, id uuid.UUID) error
 	ListMyPatients(ctx context.Context, currentUser *accountdomain.User, limit, offset int) ([]*patient.Patient, error)
 }
 
-type PatientHandler struct {
+type Handler struct {
 	svc patientService
 }
 
@@ -47,11 +49,11 @@ type createPatientRequest struct {
 	RelationType *string            `json:"relation_type,omitempty"`
 }
 
-func NewPatientHandler(svc patientService) *PatientHandler {
-	return &PatientHandler{svc: svc}
+func NewHandler(svc patientService) *Handler {
+	return &Handler{svc: svc}
 }
 
-func (h *PatientHandler) Create(c *gin.Context) {
+func (h *Handler) Create(c *gin.Context) {
 	ctx := c.Request.Context()
 	log := applog.FromContext(ctx)
 	log.Info("patient_create")
@@ -80,7 +82,7 @@ func (h *PatientHandler) Create(c *gin.Context) {
 	}
 	birthDate := req.BirthDate.Time
 
-	gender, err := ParseGender(string(req.Gender))
+	gender, err := parseGender(string(req.Gender))
 	if err != nil {
 		presenter.ErrorResponder(c, &apperr.AppError{
 			Kind:    apperr.VALIDATION_FAILED,
@@ -90,7 +92,7 @@ func (h *PatientHandler) Create(c *gin.Context) {
 		return
 	}
 
-	race, err := ParseRace(string(req.Race))
+	race, err := parseRace(string(req.Race))
 	if err != nil {
 		presenter.ErrorResponder(c, &apperr.AppError{
 			Kind:    apperr.VALIDATION_FAILED,
@@ -124,7 +126,7 @@ func (h *PatientHandler) Create(c *gin.Context) {
 	}
 
 	// 4. Montagem do input da aplicação
-	input := patientsvc.CreateInput{
+	input := patientprofile.CreateInput{
 		UserID:       ownerUserID,
 		CPF:          req.Cpf,
 		CNS:          req.Cns,
@@ -150,7 +152,7 @@ func (h *PatientHandler) Create(c *gin.Context) {
 	})
 }
 
-func (h *PatientHandler) GetPatient(c *gin.Context) {
+func (h *Handler) GetPatient(c *gin.Context) {
 	currentUser := helpers.MustGetCurrentUser(c)
 
 	id := c.Param("id")
@@ -181,7 +183,7 @@ func (h *PatientHandler) GetPatient(c *gin.Context) {
 	c.JSON(http.StatusOK, p)
 }
 
-func (h *PatientHandler) UpdatePatient(c *gin.Context) {
+func (h *Handler) UpdatePatient(c *gin.Context) {
 	currentUser := helpers.MustGetCurrentUser(c)
 
 	id := c.Param("id")
@@ -203,7 +205,7 @@ func (h *PatientHandler) UpdatePatient(c *gin.Context) {
 		return
 	}
 
-	var input patientsvc.UpdateInput
+	var input patientprofile.UpdateInput
 	if err := c.ShouldBindJSON(&input); err != nil {
 		presenter.ErrorResponder(c, &apperr.AppError{
 			Kind:    apperr.VALIDATION_FAILED,
@@ -222,7 +224,7 @@ func (h *PatientHandler) UpdatePatient(c *gin.Context) {
 	c.JSON(http.StatusOK, p)
 }
 
-func (h *PatientHandler) ListPatients(c *gin.Context) {
+func (h *Handler) ListPatients(c *gin.Context) {
 	if h == nil || h.svc == nil {
 		presenter.ErrorResponder(c, apperr.Internal("serviço indisponível", nil))
 		return
@@ -239,7 +241,7 @@ func (h *PatientHandler) ListPatients(c *gin.Context) {
 	c.JSON(http.StatusOK, list)
 }
 
-func (h *PatientHandler) HardDeletePatient(c *gin.Context) {
+func (h *Handler) HardDeletePatient(c *gin.Context) {
 	currentUser := helpers.MustGetCurrentUser(c)
 
 	id := c.Param("id")
@@ -268,4 +270,20 @@ func (h *PatientHandler) HardDeletePatient(c *gin.Context) {
 
 	c.Status(http.StatusNoContent)
 
+}
+
+func parseGender(value string) (demographics.Gender, error) {
+	gender, err := demographics.ParseGender(value)
+	if err != nil {
+		return "", fmt.Errorf("invalid gender value: %s: %w", value, demographics.ErrInvalidGender)
+	}
+	return gender, nil
+}
+
+func parseRace(value string) (demographics.Race, error) {
+	race, err := demographics.ParseRace(value)
+	if err != nil {
+		return "", fmt.Errorf("invalid race value: %s: %w", value, demographics.ErrInvalidRace)
+	}
+	return race, nil
 }

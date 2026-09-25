@@ -1,5 +1,5 @@
-// internal/application/services/patient/error.go
-package patientsvc
+// internal/features/patient/profile/error.go
+package patientprofile
 
 import (
 	"errors"
@@ -7,7 +7,7 @@ import (
 
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/demographics"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patient"
-	"github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/repo"
+	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 )
 
@@ -43,13 +43,13 @@ func mapRepoError(op string, err error) error {
 	}
 
 	switch {
-	case errors.Is(err, repo.ErrPatientAlreadyExists):
+	case errors.Is(err, ErrPatientAlreadyExists):
 		return apperr.AlreadyExists("paciente já cadastrado")
 
-	case errors.Is(err, repo.ErrPatientNotFound):
+	case errors.Is(err, ErrPatientNotFound):
 		return patientNotFound()
 
-	case errors.Is(err, repo.ErrRepositoryFailure):
+	case errors.Is(err, repository.ErrRepositoryFailure):
 		return apperr.Internal("falha técnica", fmt.Errorf("%s: %w", op, err))
 
 	default:

@@ -9,12 +9,13 @@ import (
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patient"
 	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
+	patientprofile "github.com/gabrielgcmr/sonnda/internal/features/patient/profile"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 	"github.com/google/uuid"
 )
 
 type patientLookup struct {
-	repository.Patient
+	patientprofile.Repository
 	result *patient.Patient
 	err    error
 	id     uuid.UUID

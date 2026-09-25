@@ -16,9 +16,6 @@ import (
 var (
 	//Common
 	ErrRepositoryFailure = repository.ErrRepositoryFailure
-	//patient
-	ErrPatientAlreadyExists = errors.New("patient already exists")
-	ErrPatientNotFound      = errors.New("patient not found")
 )
 
 func IsUniqueViolationError(err error) bool {

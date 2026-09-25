@@ -1,5 +1,5 @@
-// internal/application/services/patient/service.go
-package patientsvc
+// internal/features/patient/profile/service.go
+package patientprofile
 
 import (
 	"context"
@@ -17,4 +17,8 @@ type Service interface {
 	SoftDelete(ctx context.Context, currentUser *accountdomain.User, id uuid.UUID) error
 	HardDelete(ctx context.Context, currentUser *accountdomain.User, id uuid.UUID) error
 	ListMyPatients(ctx context.Context, currentUser *accountdomain.User, limit, offset int) ([]*patient.Patient, error)
+}
+
+type Authorizer interface {
+	RequirePatientAccess(ctx context.Context, actor *accountdomain.User, patientID uuid.UUID) error
 }

@@ -8,6 +8,7 @@ import (
 	labsuc "github.com/gabrielgcmr/sonnda/internal/application/usecase/labs"
 	"github.com/gabrielgcmr/sonnda/internal/domain/labextraction"
 	domainstorage "github.com/gabrielgcmr/sonnda/internal/domain/storage"
+	patientpostgres "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/postgres"
 	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
 	"github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/repo"
 )
@@ -21,7 +22,7 @@ func NewLabsModule(
 	labExtractor labextraction.LabReportExtractor,
 	storage domainstorage.FileStorageService,
 ) *LabsModule {
-	patientRepo := repo.NewPatientRepository(dbClient)
+	patientRepo := patientpostgres.NewRepository(dbClient)
 	accessRepo := repo.NewPatientAccessRepository(dbClient)
 	labsRepo := repo.NewLabsRepository(dbClient)
 

@@ -7,19 +7,20 @@ import (
 
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/exams"
 	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
+	patientprofile "github.com/gabrielgcmr/sonnda/internal/features/patient/profile"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 	"github.com/google/uuid"
 )
 
 type service struct {
-	patientRepo repository.Patient
+	patientRepo patientprofile.Repository
 	examsRepo   repository.Exams
 	router      ExamRouter
 }
 
 var _ Service = (*service)(nil)
 
-func New(patientRepo repository.Patient, examsRepo repository.Exams) Service {
+func New(patientRepo patientprofile.Repository, examsRepo repository.Exams) Service {
 	return &service{
 		patientRepo: patientRepo,
 		examsRepo:   examsRepo,

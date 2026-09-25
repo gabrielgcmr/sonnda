@@ -1,5 +1,5 @@
-// internal/application/services/patient/service_impl.go
-package patientsvc
+// internal/features/patient/profile/service_impl.go
+package patientprofile
 
 import (
 	"context"
@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gabrielgcmr/sonnda/internal/application/services/authorization"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patient"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patientaccess"
 	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
@@ -18,17 +17,17 @@ import (
 )
 
 type service struct {
-	repo       repository.Patient
+	repo       Repository
 	accessRepo repository.PatientAccessRepo
-	auth       authorization.Authorizer
+	auth       Authorizer
 }
 
 var _ Service = (*service)(nil)
 
 func New(
-	repo repository.Patient,
+	repo Repository,
 	accessRepo repository.PatientAccessRepo,
-	auth authorization.Authorizer,
+	auth Authorizer,
 ) Service {
 	return &service{
 		repo:       repo,

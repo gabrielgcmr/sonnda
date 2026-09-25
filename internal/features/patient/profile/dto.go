@@ -1,5 +1,5 @@
-// internal/application/services/patient/dto.go
-package patientsvc
+// internal/features/patient/profile/dto.go
+package patientprofile
 
 import (
 	"time"

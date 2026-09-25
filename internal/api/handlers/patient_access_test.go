@@ -12,12 +12,13 @@ import (
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patient"
 	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
+	patientprofile "github.com/gabrielgcmr/sonnda/internal/features/patient/profile"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
 type accessTestPatients struct {
-	repository.Patient
+	patientprofile.Repository
 }
 
 func (r accessTestPatients) FindByID(_ context.Context, id uuid.UUID) (*patient.Patient, error) {

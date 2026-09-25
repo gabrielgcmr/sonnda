@@ -6,20 +6,21 @@ import (
 
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/labs"
 	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
+	patientprofile "github.com/gabrielgcmr/sonnda/internal/features/patient/profile"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 
 	"github.com/google/uuid"
 )
 
 type service struct {
-	patientRepo repository.Patient
+	patientRepo patientprofile.Repository
 	labsRepo    repository.Labs
 }
 
 var _ Service = (*service)(nil)
 
 func New(
-	patientRepo repository.Patient,
+	patientRepo patientprofile.Repository,
 	labsRepo repository.Labs,
 ) Service {
 	return &service{

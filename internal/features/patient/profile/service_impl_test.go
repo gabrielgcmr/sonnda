@@ -1,5 +1,5 @@
-// internal/application/services/patient/service_impl_test.go
-package patientsvc
+// internal/features/patient/profile/service_impl_test.go
+package patientprofile
 
 import (
 	"context"
@@ -12,7 +12,6 @@ import (
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patientaccess"
 	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
-	"github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/repo"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 
 	"github.com/google/uuid"
@@ -201,7 +200,7 @@ func TestCreate_SelfRelationCreatesOwnedPatient(t *testing.T) {
 
 func TestCreate_AtomicCreateError_ReturnsInternalError(t *testing.T) {
 	svc := New(
-		&fakePatientRepo{createErr: errors.Join(repo.ErrRepositoryFailure, errors.New("db down"))},
+		&fakePatientRepo{createErr: errors.Join(repository.ErrRepositoryFailure, errors.New("db down"))},
 		&fakeAccessRepo{},
 		allowAllAuthorizer{},
 	)
@@ -232,7 +231,7 @@ func TestCreate_AtomicCreateError_ReturnsInternalError(t *testing.T) {
 }
 
 func TestCreate_AlreadyExists_ReturnsResourceAlreadyExists(t *testing.T) {
-	svc := New(&fakePatientRepo{createErr: repo.ErrPatientAlreadyExists}, &fakeAccessRepo{}, allowAllAuthorizer{})
+	svc := New(&fakePatientRepo{createErr: ErrPatientAlreadyExists}, &fakeAccessRepo{}, allowAllAuthorizer{})
 
 	currentUser := &accountdomain.User{
 		ID:          uuid.Must(uuid.NewV7()),

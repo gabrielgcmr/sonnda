@@ -10,6 +10,7 @@ import (
 	openapigen "github.com/gabrielgcmr/sonnda/internal/api/openapi/generated"
 	accounthttp "github.com/gabrielgcmr/sonnda/internal/features/account/http"
 	authhttp "github.com/gabrielgcmr/sonnda/internal/features/auth/http"
+	profilehttp "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -18,7 +19,7 @@ type APIDependencies struct {
 	Auth           *authhttp.Middleware
 	Account        *accounthttp.Middleware
 	AccountHandler *accounthttp.Handler
-	PatientHandler *handlers.PatientHandler
+	PatientHandler *profilehttp.Handler
 	LabsHandler    *handlers.LabsHandler
 	ExamsHandler   *handlers.ExamsHandler
 }
