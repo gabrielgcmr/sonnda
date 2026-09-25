@@ -87,12 +87,12 @@ func (h *Handler) CreateUser(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, created)
+	c.JSON(http.StatusCreated, userResponse(created))
 }
 
 func (h *Handler) GetUser(c *gin.Context) {
 	currentUser := helpers.MustGetCurrentUser(c)
-	c.JSON(http.StatusOK, currentUser)
+	c.JSON(http.StatusOK, userResponse(currentUser))
 }
 
 func (h *Handler) UpdateUser(c *gin.Context) {
@@ -124,7 +124,7 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updated)
+	c.JSON(http.StatusOK, userResponse(updated))
 }
 
 func (h *Handler) HardDeleteUser(c *gin.Context) {
@@ -162,5 +162,5 @@ func (h *Handler) ListMyPatients(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	c.JSON(http.StatusOK, patientsResponse(result))
 }

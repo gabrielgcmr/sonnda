@@ -1,0 +1,107 @@
+# openapi/paths/account.yaml
+me:
+  post:
+    summary: Criar usuário
+    description: |-
+      Cria o usuário da plataforma a partir da identidade autenticada (JWT do Supabase).
+      Requer token válido do Supabase (Bearer).
+      O servidor define account_type como basic_care.
+    tags: [Me]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../../openapi.yaml#/components/schemas/CreateUserRequest"
+    responses:
+      "201":
+        description: Usuário criado
+        content:
+          application/json:
+            schema:
+              $ref: "../../openapi.yaml#/components/schemas/User"
+      "409":
+        $ref: "../../openapi.yaml#/components/responses/Problem"
+      "400":
+        $ref: "../../openapi.yaml#/components/responses/Problem"
+      "401":
+        $ref: "../../openapi.yaml#/components/responses/Problem"
+      "422":
+        $ref: "../../openapi.yaml#/components/responses/Problem"
+      "500":
+        $ref: "../../openapi.yaml#/components/responses/Problem"
+  get:
+    summary: Obter perfil do usuário atual
+    description: Retorna 403 com code PROFILE_NOT_FOUND quando a identidade está autenticada mas não possui cadastro local.
+    tags: [Me]
+    responses:
+      "200":
+        description: OK
+        content:
+          application/json:
+            schema:
+              $ref: "../../openapi.yaml#/components/schemas/User"
+      "403":
+        $ref: "../../openapi.yaml#/components/responses/Problem"
+      "401":
+        $ref: "../../openapi.yaml#/components/responses/Problem"
+      "500":
+        $ref: "../../openapi.yaml#/components/responses/Problem"
+  put:
+    summary: Atualizar perfil do usuário atual
+    tags: [Me]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../../openapi.yaml#/components/schemas/UpdateUserRequest"
+    responses:
+      "200":
+        description: OK
+        content:
+          application/json:
+            schema:
+              $ref: "../../openapi.yaml#/components/schemas/User"
+      "400":
+        $ref: "../../openapi.yaml#/components/responses/Problem"
+      "403":
+        $ref: "../../openapi.yaml#/components/responses/Problem"
+      "401":
+        $ref: "../../openapi.yaml#/components/responses/Problem"
+      "422":
+        $ref: "../../openapi.yaml#/components/responses/Problem"
+      "500":
+        $ref: "../../openapi.yaml#/components/responses/Problem"
+  delete:
+    summary: Remover usuário atual (hard delete)
+    tags: [Me]
+    responses:
+      "204":
+        description: No Content
+      "403":
+        $ref: "../../openapi.yaml#/components/responses/Problem"
+      "401":
+        $ref: "../../openapi.yaml#/components/responses/Problem"
+      "500":
+        $ref: "../../openapi.yaml#/components/responses/Problem"
+patients:
+  get:
+    summary: Listar pacientes do usuário atual
+    tags: [Me]
+    parameters:
+      - $ref: "../../openapi.yaml#/components/parameters/LimitParam"
+      - $ref: "../../openapi.yaml#/components/parameters/OffsetParam"
+    responses:
+      "200":
+        description: OK
+        content:
+          application/json:
+            schema:
+              $ref: "../../openapi.yaml#/components/schemas/MyPatientsResponse"
+      "401":
+        $ref: "../../openapi.yaml#/components/responses/Problem"
+      "403":
+        $ref: "../../openapi.yaml#/components/responses/Problem"
+      "500":
+        $ref: "../../openapi.yaml#/components/responses/Problem"

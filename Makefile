@@ -8,11 +8,12 @@ VERSION ?= 1.0.0
 LDFLAGS := -s -w -X github.com/gabrielgcmr/sonnda/cmd/api.version=$(VERSION)
 SQLC_SPEC := internal/infrastructure/persistence/postgres/sqlc/sqlc.yaml
 OPENAPI_SPEC := openapi.yaml
+OPENAPI_BUNDLE := bin/openapi.yaml
 
 # ==============================================================================
 # 🎯 TARGETS PRINCIPAIS
 # ==============================================================================
-.PHONY: all dev dev-air build clean generate test help openapi-validate openapi-embed oapi-codegen tools-air
+.PHONY: all dev dev-air build clean generate test help openapi-validate openapi-bundle openapi-embed oapi-codegen tools-air
 
 all: build
 
@@ -62,7 +63,7 @@ sqlc-check:
 # ==============================================================================
 # 🧬 CODEGEN
 # ==============================================================================
-OAPI_CODEGEN_INPUT   := $(OPENAPI_SPEC)
+OAPI_CODEGEN_INPUT   := $(OPENAPI_BUNDLE)
 OAPI_CODEGEN_OUTPUT  := internal/api/openapi/generated/oapi.gen.go
 OAPI_CODEGEN_PACKAGE := openapi
 OAPI_CODEGEN_GENERATE := types,gin
@@ -70,8 +71,10 @@ OAPI_CODEGEN_GENERATE := types,gin
 openapi-embed:
 	go generate ./internal/api/openapi
 
-oapi-codegen:
-	@mkdir -p $(dir $(OAPI_CODEGEN_OUTPUT))
+openapi-bundle:
+	go run ./cmd/openapi-bundle -input $(OPENAPI_SPEC) -output $(OPENAPI_BUNDLE)
+
+oapi-codegen: openapi-bundle
 	go tool oapi-codegen -generate $(OAPI_CODEGEN_GENERATE) -package $(OAPI_CODEGEN_PACKAGE) -o $(OAPI_CODEGEN_OUTPUT) $(OAPI_CODEGEN_INPUT)
 
 generate: sqlc openapi-embed oapi-codegen
@@ -99,6 +102,7 @@ help:
 	@echo "  generate    - Gera código (sqlc + oapi-codegen)"
 	@echo "  openapi-embed - Gera o asset OpenAPI embutido"
 	@echo "  openapi-validate - Valida o OpenAPI local"
+	@echo "  openapi-bundle - Unifica o OpenAPI em bin/openapi.yaml"
 	@echo "  tools-air   - Instala o Air em ./bin"
 	@echo "  docker-up   - Sobe o docker"
 	@echo "  docker-down - Derruba o docker"

@@ -1,0 +1,125 @@
+# openapi/components/schemas/account.yaml
+CreateUserRequest:
+  type: object
+  description: Dados editáveis do cadastro. Identidade e email vêm da autenticação; o servidor define account_type como basic_care.
+  required:
+    - full_name
+    - birth_date
+    - cpf
+    - phone
+  properties:
+    full_name:
+      type: string
+      minLength: 2
+      maxLength: 120
+    birth_date:
+      type: string
+      format: date
+    cpf:
+      type: string
+      pattern: "^[0-9]{11}$"
+      description: "CPF sem pontuação (apenas dígitos)"
+    phone:
+      type: string
+      pattern: "^\\+?[0-9]{10,15}$"
+UpdateUserRequest:
+  type: object
+  description: Atualização parcial do perfil. Campos omitidos ou null são preservados.
+  properties:
+    full_name:
+      type: string
+      nullable: true
+    birth_date:
+      type: string
+      format: date
+      nullable: true
+    cpf:
+      type: string
+      pattern: "^[0-9]{11}$"
+      description: "CPF sem pontuação (apenas dígitos)"
+      nullable: true
+    phone:
+      type: string
+      pattern: "^\\+?[0-9]{10,15}$"
+      nullable: true
+User:
+  type: object
+  description: Perfil da conta baseado em public.users. deleted_at é interno e não faz parte da resposta.
+  additionalProperties: false
+  required:
+    [
+      id,
+      auth_issuer,
+      auth_subject,
+      email,
+      full_name,
+      account_type,
+      birth_date,
+      cpf,
+      phone,
+      created_at,
+      updated_at,
+    ]
+  properties:
+    id:
+      type: string
+      format: uuid
+    auth_issuer:
+      type: string
+    auth_subject:
+      type: string
+    email:
+      type: string
+    full_name:
+      type: string
+    account_type:
+      type: string
+      description: Valor armazenado da conta. Novos cadastros recebem basic_care; não define permissões.
+      example: basic_care
+    birth_date:
+      type: string
+      format: date
+    cpf:
+      type: string
+    phone:
+      type: string
+    created_at:
+      type: string
+      format: date-time
+    updated_at:
+      type: string
+      format: date-time
+AccountPatientRelation:
+  type: object
+  additionalProperties: false
+  required: [id, full_name, relation_type]
+  properties:
+    id:
+      type: string
+      format: uuid
+    full_name:
+      type: string
+    avatar_url:
+      type: string
+    relation_type:
+      type: string
+MyPatientsResponse:
+  type: object
+  additionalProperties: false
+  required: [patients, total, limit, offset]
+  properties:
+    patients:
+      type: array
+      items:
+        $ref: "#/components/schemas/AccountPatientRelation"
+    total:
+      type: integer
+      format: int64
+      minimum: 0
+    limit:
+      type: integer
+      minimum: 1
+      maximum: 100
+    offset:
+      type: integer
+      minimum: 0

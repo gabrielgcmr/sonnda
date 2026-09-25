@@ -14,7 +14,7 @@ import (
 
 	"github.com/gabrielgcmr/sonnda/internal/application/bootstrap"
 	"github.com/gabrielgcmr/sonnda/internal/config"
-	"github.com/gabrielgcmr/sonnda/internal/features/auth"
+	authhttp "github.com/gabrielgcmr/sonnda/internal/features/auth/http"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/observability"
 
@@ -101,7 +101,7 @@ func main() {
 
 	//8 Middlewares
 	//8.1 API
-	authMiddleware := auth.NewMiddleware(apiAuthProvider.AuthenticateBearerToken)
+	authMiddleware := authhttp.NewMiddleware(apiAuthProvider.AuthenticateBearerToken)
 
 	//10. Cria o router HTTP
 	ginMode := gin.DebugMode

@@ -1,5 +1,5 @@
 # openapi.yaml
-# NOTE: source of truth. Embedded and served at /openapi.yaml.
+# NOTE: source entrypoint. Bundled, embedded and served at /openapi.yaml.
 openapi: 3.0.3
 info:
   title: Sonnda API
@@ -65,108 +65,9 @@ paths:
                 type: string
   # Me (usuário autenticado)
   /v1/me:
-    post:
-      summary: Criar usuário
-      description: |-
-        Cria o usuário da plataforma a partir da identidade autenticada (JWT do Supabase).
-        Requer token válido do Supabase (Bearer).
-      tags: [Me]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreateUserRequest"
-      responses:
-        "201":
-          description: Usuário criado
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/User"
-        "409":
-          $ref: "#/components/responses/Problem"
-        "400":
-          $ref: "#/components/responses/Problem"
-        "401":
-          $ref: "#/components/responses/Problem"
-        "422":
-          $ref: "#/components/responses/Problem"
-        "500":
-          $ref: "#/components/responses/Problem"
-    get:
-      summary: Obter perfil do usuário atual
-      description: Retorna 403 com code PROFILE_NOT_FOUND quando a identidade está autenticada mas não possui cadastro local.
-      tags: [Me]
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/User"
-        "403":
-          $ref: "#/components/responses/Problem"
-        "401":
-          $ref: "#/components/responses/Problem"
-        "500":
-          $ref: "#/components/responses/Problem"
-    put:
-      summary: Atualizar perfil do usuário atual
-      tags: [Me]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UpdateUserRequest"
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/User"
-        "400":
-          $ref: "#/components/responses/Problem"
-        "403":
-          $ref: "#/components/responses/Problem"
-        "401":
-          $ref: "#/components/responses/Problem"
-        "422":
-          $ref: "#/components/responses/Problem"
-        "500":
-          $ref: "#/components/responses/Problem"
-    delete:
-      summary: Remover usuário atual (hard delete)
-      tags: [Me]
-      responses:
-        "204":
-          description: No Content
-        "403":
-          $ref: "#/components/responses/Problem"
-        "401":
-          $ref: "#/components/responses/Problem"
-        "500":
-          $ref: "#/components/responses/Problem"
+    $ref: "./openapi/paths/account.yaml#/me"
   /v1/me/patients:
-    get:
-      summary: Listar pacientes do usuário atual
-      tags: [Me]
-      parameters:
-        - $ref: "#/components/parameters/LimitParam"
-        - $ref: "#/components/parameters/OffsetParam"
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PatientsList"
-        "401":
-          $ref: "#/components/responses/Problem"
-        "500":
-          $ref: "#/components/responses/Problem"
+    $ref: "./openapi/paths/account.yaml#/patients"
   # patients
   /v1/patients:
     post:
@@ -429,56 +330,9 @@ components:
           type: string
       required: [name, version, environment, docs, openapi, health, ready]
     CreateUserRequest:
-      type: object
-      required:
-        - full_name
-        - birth_date
-        - cpf
-        - phone
-      properties:
-        cns:
-          type: string
-          nullable: true
-        full_name:
-          type: string
-          minLength: 2
-          maxLength: 120
-        account_type:
-          type: string
-          enum: [basic_care] # tira "professional" do contrato enquanto MVP
-        birth_date:
-          type: string
-          format: date
-        cpf:
-          type: string
-          pattern: "^[0-9]{11}$"
-          description: "CPF sem pontuação (apenas dígitos)"
-        relation_type:
-          type: string
-          enum: [caregiver, family, professional, self]
-          nullable: true
-        phone:
-          type: string
-          pattern: "^\\+?[0-9]{10,15}$"
+      $ref: "./openapi/components/schemas/account.yaml#/CreateUserRequest"
     UpdateUserRequest:
-      type: object
-      properties:
-        full_name:
-          type: string
-          nullable: true
-        birth_date:
-          type: string
-          format: date
-          nullable: true
-        cpf:
-          type: string
-          pattern: "^[0-9]{11}$"
-          description: "CPF sem pontuação (apenas dígitos)"
-          nullable: true
-        phone:
-          type: string
-          pattern: "^\\+?[0-9]{10,15}$"
-          nullable: true
+      $ref: "./openapi/components/schemas/account.yaml#/UpdateUserRequest"
     CreatePatientRequest:
       type: object
       required:
@@ -524,9 +378,11 @@ components:
           format: uuid
       required: [id]
     User:
-      type: object
-      description: Representação simplificada do usuário.
-      additionalProperties: true
+      $ref: "./openapi/components/schemas/account.yaml#/User"
+    AccountPatientSummary:
+      $ref: "./openapi/components/schemas/account.yaml#/AccountPatientSummary"
+    MyPatientsResponse:
+      $ref: "./openapi/components/schemas/account.yaml#/MyPatientsResponse"
     Patient:
       type: object
       description: Representação simplificada do paciente.

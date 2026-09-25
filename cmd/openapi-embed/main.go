@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+
+	openapitools "github.com/gabrielgcmr/sonnda/internal/tooling/openapi"
 )
 
 func main() {
@@ -14,7 +16,7 @@ func main() {
 	outputPath := flag.String("output", "openapi_spec_gen.go", "path to the generated Go file")
 	flag.Parse()
 
-	data, err := os.ReadFile(*inputPath)
+	data, err := openapitools.Bundle(*inputPath)
 	if err != nil {
 		fail("read OpenAPI source", err)
 	}

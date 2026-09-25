@@ -11,6 +11,8 @@ import (
 	"testing"
 
 	"github.com/gabrielgcmr/sonnda/internal/api"
+	openapispec "github.com/gabrielgcmr/sonnda/internal/api/openapi"
+	openapigen "github.com/gabrielgcmr/sonnda/internal/api/openapi/generated"
 	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
 	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	"github.com/gabrielgcmr/sonnda/internal/features/account"
@@ -19,6 +21,7 @@ import (
 	authdomain "github.com/gabrielgcmr/sonnda/internal/features/auth/domain"
 	authhttp "github.com/gabrielgcmr/sonnda/internal/features/auth/http"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -36,9 +39,9 @@ func TestAccountRoutesLifecycle(t *testing.T) {
 
 			response = accountRequest(t, router, http.MethodPost, createPath, accountPayload, http.StatusCreated)
 			created := decodeAccountUser(t, response)
-			if created.ID == uuid.Nil || created.FullName != "Ana Silva" || created.Email != "ana@example.test" ||
+			if created.Id == uuid.Nil || created.FullName != "Ana Silva" || created.Email != "ana@example.test" ||
 				created.AuthIssuer != "test-issuer" || created.AuthSubject != "test-subject" ||
-				created.AccountType != accountdomain.AccountTypeBasicCare || created.BirthDate.Format("2006-01-02") != "1990-01-02" {
+				created.AccountType != string(accountdomain.AccountTypeBasicCare) || created.BirthDate.Format("2006-01-02") != "1990-01-02" {
 				t.Fatalf("unexpected created profile: %+v", created)
 			}
 
@@ -52,7 +55,7 @@ func TestAccountRoutesLifecycle(t *testing.T) {
 
 			response = accountRequest(t, router, http.MethodPut, "/v1/me", `{"full_name":"Ana Souza"}`, http.StatusOK)
 			updated := decodeAccountUser(t, response)
-			if updated.ID != created.ID || updated.FullName != "Ana Souza" || updated.Email != created.Email || updated.CPF != created.CPF {
+			if updated.Id != created.Id || updated.FullName != "Ana Souza" || updated.Email != created.Email || updated.Cpf != created.Cpf {
 				t.Fatalf("unexpected updated profile: %+v", updated)
 			}
 			response = accountRequest(t, router, http.MethodGet, "/v1/me", "", http.StatusOK)
@@ -147,16 +150,49 @@ func accountRequest(t *testing.T, router http.Handler, method, path, body string
 	if response.Code != status {
 		t.Fatalf("%s %s: status = %d, want %d; body = %s", method, path, response.Code, status, response.Body.String())
 	}
+	assertAccountResponseSchema(t, request, response)
 	return response
 }
 
-func decodeAccountUser(t *testing.T, response *httptest.ResponseRecorder) accountdomain.User {
+func decodeAccountUser(t *testing.T, response *httptest.ResponseRecorder) openapigen.User {
 	t.Helper()
-	var profile accountdomain.User
+	var profile openapigen.User
 	if err := json.Unmarshal(response.Body.Bytes(), &profile); err != nil {
 		t.Fatal(err)
 	}
 	return profile
+}
+
+func assertAccountResponseSchema(t *testing.T, request *http.Request, response *httptest.ResponseRecorder) {
+	t.Helper()
+	doc, err := openapi3.NewLoader().LoadFromData(openapispec.OpenAPISpec)
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := request.URL.Path
+	if path == "/v1/users" {
+		path = "/v1/me"
+	}
+	operation := doc.Paths.Value(path).GetOperation(request.Method)
+	declared := operation.Responses.Status(response.Code)
+	if declared == nil {
+		t.Fatalf("undocumented response: %s %s %d", request.Method, path, response.Code)
+	}
+	if response.Code == http.StatusNoContent {
+		return
+	}
+	mediaType := strings.Split(response.Header().Get("Content-Type"), ";")[0]
+	content := declared.Value.Content[mediaType]
+	if content == nil || content.Schema == nil {
+		t.Fatalf("undocumented response content type: %s", mediaType)
+	}
+	var body any
+	if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
+		t.Fatal(err)
+	}
+	if err := content.Schema.Value.VisitJSON(body, openapi3.VisitAsResponse()); err != nil {
+		t.Fatalf("%s %s response violates OpenAPI: %v", request.Method, path, err)
+	}
 }
 
 func assertAccountProblem(t *testing.T, response *httptest.ResponseRecorder, code apperr.ErrorKind) {

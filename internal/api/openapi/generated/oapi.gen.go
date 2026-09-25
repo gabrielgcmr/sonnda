@@ -36,19 +36,6 @@ const (
 	CreatePatientRequestRaceWHITE      CreatePatientRequestRace = "WHITE"
 )
 
-// Defines values for CreateUserRequestAccountType.
-const (
-	BasicCare CreateUserRequestAccountType = "basic_care"
-)
-
-// Defines values for CreateUserRequestRelationType.
-const (
-	Caregiver    CreateUserRequestRelationType = "caregiver"
-	Family       CreateUserRequestRelationType = "family"
-	Professional CreateUserRequestRelationType = "professional"
-	Self         CreateUserRequestRelationType = "self"
-)
-
 // Defines values for PatientGender.
 const (
 	PatientGenderFEMALE  PatientGender = "FEMALE"
@@ -72,6 +59,14 @@ const (
 	Full GetV1PatientsIdLabsParamsExpand = "full"
 )
 
+// AccountPatientSummary defines model for AccountPatientSummary.
+type AccountPatientSummary struct {
+	AvatarUrl    *string            `json:"avatar_url,omitempty"`
+	FullName     string             `json:"full_name"`
+	Id           openapi_types.UUID `json:"id"`
+	RelationType string             `json:"relation_type"`
+}
+
 // CreatePatientRequest defines model for CreatePatientRequest.
 type CreatePatientRequest struct {
 	AvatarUrl *string            `json:"avatar_url"`
@@ -91,24 +86,15 @@ type CreatePatientRequestGender string
 // CreatePatientRequestRace defines model for CreatePatientRequest.Race.
 type CreatePatientRequestRace string
 
-// CreateUserRequest defines model for CreateUserRequest.
+// CreateUserRequest Dados editáveis do cadastro. Identidade e email vêm da autenticação; o servidor define account_type como basic_care.
 type CreateUserRequest struct {
-	AccountType *CreateUserRequestAccountType `json:"account_type,omitempty"`
-	BirthDate   openapi_types.Date            `json:"birth_date"`
-	Cns         *string                       `json:"cns"`
+	BirthDate openapi_types.Date `json:"birth_date"`
 
 	// Cpf CPF sem pontuação (apenas dígitos)
-	Cpf          string                         `json:"cpf"`
-	FullName     string                         `json:"full_name"`
-	Phone        string                         `json:"phone"`
-	RelationType *CreateUserRequestRelationType `json:"relation_type"`
+	Cpf      string `json:"cpf"`
+	FullName string `json:"full_name"`
+	Phone    string `json:"phone"`
 }
-
-// CreateUserRequestAccountType defines model for CreateUserRequest.AccountType.
-type CreateUserRequestAccountType string
-
-// CreateUserRequestRelationType defines model for CreateUserRequest.RelationType.
-type CreateUserRequestRelationType string
 
 // HealthResponse defines model for HealthResponse.
 type HealthResponse struct {
@@ -117,21 +103,21 @@ type HealthResponse struct {
 
 // LabReportFull defines model for LabReportFull.
 type LabReportFull struct {
-	CreatedAt         time.Time            `json:"CreatedAt"`
-	Fingerprint       *string              `json:"Fingerprint"`
-	ID                openapi_types.UUID   `json:"ID"`
-	InsuranceProvider *string              `json:"InsuranceProvider"`
-	LabName           *string              `json:"LabName"`
-	LabPhone          *string              `json:"LabPhone"`
-	PatientDOB        *time.Time           `json:"PatientDOB"`
-	PatientID         openapi_types.UUID   `json:"PatientID"`
-	PatientName       *string              `json:"PatientName"`
-	ReportDate        *time.Time           `json:"ReportDate"`
-	RequestingDoctor  *string              `json:"RequestingDoctor"`
-	TechnicalManager  *string              `json:"TechnicalManager"`
-	TestResults       *[]LabTestResultFull `json:"TestResults"`
-	UpdatedAt         time.Time            `json:"UpdatedAt"`
-	UploadedByUserID  openapi_types.UUID   `json:"UploadedByUserID"`
+	CreatedAt         time.Time            `json:"created_at"`
+	Fingerprint       *string              `json:"fingerprint"`
+	Id                openapi_types.UUID   `json:"id"`
+	InsuranceProvider *string              `json:"insurance_provider"`
+	LabName           *string              `json:"lab_name"`
+	LabPhone          *string              `json:"lab_phone"`
+	PatientDob        *time.Time           `json:"patient_dob"`
+	PatientId         openapi_types.UUID   `json:"patient_id"`
+	PatientName       *string              `json:"patient_name"`
+	ReportDate        *time.Time           `json:"report_date"`
+	RequestingDoctor  *string              `json:"requesting_doctor"`
+	TechnicalManager  *string              `json:"technical_manager"`
+	TestResults       *[]LabTestResultFull `json:"test_results"`
+	UpdatedAt         time.Time            `json:"updated_at"`
+	UploadedByUserId  openapi_types.UUID   `json:"uploaded_by_user_id"`
 }
 
 // LabReportFullList defines model for LabReportFullList.
@@ -164,22 +150,22 @@ type LabResultSummary struct {
 
 // LabTestItemFull defines model for LabTestItemFull.
 type LabTestItemFull struct {
-	ID            openapi_types.UUID `json:"ID"`
-	ParameterName string             `json:"ParameterName"`
-	ReferenceText *string            `json:"ReferenceText"`
-	ResultUnit    *string            `json:"ResultUnit"`
-	ResultValue   *string            `json:"ResultValue"`
+	Id            openapi_types.UUID `json:"id"`
+	ParameterName string             `json:"parameter_name"`
+	ReferenceText *string            `json:"reference_text"`
+	ResultUnit    *string            `json:"result_unit"`
+	ResultValue   *string            `json:"result_value"`
 }
 
 // LabTestResultFull defines model for LabTestResultFull.
 type LabTestResultFull struct {
-	CollectedAt *time.Time         `json:"CollectedAt"`
-	ID          openapi_types.UUID `json:"ID"`
-	Items       *[]LabTestItemFull `json:"Items"`
-	Material    *string            `json:"Material"`
-	Method      *string            `json:"Method"`
-	ReleaseAt   *time.Time         `json:"ReleaseAt"`
-	TestName    string             `json:"TestName"`
+	CollectedAt *time.Time         `json:"collected_at"`
+	Id          openapi_types.UUID `json:"id"`
+	Items       *[]LabTestItemFull `json:"items"`
+	Material    *string            `json:"material"`
+	Method      *string            `json:"method"`
+	ReleaseAt   *time.Time         `json:"release_at"`
+	TestName    string             `json:"test_name"`
 }
 
 // LabUploadResponse Retorno do processamento do laudo.
@@ -190,6 +176,14 @@ type LabUploadResponse map[string]interface{}
 // results ou test_results, retorna LabReportFullList.
 type LabsList struct {
 	union json.RawMessage
+}
+
+// MyPatientsResponse defines model for MyPatientsResponse.
+type MyPatientsResponse struct {
+	Limit    int                     `json:"limit"`
+	Offset   int                     `json:"offset"`
+	Patients []AccountPatientSummary `json:"patients"`
+	Total    int64                   `json:"total"`
 }
 
 // Patient Representação simplificada do paciente.
@@ -263,7 +257,7 @@ type RootResponse struct {
 	Version     string `json:"version"`
 }
 
-// UpdateUserRequest defines model for UpdateUserRequest.
+// UpdateUserRequest Atualização parcial do perfil. Campos omitidos ou null são preservados.
 type UpdateUserRequest struct {
 	BirthDate *openapi_types.Date `json:"birth_date"`
 
@@ -273,8 +267,21 @@ type UpdateUserRequest struct {
 	Phone    *string `json:"phone"`
 }
 
-// User Representação simplificada do usuário.
-type User map[string]interface{}
+// User Perfil da conta baseado em public.users. deleted_at é interno e não faz parte da resposta.
+type User struct {
+	// AccountType Valor armazenado da conta. Novos cadastros recebem basic_care; não define permissões.
+	AccountType string             `json:"account_type"`
+	AuthIssuer  string             `json:"auth_issuer"`
+	AuthSubject string             `json:"auth_subject"`
+	BirthDate   openapi_types.Date `json:"birth_date"`
+	Cpf         string             `json:"cpf"`
+	CreatedAt   time.Time          `json:"created_at"`
+	Email       string             `json:"email"`
+	FullName    string             `json:"full_name"`
+	Id          openapi_types.UUID `json:"id"`
+	Phone       string             `json:"phone"`
+	UpdatedAt   time.Time          `json:"updated_at"`
+}
 
 // LimitParam defines model for LimitParam.
 type LimitParam = int
