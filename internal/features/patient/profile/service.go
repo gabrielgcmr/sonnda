@@ -19,6 +19,6 @@ type Service interface {
 	ListMyPatients(ctx context.Context, currentUser *accountdomain.User, limit, offset int) ([]*profiledomain.Patient, error)
 }
 
-type Authorizer interface {
-	RequirePatientAccess(ctx context.Context, actor *accountdomain.User, patientID uuid.UUID) error
+type AccessChecker interface {
+	RequireAccess(ctx context.Context, accountID, patientID uuid.UUID) error
 }

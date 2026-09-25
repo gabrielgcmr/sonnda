@@ -28,7 +28,7 @@ func StatusFromCode(code apperr.ErrorKind) int {
 		apperr.AUTH_TOKEN_EXPIRED:
 		return http.StatusUnauthorized // 401
 
-	// AUTHZ
+	// ACCESS AND PERMISSIONS
 	case apperr.PROFILE_NOT_FOUND,
 		apperr.ACCESS_DENIED,
 		apperr.ACTION_NOT_ALLOWED:

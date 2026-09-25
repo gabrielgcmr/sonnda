@@ -17,9 +17,9 @@ import (
 )
 
 type service struct {
-	repo       Repository
-	accessRepo patientaccess.Repository
-	auth       Authorizer
+	repo          Repository
+	accessRepo    patientaccess.Repository
+	accessChecker AccessChecker
 }
 
 var _ Service = (*service)(nil)
@@ -27,12 +27,12 @@ var _ Service = (*service)(nil)
 func New(
 	repo Repository,
 	accessRepo patientaccess.Repository,
-	auth Authorizer,
+	accessChecker AccessChecker,
 ) Service {
 	return &service{
-		repo:       repo,
-		accessRepo: accessRepo,
-		auth:       auth,
+		repo:          repo,
+		accessRepo:    accessRepo,
+		accessChecker: accessChecker,
 	}
 }
 
@@ -85,7 +85,7 @@ func (s *service) Create(ctx context.Context, currentUser *accountdomain.User, i
 }
 
 func (s *service) Get(ctx context.Context, currentUser *accountdomain.User, id uuid.UUID) (*profiledomain.Patient, error) {
-	if err := s.auth.RequirePatientAccess(ctx, currentUser, id); err != nil {
+	if err := s.accessChecker.RequireAccess(ctx, currentAccountID(currentUser), id); err != nil {
 		return nil, err
 	}
 
@@ -100,7 +100,7 @@ func (s *service) Get(ctx context.Context, currentUser *accountdomain.User, id u
 }
 
 func (s *service) Update(ctx context.Context, currentUser *accountdomain.User, id uuid.UUID, input UpdateInput) (*profiledomain.Patient, error) {
-	if err := s.auth.RequirePatientAccess(ctx, currentUser, id); err != nil {
+	if err := s.accessChecker.RequireAccess(ctx, currentAccountID(currentUser), id); err != nil {
 		return nil, err
 	}
 
@@ -132,7 +132,7 @@ func (s *service) Update(ctx context.Context, currentUser *accountdomain.User, i
 }
 
 func (s *service) SoftDelete(ctx context.Context, currentUser *accountdomain.User, id uuid.UUID) error {
-	if err := s.auth.RequirePatientAccess(ctx, currentUser, id); err != nil {
+	if err := s.accessChecker.RequireAccess(ctx, currentAccountID(currentUser), id); err != nil {
 		return err
 	}
 
@@ -151,7 +151,7 @@ func (s *service) SoftDelete(ctx context.Context, currentUser *accountdomain.Use
 }
 
 func (s *service) HardDelete(ctx context.Context, currentUser *accountdomain.User, id uuid.UUID) error {
-	if err := s.auth.RequirePatientAccess(ctx, currentUser, id); err != nil {
+	if err := s.accessChecker.RequireAccess(ctx, currentAccountID(currentUser), id); err != nil {
 		return err
 	}
 
@@ -167,6 +167,13 @@ func (s *service) HardDelete(ctx context.Context, currentUser *accountdomain.Use
 		return mapRepoError("patientRepo.HardDelete", err)
 	}
 	return nil
+}
+
+func currentAccountID(currentUser *accountdomain.User) uuid.UUID {
+	if currentUser == nil {
+		return uuid.Nil
+	}
+	return currentUser.ID
 }
 
 func (s *service) ListMyPatients(ctx context.Context, currentUser *accountdomain.User, limit, offset int) ([]*profiledomain.Patient, error) {

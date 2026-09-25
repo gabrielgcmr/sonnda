@@ -50,7 +50,7 @@ Simple instructions for coding agents working on this repo.
 - **Application (`internal/application`)**: Where orchestration and cross-cutting concerns live.
   - **Use cases (`internal/application/usecase`)**: Business flows composed from domain models/ports.
   - **Services (`internal/application/services`)**: Application services that coordinate repositories/integrations.
-  - **Authorization (`internal/application/services/authorization`)**: Transitional shared patient access checker (owner or active grant). Its domain and persistence dependencies belong to `features/patient/access`; the checker will move there in the next migration stage. No action, account-type or professional-kind policies are currently implemented.
+  - Patient access checks live in `internal/features/patient/access`: `Checker` permits the patient owner or an account with an active grant. No action, account-type or professional-kind policies are currently implemented.
   - **Bootstrap (`internal/application/bootstrap`)**: Wiring of dependencies, env/config loading.
 - **Config (`internal/config`)**: Environment configuration.
 - **API (`internal/api`)**: HTTP layer (RESTful API).

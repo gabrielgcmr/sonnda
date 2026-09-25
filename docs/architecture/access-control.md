@@ -5,13 +5,13 @@ O acesso atual verifica a quais pacientes uma conta está vinculada. Políticas
 de autorização por ação, tipo de conta e profissão ficam para uma etapa futura.
 
 A autenticação continua em `internal/features/auth`: valida a identidade externa.
-O middleware de account resolve o cadastro local. O pacote
-`internal/application/services/authorization` recebe esse usuário e o paciente
-solicitado, sem depender de HTTP ou de um perfil profissional.
+O middleware de account resolve o cadastro local. O checker em
+`internal/features/patient/access` recebe os identificadores da conta e do
+paciente solicitado, sem depender de HTTP ou de um perfil profissional.
 
 ## Regra atual
 
-`RequirePatientAccess(ctx, actor, patientID)` permite acesso quando o usuário é
+`RequireAccess(ctx, accountID, patientID)` permite acesso quando a conta é
 o dono (`OwnerUserID`) do paciente ou tem um vínculo ativo em `patient_access`.
 Sem vínculo, a resposta é 403 (`ACCESS_DENIED`). Um paciente inexistente recebe
 a mesma resposta, evitando revelar sua existência. Falhas de consulta não
@@ -30,9 +30,8 @@ Ser médico ou ter `AccountType=professional` não concede acesso a outros pacie
 
 - `internal/features/account/domain`: `User` e `AccountType`.
 - `internal/features/patient/access/domain`: vínculo com o paciente e tipo de relacionamento.
-- `internal/features/patient/access`: contratos de persistência de acesso.
+- `internal/features/patient/access`: contratos de persistência e checker de acesso.
 - `internal/features/patient/access/postgres`: adaptador PostgreSQL de acesso.
-- `internal/application/services/authorization`: checker transitório, que será movido para a feature de acesso.
 
 A entidade, o serviço e o repositório antigos de profissionais e as políticas
 RBAC foram removidos. `AccountType` e o tipo de relacionamento permanecem como
@@ -45,7 +44,7 @@ A remoção desses artefatos de persistência deve ocorrer em uma etapa própria
 
 ## Verificação
 
-Os testes do autorizador cobrem dono, vínculo ativo, ausência de vínculo,
+Os testes do checker de acesso cobrem dono, vínculo ativo, ausência de vínculo,
 paciente inexistente, identidade ausente e falhas de consulta. Os testes dos
 consumidores verificam que a negativa interrompe o fluxo antes de leituras,
 alterações ou processamento de documentos.

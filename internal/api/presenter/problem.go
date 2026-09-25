@@ -66,7 +66,7 @@ func ProblemTitleFromCode(code ErrorCode, status int) string {
 	case apperr.AUTH_REQUIRED, apperr.AUTH_TOKEN_INVALID, apperr.AUTH_TOKEN_EXPIRED:
 		return "Não autorizado"
 
-	// AUTHZ
+	// ACCESS AND PERMISSIONS
 	case apperr.PROFILE_NOT_FOUND:
 		return "Cadastro necessário"
 	case apperr.ACCESS_DENIED, apperr.ACTION_NOT_ALLOWED:

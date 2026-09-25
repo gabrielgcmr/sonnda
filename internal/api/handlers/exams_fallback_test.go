@@ -30,7 +30,7 @@ func TestUploadContinuesAfterCloudOCRRecoversLocalFailure(t *testing.T) {
 	cloud := &recoveredTextExtractor{}
 	storage := &fakeExamStorage{uri: "gs://bucket/photo.jpg"}
 	extractor := textsvc.NewFallbackExtractor(reviewTextExtractor{errors.New("local OCR failed")}, cloud)
-	h := NewExams(svc, lab, storage, extractor, allowAllAuthorizer{})
+	h := NewExams(svc, lab, storage, extractor, allowAllAccessChecker{})
 	r := gin.New()
 	r.Use(func(c *gin.Context) {
 		helpers.SetCurrentUser(c, &accountdomain.User{ID: uuid.New(), AccountType: accountdomain.AccountTypeBasicCare})

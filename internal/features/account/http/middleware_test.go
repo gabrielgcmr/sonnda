@@ -87,6 +87,6 @@ func TestRegistrationAccess(t *testing.T) {
 func TestMissingProfileIsExpectedClientError(t *testing.T) {
 	err := apperr.ProfileNotFound()
 	if !apperr.IsForbidden(err) || apperr.LogLevelOf(err) != slog.LevelInfo {
-		t.Fatal("missing profile must remain an expected authorization error")
+		t.Fatal("missing profile must remain an expected account access error")
 	}
 }

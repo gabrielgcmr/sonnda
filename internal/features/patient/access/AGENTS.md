@@ -8,4 +8,4 @@
 - Keep access entities and validation rules in `domain/`, repository contracts in the feature root, and the pgx/sqlc adapter in `postgres/`.
 - Shared database clients and generated sqlc code remain in `internal/infrastructure`.
 - Access request types are dormant domain code until their workflow and authorization rules are defined; do not expose request endpoints during the structural migration.
-- Preserve existing access behavior while the legacy checker is migrated from `internal/application/services/authorization`.
+- Keep the shared patient access checker in this feature and express its input as account and patient identifiers.

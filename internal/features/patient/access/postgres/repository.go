@@ -3,14 +3,17 @@ package accesspostgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
+	domainrepository "github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	patientaccess "github.com/gabrielgcmr/sonnda/internal/features/patient/access"
 	accessdomain "github.com/gabrielgcmr/sonnda/internal/features/patient/access/domain"
 	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
 	patientaccesssqlc "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/sqlc/generated/patientaccess"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -72,8 +75,13 @@ func (p *Repository) HasActiveAccess(ctx context.Context, patientID uuid.UUID, g
 		GranteeID: pgtype.UUID{Bytes: granteeID, Valid: true},
 	})
 	if err != nil {
-		// Se não encontrou, retorna false sem erro
-		return false, nil
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, nil
+		}
+		return false, errors.Join(
+			domainrepository.ErrRepositoryFailure,
+			fmt.Errorf("find patient access: %w", err),
+		)
 	}
 
 	// Verifica se não está revogado

@@ -43,7 +43,7 @@ func TestUploadExamDocumentExplainsOCRReview(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			svc := &fakeExamsService{}
 			lab := &fakeCreateLabReportUC{}
-			h := NewExams(svc, lab, &fakeExamStorage{}, tc.extractor, allowAllAuthorizer{})
+			h := NewExams(svc, lab, &fakeExamStorage{}, tc.extractor, allowAllAccessChecker{})
 			r := gin.New()
 			r.Use(func(c *gin.Context) {
 				helpers.SetCurrentUser(c, &accountdomain.User{ID: uuid.New(), AccountType: accountdomain.AccountTypeBasicCare})

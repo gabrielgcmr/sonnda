@@ -2,7 +2,7 @@
 package bootstrap
 
 import (
-	authorization "github.com/gabrielgcmr/sonnda/internal/application/services/authorization"
+	patientaccess "github.com/gabrielgcmr/sonnda/internal/features/patient/access"
 	accesspostgres "github.com/gabrielgcmr/sonnda/internal/features/patient/access/postgres"
 	patientprofile "github.com/gabrielgcmr/sonnda/internal/features/patient/profile"
 	profilehttp "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/http"
@@ -19,8 +19,8 @@ func NewPatientModule(db *postgress.Client) *PatientModule {
 	patientRepo := patientpostgres.NewRepository(db)
 	accessRepo := accesspostgres.NewRepository(db)
 
-	authz := authorization.New(patientRepo, accessRepo)
-	svc := patientprofile.New(patientRepo, accessRepo, authz)
+	accessChecker := patientaccess.NewChecker(patientRepo, accessRepo)
+	svc := patientprofile.New(patientRepo, accessRepo, accessChecker)
 
 	return &PatientModule{
 		Service: svc,

@@ -18,9 +18,9 @@ import (
 	"github.com/google/uuid"
 )
 
-type allowAllAuthorizer struct{}
+type allowAllAccessChecker struct{}
 
-func (a allowAllAuthorizer) RequirePatientAccess(ctx context.Context, actor *accountdomain.User, patientID uuid.UUID) error {
+func (a allowAllAccessChecker) RequireAccess(ctx context.Context, accountID, patientID uuid.UUID) error {
 	return nil
 }
 
@@ -91,7 +91,7 @@ func (r *fakeAccessRepo) HasActiveAccess(ctx context.Context, patientID, grantee
 func TestCreate_ProfessionalCreatesAccess(t *testing.T) {
 	patientRepo := &fakePatientRepo{}
 	accessRepo := &fakeAccessRepo{}
-	svc := New(patientRepo, accessRepo, allowAllAuthorizer{})
+	svc := New(patientRepo, accessRepo, allowAllAccessChecker{})
 
 	currentUser := &accountdomain.User{
 		ID:          uuid.Must(uuid.NewV7()),
@@ -136,7 +136,7 @@ func TestCreate_ProfessionalCreatesAccess(t *testing.T) {
 
 func TestCreate_BasicCareCreatesAccess(t *testing.T) {
 	patientRepo := &fakePatientRepo{}
-	svc := New(patientRepo, &fakeAccessRepo{}, allowAllAuthorizer{})
+	svc := New(patientRepo, &fakeAccessRepo{}, allowAllAccessChecker{})
 
 	currentUser := &accountdomain.User{
 		ID:          uuid.Must(uuid.NewV7()),
@@ -167,7 +167,7 @@ func TestCreate_BasicCareCreatesAccess(t *testing.T) {
 func TestCreate_SelfRelationCreatesOwnedPatient(t *testing.T) {
 	patientRepo := &fakePatientRepo{}
 	accessRepo := &fakeAccessRepo{}
-	svc := New(patientRepo, accessRepo, allowAllAuthorizer{})
+	svc := New(patientRepo, accessRepo, allowAllAccessChecker{})
 
 	currentUser := &accountdomain.User{
 		ID:          uuid.Must(uuid.NewV7()),
@@ -205,7 +205,7 @@ func TestCreate_AtomicCreateError_ReturnsInternalError(t *testing.T) {
 	svc := New(
 		&fakePatientRepo{createErr: errors.Join(repository.ErrRepositoryFailure, errors.New("db down"))},
 		&fakeAccessRepo{},
-		allowAllAuthorizer{},
+		allowAllAccessChecker{},
 	)
 
 	currentUser := &accountdomain.User{
@@ -234,7 +234,7 @@ func TestCreate_AtomicCreateError_ReturnsInternalError(t *testing.T) {
 }
 
 func TestCreate_AlreadyExists_ReturnsResourceAlreadyExists(t *testing.T) {
-	svc := New(&fakePatientRepo{createErr: ErrPatientAlreadyExists}, &fakeAccessRepo{}, allowAllAuthorizer{})
+	svc := New(&fakePatientRepo{createErr: ErrPatientAlreadyExists}, &fakeAccessRepo{}, allowAllAccessChecker{})
 
 	currentUser := &accountdomain.User{
 		ID:          uuid.Must(uuid.NewV7()),
@@ -262,7 +262,7 @@ func TestCreate_AlreadyExists_ReturnsResourceAlreadyExists(t *testing.T) {
 }
 
 func TestCreate_NilUser_ReturnsAuthRequired(t *testing.T) {
-	svc := New(&fakePatientRepo{}, &fakeAccessRepo{}, allowAllAuthorizer{})
+	svc := New(&fakePatientRepo{}, &fakeAccessRepo{}, allowAllAccessChecker{})
 
 	input := CreateInput{
 		CPF:       "12345678901",

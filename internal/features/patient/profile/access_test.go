@@ -13,12 +13,12 @@ import (
 
 type deniedPatientAccess struct {
 	err       error
-	actorID   uuid.UUID
+	accountID uuid.UUID
 	patientID uuid.UUID
 }
 
-func (a *deniedPatientAccess) RequirePatientAccess(_ context.Context, actor *accountdomain.User, patientID uuid.UUID) error {
-	a.actorID, a.patientID = actor.ID, patientID
+func (a *deniedPatientAccess) RequireAccess(_ context.Context, accountID, patientID uuid.UUID) error {
+	a.accountID, a.patientID = accountID, patientID
 	return a.err
 }
 
@@ -28,9 +28,9 @@ func TestPatientOperationsStopWhenAccessIsDenied(t *testing.T) {
 	denied := apperr.Forbidden("acesso negado")
 	for _, operation := range []string{"get", "update", "soft delete", "hard delete"} {
 		t.Run(operation, func(t *testing.T) {
-			authz := &deniedPatientAccess{err: denied}
+			accessChecker := &deniedPatientAccess{err: denied}
 			// Nil repositories ensure no read or write happens after denial.
-			svc := New(nil, nil, authz)
+			svc := New(nil, nil, accessChecker)
 			var err error
 			switch operation {
 			case "get":
@@ -45,7 +45,7 @@ func TestPatientOperationsStopWhenAccessIsDenied(t *testing.T) {
 			if !errors.Is(err, denied) {
 				t.Fatalf("expected access denial, got %v", err)
 			}
-			if authz.actorID != actor.ID || authz.patientID != patientID {
+			if accessChecker.accountID != actor.ID || accessChecker.patientID != patientID {
 				t.Fatal("wrong access check")
 			}
 		})

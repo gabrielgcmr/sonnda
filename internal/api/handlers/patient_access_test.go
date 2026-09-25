@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/gabrielgcmr/sonnda/internal/api/helpers"
-	"github.com/gabrielgcmr/sonnda/internal/application/services/authorization"
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
 	patientaccess "github.com/gabrielgcmr/sonnda/internal/features/patient/access"
 	patientprofile "github.com/gabrielgcmr/sonnda/internal/features/patient/profile"
@@ -58,10 +57,10 @@ func TestPatientDocumentsDenyAccessBeforeReadingOrProcessing(t *testing.T) {
 			actor := &accountdomain.User{ID: uuid.New(), AccountType: accountdomain.AccountTypeProfessional}
 			patientID := uuid.New()
 			grants := &accessTestGrants{t: t, patientID: patientID, actorID: actor.ID}
-			authz := authorization.New(accessTestPatients{}, grants)
+			accessChecker := patientaccess.NewChecker(accessTestPatients{}, grants)
 			// All data services are nil: reaching them after denial fails the test.
-			labs := NewLabs(nil, nil, nil, authz)
-			exams := NewExams(nil, nil, nil, nil, authz)
+			labs := NewLabs(nil, nil, nil, accessChecker)
+			exams := NewExams(nil, nil, nil, nil, accessChecker)
 			router := gin.New()
 			router.Use(func(c *gin.Context) { helpers.SetCurrentUser(c, actor) })
 			router.GET("/patients/:id/labs", labs.ListLabs)

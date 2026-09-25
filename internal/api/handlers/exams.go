@@ -15,13 +15,13 @@ import (
 
 	"github.com/gabrielgcmr/sonnda/internal/api/helpers"
 	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
-	authorization "github.com/gabrielgcmr/sonnda/internal/application/services/authorization"
 	examsvc "github.com/gabrielgcmr/sonnda/internal/application/services/exams"
 	labsvc "github.com/gabrielgcmr/sonnda/internal/application/services/labs"
 	labsuc "github.com/gabrielgcmr/sonnda/internal/application/usecase/labs"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/exams"
 	domainstorage "github.com/gabrielgcmr/sonnda/internal/domain/storage"
 	domaintext "github.com/gabrielgcmr/sonnda/internal/domain/textextraction"
+	patientaccess "github.com/gabrielgcmr/sonnda/internal/features/patient/access"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 	applog "github.com/gabrielgcmr/sonnda/internal/kernel/observability"
 	"github.com/gin-gonic/gin"
@@ -33,7 +33,7 @@ type ExamsHandler struct {
 	createLabUC   labsuc.CreateLabReportFromDocumentUseCase
 	storage       domainstorage.FileStorageService
 	textExtractor domaintext.Extractor
-	authz         authorization.Authorizer
+	accessChecker patientaccess.Checker
 }
 
 func NewExams(
@@ -41,14 +41,14 @@ func NewExams(
 	createLabUC labsuc.CreateLabReportFromDocumentUseCase,
 	storageClient domainstorage.FileStorageService,
 	textExtractor domaintext.Extractor,
-	authz authorization.Authorizer,
+	accessChecker patientaccess.Checker,
 ) *ExamsHandler {
 	return &ExamsHandler{
 		svc:           svc,
 		createLabUC:   createLabUC,
 		storage:       storageClient,
 		textExtractor: textExtractor,
-		authz:         authz,
+		accessChecker: accessChecker,
 	}
 }
 
@@ -60,7 +60,7 @@ func (h *ExamsHandler) ListExamDocuments(c *gin.Context) {
 		return
 	}
 
-	if err := h.authz.RequirePatientAccess(c.Request.Context(), currentUser, patientID); err != nil {
+	if err := h.accessChecker.RequireAccess(c.Request.Context(), currentUser.ID, patientID); err != nil {
 		presenter.ErrorResponder(c, err)
 		return
 	}
@@ -87,7 +87,7 @@ func (h *ExamsHandler) ListExamDocumentTexts(c *gin.Context) {
 		return
 	}
 
-	if err := h.authz.RequirePatientAccess(c.Request.Context(), currentUser, patientID); err != nil {
+	if err := h.accessChecker.RequireAccess(c.Request.Context(), currentUser.ID, patientID); err != nil {
 		presenter.ErrorResponder(c, err)
 		return
 	}
@@ -119,7 +119,7 @@ func (h *ExamsHandler) UploadExamDocument(c *gin.Context) {
 		return
 	}
 
-	if err := h.authz.RequirePatientAccess(c.Request.Context(), currentUser, patientID); err != nil {
+	if err := h.accessChecker.RequireAccess(c.Request.Context(), currentUser.ID, patientID); err != nil {
 		presenter.ErrorResponder(c, err)
 		return
 	}

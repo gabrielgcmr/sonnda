@@ -11,34 +11,34 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	authorization "github.com/gabrielgcmr/sonnda/internal/application/services/authorization"
 	labsvc "github.com/gabrielgcmr/sonnda/internal/application/services/labs"
 	labsuc "github.com/gabrielgcmr/sonnda/internal/application/usecase/labs"
 
 	helpers "github.com/gabrielgcmr/sonnda/internal/api/helpers"
 	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
 	domainstorage "github.com/gabrielgcmr/sonnda/internal/domain/storage"
+	patientaccess "github.com/gabrielgcmr/sonnda/internal/features/patient/access"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 )
 
 type LabsHandler struct {
-	svc      labsvc.Service
-	createUC labsuc.CreateLabReportFromDocumentUseCase
-	storage  domainstorage.FileStorageService
-	authz    authorization.Authorizer
+	svc           labsvc.Service
+	createUC      labsuc.CreateLabReportFromDocumentUseCase
+	storage       domainstorage.FileStorageService
+	accessChecker patientaccess.Checker
 }
 
 func NewLabs(
 	svc labsvc.Service,
 	createUC labsuc.CreateLabReportFromDocumentUseCase,
 	storageClient domainstorage.FileStorageService,
-	authz authorization.Authorizer,
+	accessChecker patientaccess.Checker,
 ) *LabsHandler {
 	return &LabsHandler{
-		svc:      svc,
-		createUC: createUC,
-		storage:  storageClient,
-		authz:    authz,
+		svc:           svc,
+		createUC:      createUC,
+		storage:       storageClient,
+		accessChecker: accessChecker,
 	}
 }
 
@@ -50,7 +50,7 @@ func (h *LabsHandler) ListLabs(c *gin.Context) {
 		return
 	}
 
-	if err := h.authz.RequirePatientAccess(c.Request.Context(), currentUser, patientID); err != nil {
+	if err := h.accessChecker.RequireAccess(c.Request.Context(), currentUser.ID, patientID); err != nil {
 		presenter.ErrorResponder(c, err)
 		return
 	}
@@ -91,7 +91,7 @@ func (h *LabsHandler) UploadAndProcessLabs(c *gin.Context) {
 		return
 	}
 
-	if err := h.authz.RequirePatientAccess(c.Request.Context(), currentUser, patientID); err != nil {
+	if err := h.accessChecker.RequireAccess(c.Request.Context(), currentUser.ID, patientID); err != nil {
 		presenter.ErrorResponder(c, err)
 		return
 	}

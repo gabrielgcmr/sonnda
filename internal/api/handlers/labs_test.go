@@ -19,9 +19,9 @@ type fakeLabsService struct {
 	listFullCalled bool
 }
 
-type allowAllAuthorizer struct{}
+type allowAllAccessChecker struct{}
 
-func (a allowAllAuthorizer) RequirePatientAccess(ctx context.Context, actor *accountdomain.User, patientID uuid.UUID) error {
+func (a allowAllAccessChecker) RequireAccess(ctx context.Context, accountID, patientID uuid.UUID) error {
 	return nil
 }
 
@@ -39,7 +39,7 @@ func TestListLabs_DefaultUsesSummary(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	svc := &fakeLabsService{}
-	h := NewLabs(svc, nil, nil, allowAllAuthorizer{})
+	h := NewLabs(svc, nil, nil, allowAllAccessChecker{})
 
 	r := gin.New()
 	r.Use(func(c *gin.Context) {
@@ -69,7 +69,7 @@ func TestListLabs_ExpandFullUsesFull(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	svc := &fakeLabsService{}
-	h := NewLabs(svc, nil, nil, allowAllAuthorizer{})
+	h := NewLabs(svc, nil, nil, allowAllAccessChecker{})
 
 	r := gin.New()
 	r.Use(func(c *gin.Context) {
@@ -99,7 +99,7 @@ func TestListLabs_IncludeResultsUsesFull(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	svc := &fakeLabsService{}
-	h := NewLabs(svc, nil, nil, allowAllAuthorizer{})
+	h := NewLabs(svc, nil, nil, allowAllAccessChecker{})
 
 	r := gin.New()
 	r.Use(func(c *gin.Context) {

@@ -3,7 +3,6 @@ package bootstrap
 
 import (
 	"github.com/gabrielgcmr/sonnda/internal/api/handlers"
-	authorization "github.com/gabrielgcmr/sonnda/internal/application/services/authorization"
 	examsvc "github.com/gabrielgcmr/sonnda/internal/application/services/exams"
 	textsvc "github.com/gabrielgcmr/sonnda/internal/application/services/textextraction"
 	labsuc "github.com/gabrielgcmr/sonnda/internal/application/usecase/labs"
@@ -11,6 +10,7 @@ import (
 	"github.com/gabrielgcmr/sonnda/internal/domain/labextraction"
 	domainstorage "github.com/gabrielgcmr/sonnda/internal/domain/storage"
 	domaintext "github.com/gabrielgcmr/sonnda/internal/domain/textextraction"
+	patientaccess "github.com/gabrielgcmr/sonnda/internal/features/patient/access"
 	accesspostgres "github.com/gabrielgcmr/sonnda/internal/features/patient/access/postgres"
 	patientpostgres "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/postgres"
 	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
@@ -41,9 +41,9 @@ func NewExamsModule(
 		RequireUsableText: true,
 	})
 	textExtractor := textsvc.NewFallbackExtractor(localExtractor, fallback)
-	authz := authorization.New(patientRepo, accessRepo)
+	accessChecker := patientaccess.NewChecker(patientRepo, accessRepo)
 
 	return &ExamsModule{
-		Handler: handlers.NewExams(svc, createLabUC, storage, textExtractor, authz),
+		Handler: handlers.NewExams(svc, createLabUC, storage, textExtractor, accessChecker),
 	}
 }

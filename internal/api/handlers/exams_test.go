@@ -234,7 +234,7 @@ func TestListExamDocuments_UsesServiceWithDefaultPagination(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	svc := &fakeExamsService{}
-	h := NewExams(svc, nil, nil, nil, allowAllAuthorizer{})
+	h := NewExams(svc, nil, nil, nil, allowAllAccessChecker{})
 
 	r := gin.New()
 	r.Use(func(c *gin.Context) {
@@ -270,7 +270,7 @@ func TestListExamDocumentTexts_UsesService(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	svc := &fakeExamsService{}
-	h := NewExams(svc, nil, nil, nil, allowAllAuthorizer{})
+	h := NewExams(svc, nil, nil, nil, allowAllAccessChecker{})
 
 	r := gin.New()
 	r.Use(func(c *gin.Context) {
@@ -297,7 +297,7 @@ func TestListExamDocuments_UsesQueryPagination(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	svc := &fakeExamsService{}
-	h := NewExams(svc, nil, nil, nil, allowAllAuthorizer{})
+	h := NewExams(svc, nil, nil, nil, allowAllAccessChecker{})
 
 	r := gin.New()
 	r.Use(func(c *gin.Context) {
@@ -332,7 +332,7 @@ func TestUploadExamDocument_WhenClassifiedAsLab_UsesStructuredLabPipeline(t *tes
 	textExtractor := &fakeTextExtractor{}
 	createLabUC := &fakeCreateLabReportUC{}
 	svc := &fakeExamsService{}
-	h := NewExams(svc, createLabUC, storage, textExtractor, allowAllAuthorizer{})
+	h := NewExams(svc, createLabUC, storage, textExtractor, allowAllAccessChecker{})
 
 	body, contentType := multipartBodyWithFields(
 		t,
@@ -407,7 +407,7 @@ func TestUploadExamDocument_LabFailureIsNotReportedAsSuccess(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			svc := &fakeExamsService{}
-			h := NewExams(svc, &fakeCreateLabReportUC{err: tc.err}, &fakeExamStorage{}, &fakeTextExtractor{}, allowAllAuthorizer{})
+			h := NewExams(svc, &fakeCreateLabReportUC{err: tc.err}, &fakeExamStorage{}, &fakeTextExtractor{}, allowAllAccessChecker{})
 			r := gin.New()
 			r.Use(func(c *gin.Context) {
 				helpers.SetCurrentUser(c, &accountdomain.User{ID: uuid.New(), AccountType: accountdomain.AccountTypeBasicCare})

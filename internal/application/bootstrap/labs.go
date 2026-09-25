@@ -3,11 +3,11 @@ package bootstrap
 
 import (
 	handlers "github.com/gabrielgcmr/sonnda/internal/api/handlers"
-	authorization "github.com/gabrielgcmr/sonnda/internal/application/services/authorization"
 	labsvc "github.com/gabrielgcmr/sonnda/internal/application/services/labs"
 	labsuc "github.com/gabrielgcmr/sonnda/internal/application/usecase/labs"
 	"github.com/gabrielgcmr/sonnda/internal/domain/labextraction"
 	domainstorage "github.com/gabrielgcmr/sonnda/internal/domain/storage"
+	patientaccess "github.com/gabrielgcmr/sonnda/internal/features/patient/access"
 	accesspostgres "github.com/gabrielgcmr/sonnda/internal/features/patient/access/postgres"
 	patientpostgres "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/postgres"
 	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
@@ -29,8 +29,8 @@ func NewLabsModule(
 
 	svc := labsvc.New(patientRepo, labsRepo)
 	createUC := labsuc.NewCreateLabReportFromDocument(patientRepo, labsRepo, labExtractor)
-	authz := authorization.New(patientRepo, accessRepo)
+	accessChecker := patientaccess.NewChecker(patientRepo, accessRepo)
 	return &LabsModule{
-		Handler: handlers.NewLabs(svc, createUC, storage, authz),
+		Handler: handlers.NewLabs(svc, createUC, storage, accessChecker),
 	}
 }

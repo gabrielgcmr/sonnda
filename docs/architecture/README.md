@@ -199,8 +199,8 @@ Os ADRs vivem em:
 
 ## Controle de acesso aos pacientes
 
-O pacote `internal/application/services/authorization` centraliza a checagem de
-acesso por vínculo. `RequirePatientAccess` permite acesso ao dono do paciente ou
+O pacote `internal/features/patient/access` centraliza a checagem de acesso por
+vínculo. `RequireAccess` permite acesso ao dono do paciente ou
 a um usuário com vínculo ativo; os demais recebem 403. Pacientes, exames e
 laudos compartilham essa regra.
 
