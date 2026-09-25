@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patientaccess"
-	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
+	patientaccess "github.com/gabrielgcmr/sonnda/internal/features/patient/access"
+	accessdomain "github.com/gabrielgcmr/sonnda/internal/features/patient/access/domain"
 	profiledomain "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/domain"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 
@@ -18,7 +18,7 @@ import (
 
 type service struct {
 	repo       Repository
-	accessRepo repository.PatientAccessRepo
+	accessRepo patientaccess.Repository
 	auth       Authorizer
 }
 
@@ -26,7 +26,7 @@ var _ Service = (*service)(nil)
 
 func New(
 	repo Repository,
-	accessRepo repository.PatientAccessRepo,
+	accessRepo patientaccess.Repository,
 	auth Authorizer,
 ) Service {
 	return &service{
@@ -67,7 +67,7 @@ func (s *service) Create(ctx context.Context, currentUser *accountdomain.User, i
 		return nil, mapDomainError(err)
 	}
 
-	access, err := patientaccess.NewPatientAccess(
+	access, err := accessdomain.NewPatientAccess(
 		newPatient.ID,
 		currentUser.ID,
 		relationType,
@@ -202,12 +202,12 @@ func (s *service) ListMyPatients(ctx context.Context, currentUser *accountdomain
 	return out, nil
 }
 
-func relationTypeForCreator(currentUser *accountdomain.User) (patientaccess.RelationshipType, error) {
+func relationTypeForCreator(currentUser *accountdomain.User) (accessdomain.RelationshipType, error) {
 	switch currentUser.AccountType.Normalize() {
 	case accountdomain.AccountTypeProfessional:
-		return patientaccess.RelationshipTypeProfessional, nil
+		return accessdomain.RelationshipTypeProfessional, nil
 	case accountdomain.AccountTypeBasicCare:
-		return patientaccess.RelationshipTypeCaregiver, nil
+		return accessdomain.RelationshipTypeCaregiver, nil
 	default:
 		return "", apperr.Internal("erro inesperado", fmt.Errorf("unsupported account type: %s", currentUser.AccountType))
 	}

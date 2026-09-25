@@ -14,12 +14,12 @@ import (
 	openapispec "github.com/gabrielgcmr/sonnda/internal/api/openapi"
 	openapigen "github.com/gabrielgcmr/sonnda/internal/api/openapi/generated"
 	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
-	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	"github.com/gabrielgcmr/sonnda/internal/features/account"
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
 	accounthttp "github.com/gabrielgcmr/sonnda/internal/features/account/http"
 	authdomain "github.com/gabrielgcmr/sonnda/internal/features/auth/domain"
 	authhttp "github.com/gabrielgcmr/sonnda/internal/features/auth/http"
+	patientaccess "github.com/gabrielgcmr/sonnda/internal/features/patient/access"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/gin-gonic/gin"
@@ -252,9 +252,9 @@ func (r *accountUserRepository) Delete(_ context.Context, id uuid.UUID) error {
 }
 
 type accountPatientAccessRepository struct {
-	repository.PatientAccessRepo
+	patientaccess.Repository
 }
 
-func (accountPatientAccessRepository) ListAccessiblePatientsByUser(context.Context, uuid.UUID, int, int) ([]repository.AccessiblePatient, int64, error) {
-	return []repository.AccessiblePatient{}, 0, nil
+func (accountPatientAccessRepository) ListAccessiblePatientsByUser(context.Context, uuid.UUID, int, int) ([]patientaccess.AccessiblePatient, int64, error) {
+	return []patientaccess.AccessiblePatient{}, 0, nil
 }

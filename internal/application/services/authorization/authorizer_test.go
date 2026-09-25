@@ -6,8 +6,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
+	patientaccess "github.com/gabrielgcmr/sonnda/internal/features/patient/access"
 	patientprofile "github.com/gabrielgcmr/sonnda/internal/features/patient/profile"
 	profiledomain "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/domain"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
@@ -27,7 +27,7 @@ func (r *patientLookup) FindByID(_ context.Context, id uuid.UUID) (*profiledomai
 }
 
 type accessLookup struct {
-	repository.PatientAccessRepo
+	patientaccess.Repository
 	allowed   bool
 	err       error
 	patientID uuid.UUID

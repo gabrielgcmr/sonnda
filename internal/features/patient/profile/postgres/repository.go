@@ -7,8 +7,8 @@ import (
 	"fmt"
 
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/demographics"
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patientaccess"
 	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
+	accessdomain "github.com/gabrielgcmr/sonnda/internal/features/patient/access/domain"
 	patientprofile "github.com/gabrielgcmr/sonnda/internal/features/patient/profile"
 	profiledomain "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/domain"
 	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
@@ -69,7 +69,7 @@ func (r *Repository) Create(ctx context.Context, p *profiledomain.Patient) error
 func (r *Repository) CreateWithAccess(
 	ctx context.Context,
 	p *profiledomain.Patient,
-	access *patientaccess.PatientAccess,
+	access *accessdomain.PatientAccess,
 ) error {
 	if err := access.Validate(); err != nil {
 		return fmt.Errorf("invalid patient access: %w", err)

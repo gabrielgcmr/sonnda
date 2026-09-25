@@ -1,5 +1,5 @@
-// internal/domain/entity/patientaccess/request_status.go
-package patientaccess
+// internal/features/patient/access/domain/request_status.go
+package accessdomain
 
 import "errors"
 

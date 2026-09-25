@@ -1,8 +1,8 @@
 <!-- docs/architecture/access-control.md -->
 # Controle de acesso aos pacientes
 
-A autorização atual verifica em quais pacientes o usuário pode operar. Políticas
-por ação, tipo de conta e profissão ficam para uma etapa futura.
+O acesso atual verifica a quais pacientes uma conta está vinculada. Políticas
+de autorização por ação, tipo de conta e profissão ficam para uma etapa futura.
 
 A autenticação continua em `internal/features/auth`: valida a identidade externa.
 O middleware de account resolve o cadastro local. O pacote
@@ -29,13 +29,15 @@ Ser médico ou ter `AccountType=professional` não concede acesso a outros pacie
 ## Modelos e persistência
 
 - `internal/features/account/domain`: `User` e `AccountType`.
-- `internal/domain/entity/patientaccess`: vínculo com o paciente.
-- `internal/domain/repository`: interfaces de pacientes e vínculos.
-- `internal/application/services/authorization`: validação compartilhada do acesso.
+- `internal/features/patient/access/domain`: vínculo com o paciente e tipo de relacionamento.
+- `internal/features/patient/access`: contratos de persistência de acesso.
+- `internal/features/patient/access/postgres`: adaptador PostgreSQL de acesso.
+- `internal/application/services/authorization`: checker transitório, que será movido para a feature de acesso.
 
 A entidade, o serviço e o repositório antigos de profissionais e as políticas
 RBAC foram removidos. `AccountType` e o tipo de relacionamento permanecem como
-dados existentes, sem políticas de permissão associadas. O contrato HTTP de
+dados existentes, sem políticas de permissão associadas. `relation_type` é
+metadado do relacionamento e não concede ações. O contrato HTTP de
 cadastro continua criando `basic_care`; ele não foi alterado nesta etapa.
 
 Tabelas, migrações e código SQLC gerado de profissionais foram preservados.

@@ -34,6 +34,7 @@ Simple instructions for coding agents working on this repo.
 - **Features (`internal/features`)**: Context-specific application flows.
   - **Account (`internal/features/account`)**: Profile services, onboarding, DTOs and error mapping; HTTP handler and middleware live in `account/http`.
   - **Patient profile (`internal/features/patient/profile`)**: Patient registration services, DTOs, error mapping and repository contract; its domain model lives in `profile/domain`, HTTP handler in `profile/http`, and Postgres adapter in `profile/postgres`.
+  - **Patient access (`internal/features/patient/access`)**: Account-to-patient grants, relationship metadata, repository contracts and persistence. Access determines whether an account is linked to a patient; it does not define action-level authorization.
   - Account owns its repository interface and user persistence errors in `account/repository.go`; its Postgres adapter lives in `account/postgres`.
   - User entities and account types belong to `internal/features/account/domain` (package `accountdomain`). Other contexts may import this pure domain package without depending on account application services.
   - The shared database client and generated sqlc code remain in `internal/infrastructure` during this migration.
@@ -49,7 +50,7 @@ Simple instructions for coding agents working on this repo.
 - **Application (`internal/application`)**: Where orchestration and cross-cutting concerns live.
   - **Use cases (`internal/application/usecase`)**: Business flows composed from domain models/ports.
   - **Services (`internal/application/services`)**: Application services that coordinate repositories/integrations.
-  - **Authorization (`internal/application/services/authorization`)**: Shared patient access check (owner or active grant). Patients, exams and labs must call `RequirePatientAccess` before accessing an existing patient's data. No action, account-type or professional-kind policies are currently implemented.
+  - **Authorization (`internal/application/services/authorization`)**: Transitional shared patient access checker (owner or active grant). Its domain and persistence dependencies belong to `features/patient/access`; the checker will move there in the next migration stage. No action, account-type or professional-kind policies are currently implemented.
   - **Bootstrap (`internal/application/bootstrap`)**: Wiring of dependencies, env/config loading.
 - **Config (`internal/config`)**: Environment configuration.
 - **API (`internal/api`)**: HTTP layer (RESTful API).

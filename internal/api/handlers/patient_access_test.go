@@ -9,8 +9,8 @@ import (
 
 	"github.com/gabrielgcmr/sonnda/internal/api/helpers"
 	"github.com/gabrielgcmr/sonnda/internal/application/services/authorization"
-	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
+	patientaccess "github.com/gabrielgcmr/sonnda/internal/features/patient/access"
 	patientprofile "github.com/gabrielgcmr/sonnda/internal/features/patient/profile"
 	profiledomain "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/domain"
 	"github.com/gin-gonic/gin"
@@ -26,7 +26,7 @@ func (r accessTestPatients) FindByID(_ context.Context, id uuid.UUID) (*profiled
 }
 
 type accessTestGrants struct {
-	repository.PatientAccessRepo
+	patientaccess.Repository
 	t         *testing.T
 	patientID uuid.UUID
 	actorID   uuid.UUID

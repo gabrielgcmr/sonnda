@@ -5,8 +5,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
+	patientaccess "github.com/gabrielgcmr/sonnda/internal/features/patient/access"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 
 	"github.com/google/uuid"
@@ -14,12 +14,12 @@ import (
 
 type service struct {
 	userRepo          Repository
-	patientAccessRepo repository.PatientAccessRepo
+	patientAccessRepo patientaccess.Repository
 }
 
 var _ Service = (*service)(nil)
 
-func NewService(userRepo Repository, patientAccessRepo repository.PatientAccessRepo) Service {
+func NewService(userRepo Repository, patientAccessRepo patientaccess.Repository) Service {
 	return &service{
 		userRepo:          userRepo,
 		patientAccessRepo: patientAccessRepo,

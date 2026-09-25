@@ -8,9 +8,10 @@ import (
 	"time"
 
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/demographics"
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patientaccess"
 	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
+	patientaccess "github.com/gabrielgcmr/sonnda/internal/features/patient/access"
+	accessdomain "github.com/gabrielgcmr/sonnda/internal/features/patient/access/domain"
 	profiledomain "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/domain"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 
@@ -25,7 +26,7 @@ func (a allowAllAuthorizer) RequirePatientAccess(ctx context.Context, actor *acc
 
 type fakePatientRepo struct {
 	created          *profiledomain.Patient
-	createAccess     *patientaccess.PatientAccess
+	createAccess     *accessdomain.PatientAccess
 	createErr        error
 	createWithAccess bool
 }
@@ -37,7 +38,7 @@ func (r *fakePatientRepo) Create(ctx context.Context, p *profiledomain.Patient) 
 func (r *fakePatientRepo) CreateWithAccess(
 	ctx context.Context,
 	p *profiledomain.Patient,
-	access *patientaccess.PatientAccess,
+	access *accessdomain.PatientAccess,
 ) error {
 	r.created = p
 	r.createAccess = access
@@ -66,7 +67,7 @@ func (r *fakePatientRepo) SearchByName(ctx context.Context, name string, limit, 
 }
 
 type fakeAccessRepo struct {
-	upsertAccess *patientaccess.PatientAccess
+	upsertAccess *accessdomain.PatientAccess
 	upsertErr    error
 }
 
@@ -74,11 +75,11 @@ func (r *fakeAccessRepo) ListAccessiblePatientsByUser(
 	ctx context.Context,
 	granteeID uuid.UUID,
 	limit, offset int,
-) ([]repository.AccessiblePatient, int64, error) {
+) ([]patientaccess.AccessiblePatient, int64, error) {
 	panic("unused")
 }
 
-func (r *fakeAccessRepo) Upsert(ctx context.Context, access *patientaccess.PatientAccess) error {
+func (r *fakeAccessRepo) Upsert(ctx context.Context, access *accessdomain.PatientAccess) error {
 	r.upsertAccess = access
 	return r.upsertErr
 }
@@ -128,8 +129,8 @@ func TestCreate_ProfessionalCreatesAccess(t *testing.T) {
 	if patientRepo.createAccess.GrantedBy == nil || *patientRepo.createAccess.GrantedBy != currentUser.ID {
 		t.Fatalf("expected granted_by=%s", currentUser.ID)
 	}
-	if patientRepo.createAccess.RelationType != patientaccess.RelationshipTypeProfessional {
-		t.Fatalf("expected relation_type=%s, got %s", patientaccess.RelationshipTypeProfessional, patientRepo.createAccess.RelationType)
+	if patientRepo.createAccess.RelationType != accessdomain.RelationshipTypeProfessional {
+		t.Fatalf("expected relation_type=%s, got %s", accessdomain.RelationshipTypeProfessional, patientRepo.createAccess.RelationType)
 	}
 }
 
@@ -158,8 +159,8 @@ func TestCreate_BasicCareCreatesAccess(t *testing.T) {
 	if patientRepo.createAccess == nil {
 		t.Fatalf("expected patient access to be created")
 	}
-	if patientRepo.createAccess.RelationType != patientaccess.RelationshipTypeCaregiver {
-		t.Fatalf("expected relation_type=%s, got %s", patientaccess.RelationshipTypeCaregiver, patientRepo.createAccess.RelationType)
+	if patientRepo.createAccess.RelationType != accessdomain.RelationshipTypeCaregiver {
+		t.Fatalf("expected relation_type=%s, got %s", accessdomain.RelationshipTypeCaregiver, patientRepo.createAccess.RelationType)
 	}
 }
 
@@ -172,7 +173,7 @@ func TestCreate_SelfRelationCreatesOwnedPatient(t *testing.T) {
 		ID:          uuid.Must(uuid.NewV7()),
 		AccountType: accountdomain.AccountTypeBasicCare,
 	}
-	relationType := patientaccess.RelationshipTypeSelf
+	relationType := accessdomain.RelationshipTypeSelf
 
 	input := CreateInput{
 		UserID:       &currentUser.ID,
@@ -195,8 +196,8 @@ func TestCreate_SelfRelationCreatesOwnedPatient(t *testing.T) {
 	if patientRepo.createAccess == nil {
 		t.Fatalf("expected patient access to be created")
 	}
-	if patientRepo.createAccess.RelationType != patientaccess.RelationshipTypeSelf {
-		t.Fatalf("expected relation_type=%s, got %s", patientaccess.RelationshipTypeSelf, patientRepo.createAccess.RelationType)
+	if patientRepo.createAccess.RelationType != accessdomain.RelationshipTypeSelf {
+		t.Fatalf("expected relation_type=%s, got %s", accessdomain.RelationshipTypeSelf, patientRepo.createAccess.RelationType)
 	}
 }
 

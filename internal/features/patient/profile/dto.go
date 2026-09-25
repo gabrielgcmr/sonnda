@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/demographics"
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patientaccess"
+	accessdomain "github.com/gabrielgcmr/sonnda/internal/features/patient/access/domain"
 
 	"github.com/google/uuid"
 )
@@ -20,7 +20,7 @@ type CreateInput struct {
 	Race         demographics.Race
 	Phone        *string
 	AvatarURL    string
-	RelationType *patientaccess.RelationshipType
+	RelationType *accessdomain.RelationshipType
 }
 
 type UpdateInput struct {

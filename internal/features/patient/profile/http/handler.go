@@ -12,8 +12,8 @@ import (
 
 	openapi "github.com/gabrielgcmr/sonnda/internal/api/openapi/generated"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/demographics"
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patientaccess"
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
+	accessdomain "github.com/gabrielgcmr/sonnda/internal/features/patient/access/domain"
 	patientprofile "github.com/gabrielgcmr/sonnda/internal/features/patient/profile"
 	profiledomain "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/domain"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
@@ -108,19 +108,19 @@ func (h *Handler) Create(c *gin.Context) {
 	}
 
 	var ownerUserID *uuid.UUID
-	var relationType *patientaccess.RelationshipType
+	var relationType *accessdomain.RelationshipType
 	if req.RelationType != nil && strings.TrimSpace(*req.RelationType) != "" {
-		rt := patientaccess.RelationshipType(strings.TrimSpace(*req.RelationType))
+		rt := accessdomain.RelationshipType(strings.TrimSpace(*req.RelationType))
 		if !rt.IsValid() {
 			presenter.ErrorResponder(c, &apperr.AppError{
 				Kind:    apperr.VALIDATION_FAILED,
 				Message: "vÃ­nculo com paciente invÃ¡lido",
-				Cause:   patientaccess.ErrInvalidRelationshipType,
+				Cause:   accessdomain.ErrInvalidRelationshipType,
 			})
 			return
 		}
 		relationType = &rt
-		if rt == patientaccess.RelationshipTypeSelf {
+		if rt == accessdomain.RelationshipTypeSelf {
 			ownerUserID = &user.ID
 		}
 	}

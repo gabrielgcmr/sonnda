@@ -11,6 +11,7 @@ import (
 	"github.com/gabrielgcmr/sonnda/internal/domain/labextraction"
 	domainstorage "github.com/gabrielgcmr/sonnda/internal/domain/storage"
 	domaintext "github.com/gabrielgcmr/sonnda/internal/domain/textextraction"
+	accesspostgres "github.com/gabrielgcmr/sonnda/internal/features/patient/access/postgres"
 	patientpostgres "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/postgres"
 	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
 	"github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/repo"
@@ -29,7 +30,7 @@ func NewExamsModule(
 	fallback domaintext.Extractor,
 ) *ExamsModule {
 	patientRepo := patientpostgres.NewRepository(dbClient)
-	accessRepo := repo.NewPatientAccessRepository(dbClient)
+	accessRepo := accesspostgres.NewRepository(dbClient)
 	examsRepo := repo.NewExamsRepository(dbClient)
 	labsRepo := repo.NewLabsRepository(dbClient)
 

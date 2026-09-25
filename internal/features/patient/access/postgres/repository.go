@@ -1,12 +1,12 @@
-// internal/infrastructure/persistence/postgres/repo/patient_access.go
-package repo
+// internal/features/patient/access/postgres/repository.go
+package accesspostgres
 
 import (
 	"context"
 	"fmt"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patientaccess"
-	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
+	patientaccess "github.com/gabrielgcmr/sonnda/internal/features/patient/access"
+	accessdomain "github.com/gabrielgcmr/sonnda/internal/features/patient/access/domain"
 	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
 	patientaccesssqlc "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/sqlc/generated/patientaccess"
 
@@ -14,22 +14,22 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-type PatientAccessRepository struct {
+type Repository struct {
 	client  *postgress.Client
 	queries *patientaccesssqlc.Queries
 }
 
-var _ repository.PatientAccessRepo = (*PatientAccessRepository)(nil)
+var _ patientaccess.Repository = (*Repository)(nil)
 
-func NewPatientAccessRepository(client *postgress.Client) repository.PatientAccessRepo {
-	return &PatientAccessRepository{
+func NewRepository(client *postgress.Client) patientaccess.Repository {
+	return &Repository{
 		client:  client,
 		queries: patientaccesssqlc.New(client.Pool()),
 	}
 }
 
-// ListAccessiblePatientsByUser implements [repository.PatientAccessRepo].
-func (p *PatientAccessRepository) ListAccessiblePatientsByUser(ctx context.Context, granteeID uuid.UUID, limit, offset int) ([]repository.AccessiblePatient, int64, error) {
+// ListAccessiblePatientsByUser implements [patientaccess.Repository].
+func (p *Repository) ListAccessiblePatientsByUser(ctx context.Context, granteeID uuid.UUID, limit, offset int) ([]patientaccess.AccessiblePatient, int64, error) {
 	// Buscar lista paginada
 	rows, err := p.queries.ListAccessiblePatientsByUser(ctx, patientaccesssqlc.ListAccessiblePatientsByUserParams{
 		GranteeID: pgtype.UUID{Bytes: granteeID, Valid: true},
@@ -47,14 +47,14 @@ func (p *PatientAccessRepository) ListAccessiblePatientsByUser(ctx context.Conte
 	}
 
 	// Mapear para DTO
-	result := make([]repository.AccessiblePatient, len(rows))
+	result := make([]patientaccess.AccessiblePatient, len(rows))
 	for i, row := range rows {
 		var avatarURL *string
 		if row.AvatarUrl.Valid {
 			avatarURL = &row.AvatarUrl.String
 		}
 
-		result[i] = repository.AccessiblePatient{
+		result[i] = patientaccess.AccessiblePatient{
 			PatientID:    row.PatientID.Bytes,
 			FullName:     row.FullName,
 			AvatarURL:    avatarURL,
@@ -65,8 +65,8 @@ func (p *PatientAccessRepository) ListAccessiblePatientsByUser(ctx context.Conte
 	return result, total, nil
 }
 
-// HasActiveAccess implements [repository.PatientAccessRepo].
-func (p *PatientAccessRepository) HasActiveAccess(ctx context.Context, patientID uuid.UUID, granteeID uuid.UUID) (bool, error) {
+// HasActiveAccess implements [patientaccess.Repository].
+func (p *Repository) HasActiveAccess(ctx context.Context, patientID uuid.UUID, granteeID uuid.UUID) (bool, error) {
 	access, err := p.queries.FindPatientAccess(ctx, patientaccesssqlc.FindPatientAccessParams{
 		PatientID: pgtype.UUID{Bytes: patientID, Valid: true},
 		GranteeID: pgtype.UUID{Bytes: granteeID, Valid: true},
@@ -80,8 +80,8 @@ func (p *PatientAccessRepository) HasActiveAccess(ctx context.Context, patientID
 	return !access.RevokedAt.Valid, nil
 }
 
-// Upsert implements [repository.PatientAccessRepo].
-func (p *PatientAccessRepository) Upsert(ctx context.Context, access *patientaccess.PatientAccess) error {
+// Upsert implements [patientaccess.Repository].
+func (p *Repository) Upsert(ctx context.Context, access *accessdomain.PatientAccess) error {
 	if err := access.Validate(); err != nil {
 		return fmt.Errorf("invalid patient access: %w", err)
 	}

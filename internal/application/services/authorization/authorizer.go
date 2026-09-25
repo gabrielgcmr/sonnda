@@ -6,8 +6,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
+	patientaccess "github.com/gabrielgcmr/sonnda/internal/features/patient/access"
 	patientprofile "github.com/gabrielgcmr/sonnda/internal/features/patient/profile"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 	"github.com/google/uuid"
@@ -20,10 +20,10 @@ type Authorizer interface {
 
 type Service struct {
 	patientRepo       patientprofile.Repository
-	patientAccessRepo repository.PatientAccessRepo
+	patientAccessRepo patientaccess.Repository
 }
 
-func New(patientRepo patientprofile.Repository, patientAccessRepo repository.PatientAccessRepo) *Service {
+func New(patientRepo patientprofile.Repository, patientAccessRepo patientaccess.Repository) *Service {
 	return &Service{patientRepo: patientRepo, patientAccessRepo: patientAccessRepo}
 }
 
