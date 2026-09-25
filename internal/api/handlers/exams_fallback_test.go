@@ -10,8 +10,8 @@ import (
 
 	"github.com/gabrielgcmr/sonnda/internal/api/helpers"
 	textsvc "github.com/gabrielgcmr/sonnda/internal/application/services/textextraction"
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/user"
 	domaintext "github.com/gabrielgcmr/sonnda/internal/domain/textextraction"
+	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -33,7 +33,7 @@ func TestUploadContinuesAfterCloudOCRRecoversLocalFailure(t *testing.T) {
 	h := NewExams(svc, lab, storage, extractor, allowAllAuthorizer{})
 	r := gin.New()
 	r.Use(func(c *gin.Context) {
-		helpers.SetCurrentUser(c, &user.User{ID: uuid.New(), AccountType: user.AccountTypeBasicCare})
+		helpers.SetCurrentUser(c, &accountdomain.User{ID: uuid.New(), AccountType: accountdomain.AccountTypeBasicCare})
 		c.Next()
 	})
 	r.POST("/v1/patients/:id/exames", h.UploadExamDocument)

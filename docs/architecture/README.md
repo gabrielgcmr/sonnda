@@ -29,6 +29,7 @@ O backend está migrando de camadas globais para contextos em `internal/features
   Fluxos orientados a contexto de negócio.  
   - `auth` valida identidades externas e expõe `RequireBearer`.
   - `account` reúne serviços de perfil, onboarding, DTOs e mapeamento de erros.
+  - `account/domain` contém `User`, `AccountType` e suas regras de validação, no pacote `accountdomain`.
   - `account/http` contém o handler de perfil e o middleware que resolve o usuário local e expõe `RequireRegisteredUser`.
   - `account/repository.go` define a interface de persistência; `account/postgres` implementa esse contrato usando o SQLC existente.
 
@@ -42,7 +43,7 @@ O backend está migrando de camadas globais para contextos em `internal/features
   Preocupações transversais (cross-cutting concerns).  
   - Error contract (`internal/kernel/apperr`): `AppError` e catalog de códigos.
   - Observability (`internal/kernel/observability`): logging (slog) com escopo de requisição.
-  - **Auth (`internal/infrastructure/auth`)**: autenticação e autorização (Supabase Auth, etc).
+  - **Auth (`internal/infrastructure/auth`)**: integração com o provedor de autenticação.
 
 - **Kernel (`internal/kernel`)**  
   Núcleo transversal do sistema.
@@ -51,10 +52,14 @@ O backend está migrando de camadas globais para contextos em `internal/features
 
 Essas camadas representam **limites conceituais**, não apenas organização de pastas.
 
-## Migração de account — etapas 1 e 2
+## Migração de account — aplicação, persistência e entidades
 
 ```text
 internal/features/account/
+├── domain/
+│   ├── user.go
+│   ├── account_type.go
+│   └── user_test.go
 ├── service.go
 ├── service_impl.go
 ├── dto.go
@@ -88,10 +93,20 @@ genérica de persistência pertence a `internal/domain/repository/errors.go`; o
 pacote legado mantém uma referência ao mesmo erro para preservar a compatibilidade.
 O mapeamento de erros da aplicação deixa de importar a implementação Postgres.
 
-As entidades de usuário, interfaces de acesso a pacientes, conexão compartilhada
-e código sqlc mantêm seus caminhos atuais. A consulta de pacientes acessíveis e a
-dependência de profissionais do onboarding ficam para as próximas etapas. Não há
-migração de entidades nem de queries nesta etapa.
+As entidades `User` e `AccountType`, seus parâmetros, erros de validação e testes
+agora pertencem a `account/domain`, sem uma subpasta `entity`. Esse pacote mantém
+as regras de domínio independentes de serviços de aplicação, HTTP, `apperr` e
+infraestrutura. Pacientes e autorização importam `accountdomain` diretamente;
+essa dependência entre contextos continua explícita, sem depender dos serviços
+de account. A normalização de CPF continua usando o domínio compartilhado
+`demographics`.
+
+As interfaces de acesso a pacientes, conexão compartilhada e código sqlc mantêm
+seus caminhos atuais. A consulta de pacientes acessíveis fica para as próximas
+etapas. O onboarding não depende mais de um serviço ou perfil profissional
+separado; registra os tipos de conta existentes pelo serviço de account. O
+cadastro HTTP continua criando `basic_care`, conforme o contrato atual.
+Não há migração de queries nesta etapa.
 
 Não houve mudança de contrato HTTP, OpenAPI, banco ou regras de negócio. Os testes
 em `internal/api/account_routes_test.go` verificam os fluxos pelas rotas reais,
@@ -182,12 +197,16 @@ Os ADRs vivem em:
 
 ---
 
-## Controle de acesso (ReBAC)
+## Controle de acesso aos pacientes
 
-O projeto segue a direcao de **ReBAC** (Relationship-Based Access Control) para decidir acesso a recursos de paciente.
+O pacote `internal/application/services/authorization` centraliza a checagem de
+acesso por vínculo. `RequirePatientAccess` permite acesso ao dono do paciente ou
+a um usuário com vínculo ativo; os demais recebem 403. Pacientes, exames e
+laudos compartilham essa regra.
 
-Em paralelo, existe **RBAC por acao** para limitar o que um tipo de conta pode fazer (AccountType + Professional.Kind).
+As políticas por ação e profissão foram removidas, junto com a entidade, serviço
+e repositório antigos de profissionais. `AccountType` permanece como dado da
+conta e não concede acesso a pacientes. Tabelas, migrações e código SQLC gerado
+foram preservados; sua limpeza é uma etapa separada.
 
 Detalhes: `docs/architecture/access-control.md`.
-
-Modelo de conta: `docs/architecture/account-model.md`.

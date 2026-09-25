@@ -5,8 +5,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/user"
 	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
+	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 
 	"github.com/google/uuid"
@@ -26,8 +26,8 @@ func NewService(userRepo Repository, patientAccessRepo repository.PatientAccessR
 	}
 }
 
-func (s *service) Create(ctx context.Context, input UserCreateInput) (*user.User, error) {
-	newUser, err := user.NewUser(user.NewUserParams{
+func (s *service) Create(ctx context.Context, input UserCreateInput) (*accountdomain.User, error) {
+	newUser, err := accountdomain.NewUser(accountdomain.NewUserParams{
 		AuthIssuer:  input.Issuer,
 		AuthSubject: input.Subject,
 		Email:       input.Email,
@@ -48,7 +48,7 @@ func (s *service) Create(ctx context.Context, input UserCreateInput) (*user.User
 	return newUser, nil
 }
 
-func (s *service) Update(ctx context.Context, input UserUpdateInput) (*user.User, error) {
+func (s *service) Update(ctx context.Context, input UserUpdateInput) (*accountdomain.User, error) {
 	existingUser, err := s.userRepo.FindByID(ctx, input.UserID)
 	if err != nil {
 		return nil, mapRepoError("userRepo.FindByID", err)
@@ -57,7 +57,7 @@ func (s *service) Update(ctx context.Context, input UserUpdateInput) (*user.User
 		return nil, userNotFound()
 	}
 
-	changed, err := existingUser.ApplyUpdate(user.UpdateUserParams{
+	changed, err := existingUser.ApplyUpdate(accountdomain.UpdateUserParams{
 		FullName:  input.FullName,
 		BirthDate: input.BirthDate,
 		CPF:       input.CPF,

@@ -2,7 +2,6 @@
 package bootstrap
 
 import (
-	professionalsvc "github.com/gabrielgcmr/sonnda/internal/application/services/professional"
 	"github.com/gabrielgcmr/sonnda/internal/features/account"
 	accounthttp "github.com/gabrielgcmr/sonnda/internal/features/account/http"
 	accountpostgres "github.com/gabrielgcmr/sonnda/internal/features/account/postgres"
@@ -17,12 +16,10 @@ type AccountModule struct {
 
 func NewAccountModule(db *postgress.Client) *AccountModule {
 	userRepo := accountpostgres.New(db.Pool())
-	profRepo := repo.NewProfessionalRepository(db)
 	patientAccessRepo := repo.NewPatientAccessRepository(db)
 
 	service := account.NewService(userRepo, patientAccessRepo)
-	professionalService := professionalsvc.New(profRepo)
-	onboarding := account.NewOnboarding(userRepo, service, professionalService)
+	onboarding := account.NewOnboarding(userRepo, service)
 
 	return &AccountModule{
 		Handler:    accounthttp.NewHandler(onboarding, service),

@@ -4,11 +4,12 @@ package accounthttp
 import (
 	"context"
 
-	"github.com/gabrielgcmr/sonnda/internal/api/helpers"
+	helpers "github.com/gabrielgcmr/sonnda/internal/api/helpers"
 	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/identity"
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/user"
 	"github.com/gabrielgcmr/sonnda/internal/features/account"
+	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
+	authdomain "github.com/gabrielgcmr/sonnda/internal/features/auth/domain"
+	authhttp "github.com/gabrielgcmr/sonnda/internal/features/auth/http"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 	"github.com/gin-gonic/gin"
 )
@@ -21,7 +22,7 @@ func NewMiddleware(userRepo account.Repository) *Middleware {
 	return &Middleware{userRepo: userRepo}
 }
 
-func (m *Middleware) resolveCurrentUser(ctx context.Context, identity *identity.Identity) (*user.User, error) {
+func (m *Middleware) resolveCurrentUser(ctx context.Context, identity *authdomain.Identity) (*accountdomain.User, error) {
 	if identity == nil {
 		return nil, apperr.Unauthorized("autenticação necessária")
 	}
@@ -36,7 +37,7 @@ func (m *Middleware) resolveCurrentUser(ctx context.Context, identity *identity.
 
 func (m *Middleware) RequireRegisteredUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		identity, ok := helpers.GetIdentity(c)
+		identity, ok := authhttp.GetIdentity(c)
 		if !ok || identity == nil {
 			presenter.ErrorResponder(c, apperr.Unauthorized("autenticação necessária"))
 			return
@@ -59,7 +60,7 @@ func (m *Middleware) RequireRegisteredUser() gin.HandlerFunc {
 
 func (m *Middleware) LoadCurrentUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		identity, ok := helpers.GetIdentity(c)
+		identity, ok := authhttp.GetIdentity(c)
 		if !ok || identity == nil {
 			c.Next()
 			return

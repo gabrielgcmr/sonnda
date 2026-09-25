@@ -5,21 +5,21 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/user"
 	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
+	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 )
 
 func mapDomainError(err error) error {
 	switch {
-	case errors.Is(err, user.ErrInvalidAuthIssuer),
-		errors.Is(err, user.ErrInvalidAuthSubject),
-		errors.Is(err, user.ErrInvalidEmail),
-		errors.Is(err, user.ErrInvalidFullName),
-		errors.Is(err, user.ErrInvalidAccountType),
-		errors.Is(err, user.ErrInvalidBirthDate),
-		errors.Is(err, user.ErrInvalidCPF),
-		errors.Is(err, user.ErrInvalidPhone):
+	case errors.Is(err, accountdomain.ErrInvalidAuthIssuer),
+		errors.Is(err, accountdomain.ErrInvalidAuthSubject),
+		errors.Is(err, accountdomain.ErrInvalidEmail),
+		errors.Is(err, accountdomain.ErrInvalidFullName),
+		errors.Is(err, accountdomain.ErrInvalidAccountType),
+		errors.Is(err, accountdomain.ErrInvalidBirthDate),
+		errors.Is(err, accountdomain.ErrInvalidCPF),
+		errors.Is(err, accountdomain.ErrInvalidPhone):
 		return &apperr.AppError{
 			Kind:    apperr.VALIDATION_FAILED,
 			Message: "dados do usuário inválidos",

@@ -8,7 +8,7 @@ import (
 
 	"github.com/coreos/go-oidc/v3/oidc"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/identity"
+	authdomain "github.com/gabrielgcmr/sonnda/internal/features/auth/domain"
 )
 
 type SupabaseBearerConfig struct {
@@ -44,7 +44,7 @@ func NewSupabaseBearerProvider(cfg SupabaseBearerConfig) (*SupabaseBearerProvide
 	}, nil
 }
 
-func (p *SupabaseBearerProvider) AuthenticateBearerToken(ctx context.Context, bearerToken string) (*identity.Identity, error) {
+func (p *SupabaseBearerProvider) AuthenticateBearerToken(ctx context.Context, bearerToken string) (*authdomain.Identity, error) {
 	if strings.TrimSpace(bearerToken) == "" {
 		return nil, nil
 	}
@@ -63,7 +63,7 @@ func (p *SupabaseBearerProvider) AuthenticateBearerToken(ctx context.Context, be
 		return nil, nil
 	}
 
-	identity := identity.Identity{
+	identity := authdomain.Identity{
 		Issuer:  idToken.Issuer,
 		Subject: idToken.Subject,
 	}

@@ -20,7 +20,6 @@ import (
 	labsvc "github.com/gabrielgcmr/sonnda/internal/application/services/labs"
 	labsuc "github.com/gabrielgcmr/sonnda/internal/application/usecase/labs"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/exams"
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/rbac"
 	domainstorage "github.com/gabrielgcmr/sonnda/internal/domain/storage"
 	domaintext "github.com/gabrielgcmr/sonnda/internal/domain/textextraction"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
@@ -61,11 +60,9 @@ func (h *ExamsHandler) ListExamDocuments(c *gin.Context) {
 		return
 	}
 
-	if h.authz != nil {
-		if err := h.authz.Require(c.Request.Context(), currentUser, rbac.ActionReadExams, &patientID); err != nil {
-			presenter.ErrorResponder(c, err)
-			return
-		}
+	if err := h.authz.RequirePatientAccess(c.Request.Context(), currentUser, patientID); err != nil {
+		presenter.ErrorResponder(c, err)
+		return
 	}
 
 	limit, offset, ok := parsePagination(c, 100, 0)
@@ -90,11 +87,9 @@ func (h *ExamsHandler) ListExamDocumentTexts(c *gin.Context) {
 		return
 	}
 
-	if h.authz != nil {
-		if err := h.authz.Require(c.Request.Context(), currentUser, rbac.ActionReadExams, &patientID); err != nil {
-			presenter.ErrorResponder(c, err)
-			return
-		}
+	if err := h.authz.RequirePatientAccess(c.Request.Context(), currentUser, patientID); err != nil {
+		presenter.ErrorResponder(c, err)
+		return
 	}
 
 	limit, offset, ok := parsePagination(c, 100, 0)
@@ -124,11 +119,9 @@ func (h *ExamsHandler) UploadExamDocument(c *gin.Context) {
 		return
 	}
 
-	if h.authz != nil {
-		if err := h.authz.Require(c.Request.Context(), currentUser, rbac.ActionUploadExams, &patientID); err != nil {
-			presenter.ErrorResponder(c, err)
-			return
-		}
+	if err := h.authz.RequirePatientAccess(c.Request.Context(), currentUser, patientID); err != nil {
+		presenter.ErrorResponder(c, err)
+		return
 	}
 
 	collectionDate, err := parseExamCollectionDate(c.PostForm("collection_date"))

@@ -29,7 +29,6 @@ func NewExamsModule(
 ) *ExamsModule {
 	patientRepo := repo.NewPatientRepository(dbClient)
 	accessRepo := repo.NewPatientAccessRepository(dbClient)
-	profRepo := repo.NewProfessionalRepository(dbClient)
 	examsRepo := repo.NewExamsRepository(dbClient)
 	labsRepo := repo.NewLabsRepository(dbClient)
 
@@ -40,7 +39,7 @@ func NewExamsModule(
 		RequireUsableText: true,
 	})
 	textExtractor := textsvc.NewFallbackExtractor(localExtractor, fallback)
-	authz := authorization.New(patientRepo, accessRepo, profRepo)
+	authz := authorization.New(patientRepo, accessRepo)
 
 	return &ExamsModule{
 		Handler: handlers.NewExams(svc, createLabUC, storage, textExtractor, authz),

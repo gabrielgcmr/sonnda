@@ -4,7 +4,7 @@ package account
 import (
 	"time"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/user"
+	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
 
 	"github.com/google/uuid"
 )
@@ -13,7 +13,7 @@ type UserCreateInput struct {
 	Issuer      string
 	Subject     string
 	Email       string
-	AccountType user.AccountType
+	AccountType accountdomain.AccountType
 	FullName    string
 	BirthDate   time.Time
 	CPF         string

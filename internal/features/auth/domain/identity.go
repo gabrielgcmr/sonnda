@@ -1,5 +1,5 @@
-// internal/domain/entity/identity.go
-package identity
+// internal/features/auth/domain/identity.go
+package authdomain
 
 // Identity representa o usuário autenticado (OIDC-compatible).
 type Identity struct {

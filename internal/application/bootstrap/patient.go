@@ -17,9 +17,8 @@ type PatientModule struct {
 func NewPatientModule(db *postgress.Client) *PatientModule {
 	patientRepo := repo.NewPatientRepository(db)
 	accessRepo := repo.NewPatientAccessRepository(db)
-	profRepo := repo.NewProfessionalRepository(db)
 
-	authz := authorization.New(patientRepo, accessRepo, profRepo)
+	authz := authorization.New(patientRepo, accessRepo)
 	svc := patientsvc.New(patientRepo, accessRepo, authz)
 
 	return &PatientModule{

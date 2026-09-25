@@ -6,126 +6,35 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/rbac"
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/user"
 	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
+	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
-
 	"github.com/google/uuid"
 )
 
+// Authorizer checks access to a patient independently of account type or action.
 type Authorizer interface {
-	Require(ctx context.Context, actor *user.User, action rbac.Action, patientID *uuid.UUID) error
+	RequirePatientAccess(ctx context.Context, actor *accountdomain.User, patientID uuid.UUID) error
 }
 
 type Service struct {
-	rbacPolicy        *rbac.RbacPolicy
 	patientRepo       repository.Patient
 	patientAccessRepo repository.PatientAccessRepo
-	profRepo          repository.Professional
 }
 
-func New(
-	patientRepo repository.Patient,
-	patientAccessRepo repository.PatientAccessRepo,
-	profRepo repository.Professional,
-) *Service {
-	return &Service{
-		rbacPolicy:        rbac.NewRbacPolicy(),
-		patientRepo:       patientRepo,
-		patientAccessRepo: patientAccessRepo,
-		profRepo:          profRepo,
-	}
+func New(patientRepo repository.Patient, patientAccessRepo repository.PatientAccessRepo) *Service {
+	return &Service{patientRepo: patientRepo, patientAccessRepo: patientAccessRepo}
 }
 
-func (s *Service) Require(ctx context.Context, actor *user.User, action rbac.Action, patientID *uuid.UUID) error {
-	if actor == nil {
-		return &apperr.AppError{
-			Kind:    apperr.AUTH_REQUIRED,
-			Message: "autenticação necessária",
-		}
+func (s *Service) RequirePatientAccess(ctx context.Context, actor *accountdomain.User, patientID uuid.UUID) error {
+	if actor == nil || actor.ID == uuid.Nil {
+		return apperr.Unauthorized("autenticação necessária")
 	}
-
-	subject, err := s.buildSubject(ctx, actor, action)
-	if err != nil {
-		return err
+	if patientID == uuid.Nil {
+		return apperr.Internal("erro inesperado", errors.New("patientID is required"))
 	}
-
-	if !s.rbacPolicy.CanPerform(subject, action) {
-		return &apperr.AppError{
-			Kind:    apperr.ACTION_NOT_ALLOWED,
-			Message: "ação não permitida",
-		}
-	}
-
-	if !isPatientScoped(action) {
-		return nil
-	}
-
-	if patientID == nil || *patientID == uuid.Nil {
-		return &apperr.AppError{
-			Kind:    apperr.INTERNAL_ERROR,
-			Message: "erro inesperado",
-			Cause:   errors.New("patientID is required for patient-scoped action"),
-		}
-	}
-
-	if err := s.requirePatientAccess(ctx, actor.ID, *patientID); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (s *Service) buildSubject(ctx context.Context, actor *user.User, action rbac.Action) (rbac.Subject, error) {
-	subject := rbac.Subject{
-		AccountType: actor.AccountType,
-	}
-
-	if actor.AccountType != user.AccountTypeProfessional {
-		return subject, nil
-	}
-
-	if !requiresProfessionalKind(action) {
-		return subject, nil
-	}
-
-	if s.profRepo == nil {
-		return rbac.Subject{}, &apperr.AppError{
-			Kind:    apperr.INTERNAL_ERROR,
-			Message: "erro inesperado",
-			Cause:   errors.New("professional repository not configured"),
-		}
-	}
-
-	prof, err := s.profRepo.FindByUserID(ctx, actor.ID)
-	if err != nil {
-		return rbac.Subject{}, &apperr.AppError{
-			Kind:    apperr.INFRA_DATABASE_ERROR,
-			Message: "falha técnica",
-			Cause:   fmt.Errorf("profRepo.FindByUserID: %w", err),
-		}
-	}
-	if prof == nil {
-		return rbac.Subject{}, &apperr.AppError{
-			Kind:    apperr.INTERNAL_ERROR,
-			Message: "erro inesperado",
-			Cause:   fmt.Errorf("professional profile missing for user_id=%s", actor.ID),
-		}
-	}
-
-	kind := prof.Kind.Normalize()
-	subject.ProfessionalKind = &kind
-	return subject, nil
-}
-
-func (s *Service) requirePatientAccess(ctx context.Context, actorID uuid.UUID, patientID uuid.UUID) error {
 	if s.patientRepo == nil || s.patientAccessRepo == nil {
-		return &apperr.AppError{
-			Kind:    apperr.INTERNAL_ERROR,
-			Message: "erro inesperado",
-			Cause:   errors.New("authorizer repositories not configured"),
-		}
+		return apperr.Internal("erro inesperado", errors.New("patient access repositories not configured"))
 	}
 
 	p, err := s.patientRepo.FindByID(ctx, patientID)
@@ -136,21 +45,15 @@ func (s *Service) requirePatientAccess(ctx context.Context, actorID uuid.UUID, p
 			Cause:   fmt.Errorf("patientRepo.FindByID: %w", err),
 		}
 	}
-
-	// Preferência do projeto: responder 403 (ACCESS_DENIED) mesmo quando paciente não existe,
-	// para evitar vazar existência de recursos.
+	// Return the same error for a missing patient and a patient without access.
 	if p == nil {
-		return &apperr.AppError{
-			Kind:    apperr.ACCESS_DENIED,
-			Message: "acesso negado",
-		}
+		return apperr.Forbidden("acesso negado")
 	}
-
-	if p.OwnerUserID != nil && *p.OwnerUserID == actorID {
+	if p.OwnerUserID != nil && *p.OwnerUserID == actor.ID {
 		return nil
 	}
 
-	hasAccess, err := s.patientAccessRepo.HasActiveAccess(ctx, patientID, actorID)
+	hasAccess, err := s.patientAccessRepo.HasActiveAccess(ctx, patientID, actor.ID)
 	if err != nil {
 		return &apperr.AppError{
 			Kind:    apperr.INFRA_DATABASE_ERROR,
@@ -158,42 +61,10 @@ func (s *Service) requirePatientAccess(ctx context.Context, actorID uuid.UUID, p
 			Cause:   fmt.Errorf("patientAccessRepo.HasActiveAccess: %w", err),
 		}
 	}
-	if hasAccess {
-		return nil
+	if !hasAccess {
+		return apperr.Forbidden("acesso negado")
 	}
-
-	return &apperr.AppError{
-		Kind:    apperr.ACCESS_DENIED,
-		Message: "acesso negado",
-	}
-}
-
-func isPatientScoped(action rbac.Action) bool {
-	switch action {
-	case rbac.ActionReadPatient,
-		rbac.ActionUpdatePatient,
-		rbac.ActionSoftDeletePatient,
-		rbac.ActionRecordMeasurement,
-		rbac.ActionWriteClinicalNote,
-		rbac.ActionReadLabs,
-		rbac.ActionUploadLabs,
-		rbac.ActionReadExams,
-		rbac.ActionUploadExams,
-		rbac.ActionReadPrescriptions,
-		rbac.ActionWritePrescriptions:
-		return true
-	default:
-		return false
-	}
-}
-
-func requiresProfessionalKind(action rbac.Action) bool {
-	switch action {
-	case rbac.ActionWritePrescriptions:
-		return true
-	default:
-		return false
-	}
+	return nil
 }
 
 var _ Authorizer = (*Service)(nil)

@@ -1,22 +1,21 @@
 // internal/features/auth/middleware.go
-package auth
+package authhttp
 
 import (
 	"context"
 	"strings"
 
-	"github.com/gabrielgcmr/sonnda/internal/api/helpers"
 	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/identity"
+	authdomain "github.com/gabrielgcmr/sonnda/internal/features/auth/domain"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 	"github.com/gin-gonic/gin"
 )
 
 type Middleware struct {
-	authenticate func(context.Context, string) (*identity.Identity, error)
+	authenticate func(context.Context, string) (*authdomain.Identity, error)
 }
 
-func NewMiddleware(authenticate func(context.Context, string) (*identity.Identity, error)) *Middleware {
+func NewMiddleware(authenticate func(context.Context, string) (*authdomain.Identity, error)) *Middleware {
 	return &Middleware{authenticate: authenticate}
 }
 
@@ -58,7 +57,7 @@ func (m *Middleware) RequireBearer() gin.HandlerFunc {
 			return
 		}
 
-		helpers.SetIdentity(c, identity)
+		SetIdentity(c, identity)
 		c.Next()
 	}
 }

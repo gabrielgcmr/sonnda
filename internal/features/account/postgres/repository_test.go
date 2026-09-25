@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/user"
 	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	"github.com/gabrielgcmr/sonnda/internal/features/account"
+	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
 	usersqlc "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/sqlc/generated/user"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -46,14 +46,14 @@ func TestLookupsPreserveProfileAndMissingResultSemantics(t *testing.T) {
 	profile := testProfile()
 	for _, lookup := range []struct {
 		name string
-		find func(*Repository) (*user.User, error)
+		find func(*Repository) (*accountdomain.User, error)
 	}{
-		{"identity", func(r *Repository) (*user.User, error) {
+		{"identity", func(r *Repository) (*accountdomain.User, error) {
 			return r.FindByAuthIdentity(t.Context(), profile.AuthIssuer, profile.AuthSubject)
 		}},
-		{"id", func(r *Repository) (*user.User, error) { return r.FindByID(t.Context(), profile.ID) }},
-		{"cpf", func(r *Repository) (*user.User, error) { return r.FindByCPF(t.Context(), profile.CPF) }},
-		{"email", func(r *Repository) (*user.User, error) { return r.FindByEmail(t.Context(), profile.Email) }},
+		{"id", func(r *Repository) (*accountdomain.User, error) { return r.FindByID(t.Context(), profile.ID) }},
+		{"cpf", func(r *Repository) (*accountdomain.User, error) { return r.FindByCPF(t.Context(), profile.CPF) }},
+		{"email", func(r *Repository) (*accountdomain.User, error) { return r.FindByEmail(t.Context(), profile.Email) }},
 	} {
 		t.Run(lookup.name, func(t *testing.T) {
 			queries := &stubQueries{row: profileRow(profile)}
@@ -101,12 +101,12 @@ func TestWriteErrorsPreserveRepositoryContract(t *testing.T) {
 	failure := errors.New("database unavailable")
 	for _, operation := range []struct {
 		name  string
-		write func(*Repository, *user.User) error
+		write func(*Repository, *accountdomain.User) error
 	}{
-		{"create", func(r *Repository, u *user.User) error { return r.Create(t.Context(), u) }},
-		{"update", func(r *Repository, u *user.User) error { return r.Update(t.Context(), u) }},
-		{"delete", func(r *Repository, u *user.User) error { return r.Delete(t.Context(), u.ID) }},
-		{"soft delete", func(r *Repository, u *user.User) error { return r.SoftDelete(t.Context(), u.ID) }},
+		{"create", func(r *Repository, u *accountdomain.User) error { return r.Create(t.Context(), u) }},
+		{"update", func(r *Repository, u *accountdomain.User) error { return r.Update(t.Context(), u) }},
+		{"delete", func(r *Repository, u *accountdomain.User) error { return r.Delete(t.Context(), u.ID) }},
+		{"soft delete", func(r *Repository, u *accountdomain.User) error { return r.SoftDelete(t.Context(), u.ID) }},
 	} {
 		t.Run(operation.name, func(t *testing.T) {
 			queries := &stubQueries{err: failure}
@@ -144,17 +144,17 @@ func TestWriteErrorsPreserveRepositoryContract(t *testing.T) {
 	}
 }
 
-func testProfile() *user.User {
-	return &user.User{
+func testProfile() *accountdomain.User {
+	return &accountdomain.User{
 		ID: uuid.New(), AuthIssuer: "test", AuthSubject: "subject-1", Email: "ana@example.test",
-		FullName: "Ana Silva", AccountType: user.AccountTypeBasicCare, CPF: "12345678901", Phone: "11999999999",
+		FullName: "Ana Silva", AccountType: accountdomain.AccountTypeBasicCare, CPF: "12345678901", Phone: "11999999999",
 		BirthDate: time.Date(1990, 1, 2, 0, 0, 0, 0, time.UTC),
 		CreatedAt: time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC),
 		UpdatedAt: time.Date(2026, 1, 2, 12, 0, 0, 0, time.UTC),
 	}
 }
 
-func profileRow(u *user.User) usersqlc.User {
+func profileRow(u *accountdomain.User) usersqlc.User {
 	return usersqlc.User{
 		ID: u.ID, AuthIssuer: u.AuthIssuer, AuthSubject: u.AuthSubject, Email: u.Email,
 		FullName: u.FullName, AccountType: string(u.AccountType), Cpf: u.CPF, Phone: u.Phone,

@@ -10,9 +10,8 @@ import (
 	"github.com/gabrielgcmr/sonnda/internal/application/services/authorization"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patient"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patientaccess"
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/rbac"
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/user"
 	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
+	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 
 	"github.com/google/uuid"
@@ -38,12 +37,9 @@ func New(
 	}
 }
 
-func (s *service) Create(ctx context.Context, currentUser *user.User, input CreateInput) (*patient.Patient, error) {
+func (s *service) Create(ctx context.Context, currentUser *accountdomain.User, input CreateInput) (*patient.Patient, error) {
 	if currentUser == nil {
 		return nil, apperr.Unauthorized("autenticação necessária")
-	}
-	if err := s.auth.Require(ctx, currentUser, rbac.ActionCreatePatient, nil); err != nil {
-		return nil, err
 	}
 	if s.accessRepo == nil {
 		return nil, apperr.Internal("erro inesperado", errors.New("patient access repository not configured"))
@@ -89,8 +85,8 @@ func (s *service) Create(ctx context.Context, currentUser *user.User, input Crea
 	return newPatient, nil
 }
 
-func (s *service) Get(ctx context.Context, currentUser *user.User, id uuid.UUID) (*patient.Patient, error) {
-	if err := s.auth.Require(ctx, currentUser, rbac.ActionReadPatient, &id); err != nil {
+func (s *service) Get(ctx context.Context, currentUser *accountdomain.User, id uuid.UUID) (*patient.Patient, error) {
+	if err := s.auth.RequirePatientAccess(ctx, currentUser, id); err != nil {
 		return nil, err
 	}
 
@@ -104,8 +100,8 @@ func (s *service) Get(ctx context.Context, currentUser *user.User, id uuid.UUID)
 	return p, nil
 }
 
-func (s *service) Update(ctx context.Context, currentUser *user.User, id uuid.UUID, input UpdateInput) (*patient.Patient, error) {
-	if err := s.auth.Require(ctx, currentUser, rbac.ActionUpdatePatient, &id); err != nil {
+func (s *service) Update(ctx context.Context, currentUser *accountdomain.User, id uuid.UUID, input UpdateInput) (*patient.Patient, error) {
+	if err := s.auth.RequirePatientAccess(ctx, currentUser, id); err != nil {
 		return nil, err
 	}
 
@@ -136,8 +132,8 @@ func (s *service) Update(ctx context.Context, currentUser *user.User, id uuid.UU
 	return p, nil
 }
 
-func (s *service) SoftDelete(ctx context.Context, currentUser *user.User, id uuid.UUID) error {
-	if err := s.auth.Require(ctx, currentUser, rbac.ActionSoftDeletePatient, &id); err != nil {
+func (s *service) SoftDelete(ctx context.Context, currentUser *accountdomain.User, id uuid.UUID) error {
+	if err := s.auth.RequirePatientAccess(ctx, currentUser, id); err != nil {
 		return err
 	}
 
@@ -155,8 +151,8 @@ func (s *service) SoftDelete(ctx context.Context, currentUser *user.User, id uui
 	return nil
 }
 
-func (s *service) HardDelete(ctx context.Context, currentUser *user.User, id uuid.UUID) error {
-	if err := s.auth.Require(ctx, currentUser, rbac.ActionHardDeletePatient, &id); err != nil {
+func (s *service) HardDelete(ctx context.Context, currentUser *accountdomain.User, id uuid.UUID) error {
+	if err := s.auth.RequirePatientAccess(ctx, currentUser, id); err != nil {
 		return err
 	}
 
@@ -174,9 +170,9 @@ func (s *service) HardDelete(ctx context.Context, currentUser *user.User, id uui
 	return nil
 }
 
-func (s *service) ListMyPatients(ctx context.Context, currentUser *user.User, limit, offset int) ([]*patient.Patient, error) {
-	if err := s.auth.Require(ctx, currentUser, rbac.ActionListPatients, nil); err != nil {
-		return nil, err
+func (s *service) ListMyPatients(ctx context.Context, currentUser *accountdomain.User, limit, offset int) ([]*patient.Patient, error) {
+	if currentUser == nil {
+		return nil, apperr.Unauthorized("autenticação necessária")
 	}
 
 	if s.accessRepo == nil {
@@ -207,11 +203,11 @@ func (s *service) ListMyPatients(ctx context.Context, currentUser *user.User, li
 	return out, nil
 }
 
-func relationTypeForCreator(currentUser *user.User) (patientaccess.RelationshipType, error) {
+func relationTypeForCreator(currentUser *accountdomain.User) (patientaccess.RelationshipType, error) {
 	switch currentUser.AccountType.Normalize() {
-	case user.AccountTypeProfessional:
+	case accountdomain.AccountTypeProfessional:
 		return patientaccess.RelationshipTypeProfessional, nil
-	case user.AccountTypeBasicCare:
+	case accountdomain.AccountTypeBasicCare:
 		return patientaccess.RelationshipTypeCaregiver, nil
 	default:
 		return "", apperr.Internal("erro inesperado", fmt.Errorf("unsupported account type: %s", currentUser.AccountType))

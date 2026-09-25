@@ -1,5 +1,5 @@
-// internal/domain/entity/user/user.go
-package user
+// internal/features/account/domain/user.go
+package accountdomain
 
 import (
 	"errors"

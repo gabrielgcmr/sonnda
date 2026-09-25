@@ -13,7 +13,7 @@ import (
 	patientsvc "github.com/gabrielgcmr/sonnda/internal/application/services/patient"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patient"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patientaccess"
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/user"
+	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 	applog "github.com/gabrielgcmr/sonnda/internal/kernel/observability"
 
@@ -24,11 +24,11 @@ import (
 )
 
 type patientService interface {
-	Create(ctx context.Context, currentUser *user.User, input patientsvc.CreateInput) (*patient.Patient, error)
-	Get(ctx context.Context, currentUser *user.User, id uuid.UUID) (*patient.Patient, error)
-	Update(ctx context.Context, currentUser *user.User, id uuid.UUID, input patientsvc.UpdateInput) (*patient.Patient, error)
-	HardDelete(ctx context.Context, currentUser *user.User, id uuid.UUID) error
-	ListMyPatients(ctx context.Context, currentUser *user.User, limit, offset int) ([]*patient.Patient, error)
+	Create(ctx context.Context, currentUser *accountdomain.User, input patientsvc.CreateInput) (*patient.Patient, error)
+	Get(ctx context.Context, currentUser *accountdomain.User, id uuid.UUID) (*patient.Patient, error)
+	Update(ctx context.Context, currentUser *accountdomain.User, id uuid.UUID, input patientsvc.UpdateInput) (*patient.Patient, error)
+	HardDelete(ctx context.Context, currentUser *accountdomain.User, id uuid.UUID) error
+	ListMyPatients(ctx context.Context, currentUser *accountdomain.User, limit, offset int) ([]*patient.Patient, error)
 }
 
 type PatientHandler struct {

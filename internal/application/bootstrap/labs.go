@@ -23,12 +23,11 @@ func NewLabsModule(
 ) *LabsModule {
 	patientRepo := repo.NewPatientRepository(dbClient)
 	accessRepo := repo.NewPatientAccessRepository(dbClient)
-	profRepo := repo.NewProfessionalRepository(dbClient)
 	labsRepo := repo.NewLabsRepository(dbClient)
 
 	svc := labsvc.New(patientRepo, labsRepo)
 	createUC := labsuc.NewCreateLabReportFromDocument(patientRepo, labsRepo, labExtractor)
-	authz := authorization.New(patientRepo, accessRepo, profRepo)
+	authz := authorization.New(patientRepo, accessRepo)
 	return &LabsModule{
 		Handler: handlers.NewLabs(svc, createUC, storage, authz),
 	}

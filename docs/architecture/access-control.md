@@ -1,75 +1,49 @@
-# Controle de acesso (RBAC + ReBAC)
+<!-- docs/architecture/access-control.md -->
+# Controle de acesso aos pacientes
 
-Este projeto nao modela autorizacao como "RBAC" puro.
+A autorização atual verifica em quais pacientes o usuário pode operar. Políticas
+por ação, tipo de conta e profissão ficam para uma etapa futura.
 
-O modelo atual combina:
+A autenticação continua em `internal/features/auth`: valida a identidade externa.
+O middleware de account resolve o cadastro local. O pacote
+`internal/application/services/authorization` recebe esse usuário e o paciente
+solicitado, sem depender de HTTP ou de um perfil profissional.
 
-- **RBAC (acoes)** para limitar *o que* um tipo de conta pode fazer (ex.: "basic_care pode ler paciente?", "professional pode fazer upload de labs?").
-- **ReBAC (relacionamento)** para limitar *em qual paciente* o usuario pode operar (ex.: "tem vinculo com este paciente? e dono?").
+## Regra atual
 
-O objetivo e manter:
-- contrato simples e estavel para o cliente
-- dominio agnostico de HTTP
-- politica de acesso testavel e centralizada na camada App (authorizer, a ser criado)
+`RequirePatientAccess(ctx, actor, patientID)` permite acesso quando o usuário é
+o dono (`OwnerUserID`) do paciente ou tem um vínculo ativo em `patient_access`.
+Sem vínculo, a resposta é 403 (`ACCESS_DENIED`). Um paciente inexistente recebe
+a mesma resposta, evitando revelar sua existência. Falhas de consulta não
+concedem acesso e são retornadas pelo contrato central de erros.
 
-## O que isso significa na pratica
+A checagem é compartilhada pelo serviço de pacientes e pelos handlers de exames
+e laudos, antes de ler, alterar ou processar dados. Ela é uma dependência
+obrigatória desses fluxos. Os métodos de exclusão do serviço também exigem o
+vínculo; não há mais bloqueio por ação. Nenhuma nova rota foi exposta.
 
-- Um usuario nao "tem acesso a pacientes" globalmente.
-- Um usuario tem acesso a **um paciente especifico** se:
-  - ele e o **owner** (`patients.owner_user_id`), ou
-  - existir um **vinculo** em `patient_access (patient_id, user_id, role)`.
-- "Ser paciente" nao e uma role global: `patient` e um recurso/registro, e pode ou nao ter uma conta vinculada.
+A criação do paciente grava seu vínculo com o criador na mesma transação.
+As listagens continuam usando a consulta de pacientes acessíveis ao usuário.
+Ser médico ou ter `AccountType=professional` não concede acesso a outros pacientes.
 
-Em codigo, o vinculo e representado no dominio por `internal/domain/model/patient/patientaccess.PatientAccess`.
+## Modelos e persistência
 
-## Modelo atual (MVP)
+- `internal/features/account/domain`: `User` e `AccountType`.
+- `internal/domain/entity/patientaccess`: vínculo com o paciente.
+- `internal/domain/repository`: interfaces de pacientes e vínculos.
+- `internal/application/services/authorization`: validação compartilhada do acesso.
 
-O modelo de autorizacao hoje gira em torno de:
+A entidade, o serviço e o repositório antigos de profissionais e as políticas
+RBAC foram removidos. `AccountType` e o tipo de relacionamento permanecem como
+dados existentes, sem políticas de permissão associadas. O contrato HTTP de
+cadastro continua criando `basic_care`; ele não foi alterado nesta etapa.
 
-- **Tipos de conta (RBAC):** `internal/domain/model/user.AccountType`
-  - `professional`: conta de profissional de saude
-  - `basic_care`: conta de cuidado basico (ex.: caregiver)
-  - `admin`: reservado (fora do MVP; nao persistido no banco hoje)
+Tabelas, migrações e código SQLC gerado de profissionais foram preservados.
+A remoção desses artefatos de persistência deve ocorrer em uma etapa própria.
 
-- **Tipo de profissional (apenas se AccountType==professional):** `internal/domain/model/user/professional.Kind`
-  - exemplos: `doctor`, `nurse`, ...
-  - persistido em `professionals.kind`
+## Verificação
 
-- **RBAC (acoes):** `internal/domain/model/rbac`
-  - `rbac.Action` e o catalogo de acoes (`patient:read`, `labs:upload`, etc.)
-  - `rbac.Subject` representa "quem e o ator" (AccountType + optional ProfessionalKind)
-  - `rbac.RbacPolicy.CanPerform(subject, action)` decide se a acao e permitida *em abstrato*
-
-- **Entidade de relacionamento (ReBAC):** `internal/domain/model/patient/patientaccess`
-  - `PatientID`, `UserID` (quem acessa o que)
-  - `RelationType` (papel no contexto do paciente: caregiver, professional, self, etc.)
-  - `RevokedAt` existe no dominio (no banco, revoke hoje e feito por delete)
-
-- **Persistencia (hoje):**
-  - `users.account_type` (substitui `users.role`)
-  - `professionals.kind`
-  - `patient_access.role` (papel do vinculo no contexto do paciente)
-  - schema principal em `internal/infrastructure/persistence/sqlc/sql/schema/users.sql` e `internal/infrastructure/persistence/sqlc/sql/schema/patientaccess.sql`
-  - migracao: `internal/infrastructure/persistence/sqlc/sql/migrations/0004_account_type_and_professional_kind.sql`
-
-## Por que isso nao e RBAC + ABAC aqui
-
-- **Nao e RBAC puro:** roles nao sao globais; `RoleProfessional` / `RoleCaregiver` em `patientaccess` sao roles *dentro do relacionamento*, nao "roles do sistema inteiro".
-- **Nao e ABAC como base:** a decisao nao e feita principalmente por atributos como departamento, tenant, horario, device, etc. (podemos adicionar restricoes depois, mas a base continua relationship-first).
-
-O RBAC aqui existe para limitar **acoes** por tipo de conta/profissional, mas nunca substitui o cheque de relacionamento com o paciente.
-
-## Objetivos de design
-
-- Proteger dados de paciente: negar por padrao e evitar vazar existencia de pacientes em acesso negado.
-- Tornar compartilhamento explicito: acesso e criado/revogado gerenciando relacionamentos.
-- Manter regras testaveis: RBAC no dominio (`rbac.RbacPolicy`) e ReBAC na camada App (authorizer a ser criado) usando repositorios.
-
-## Roadmap (ReBAC evoluindo)
-
-ReBAC no projeto ainda esta em implementacao. Proximos passos comuns:
-
-- modelar "invites" / "approvals" para criacao do vinculo
-- persistir status/revogacao/expiracao no banco
-- tratar "ownership" como relacionamento (ex: `patients.owner_user_id`) e definir permissoes implicitas
-- suportar grafos mais ricos (time, delegacao, etc.) se necessario
+Os testes do autorizador cobrem dono, vínculo ativo, ausência de vínculo,
+paciente inexistente, identidade ausente e falhas de consulta. Os testes dos
+consumidores verificam que a negativa interrompe o fluxo antes de leituras,
+alterações ou processamento de documentos.

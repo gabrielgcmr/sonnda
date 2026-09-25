@@ -1,6 +1,5 @@
-// internal/domain/entity/user/account.go
-// internal/domain/entity/account.go
-package user
+// internal/features/account/domain/account_type.go
+package accountdomain
 
 import "strings"
 

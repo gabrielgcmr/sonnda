@@ -8,6 +8,9 @@
 - Compose dependencies in `internal/application/bootstrap/account.go`.
 - This is migration stage 2 for persistence: the repository interface and user persistence errors live in `repository.go`; the concrete SQLC/pgx adapter lives in `postgres/`.
 - Application code depends on `Repository`, never on the Postgres adapter or the legacy concrete repositories. Generic persistence failures use `internal/domain/repository.ErrRepositoryFailure`.
-- User entities, patient access interfaces, the shared database client and generated sqlc code stay in their existing packages.
-- The professional service and patient access dependencies remain transitional dependencies for a later migration.
+- Keep `User`, `AccountType`, their validation rules and tests in `domain/` (package `accountdomain`), without an extra `entity/` directory.
+- The domain package must not import account application services, HTTP, Gin, `apperr` or infrastructure. Other contexts may import it directly for account models.
+- Patient access interfaces, the shared database client and generated sqlc code stay in their existing packages.
+- Onboarding registers accounts without a separate professional profile or professional service. Patient access remains a transitional dependency for a later migration.
+- Account types are account data, not permissions. Authorization is limited to patient ownership or active grants in `internal/application/services/authorization`.
 - Keep `/v1/me`, the `/v1/users` creation alias and `/v1/me/patients` behavior compatible during structural moves.

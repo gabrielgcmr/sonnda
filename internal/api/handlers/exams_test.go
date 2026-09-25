@@ -19,8 +19,8 @@ import (
 	labsvc "github.com/gabrielgcmr/sonnda/internal/application/services/labs"
 	labsuc "github.com/gabrielgcmr/sonnda/internal/application/usecase/labs"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/exams"
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/user"
 	domaintext "github.com/gabrielgcmr/sonnda/internal/domain/textextraction"
+	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -238,7 +238,7 @@ func TestListExamDocuments_UsesServiceWithDefaultPagination(t *testing.T) {
 
 	r := gin.New()
 	r.Use(func(c *gin.Context) {
-		helpers.SetCurrentUser(c, &user.User{ID: uuid.Must(uuid.NewV7()), AccountType: user.AccountTypeBasicCare})
+		helpers.SetCurrentUser(c, &accountdomain.User{ID: uuid.Must(uuid.NewV7()), AccountType: accountdomain.AccountTypeBasicCare})
 		c.Next()
 	})
 	r.GET("/patients/:id/exames", h.ListExamDocuments)
@@ -274,7 +274,7 @@ func TestListExamDocumentTexts_UsesService(t *testing.T) {
 
 	r := gin.New()
 	r.Use(func(c *gin.Context) {
-		helpers.SetCurrentUser(c, &user.User{ID: uuid.Must(uuid.NewV7()), AccountType: user.AccountTypeBasicCare})
+		helpers.SetCurrentUser(c, &accountdomain.User{ID: uuid.Must(uuid.NewV7()), AccountType: accountdomain.AccountTypeBasicCare})
 		c.Next()
 	})
 	r.GET("/patients/:id/exames/document-texts", h.ListExamDocumentTexts)
@@ -301,7 +301,7 @@ func TestListExamDocuments_UsesQueryPagination(t *testing.T) {
 
 	r := gin.New()
 	r.Use(func(c *gin.Context) {
-		helpers.SetCurrentUser(c, &user.User{ID: uuid.Must(uuid.NewV7()), AccountType: user.AccountTypeBasicCare})
+		helpers.SetCurrentUser(c, &accountdomain.User{ID: uuid.Must(uuid.NewV7()), AccountType: accountdomain.AccountTypeBasicCare})
 		c.Next()
 	})
 	r.GET("/patients/:id/exames", h.ListExamDocuments)
@@ -345,7 +345,7 @@ func TestUploadExamDocument_WhenClassifiedAsLab_UsesStructuredLabPipeline(t *tes
 
 	r := gin.New()
 	r.Use(func(c *gin.Context) {
-		helpers.SetCurrentUser(c, &user.User{ID: userID, AccountType: user.AccountTypeBasicCare})
+		helpers.SetCurrentUser(c, &accountdomain.User{ID: userID, AccountType: accountdomain.AccountTypeBasicCare})
 		c.Next()
 	})
 	r.POST("/v1/patients/:id/exames", h.UploadExamDocument)
@@ -410,7 +410,7 @@ func TestUploadExamDocument_LabFailureIsNotReportedAsSuccess(t *testing.T) {
 			h := NewExams(svc, &fakeCreateLabReportUC{err: tc.err}, &fakeExamStorage{}, &fakeTextExtractor{}, allowAllAuthorizer{})
 			r := gin.New()
 			r.Use(func(c *gin.Context) {
-				helpers.SetCurrentUser(c, &user.User{ID: uuid.New(), AccountType: user.AccountTypeBasicCare})
+				helpers.SetCurrentUser(c, &accountdomain.User{ID: uuid.New(), AccountType: accountdomain.AccountTypeBasicCare})
 				c.Next()
 			})
 			r.POST("/v1/patients/:id/exames", h.UploadExamDocument)

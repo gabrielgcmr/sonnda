@@ -10,9 +10,8 @@ import (
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/demographics"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patient"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patientaccess"
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/rbac"
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/user"
 	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
+	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
 	"github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/repo"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 
@@ -21,7 +20,7 @@ import (
 
 type allowAllAuthorizer struct{}
 
-func (a allowAllAuthorizer) Require(ctx context.Context, actor *user.User, action rbac.Action, patientID *uuid.UUID) error {
+func (a allowAllAuthorizer) RequirePatientAccess(ctx context.Context, actor *accountdomain.User, patientID uuid.UUID) error {
 	return nil
 }
 
@@ -92,9 +91,9 @@ func TestCreate_ProfessionalCreatesAccess(t *testing.T) {
 	accessRepo := &fakeAccessRepo{}
 	svc := New(patientRepo, accessRepo, allowAllAuthorizer{})
 
-	currentUser := &user.User{
+	currentUser := &accountdomain.User{
 		ID:          uuid.Must(uuid.NewV7()),
-		AccountType: user.AccountTypeProfessional,
+		AccountType: accountdomain.AccountTypeProfessional,
 	}
 
 	input := CreateInput{
@@ -137,9 +136,9 @@ func TestCreate_BasicCareCreatesAccess(t *testing.T) {
 	patientRepo := &fakePatientRepo{}
 	svc := New(patientRepo, &fakeAccessRepo{}, allowAllAuthorizer{})
 
-	currentUser := &user.User{
+	currentUser := &accountdomain.User{
 		ID:          uuid.Must(uuid.NewV7()),
-		AccountType: user.AccountTypeBasicCare,
+		AccountType: accountdomain.AccountTypeBasicCare,
 	}
 
 	input := CreateInput{
@@ -168,9 +167,9 @@ func TestCreate_SelfRelationCreatesOwnedPatient(t *testing.T) {
 	accessRepo := &fakeAccessRepo{}
 	svc := New(patientRepo, accessRepo, allowAllAuthorizer{})
 
-	currentUser := &user.User{
+	currentUser := &accountdomain.User{
 		ID:          uuid.Must(uuid.NewV7()),
-		AccountType: user.AccountTypeBasicCare,
+		AccountType: accountdomain.AccountTypeBasicCare,
 	}
 	relationType := patientaccess.RelationshipTypeSelf
 
@@ -207,9 +206,9 @@ func TestCreate_AtomicCreateError_ReturnsInternalError(t *testing.T) {
 		allowAllAuthorizer{},
 	)
 
-	currentUser := &user.User{
+	currentUser := &accountdomain.User{
 		ID:          uuid.Must(uuid.NewV7()),
-		AccountType: user.AccountTypeProfessional,
+		AccountType: accountdomain.AccountTypeProfessional,
 	}
 
 	input := CreateInput{
@@ -235,9 +234,9 @@ func TestCreate_AtomicCreateError_ReturnsInternalError(t *testing.T) {
 func TestCreate_AlreadyExists_ReturnsResourceAlreadyExists(t *testing.T) {
 	svc := New(&fakePatientRepo{createErr: repo.ErrPatientAlreadyExists}, &fakeAccessRepo{}, allowAllAuthorizer{})
 
-	currentUser := &user.User{
+	currentUser := &accountdomain.User{
 		ID:          uuid.Must(uuid.NewV7()),
-		AccountType: user.AccountTypeProfessional,
+		AccountType: accountdomain.AccountTypeProfessional,
 	}
 
 	input := CreateInput{

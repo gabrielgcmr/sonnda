@@ -4,14 +4,14 @@ package account
 import (
 	"context"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/user"
+	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
 
 	"github.com/google/uuid"
 )
 
 type Service interface {
-	Create(ctx context.Context, input UserCreateInput) (*user.User, error)
-	Update(ctx context.Context, input UserUpdateInput) (*user.User, error)
+	Create(ctx context.Context, input UserCreateInput) (*accountdomain.User, error)
+	Update(ctx context.Context, input UserUpdateInput) (*accountdomain.User, error)
 	Delete(ctx context.Context, userID uuid.UUID) error
 
 	// SoftDelete performs a logical delete.

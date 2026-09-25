@@ -5,36 +5,29 @@ import (
 	"context"
 	"errors"
 
-	professionalsvc "github.com/gabrielgcmr/sonnda/internal/application/services/professional"
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/user"
+	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 )
 
 type Onboarding interface {
-	Register(ctx context.Context, input RegisterInput) (*user.User, error)
+	Register(ctx context.Context, input RegisterInput) (*accountdomain.User, error)
 }
 
 type onboarding struct {
 	userRepo Repository
 	userSvc  Service
-	profSvc  professionalsvc.Service
 }
 
 var _ Onboarding = (*onboarding)(nil)
 
-func NewOnboarding(userRepo Repository, userSvc Service, profSvc professionalsvc.Service) Onboarding {
+func NewOnboarding(userRepo Repository, userSvc Service) Onboarding {
 	return &onboarding{
 		userRepo: userRepo,
 		userSvc:  userSvc,
-		profSvc:  profSvc,
 	}
 }
 
-func (u *onboarding) Register(ctx context.Context, input RegisterInput) (*user.User, error) {
-	if input.AccountType == user.AccountTypeProfessional {
-		return nil, apperr.DomainRuleViolation("criação de profissional ainda não está implementada no MVP")
-	}
-
+func (u *onboarding) Register(ctx context.Context, input RegisterInput) (*accountdomain.User, error) {
 	// Verificar se usuário já existe
 	existing, err := u.userRepo.FindByAuthIdentity(ctx, input.Issuer, input.Subject)
 	if err != nil {

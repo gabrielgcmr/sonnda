@@ -7,19 +7,20 @@ import (
 	"strconv"
 	"strings"
 
+	authhttp "github.com/gabrielgcmr/sonnda/internal/features/auth/http"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
 	helpers "github.com/gabrielgcmr/sonnda/internal/api/helpers"
 	openapi "github.com/gabrielgcmr/sonnda/internal/api/openapi/generated"
 	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/user"
 	"github.com/gabrielgcmr/sonnda/internal/features/account"
+	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 )
 
 type userService interface {
-	Update(ctx context.Context, input account.UserUpdateInput) (*user.User, error)
+	Update(ctx context.Context, input account.UserUpdateInput) (*accountdomain.User, error)
 	Delete(ctx context.Context, userID uuid.UUID) error
 	ListMyPatients(ctx context.Context, userID uuid.UUID, limit, offset int) (*account.MyPatientsOutput, error)
 }
@@ -41,7 +42,7 @@ func NewHandler(
 }
 
 func (h *Handler) CreateUser(c *gin.Context) {
-	identity, ok := helpers.GetIdentity(c)
+	identity, ok := authhttp.GetIdentity(c)
 	if !ok {
 		presenter.ErrorResponder(c, apperr.Unauthorized("autenticação necessária"))
 		return
@@ -74,7 +75,7 @@ func (h *Handler) CreateUser(c *gin.Context) {
 		Subject:     identity.Subject,
 		Email:       email,
 		FullName:    req.FullName,
-		AccountType: user.AccountTypeBasicCare,
+		AccountType: accountdomain.AccountTypeBasicCare,
 		BirthDate:   birthDate,
 		CPF:         req.Cpf,
 		Phone:       req.Phone,

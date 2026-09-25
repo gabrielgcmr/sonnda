@@ -17,7 +17,6 @@ import (
 
 	helpers "github.com/gabrielgcmr/sonnda/internal/api/helpers"
 	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/rbac"
 	domainstorage "github.com/gabrielgcmr/sonnda/internal/domain/storage"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 )
@@ -51,11 +50,9 @@ func (h *LabsHandler) ListLabs(c *gin.Context) {
 		return
 	}
 
-	if h.authz != nil {
-		if err := h.authz.Require(c.Request.Context(), currentUser, rbac.ActionReadLabs, &patientID); err != nil {
-			presenter.ErrorResponder(c, err)
-			return
-		}
+	if err := h.authz.RequirePatientAccess(c.Request.Context(), currentUser, patientID); err != nil {
+		presenter.ErrorResponder(c, err)
+		return
 	}
 
 	limit, offset, ok := parsePagination(c, 100, 0)
@@ -94,11 +91,9 @@ func (h *LabsHandler) UploadAndProcessLabs(c *gin.Context) {
 		return
 	}
 
-	if h.authz != nil {
-		if err := h.authz.Require(c.Request.Context(), currentUser, rbac.ActionUploadLabs, &patientID); err != nil {
-			presenter.ErrorResponder(c, err)
-			return
-		}
+	if err := h.authz.RequirePatientAccess(c.Request.Context(), currentUser, patientID); err != nil {
+		presenter.ErrorResponder(c, err)
+		return
 	}
 
 	documentURI, mimeType, uploadErr := h.handleFileUpload(c, patientID)

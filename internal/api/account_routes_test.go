@@ -12,12 +12,12 @@ import (
 
 	"github.com/gabrielgcmr/sonnda/internal/api"
 	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/identity"
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/user"
 	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	"github.com/gabrielgcmr/sonnda/internal/features/account"
+	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
 	accounthttp "github.com/gabrielgcmr/sonnda/internal/features/account/http"
-	"github.com/gabrielgcmr/sonnda/internal/features/auth"
+	authdomain "github.com/gabrielgcmr/sonnda/internal/features/auth/domain"
+	authhttp "github.com/gabrielgcmr/sonnda/internal/features/auth/http"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -38,7 +38,7 @@ func TestAccountRoutesLifecycle(t *testing.T) {
 			created := decodeAccountUser(t, response)
 			if created.ID == uuid.Nil || created.FullName != "Ana Silva" || created.Email != "ana@example.test" ||
 				created.AuthIssuer != "test-issuer" || created.AuthSubject != "test-subject" ||
-				created.AccountType != user.AccountTypeBasicCare || created.BirthDate.Format("2006-01-02") != "1990-01-02" {
+				created.AccountType != accountdomain.AccountTypeBasicCare || created.BirthDate.Format("2006-01-02") != "1990-01-02" {
 				t.Fatalf("unexpected created profile: %+v", created)
 			}
 
@@ -123,10 +123,10 @@ func TestAccountRoutesPreserveErrors(t *testing.T) {
 func newAccountRouter(repo *accountUserRepository) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	service := account.NewService(repo, accountPatientAccessRepository{})
-	onboarding := account.NewOnboarding(repo, service, nil)
-	authMiddleware := auth.NewMiddleware(func(context.Context, string) (*identity.Identity, error) {
+	onboarding := account.NewOnboarding(repo, service)
+	authMiddleware := authhttp.NewMiddleware(func(context.Context, string) (*authdomain.Identity, error) {
 		email := "ana@example.test"
-		return &identity.Identity{Issuer: "test-issuer", Subject: "test-subject", Email: &email}, nil
+		return &authdomain.Identity{Issuer: "test-issuer", Subject: "test-subject", Email: &email}, nil
 	})
 	router := gin.New()
 	api.SetupRoutes(router, &api.APIDependencies{
@@ -150,9 +150,9 @@ func accountRequest(t *testing.T, router http.Handler, method, path, body string
 	return response
 }
 
-func decodeAccountUser(t *testing.T, response *httptest.ResponseRecorder) user.User {
+func decodeAccountUser(t *testing.T, response *httptest.ResponseRecorder) accountdomain.User {
 	t.Helper()
-	var profile user.User
+	var profile accountdomain.User
 	if err := json.Unmarshal(response.Body.Bytes(), &profile); err != nil {
 		t.Fatal(err)
 	}
@@ -175,11 +175,11 @@ func assertAccountProblem(t *testing.T, response *httptest.ResponseRecorder, cod
 
 type accountUserRepository struct {
 	account.Repository
-	profile   *user.User
+	profile   *accountdomain.User
 	lookupErr error
 }
 
-func (r *accountUserRepository) FindByAuthIdentity(_ context.Context, issuer, subject string) (*user.User, error) {
+func (r *accountUserRepository) FindByAuthIdentity(_ context.Context, issuer, subject string) (*accountdomain.User, error) {
 	if r.lookupErr != nil {
 		return nil, r.lookupErr
 	}
@@ -190,7 +190,7 @@ func (r *accountUserRepository) FindByAuthIdentity(_ context.Context, issuer, su
 	return &profile, nil
 }
 
-func (r *accountUserRepository) FindByID(_ context.Context, id uuid.UUID) (*user.User, error) {
+func (r *accountUserRepository) FindByID(_ context.Context, id uuid.UUID) (*accountdomain.User, error) {
 	if r.profile == nil || r.profile.ID != id {
 		return nil, nil
 	}
@@ -198,13 +198,13 @@ func (r *accountUserRepository) FindByID(_ context.Context, id uuid.UUID) (*user
 	return &profile, nil
 }
 
-func (r *accountUserRepository) Create(_ context.Context, profile *user.User) error {
+func (r *accountUserRepository) Create(_ context.Context, profile *accountdomain.User) error {
 	copy := *profile
 	r.profile = &copy
 	return nil
 }
 
-func (r *accountUserRepository) Update(ctx context.Context, profile *user.User) error {
+func (r *accountUserRepository) Update(ctx context.Context, profile *accountdomain.User) error {
 	return r.Create(ctx, profile)
 }
 

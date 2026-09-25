@@ -12,20 +12,21 @@ import (
 
 	"github.com/gabrielgcmr/sonnda/internal/api/helpers"
 	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/identity"
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/user"
 	"github.com/gabrielgcmr/sonnda/internal/features/account"
+	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
+	authdomain "github.com/gabrielgcmr/sonnda/internal/features/auth/domain"
+	authhttp "github.com/gabrielgcmr/sonnda/internal/features/auth/http"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 	"github.com/gin-gonic/gin"
 )
 
 type registrationRepo struct {
 	account.Repository
-	profile *user.User
+	profile *accountdomain.User
 	err     error
 }
 
-func (r registrationRepo) FindByAuthIdentity(context.Context, string, string) (*user.User, error) {
+func (r registrationRepo) FindByAuthIdentity(context.Context, string, string) (*accountdomain.User, error) {
 	return r.profile, r.err
 }
 
@@ -34,7 +35,7 @@ func TestRegistrationAccess(t *testing.T) {
 	for _, tc := range []struct {
 		name          string
 		authenticated bool
-		profile       *user.User
+		profile       *accountdomain.User
 		err           error
 		status        int
 		code          apperr.ErrorKind
@@ -42,14 +43,14 @@ func TestRegistrationAccess(t *testing.T) {
 		{"no session", false, nil, nil, 401, apperr.AUTH_REQUIRED},
 		{"missing profile", true, nil, nil, 403, apperr.PROFILE_NOT_FOUND},
 		{"database failure", true, nil, errors.New("private database details"), 500, apperr.INTERNAL_ERROR},
-		{"registered", true, &user.User{FullName: "Ana"}, nil, 200, ""},
+		{"registered", true, &accountdomain.User{FullName: "Ana"}, nil, 200, ""},
 	} {
 		for _, path := range []string{"/v1/me", "/v1/patients"} {
 			t.Run(tc.name+path, func(t *testing.T) {
 				router := gin.New()
 				router.Use(func(c *gin.Context) {
 					if tc.authenticated {
-						helpers.SetIdentity(c, &identity.Identity{Issuer: "test", Subject: "user-1"})
+						authhttp.SetIdentity(c, &authdomain.Identity{Issuer: "test", Subject: "user-1"})
 					}
 				})
 				registration := NewMiddleware(registrationRepo{profile: tc.profile, err: tc.err})

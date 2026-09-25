@@ -34,7 +34,8 @@ Simple instructions for coding agents working on this repo.
 - **Features (`internal/features`)**: Context-specific application flows.
   - **Account (`internal/features/account`)**: Profile services, onboarding, DTOs and error mapping; HTTP handler and middleware live in `account/http`.
   - Account owns its repository interface and user persistence errors in `account/repository.go`; its Postgres adapter lives in `account/postgres`.
-  - User entities remain in `internal/domain/entity/user`; the shared database client and generated sqlc code remain in `internal/infrastructure` during this migration.
+  - User entities and account types belong to `internal/features/account/domain` (package `accountdomain`). Other contexts may import this pure domain package without depending on account application services.
+  - The shared database client and generated sqlc code remain in `internal/infrastructure` during this migration.
   - The shared persistence failure sentinel belongs to `internal/domain/repository/errors.go`; account application code must not import concrete Postgres repositories.
   - `internal/application/bootstrap/account.go` composes the account handler and middleware in a single `AccountModule`.
   - Add account behavior to this feature, not to the former global user service, registration use case or user handler paths.
@@ -47,6 +48,7 @@ Simple instructions for coding agents working on this repo.
 - **Application (`internal/application`)**: Where orchestration and cross-cutting concerns live.
   - **Use cases (`internal/application/usecase`)**: Business flows composed from domain models/ports.
   - **Services (`internal/application/services`)**: Application services that coordinate repositories/integrations.
+  - **Authorization (`internal/application/services/authorization`)**: Shared patient access check (owner or active grant). Patients, exams and labs must call `RequirePatientAccess` before accessing an existing patient's data. No action, account-type or professional-kind policies are currently implemented.
   - **Bootstrap (`internal/application/bootstrap`)**: Wiring of dependencies, env/config loading.
 - **Config (`internal/config`)**: Environment configuration.
 - **API (`internal/api`)**: HTTP layer (RESTful API).
@@ -56,7 +58,7 @@ Simple instructions for coding agents working on this repo.
   - **Presenter (`internal/api/presenter`)**: Response formatting and error presentation.
 - **Infrastructure (`internal/infrastructure`)**: Concrete implementations and outbound integrations.
   - **Persistence (`internal/infrastructure/persistence`)**: Database repositories, cache, file storage.
-  - **Auth (`internal/infrastructure/auth`)**: Authentication/authorization implementations.
+  - **Auth (`internal/infrastructure/auth`)**: Authentication provider implementations.
   - **Document AI (`internal/infrastructure/documentai`)**: current Google Cloud Document AI integration.
 - **Kernel (`internal/kernel`)**: Cross-cutting concerns.
   - **Error contract (`internal/kernel/apperr`)**: Centralized `AppError` codes/messages; handlers must convert via HTTP layer helpers.

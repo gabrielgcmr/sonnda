@@ -16,9 +16,6 @@ import (
 var (
 	//Common
 	ErrRepositoryFailure = repository.ErrRepositoryFailure
-	//Professional
-	ErrProfessionalAlreadyExists = errors.New("professional already exists")
-	ErrProfessionalNotFound      = errors.New("professional not found")
 	//patient
 	ErrPatientAlreadyExists = errors.New("patient already exists")
 	ErrPatientNotFound      = errors.New("patient not found")

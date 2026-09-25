@@ -5,7 +5,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/user"
+	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
 
 	"github.com/google/uuid"
 )
@@ -20,15 +20,15 @@ var (
 // Infrastructure failures wrap repository.ErrRepositoryFailure and their cause.
 type Repository interface {
 	// CRUD basico
-	Create(ctx context.Context, u *user.User) error
-	Update(ctx context.Context, u *user.User) error
+	Create(ctx context.Context, u *accountdomain.User) error
+	Update(ctx context.Context, u *accountdomain.User) error
 	Delete(ctx context.Context, id uuid.UUID) error
 	SoftDelete(ctx context.Context, id uuid.UUID) error
 
 	// Buscas por atributos do usuario
 
-	FindByID(ctx context.Context, id uuid.UUID) (*user.User, error)
-	FindByEmail(ctx context.Context, email string) (*user.User, error)
-	FindByCPF(ctx context.Context, cpf string) (*user.User, error)
-	FindByAuthIdentity(ctx context.Context, issuer string, subject string) (*user.User, error)
+	FindByID(ctx context.Context, id uuid.UUID) (*accountdomain.User, error)
+	FindByEmail(ctx context.Context, email string) (*accountdomain.User, error)
+	FindByCPF(ctx context.Context, cpf string) (*accountdomain.User, error)
+	FindByAuthIdentity(ctx context.Context, issuer string, subject string) (*accountdomain.User, error)
 }

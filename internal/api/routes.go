@@ -9,13 +9,13 @@ import (
 	openapispec "github.com/gabrielgcmr/sonnda/internal/api/openapi"
 	openapigen "github.com/gabrielgcmr/sonnda/internal/api/openapi/generated"
 	accounthttp "github.com/gabrielgcmr/sonnda/internal/features/account/http"
-	"github.com/gabrielgcmr/sonnda/internal/features/auth"
+	authhttp "github.com/gabrielgcmr/sonnda/internal/features/auth/http"
 
 	"github.com/gin-gonic/gin"
 )
 
 type APIDependencies struct {
-	Auth           *auth.Middleware
+	Auth           *authhttp.Middleware
 	Account        *accounthttp.Middleware
 	AccountHandler *accounthttp.Handler
 	PatientHandler *handlers.PatientHandler

@@ -7,10 +7,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	labsvc "github.com/gabrielgcmr/sonnda/internal/application/services/labs"
 	helpers "github.com/gabrielgcmr/sonnda/internal/api/helpers"
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/rbac"
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/user"
+	labsvc "github.com/gabrielgcmr/sonnda/internal/application/services/labs"
+	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -22,7 +21,7 @@ type fakeLabsService struct {
 
 type allowAllAuthorizer struct{}
 
-func (a allowAllAuthorizer) Require(ctx context.Context, actor *user.User, action rbac.Action, patientID *uuid.UUID) error {
+func (a allowAllAuthorizer) RequirePatientAccess(ctx context.Context, actor *accountdomain.User, patientID uuid.UUID) error {
 	return nil
 }
 
@@ -44,7 +43,7 @@ func TestListLabs_DefaultUsesSummary(t *testing.T) {
 
 	r := gin.New()
 	r.Use(func(c *gin.Context) {
-		helpers.SetCurrentUser(c, &user.User{ID: uuid.Must(uuid.NewV7()), AccountType: user.AccountTypeBasicCare})
+		helpers.SetCurrentUser(c, &accountdomain.User{ID: uuid.Must(uuid.NewV7()), AccountType: accountdomain.AccountTypeBasicCare})
 		c.Next()
 	})
 	r.GET("/patients/:id/labs", h.ListLabs)
@@ -74,7 +73,7 @@ func TestListLabs_ExpandFullUsesFull(t *testing.T) {
 
 	r := gin.New()
 	r.Use(func(c *gin.Context) {
-		helpers.SetCurrentUser(c, &user.User{ID: uuid.Must(uuid.NewV7()), AccountType: user.AccountTypeBasicCare})
+		helpers.SetCurrentUser(c, &accountdomain.User{ID: uuid.Must(uuid.NewV7()), AccountType: accountdomain.AccountTypeBasicCare})
 		c.Next()
 	})
 	r.GET("/patients/:id/labs", h.ListLabs)
@@ -104,7 +103,7 @@ func TestListLabs_IncludeResultsUsesFull(t *testing.T) {
 
 	r := gin.New()
 	r.Use(func(c *gin.Context) {
-		helpers.SetCurrentUser(c, &user.User{ID: uuid.Must(uuid.NewV7()), AccountType: user.AccountTypeBasicCare})
+		helpers.SetCurrentUser(c, &accountdomain.User{ID: uuid.Must(uuid.NewV7()), AccountType: accountdomain.AccountTypeBasicCare})
 		c.Next()
 	})
 	r.GET("/patients/:id/labs", h.ListLabs)

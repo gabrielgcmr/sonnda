@@ -10,9 +10,9 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/user"
 	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	"github.com/gabrielgcmr/sonnda/internal/features/account"
+	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
 	usersqlc "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/sqlc/generated/user"
 )
 
@@ -29,7 +29,7 @@ func New(db usersqlc.DBTX) *Repository {
 }
 
 // Create implements [account.Repository].
-func (r *Repository) Create(ctx context.Context, u *user.User) error {
+func (r *Repository) Create(ctx context.Context, u *accountdomain.User) error {
 	params := usersqlc.CreateUserParams{
 		ID:          u.ID,
 		AuthIssuer:  u.AuthIssuer,
@@ -79,7 +79,7 @@ func (r *Repository) Delete(ctx context.Context, id uuid.UUID) error {
 }
 
 // FindByAuthIdentity implements [account.Repository].
-func (r *Repository) FindByAuthIdentity(ctx context.Context, issuer string, subject string) (*user.User, error) {
+func (r *Repository) FindByAuthIdentity(ctx context.Context, issuer string, subject string) (*accountdomain.User, error) {
 
 	row, err := r.queries.FindUserByAuthIdentity(ctx, usersqlc.FindUserByAuthIdentityParams{
 		AuthIssuer:  issuer,
@@ -92,7 +92,7 @@ func (r *Repository) FindByAuthIdentity(ctx context.Context, issuer string, subj
 		return nil, errors.Join(repository.ErrRepositoryFailure, err)
 	}
 
-	return &user.User{
+	return &accountdomain.User{
 		ID:          row.ID,
 		AuthIssuer:  row.AuthIssuer,
 		AuthSubject: row.AuthSubject,
@@ -101,14 +101,14 @@ func (r *Repository) FindByAuthIdentity(ctx context.Context, issuer string, subj
 		BirthDate:   row.BirthDate.Time,
 		CPF:         row.Cpf,
 		Phone:       row.Phone,
-		AccountType: user.AccountType(row.AccountType),
+		AccountType: accountdomain.AccountType(row.AccountType),
 		CreatedAt:   row.CreatedAt.Time,
 		UpdatedAt:   row.UpdatedAt.Time,
 	}, nil
 }
 
 // FindByCPF implements [account.Repository].
-func (r *Repository) FindByCPF(ctx context.Context, cpf string) (*user.User, error) {
+func (r *Repository) FindByCPF(ctx context.Context, cpf string) (*accountdomain.User, error) {
 	row, err := r.queries.FindUserByCPF(ctx, cpf)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -117,7 +117,7 @@ func (r *Repository) FindByCPF(ctx context.Context, cpf string) (*user.User, err
 		return nil, errors.Join(repository.ErrRepositoryFailure, err)
 	}
 
-	return &user.User{
+	return &accountdomain.User{
 		ID:          row.ID,
 		AuthIssuer:  row.AuthIssuer,
 		AuthSubject: row.AuthSubject,
@@ -126,14 +126,14 @@ func (r *Repository) FindByCPF(ctx context.Context, cpf string) (*user.User, err
 		BirthDate:   row.BirthDate.Time,
 		CPF:         row.Cpf,
 		Phone:       row.Phone,
-		AccountType: user.AccountType(row.AccountType),
+		AccountType: accountdomain.AccountType(row.AccountType),
 		CreatedAt:   row.CreatedAt.Time,
 		UpdatedAt:   row.UpdatedAt.Time,
 	}, nil
 }
 
 // FindByID implements [account.Repository].
-func (r *Repository) FindByID(ctx context.Context, id uuid.UUID) (*user.User, error) {
+func (r *Repository) FindByID(ctx context.Context, id uuid.UUID) (*accountdomain.User, error) {
 	row, err := r.queries.FindUserByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -142,7 +142,7 @@ func (r *Repository) FindByID(ctx context.Context, id uuid.UUID) (*user.User, er
 		return nil, errors.Join(repository.ErrRepositoryFailure, err)
 	}
 
-	return &user.User{
+	return &accountdomain.User{
 		ID:          row.ID,
 		AuthIssuer:  row.AuthIssuer,
 		AuthSubject: row.AuthSubject,
@@ -151,14 +151,14 @@ func (r *Repository) FindByID(ctx context.Context, id uuid.UUID) (*user.User, er
 		BirthDate:   row.BirthDate.Time,
 		CPF:         row.Cpf,
 		Phone:       row.Phone,
-		AccountType: user.AccountType(row.AccountType),
+		AccountType: accountdomain.AccountType(row.AccountType),
 		CreatedAt:   row.CreatedAt.Time,
 		UpdatedAt:   row.UpdatedAt.Time,
 	}, nil
 }
 
 // Update implements [account.Repository].
-func (r *Repository) Update(ctx context.Context, u *user.User) error {
+func (r *Repository) Update(ctx context.Context, u *accountdomain.User) error {
 	row, err := r.queries.UpdateUser(ctx, usersqlc.UpdateUserParams{
 		ID:        u.ID,
 		Email:     u.Email,
@@ -189,7 +189,7 @@ func (r *Repository) Update(ctx context.Context, u *user.User) error {
 	return nil
 }
 
-func (r *Repository) FindByEmail(ctx context.Context, email string) (*user.User, error) {
+func (r *Repository) FindByEmail(ctx context.Context, email string) (*accountdomain.User, error) {
 	row, err := r.queries.FindUserByEmail(ctx, email)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -198,7 +198,7 @@ func (r *Repository) FindByEmail(ctx context.Context, email string) (*user.User,
 		return nil, errors.Join(repository.ErrRepositoryFailure, err)
 	}
 
-	return &user.User{
+	return &accountdomain.User{
 		ID:          row.ID,
 		AuthIssuer:  row.AuthIssuer,
 		AuthSubject: row.AuthSubject,
@@ -207,7 +207,7 @@ func (r *Repository) FindByEmail(ctx context.Context, email string) (*user.User,
 		BirthDate:   row.BirthDate.Time,
 		CPF:         row.Cpf,
 		Phone:       row.Phone,
-		AccountType: user.AccountType(row.AccountType),
+		AccountType: accountdomain.AccountType(row.AccountType),
 		CreatedAt:   row.CreatedAt.Time,
 		UpdatedAt:   row.UpdatedAt.Time,
 	}, nil
