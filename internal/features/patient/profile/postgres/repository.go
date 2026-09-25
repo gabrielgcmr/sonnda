@@ -7,10 +7,10 @@ import (
 	"fmt"
 
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/demographics"
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patient"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patientaccess"
 	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	patientprofile "github.com/gabrielgcmr/sonnda/internal/features/patient/profile"
+	profiledomain "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/domain"
 	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
 	patientsqlc "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/sqlc/generated/patient"
 	patientaccesssqlc "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/sqlc/generated/patientaccess"
@@ -27,12 +27,12 @@ type Repository struct {
 }
 
 // FindByName implements [patientprofile.Repository].
-func (r *Repository) FindByName(ctx context.Context, name string) ([]patient.Patient, error) {
+func (r *Repository) FindByName(ctx context.Context, name string) ([]profiledomain.Patient, error) {
 	panic("unimplemented")
 }
 
 // SearchByName implements [patientprofile.Repository].
-func (r *Repository) SearchByName(ctx context.Context, name string, limit int, offset int) ([]patient.Patient, error) {
+func (r *Repository) SearchByName(ctx context.Context, name string, limit int, offset int) ([]profiledomain.Patient, error) {
 	panic("unimplemented")
 }
 
@@ -42,12 +42,12 @@ func (r *Repository) HardDelete(ctx context.Context, id uuid.UUID) error {
 }
 
 // List implements [patientprofile.Repository].
-func (r *Repository) List(ctx context.Context, limit int, offset int) ([]patient.Patient, error) {
+func (r *Repository) List(ctx context.Context, limit int, offset int) ([]profiledomain.Patient, error) {
 	panic("unimplemented")
 }
 
 // Update implements [patientprofile.Repository].
-func (r *Repository) Update(ctx context.Context, patient *patient.Patient) error {
+func (r *Repository) Update(ctx context.Context, patient *profiledomain.Patient) error {
 	panic("unimplemented")
 }
 
@@ -61,14 +61,14 @@ func NewRepository(client *postgress.Client) patientprofile.Repository {
 }
 
 // Create implements [patientprofile.Repository].
-func (r *Repository) Create(ctx context.Context, p *patient.Patient) error {
+func (r *Repository) Create(ctx context.Context, p *profiledomain.Patient) error {
 	return r.createWithQueries(ctx, r.queries, p)
 }
 
 // CreateWithAccess creates a patient and its initial access grant atomically.
 func (r *Repository) CreateWithAccess(
 	ctx context.Context,
-	p *patient.Patient,
+	p *profiledomain.Patient,
 	access *patientaccess.PatientAccess,
 ) error {
 	if err := access.Validate(); err != nil {
@@ -115,7 +115,7 @@ func (r *Repository) CreateWithAccess(
 func (r *Repository) createWithQueries(
 	ctx context.Context,
 	queries *patientsqlc.Queries,
-	p *patient.Patient,
+	p *profiledomain.Patient,
 ) error {
 	params := patientsqlc.CreatePatientParams{
 		ID:          p.ID,
@@ -160,7 +160,7 @@ func (p *Repository) SoftDelete(ctx context.Context, id uuid.UUID) error {
 }
 
 // FindByCPF implements [patientprofile.Repository].
-func (p *Repository) FindByCPF(ctx context.Context, cpf string) (*patient.Patient, error) {
+func (p *Repository) FindByCPF(ctx context.Context, cpf string) (*profiledomain.Patient, error) {
 	row, err := p.queries.GetPatientByCPF(ctx, cpf)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -169,7 +169,7 @@ func (p *Repository) FindByCPF(ctx context.Context, cpf string) (*patient.Patien
 		return nil, errors.Join(repository.ErrRepositoryFailure, err)
 	}
 
-	return &patient.Patient{
+	return &profiledomain.Patient{
 		ID:          row.ID,
 		OwnerUserID: fromPgUUID(row.OwnerUserID),
 		CPF:         row.Cpf,
@@ -186,7 +186,7 @@ func (p *Repository) FindByCPF(ctx context.Context, cpf string) (*patient.Patien
 }
 
 // FindByID implements [patientprofile.Repository].
-func (p *Repository) FindByID(ctx context.Context, id uuid.UUID) (*patient.Patient, error) {
+func (p *Repository) FindByID(ctx context.Context, id uuid.UUID) (*profiledomain.Patient, error) {
 	row, err := p.queries.GetPatientByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -195,7 +195,7 @@ func (p *Repository) FindByID(ctx context.Context, id uuid.UUID) (*patient.Patie
 		return nil, errors.Join(repository.ErrRepositoryFailure, err)
 	}
 
-	return &patient.Patient{
+	return &profiledomain.Patient{
 		ID:          row.ID,
 		OwnerUserID: fromPgUUID(row.OwnerUserID),
 		CPF:         row.Cpf,

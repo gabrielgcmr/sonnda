@@ -8,18 +8,18 @@ import (
 	"time"
 
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/labs"
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patient"
 	"github.com/gabrielgcmr/sonnda/internal/domain/labextraction"
 	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	patientprofile "github.com/gabrielgcmr/sonnda/internal/features/patient/profile"
+	profiledomain "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/domain"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 	"github.com/google/uuid"
 )
 
 type labPatientRepo struct{ patientprofile.Repository }
 
-func (labPatientRepo) FindByID(_ context.Context, id uuid.UUID) (*patient.Patient, error) {
-	return &patient.Patient{ID: id}, nil
+func (labPatientRepo) FindByID(_ context.Context, id uuid.UUID) (*profiledomain.Patient, error) {
+	return &profiledomain.Patient{ID: id}, nil
 }
 
 type labRepoStub struct {

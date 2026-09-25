@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patient"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patientaccess"
 	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
+	profiledomain "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/domain"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 
 	"github.com/google/uuid"
@@ -36,7 +36,7 @@ func New(
 	}
 }
 
-func (s *service) Create(ctx context.Context, currentUser *accountdomain.User, input CreateInput) (*patient.Patient, error) {
+func (s *service) Create(ctx context.Context, currentUser *accountdomain.User, input CreateInput) (*profiledomain.Patient, error) {
 	if currentUser == nil {
 		return nil, apperr.Unauthorized("autenticação necessária")
 	}
@@ -52,7 +52,7 @@ func (s *service) Create(ctx context.Context, currentUser *accountdomain.User, i
 		relationType = *input.RelationType
 	}
 
-	newPatient, err := patient.NewPatient(patient.NewPatientParams{
+	newPatient, err := profiledomain.NewPatient(profiledomain.NewPatientParams{
 		UserID:    input.UserID,
 		CPF:       input.CPF,
 		CNS:       input.CNS,
@@ -84,7 +84,7 @@ func (s *service) Create(ctx context.Context, currentUser *accountdomain.User, i
 	return newPatient, nil
 }
 
-func (s *service) Get(ctx context.Context, currentUser *accountdomain.User, id uuid.UUID) (*patient.Patient, error) {
+func (s *service) Get(ctx context.Context, currentUser *accountdomain.User, id uuid.UUID) (*profiledomain.Patient, error) {
 	if err := s.auth.RequirePatientAccess(ctx, currentUser, id); err != nil {
 		return nil, err
 	}
@@ -99,7 +99,7 @@ func (s *service) Get(ctx context.Context, currentUser *accountdomain.User, id u
 	return p, nil
 }
 
-func (s *service) Update(ctx context.Context, currentUser *accountdomain.User, id uuid.UUID, input UpdateInput) (*patient.Patient, error) {
+func (s *service) Update(ctx context.Context, currentUser *accountdomain.User, id uuid.UUID, input UpdateInput) (*profiledomain.Patient, error) {
 	if err := s.auth.RequirePatientAccess(ctx, currentUser, id); err != nil {
 		return nil, err
 	}
@@ -169,7 +169,7 @@ func (s *service) HardDelete(ctx context.Context, currentUser *accountdomain.Use
 	return nil
 }
 
-func (s *service) ListMyPatients(ctx context.Context, currentUser *accountdomain.User, limit, offset int) ([]*patient.Patient, error) {
+func (s *service) ListMyPatients(ctx context.Context, currentUser *accountdomain.User, limit, offset int) ([]*profiledomain.Patient, error) {
 	if currentUser == nil {
 		return nil, apperr.Unauthorized("autenticação necessária")
 	}
@@ -187,7 +187,7 @@ func (s *service) ListMyPatients(ctx context.Context, currentUser *accountdomain
 		}
 	}
 
-	out := make([]*patient.Patient, 0, len(accessible))
+	out := make([]*profiledomain.Patient, 0, len(accessible))
 	for _, row := range accessible {
 		p, err := s.repo.FindByID(ctx, row.PatientID)
 		if err != nil {

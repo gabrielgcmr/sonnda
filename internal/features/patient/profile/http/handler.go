@@ -12,10 +12,10 @@ import (
 
 	openapi "github.com/gabrielgcmr/sonnda/internal/api/openapi/generated"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/demographics"
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patient"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patientaccess"
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
 	patientprofile "github.com/gabrielgcmr/sonnda/internal/features/patient/profile"
+	profiledomain "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/domain"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 	applog "github.com/gabrielgcmr/sonnda/internal/kernel/observability"
 
@@ -26,11 +26,11 @@ import (
 )
 
 type patientService interface {
-	Create(ctx context.Context, currentUser *accountdomain.User, input patientprofile.CreateInput) (*patient.Patient, error)
-	Get(ctx context.Context, currentUser *accountdomain.User, id uuid.UUID) (*patient.Patient, error)
-	Update(ctx context.Context, currentUser *accountdomain.User, id uuid.UUID, input patientprofile.UpdateInput) (*patient.Patient, error)
+	Create(ctx context.Context, currentUser *accountdomain.User, input patientprofile.CreateInput) (*profiledomain.Patient, error)
+	Get(ctx context.Context, currentUser *accountdomain.User, id uuid.UUID) (*profiledomain.Patient, error)
+	Update(ctx context.Context, currentUser *accountdomain.User, id uuid.UUID, input patientprofile.UpdateInput) (*profiledomain.Patient, error)
 	HardDelete(ctx context.Context, currentUser *accountdomain.User, id uuid.UUID) error
-	ListMyPatients(ctx context.Context, currentUser *accountdomain.User, limit, offset int) ([]*patient.Patient, error)
+	ListMyPatients(ctx context.Context, currentUser *accountdomain.User, limit, offset int) ([]*profiledomain.Patient, error)
 }
 
 type Handler struct {

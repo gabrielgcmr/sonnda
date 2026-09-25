@@ -33,7 +33,7 @@ Simple instructions for coding agents working on this repo.
 - The architecture is migrating incrementally from global layers to business contexts under `internal/features`, preserving separation of concerns.
 - **Features (`internal/features`)**: Context-specific application flows.
   - **Account (`internal/features/account`)**: Profile services, onboarding, DTOs and error mapping; HTTP handler and middleware live in `account/http`.
-  - **Patient profile (`internal/features/patient/profile`)**: Patient registration services, DTOs, error mapping and repository contract; its HTTP handler lives in `profile/http` and its Postgres adapter in `profile/postgres`. Patient entities remain in the legacy domain layer during migration stage 2.
+  - **Patient profile (`internal/features/patient/profile`)**: Patient registration services, DTOs, error mapping and repository contract; its domain model lives in `profile/domain`, HTTP handler in `profile/http`, and Postgres adapter in `profile/postgres`.
   - Account owns its repository interface and user persistence errors in `account/repository.go`; its Postgres adapter lives in `account/postgres`.
   - User entities and account types belong to `internal/features/account/domain` (package `accountdomain`). Other contexts may import this pure domain package without depending on account application services.
   - The shared database client and generated sqlc code remain in `internal/infrastructure` during this migration.

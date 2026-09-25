@@ -6,21 +6,21 @@ import (
 	"fmt"
 
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/demographics"
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patient"
 	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
+	profiledomain "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/domain"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 )
 
 func mapDomainError(err error) error {
 	switch {
-	case errors.Is(err, patient.ErrInvalidFullName),
+	case errors.Is(err, profiledomain.ErrInvalidFullName),
 		errors.Is(err, demographics.ErrInvalidBirthDate),
 		errors.Is(err, demographics.ErrInvalidCPF),
 		errors.Is(err, demographics.ErrInvalidGender),
 		errors.Is(err, demographics.ErrInvalidRace),
-		errors.Is(err, patient.ErrInvalidBirthDate),
-		errors.Is(err, patient.ErrInvalidGender),
-		errors.Is(err, patient.ErrInvalidRace):
+		errors.Is(err, profiledomain.ErrInvalidBirthDate),
+		errors.Is(err, profiledomain.ErrInvalidGender),
+		errors.Is(err, profiledomain.ErrInvalidRace):
 		return apperr.Validation("dados inválidos")
 
 	default:

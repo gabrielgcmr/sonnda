@@ -9,10 +9,10 @@ import (
 
 	"github.com/gabrielgcmr/sonnda/internal/api/helpers"
 	"github.com/gabrielgcmr/sonnda/internal/application/services/authorization"
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patient"
 	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
 	patientprofile "github.com/gabrielgcmr/sonnda/internal/features/patient/profile"
+	profiledomain "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/domain"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -21,8 +21,8 @@ type accessTestPatients struct {
 	patientprofile.Repository
 }
 
-func (r accessTestPatients) FindByID(_ context.Context, id uuid.UUID) (*patient.Patient, error) {
-	return &patient.Patient{ID: id}, nil
+func (r accessTestPatients) FindByID(_ context.Context, id uuid.UUID) (*profiledomain.Patient, error) {
+	return &profiledomain.Patient{ID: id}, nil
 }
 
 type accessTestGrants struct {

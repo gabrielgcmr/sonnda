@@ -1,5 +1,5 @@
-// internal/domain/entity/patient/patient.go
-package patient
+// internal/features/patient/profile/domain/patient.go
+package profiledomain
 
 import (
 	"strings"

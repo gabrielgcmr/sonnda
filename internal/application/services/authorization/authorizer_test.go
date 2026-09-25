@@ -6,22 +6,22 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/patient"
 	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
 	patientprofile "github.com/gabrielgcmr/sonnda/internal/features/patient/profile"
+	profiledomain "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/domain"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 	"github.com/google/uuid"
 )
 
 type patientLookup struct {
 	patientprofile.Repository
-	result *patient.Patient
+	result *profiledomain.Patient
 	err    error
 	id     uuid.UUID
 }
 
-func (r *patientLookup) FindByID(_ context.Context, id uuid.UUID) (*patient.Patient, error) {
+func (r *patientLookup) FindByID(_ context.Context, id uuid.UUID) (*profiledomain.Patient, error) {
 	r.id = id
 	return r.result, r.err
 }
@@ -64,7 +64,7 @@ func TestRequirePatientAccess(t *testing.T) {
 		{name: "access lookup failure", accessErr: dbErr, wantKind: apperr.INFRA_DATABASE_ERROR, wantAccessLookup: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			patients := &patientLookup{result: &patient.Patient{ID: patientID, OwnerUserID: tc.owner}, err: tc.patientErr}
+			patients := &patientLookup{result: &profiledomain.Patient{ID: patientID, OwnerUserID: tc.owner}, err: tc.patientErr}
 			if tc.missing {
 				patients.result = nil
 			}
