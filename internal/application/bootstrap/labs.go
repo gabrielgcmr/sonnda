@@ -2,7 +2,7 @@
 package bootstrap
 
 import (
-	handlers "github.com/gabrielgcmr/sonnda/internal/api/handlers"
+	medicalrecordhandler "github.com/gabrielgcmr/sonnda/internal/api/handlers/medicalrecord"
 	authorization "github.com/gabrielgcmr/sonnda/internal/application/services/authorization"
 	labsvc "github.com/gabrielgcmr/sonnda/internal/application/services/labs"
 	labsuc "github.com/gabrielgcmr/sonnda/internal/application/usecase/labs"
@@ -13,7 +13,7 @@ import (
 )
 
 type LabsModule struct {
-	Handler *handlers.LabsHandler
+	Handler *medicalrecordhandler.LabsHandler
 }
 
 func NewLabsModule(
@@ -30,6 +30,6 @@ func NewLabsModule(
 	createUC := labsuc.NewCreateLabReportFromDocument(patientRepo, labsRepo, labExtractor)
 	authz := authorization.New(patientRepo, accessRepo, profRepo)
 	return &LabsModule{
-		Handler: handlers.NewLabs(svc, createUC, storage, authz),
+		Handler: medicalrecordhandler.NewLabsHandler(svc, createUC, storage, authz),
 	}
 }

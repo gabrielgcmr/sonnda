@@ -12,10 +12,14 @@ import (
 )
 
 type Modules struct {
-	User    *UserModule
-	Patient *PatientModule
-	Labs    *LabsModule
-	Exams   *ExamsModule
+	Account       *UserModule
+	Patient       *PatientModule
+	MedicalRecord *MedicalRecordModule
+}
+
+type MedicalRecordModule struct {
+	Labs  *LabsModule
+	Exams *ExamsModule
 }
 
 func NewModules(
@@ -26,9 +30,11 @@ func NewModules(
 	fallback domaintext.Extractor,
 ) *Modules {
 	return &Modules{
-		User:    NewUserModule(dbClient),
+		Account: NewUserModule(dbClient),
 		Patient: NewPatientModule(dbClient),
-		Labs:    NewLabsModule(dbClient, labExtractor, storage),
-		Exams:   NewExamsModule(dbClient, labExtractor, storage, ocrConfig, fallback),
+		MedicalRecord: &MedicalRecordModule{
+			Labs:  NewLabsModule(dbClient, labExtractor, storage),
+			Exams: NewExamsModule(dbClient, labExtractor, storage, ocrConfig, fallback),
+		},
 	}
 }

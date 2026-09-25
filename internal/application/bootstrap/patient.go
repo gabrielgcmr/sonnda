@@ -2,7 +2,7 @@
 package bootstrap
 
 import (
-	"github.com/gabrielgcmr/sonnda/internal/api/handlers"
+	patienthandler "github.com/gabrielgcmr/sonnda/internal/api/handlers/patient"
 	authorization "github.com/gabrielgcmr/sonnda/internal/application/services/authorization"
 	patientsvc "github.com/gabrielgcmr/sonnda/internal/application/services/patient"
 	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
@@ -11,7 +11,7 @@ import (
 
 type PatientModule struct {
 	Service patientsvc.Service
-	Handler *handlers.PatientHandler
+	Handler *patienthandler.Handler
 }
 
 func NewPatientModule(db *postgress.Client) *PatientModule {
@@ -24,6 +24,6 @@ func NewPatientModule(db *postgress.Client) *PatientModule {
 
 	return &PatientModule{
 		Service: svc,
-		Handler: handlers.NewPatientHandler(svc),
+		Handler: patienthandler.NewHandler(svc),
 	}
 }

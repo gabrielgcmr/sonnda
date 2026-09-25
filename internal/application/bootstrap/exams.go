@@ -2,7 +2,7 @@
 package bootstrap
 
 import (
-	"github.com/gabrielgcmr/sonnda/internal/api/handlers"
+	medicalrecordhandler "github.com/gabrielgcmr/sonnda/internal/api/handlers/medicalrecord"
 	authorization "github.com/gabrielgcmr/sonnda/internal/application/services/authorization"
 	examsvc "github.com/gabrielgcmr/sonnda/internal/application/services/exams"
 	textsvc "github.com/gabrielgcmr/sonnda/internal/application/services/textextraction"
@@ -17,7 +17,7 @@ import (
 )
 
 type ExamsModule struct {
-	Handler *handlers.ExamsHandler
+	Handler *medicalrecordhandler.ExamsHandler
 }
 
 func NewExamsModule(
@@ -43,6 +43,6 @@ func NewExamsModule(
 	authz := authorization.New(patientRepo, accessRepo, profRepo)
 
 	return &ExamsModule{
-		Handler: handlers.NewExams(svc, createLabUC, storage, textExtractor, authz),
+		Handler: medicalrecordhandler.NewExamsHandler(svc, createLabUC, storage, textExtractor, authz),
 	}
 }

@@ -102,7 +102,7 @@ func main() {
 	//8 Middlewares
 	//8.1 API
 	apiAuthMW := apimw.NewAuthMiddleware(apiAuthProvider.AuthenticateBearerToken)
-	apiRegMW := modules.User.RegistrationMiddleware
+	apiRegMW := modules.Account.RegistrationMiddleware
 
 	//10. Cria o router HTTP
 	ginMode := gin.DebugMode
@@ -120,10 +120,10 @@ func main() {
 		Deps: &api.APIDependencies{
 			AuthMiddleware:         apiAuthMW,
 			RegistrationMiddleware: apiRegMW,
-			UserHandler:            modules.User.Handler,
+			UserHandler:            modules.Account.Handler,
 			PatientHandler:         modules.Patient.Handler,
-			LabsHandler:            modules.Labs.Handler,
-			ExamsHandler:           modules.Exams.Handler,
+			LabsHandler:            modules.MedicalRecord.Labs.Handler,
+			ExamsHandler:           modules.MedicalRecord.Exams.Handler,
 		},
 	})
 
