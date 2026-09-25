@@ -158,6 +158,47 @@ type fakeTextExtractor struct {
 	input domaintext.ExtractInput
 }
 
+type testLaboratoryProcessor struct {
+	creator   labsuc.CreateLabReportFromDocumentUseCase
+	documents interface {
+		CreateDocumentTextFromText(context.Context, examsvc.CreateExamDocumentTextFromTextInput) (*examsvc.ExamDocumentTextOutput, error)
+	}
+}
+
+func (testLaboratoryProcessor) Kind() labsuc.DocumentKind { return labsuc.DocumentKindLaboratory }
+
+func (p testLaboratoryProcessor) Process(ctx context.Context, input labsuc.ProcessingInput) error {
+	report, err := p.creator.Execute(ctx, labsuc.CreateLabReportFromDocumentInput{
+		PatientID:        input.Document.PatientID,
+		ExamDocumentID:   &input.Document.ID,
+		DocumentURI:      input.Document.StorageURI,
+		MimeType:         input.Document.MimeType,
+		UploadedByUserID: input.Document.UploadedByUserID,
+		CollectionDate:   input.CollectionDate,
+	})
+	if err != nil || report == nil {
+		return err
+	}
+	var summary strings.Builder
+	for _, result := range report.TestResults {
+		for _, item := range result.Items {
+			if item.ResultValue != nil && item.ResultUnit != nil {
+				summary.WriteString("- " + item.ParameterName + " " + *item.ResultValue + " " + *item.ResultUnit + "\n")
+			}
+		}
+	}
+	_, err = p.documents.CreateDocumentTextFromText(ctx, examsvc.CreateExamDocumentTextFromTextInput{
+		ExamDocumentID:   input.Document.ID,
+		PatientID:        input.Document.PatientID,
+		UploadedByUserID: input.Document.UploadedByUserID,
+		Category:         exams.ExamTypeLaboratory,
+		Text:             strings.TrimSpace(summary.String()),
+		PerformedAt:      input.CollectionDate,
+		ExtractionMethod: "test_laboratory_processor",
+	})
+	return err
+}
+
 func newExamsHandler(
 	svc examsvc.Service,
 	laboratory labsuc.CreateLabReportFromDocumentUseCase,
@@ -165,7 +206,11 @@ func newExamsHandler(
 	extractor domaintext.Extractor,
 	accessChecker patientaccess.Checker,
 ) *ExamsHandler {
-	return NewExams(svc, labsuc.NewProcessStoredDocument(svc, laboratory, extractor), storage, accessChecker)
+	var processors []labsuc.Processor
+	if laboratory != nil {
+		processors = append(processors, testLaboratoryProcessor{creator: laboratory, documents: svc})
+	}
+	return NewExams(svc, labsuc.NewProcessStoredDocument(svc, extractor, processors...), storage, accessChecker)
 }
 
 func (f *fakeTextExtractor) Extract(ctx context.Context, input domaintext.ExtractInput) (*domaintext.ExtractOutput, error) {

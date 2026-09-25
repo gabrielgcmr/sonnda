@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"google.golang.org/api/option"
@@ -22,6 +23,7 @@ import (
 	authinfra "github.com/gabrielgcmr/sonnda/internal/infrastructure/auth"
 	documentaiinfra "github.com/gabrielgcmr/sonnda/internal/infrastructure/documentai"
 	filestorage "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/filestorage"
+	geminiinfra "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/gemini"
 	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
 )
 
@@ -84,6 +86,17 @@ func main() {
 		*docAIClient,
 		cfg.Storage.GCPExtractLabsProcessorID,
 	)
+	var labTextExtractor *geminiinfra.LabReportTextExtractor
+	if strings.TrimSpace(cfg.Gemini.APIKey) != "" {
+		geminiClient, err := geminiinfra.NewClient(ctx, cfg.Gemini)
+		if err != nil {
+			logInfraFatal("falha ao criar Gemini client", err)
+		}
+		labTextExtractor, err = geminiinfra.NewLabReportTextExtractor(geminiClient)
+		if err != nil {
+			logInfraFatal("falha ao criar extrator laboratorial", err)
+		}
+	}
 
 	//6.3 Auth (Supabase)
 	apiAuthProvider, err := authinfra.NewSupabaseBearerProvider(authinfra.SupabaseBearerConfig{
@@ -97,7 +110,7 @@ func main() {
 
 	//7. Módulos
 	fallbackOCR := documentaiinfra.NewTextExtractor(docAIClient, cfg.Storage.GCPExtractLabsProcessorID, cfg.OCR.FallbackTimeout)
-	modules := bootstrap.NewModules(dbClient, docExtractor, storageService, cfg.OCR, fallbackOCR)
+	modules := bootstrap.NewModules(dbClient, docExtractor, labTextExtractor, storageService, cfg.OCR, fallbackOCR)
 
 	//8 Middlewares
 	//8.1 API

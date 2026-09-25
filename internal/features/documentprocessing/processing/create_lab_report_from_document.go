@@ -26,45 +26,37 @@ type CreateLabReportFromDocumentUseCase interface {
 	Execute(ctx context.Context, input CreateLabReportFromDocumentInput) (*labsvc.LabReportOutput, error)
 }
 
-type createLabReportFromDocumentUseCase struct {
+type ExtractedLabReportCreator interface {
+	CreateFromExtracted(ctx context.Context, input CreateLabReportFromDocumentInput, extracted *labextraction.ExtractedLabReport) (*labsvc.LabReportOutput, error)
+}
+
+type LabReportCreator struct {
 	patientRepo patientprofile.Repository
 	labsRepo    processing.LaboratoryReportRepository
 	extractor   labextraction.LabReportExtractor
 }
 
-var _ CreateLabReportFromDocumentUseCase = (*createLabReportFromDocumentUseCase)(nil)
+var _ CreateLabReportFromDocumentUseCase = (*LabReportCreator)(nil)
+var _ ExtractedLabReportCreator = (*LabReportCreator)(nil)
 
 func NewCreateLabReportFromDocument(
 	patientRepo patientprofile.Repository,
 	labsRepo processing.LaboratoryReportRepository,
 	extractor labextraction.LabReportExtractor,
-) CreateLabReportFromDocumentUseCase {
-	return &createLabReportFromDocumentUseCase{
+) *LabReportCreator {
+	return &LabReportCreator{
 		patientRepo: patientRepo,
 		labsRepo:    labsRepo,
 		extractor:   extractor,
 	}
 }
 
-func (u *createLabReportFromDocumentUseCase) Execute(ctx context.Context, input CreateLabReportFromDocumentInput) (*labsvc.LabReportOutput, error) {
-	//Valida o input
-	if err := u.validateInput(input); err != nil {
+func (u *LabReportCreator) Execute(ctx context.Context, input CreateLabReportFromDocumentInput) (*labsvc.LabReportOutput, error) {
+	if err := u.validatePatient(ctx, input); err != nil {
 		return nil, err
 	}
-
-	p, err := u.patientRepo.FindByID(ctx, input.PatientID)
-	if err != nil {
-		return nil, &apperr.AppError{
-			Kind:    apperr.INFRA_DATABASE_ERROR,
-			Message: "falha técnica",
-			Cause:   err,
-		}
-	}
-	if p == nil {
-		return nil, &apperr.AppError{
-			Kind:    apperr.NOT_FOUND,
-			Message: "paciente não encontrado",
-		}
+	if u.extractor == nil {
+		return nil, apperr.Internal("extrator laboratorial indisponivel", nil)
 	}
 
 	extracted, err := u.extractor.ExtractLabReport(ctx, input.DocumentURI, input.MimeType)
@@ -74,6 +66,29 @@ func (u *createLabReportFromDocumentUseCase) Execute(ctx context.Context, input 
 			Message: "falha ao processar documento",
 			Cause:   err,
 		}
+	}
+
+	return u.persistExtracted(ctx, input, extracted)
+}
+
+func (u *LabReportCreator) CreateFromExtracted(
+	ctx context.Context,
+	input CreateLabReportFromDocumentInput,
+	extracted *labextraction.ExtractedLabReport,
+) (*labsvc.LabReportOutput, error) {
+	if err := u.validatePatient(ctx, input); err != nil {
+		return nil, err
+	}
+	return u.persistExtracted(ctx, input, extracted)
+}
+
+func (u *LabReportCreator) persistExtracted(
+	ctx context.Context,
+	input CreateLabReportFromDocumentInput,
+	extracted *labextraction.ExtractedLabReport,
+) (*labsvc.LabReportOutput, error) {
+	if extracted == nil || !extracted.HasStructuredResults() {
+		return nil, ErrProcessorNeedsReview
 	}
 
 	report, err := u.mapExtractedToDomain(input.PatientID, input.UploadedByUserID, extracted)
@@ -118,7 +133,21 @@ func (u *createLabReportFromDocumentUseCase) Execute(ctx context.Context, input 
 	return toOutput(report), nil
 }
 
-func (u *createLabReportFromDocumentUseCase) reuseExisting(ctx context.Context, input CreateLabReportFromDocumentInput, existing *labs.LabReport) (*labsvc.LabReportOutput, error) {
+func (u *LabReportCreator) validatePatient(ctx context.Context, input CreateLabReportFromDocumentInput) error {
+	if err := u.validateInput(input); err != nil {
+		return err
+	}
+	p, err := u.patientRepo.FindByID(ctx, input.PatientID)
+	if err != nil {
+		return &apperr.AppError{Kind: apperr.INFRA_DATABASE_ERROR, Message: "falha técnica", Cause: err}
+	}
+	if p == nil {
+		return &apperr.AppError{Kind: apperr.NOT_FOUND, Message: "paciente não encontrado"}
+	}
+	return nil
+}
+
+func (u *LabReportCreator) reuseExisting(ctx context.Context, input CreateLabReportFromDocumentInput, existing *labs.LabReport) (*labsvc.LabReportOutput, error) {
 	if input.ExamDocumentID == nil {
 		return toOutput(existing), nil
 	}
@@ -157,7 +186,7 @@ func labPersistenceError(err error) error {
 	return &apperr.AppError{Kind: apperr.INFRA_DATABASE_ERROR, Message: "falha ao salvar exame", Cause: err}
 }
 
-func (u *createLabReportFromDocumentUseCase) validateInput(input CreateLabReportFromDocumentInput) error {
+func (u *LabReportCreator) validateInput(input CreateLabReportFromDocumentInput) error {
 	var violations []apperr.Violation
 
 	if input.PatientID == uuid.Nil {
@@ -197,7 +226,7 @@ func normalizeMimeType(raw string) string {
 	return normalized
 }
 
-func (u *createLabReportFromDocumentUseCase) mapExtractedToDomain(
+func (u *LabReportCreator) mapExtractedToDomain(
 	patientID uuid.UUID,
 	uploadedByUserID uuid.UUID,
 	extracted *labextraction.ExtractedLabReport,
@@ -304,7 +333,7 @@ func sameCalendarDate(left, right time.Time) bool {
 		left.Day() == right.Day()
 }
 
-func (u *createLabReportFromDocumentUseCase) mapDomainError(err error) error {
+func (u *LabReportCreator) mapDomainError(err error) error {
 	if err == nil {
 		return nil
 	}

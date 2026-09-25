@@ -8,7 +8,7 @@ import (
 	laboratory "github.com/gabrielgcmr/sonnda/internal/features/patient/exam/laboratory"
 )
 
-func buildLaboratoryReportText(report *laboratory.LabReportOutput) string {
+func BuildLaboratoryReportText(report *laboratory.LabReportOutput) string {
 	if report == nil {
 		return ""
 	}

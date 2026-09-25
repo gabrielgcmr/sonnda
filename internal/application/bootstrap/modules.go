@@ -21,6 +21,7 @@ type Modules struct {
 func NewModules(
 	dbClient *postgress.Client,
 	labExtractor labextraction.LabReportExtractor,
+	labTextExtractor labextraction.LabReportTextExtractor,
 	storage domainstorage.FileStorageService,
 	ocrConfig config.OCRConfig,
 	fallback domaintext.Extractor,
@@ -30,6 +31,6 @@ func NewModules(
 		Patient:       NewPatientModule(dbClient),
 		PatientAccess: NewPatientAccessModule(dbClient),
 		Labs:          NewLabsModule(dbClient, labExtractor, storage),
-		Exams:         NewExamsModule(dbClient, labExtractor, storage, ocrConfig, fallback),
+		Exams:         NewExamsModule(dbClient, labTextExtractor, storage, ocrConfig, fallback),
 	}
 }
