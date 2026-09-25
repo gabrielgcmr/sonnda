@@ -11,7 +11,6 @@ import (
 )
 
 type Service interface {
-	Create(ctx context.Context, currentUser *accountdomain.User, input CreateInput) (*profiledomain.Patient, error)
 	Get(ctx context.Context, currentUser *accountdomain.User, id uuid.UUID) (*profiledomain.Patient, error)
 	Update(ctx context.Context, currentUser *accountdomain.User, id uuid.UUID, input UpdateInput) (*profiledomain.Patient, error)
 	SoftDelete(ctx context.Context, currentUser *accountdomain.User, id uuid.UUID) error

@@ -277,6 +277,8 @@ components:
       $ref: "./openapi/components/schemas/patient-access.yaml#/AccessiblePatientSummary"
     AccessiblePatientsResponse:
       $ref: "./openapi/components/schemas/patient-access.yaml#/AccessiblePatientsResponse"
+    RelationshipType:
+      $ref: "./openapi/components/schemas/patient-access.yaml#/RelationshipType"
     Patient:
       $ref: "./openapi/components/schemas/patient.yaml#/Patient"
     PatientsList:

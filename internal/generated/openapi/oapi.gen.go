@@ -54,6 +54,14 @@ const (
 	PatientRaceWHITE      PatientRace = "WHITE"
 )
 
+// Defines values for RelationshipType.
+const (
+	Caregiver    RelationshipType = "caregiver"
+	Family       RelationshipType = "family"
+	Professional RelationshipType = "professional"
+	Self         RelationshipType = "self"
+)
+
 // Defines values for GetV1PatientsIdLabsParamsExpand.
 const (
 	Full GetV1PatientsIdLabsParamsExpand = "full"
@@ -85,6 +93,9 @@ type CreatePatientRequest struct {
 	Gender   CreatePatientRequestGender `json:"gender"`
 	Phone    *string                    `json:"phone"`
 	Race     CreatePatientRequestRace   `json:"race"`
+
+	// RelationType Relação da conta que recebe acesso com o paciente.
+	RelationType RelationshipType `json:"relation_type"`
 }
 
 // CreatePatientRequestGender defines model for CreatePatientRequest.Gender.
@@ -244,6 +255,9 @@ type ProblemDetails struct {
 		Reason *string `json:"reason,omitempty"`
 	} `json:"violations,omitempty"`
 }
+
+// RelationshipType Relação da conta que recebe acesso com o paciente.
+type RelationshipType string
 
 // RootResponse defines model for RootResponse.
 type RootResponse struct {

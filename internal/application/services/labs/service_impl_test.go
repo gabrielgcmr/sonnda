@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/labs"
-	accessdomain "github.com/gabrielgcmr/sonnda/internal/features/patient/access/domain"
 	profiledomain "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/domain"
 	"github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/repo"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
@@ -21,13 +20,6 @@ type fakePatientRepo struct {
 }
 
 func (r *fakePatientRepo) Create(ctx context.Context, p *profiledomain.Patient) error {
-	panic("unused")
-}
-func (r *fakePatientRepo) CreateWithAccess(
-	ctx context.Context,
-	p *profiledomain.Patient,
-	access *accessdomain.PatientAccess,
-) error {
 	panic("unused")
 }
 func (r *fakePatientRepo) Update(ctx context.Context, p *profiledomain.Patient) error {

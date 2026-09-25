@@ -117,13 +117,14 @@ func main() {
 		Logger:     appLogger,
 		CORSConfig: cfg.CORS,
 		Deps: &api.APIDependencies{
-			Auth:                 authMiddleware,
-			Account:              modules.Account.Middleware,
-			AccountHandler:       modules.Account.Handler,
-			PatientAccessHandler: modules.PatientAccess.Handler,
-			PatientHandler:       modules.Patient.Handler,
-			LabsHandler:          modules.Labs.Handler,
-			ExamsHandler:         modules.Exams.Handler,
+			Auth:                   authMiddleware,
+			Account:                modules.Account.Middleware,
+			AccountHandler:         modules.Account.Handler,
+			PatientAccessHandler:   modules.PatientAccess.Handler,
+			PatientCreationHandler: modules.Patient.CreationHandler,
+			PatientHandler:         modules.Patient.ProfileHandler,
+			LabsHandler:            modules.Labs.Handler,
+			ExamsHandler:           modules.Exams.Handler,
 		},
 	})
 

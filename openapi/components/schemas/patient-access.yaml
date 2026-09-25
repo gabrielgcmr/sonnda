@@ -1,4 +1,8 @@
 # openapi/components/schemas/patient-access.yaml
+RelationshipType:
+  type: string
+  description: Relação da conta que recebe acesso com o paciente.
+  enum: [caregiver, family, professional, self]
 AccessiblePatientSummary:
   type: object
   additionalProperties: false

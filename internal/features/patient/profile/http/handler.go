@@ -3,30 +3,21 @@ package profilehttp
 
 import (
 	"context"
-	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/demographics"
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
-	accessdomain "github.com/gabrielgcmr/sonnda/internal/features/patient/access/domain"
 	patientprofile "github.com/gabrielgcmr/sonnda/internal/features/patient/profile"
 	profiledomain "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/domain"
-	openapi "github.com/gabrielgcmr/sonnda/internal/generated/openapi"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
-	applog "github.com/gabrielgcmr/sonnda/internal/kernel/observability"
-
-	openapi_types "github.com/oapi-codegen/runtime/types"
 
 	helpers "github.com/gabrielgcmr/sonnda/internal/api/helpers"
 	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
 )
 
 type patientService interface {
-	Create(ctx context.Context, currentUser *accountdomain.User, input patientprofile.CreateInput) (*profiledomain.Patient, error)
 	Get(ctx context.Context, currentUser *accountdomain.User, id uuid.UUID) (*profiledomain.Patient, error)
 	Update(ctx context.Context, currentUser *accountdomain.User, id uuid.UUID, input patientprofile.UpdateInput) (*profiledomain.Patient, error)
 	HardDelete(ctx context.Context, currentUser *accountdomain.User, id uuid.UUID) error
@@ -37,119 +28,8 @@ type Handler struct {
 	svc patientService
 }
 
-type createPatientRequest struct {
-	Cpf          string             `json:"cpf" binding:"required"`
-	Cns          *string            `json:"cns,omitempty"`
-	FullName     string             `json:"full_name" binding:"required"`
-	BirthDate    openapi_types.Date `json:"birth_date" binding:"required"`
-	Gender       string             `json:"gender" binding:"required"`
-	Race         string             `json:"race" binding:"required"`
-	Phone        *string            `json:"phone,omitempty"`
-	AvatarUrl    *string            `json:"avatar_url,omitempty"`
-	RelationType *string            `json:"relation_type,omitempty"`
-}
-
 func NewHandler(svc patientService) *Handler {
 	return &Handler{svc: svc}
-}
-
-func (h *Handler) Create(c *gin.Context) {
-	ctx := c.Request.Context()
-	log := applog.FromContext(ctx)
-	log.Info("patient_create")
-
-	user, ok := helpers.GetCurrentUser(c)
-	if !ok || user == nil {
-		presenter.ErrorResponder(c, &apperr.AppError{
-			Kind:    apperr.AUTH_REQUIRED,
-			Message: "autenticação necessária",
-		})
-		return
-	}
-
-	var req createPatientRequest
-	// 1. Bind do request
-	if err := helpers.BindJSON(c, &req); err != nil {
-		presenter.ErrorResponder(c, err)
-		return
-	}
-
-	// 3. Parsing / normalização de fronteira
-	if req.BirthDate.Time.IsZero() {
-		presenter.ErrorResponder(c, apperr.Validation("data de nascimento é obrigatória",
-			apperr.Violation{Field: "birth_date", Reason: "required"}))
-		return
-	}
-	birthDate := req.BirthDate.Time
-
-	gender, err := parseGender(string(req.Gender))
-	if err != nil {
-		presenter.ErrorResponder(c, &apperr.AppError{
-			Kind:    apperr.VALIDATION_FAILED,
-			Message: "gênero inválido",
-			Cause:   err,
-		})
-		return
-	}
-
-	race, err := parseRace(string(req.Race))
-	if err != nil {
-		presenter.ErrorResponder(c, &apperr.AppError{
-			Kind:    apperr.VALIDATION_FAILED,
-			Message: "raça inválida",
-			Cause:   err,
-		})
-		return
-	}
-
-	avatarURL := ""
-	if req.AvatarUrl != nil {
-		avatarURL = *req.AvatarUrl
-	}
-
-	var ownerUserID *uuid.UUID
-	var relationType *accessdomain.RelationshipType
-	if req.RelationType != nil && strings.TrimSpace(*req.RelationType) != "" {
-		rt := accessdomain.RelationshipType(strings.TrimSpace(*req.RelationType))
-		if !rt.IsValid() {
-			presenter.ErrorResponder(c, &apperr.AppError{
-				Kind:    apperr.VALIDATION_FAILED,
-				Message: "vÃ­nculo com paciente invÃ¡lido",
-				Cause:   accessdomain.ErrInvalidRelationshipType,
-			})
-			return
-		}
-		relationType = &rt
-		if rt == accessdomain.RelationshipTypeSelf {
-			ownerUserID = &user.ID
-		}
-	}
-
-	// 4. Montagem do input da aplicação
-	input := patientprofile.CreateInput{
-		UserID:       ownerUserID,
-		CPF:          req.Cpf,
-		CNS:          req.Cns,
-		FullName:     req.FullName,
-		BirthDate:    birthDate,
-		Gender:       gender,
-		Race:         race,
-		Phone:        req.Phone,
-		AvatarURL:    avatarURL,
-		RelationType: relationType,
-	}
-
-	// 5. Execução do use case
-	p, err := h.svc.Create(ctx, user, input)
-	if err != nil {
-		presenter.ErrorResponder(c, err)
-		return
-	}
-
-	c.Header("Location", "/v1/patients/"+p.ID.String())
-	c.JSON(http.StatusCreated, openapi.PatientCreatedResponse{
-		Id: openapi_types.UUID(p.ID),
-	})
 }
 
 func (h *Handler) GetPatient(c *gin.Context) {
@@ -270,20 +150,4 @@ func (h *Handler) HardDeletePatient(c *gin.Context) {
 
 	c.Status(http.StatusNoContent)
 
-}
-
-func parseGender(value string) (demographics.Gender, error) {
-	gender, err := demographics.ParseGender(value)
-	if err != nil {
-		return "", fmt.Errorf("invalid gender value: %s: %w", value, demographics.ErrInvalidGender)
-	}
-	return gender, nil
-}
-
-func parseRace(value string) (demographics.Race, error) {
-	race, err := demographics.ParseRace(value)
-	if err != nil {
-		return "", fmt.Errorf("invalid race value: %s: %w", value, demographics.ErrInvalidRace)
-	}
-	return race, nil
 }

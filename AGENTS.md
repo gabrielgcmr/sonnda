@@ -50,6 +50,7 @@ Simple instructions for coding agents working on this repo.
   - **Lab Extraction (`internal/domain/labextraction`)**: contract for structured lab report extraction.
 - **Application (`internal/application`)**: Where orchestration and cross-cutting concerns live.
   - **Use cases (`internal/application/usecase`)**: Business flows composed from domain models/ports.
+  - Patient creation is coordinated by `internal/application/usecase/patientcreation`: profile data and the creator's explicit relationship are validated by their owning features and persisted atomically.
   - **Services (`internal/application/services`)**: Application services that coordinate repositories/integrations.
   - Patient access checks live in `internal/features/patient/access`: `Checker` permits the patient owner or an account with an active grant. No action, account-type or professional-kind policies are currently implemented.
   - **Bootstrap (`internal/application/bootstrap`)**: Wiring of dependencies, env/config loading.

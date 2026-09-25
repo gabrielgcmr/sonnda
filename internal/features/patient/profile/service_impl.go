@@ -5,11 +5,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
 	patientaccess "github.com/gabrielgcmr/sonnda/internal/features/patient/access"
-	accessdomain "github.com/gabrielgcmr/sonnda/internal/features/patient/access/domain"
 	profiledomain "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/domain"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 
@@ -34,54 +32,6 @@ func New(
 		accessRepo:    accessRepo,
 		accessChecker: accessChecker,
 	}
-}
-
-func (s *service) Create(ctx context.Context, currentUser *accountdomain.User, input CreateInput) (*profiledomain.Patient, error) {
-	if currentUser == nil {
-		return nil, apperr.Unauthorized("autenticação necessária")
-	}
-	if s.accessRepo == nil {
-		return nil, apperr.Internal("erro inesperado", errors.New("patient access repository not configured"))
-	}
-
-	relationType, err := relationTypeForCreator(currentUser)
-	if err != nil {
-		return nil, err
-	}
-	if input.RelationType != nil {
-		relationType = *input.RelationType
-	}
-
-	newPatient, err := profiledomain.NewPatient(profiledomain.NewPatientParams{
-		UserID:    input.UserID,
-		CPF:       input.CPF,
-		CNS:       input.CNS,
-		FullName:  input.FullName,
-		BirthDate: input.BirthDate,
-		Gender:    input.Gender,
-		Race:      input.Race,
-		Phone:     input.Phone,
-		AvatarURL: input.AvatarURL,
-	})
-	if err != nil {
-		return nil, mapDomainError(err)
-	}
-
-	access, err := accessdomain.NewPatientAccess(
-		newPatient.ID,
-		currentUser.ID,
-		relationType,
-		&currentUser.ID,
-		time.Now().UTC(),
-	)
-	if err != nil {
-		return nil, apperr.Internal("erro inesperado", err)
-	}
-	if err := s.repo.CreateWithAccess(ctx, newPatient, access); err != nil {
-		return nil, mapRepoError("patientRepo.CreateWithAccess", err)
-	}
-
-	return newPatient, nil
 }
 
 func (s *service) Get(ctx context.Context, currentUser *accountdomain.User, id uuid.UUID) (*profiledomain.Patient, error) {
@@ -207,15 +157,4 @@ func (s *service) ListMyPatients(ctx context.Context, currentUser *accountdomain
 	}
 
 	return out, nil
-}
-
-func relationTypeForCreator(currentUser *accountdomain.User) (accessdomain.RelationshipType, error) {
-	switch currentUser.AccountType.Normalize() {
-	case accountdomain.AccountTypeProfessional:
-		return accessdomain.RelationshipTypeProfessional, nil
-	case accountdomain.AccountTypeBasicCare:
-		return accessdomain.RelationshipTypeCaregiver, nil
-	default:
-		return "", apperr.Internal("erro inesperado", fmt.Errorf("unsupported account type: %s", currentUser.AccountType))
-	}
 }

@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 
-	accessdomain "github.com/gabrielgcmr/sonnda/internal/features/patient/access/domain"
 	profiledomain "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/domain"
 
 	"github.com/google/uuid"
@@ -18,7 +17,6 @@ var (
 
 type Repository interface {
 	Create(ctx context.Context, patient *profiledomain.Patient) error
-	CreateWithAccess(ctx context.Context, patient *profiledomain.Patient, access *accessdomain.PatientAccess) error
 	Update(ctx context.Context, patient *profiledomain.Patient) error
 	SoftDelete(ctx context.Context, id uuid.UUID) error
 	HardDelete(ctx context.Context, id uuid.UUID) error

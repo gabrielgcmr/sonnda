@@ -2,17 +2,21 @@
 package bootstrap
 
 import (
+	patientcreation "github.com/gabrielgcmr/sonnda/internal/application/usecase/patientcreation"
 	patientaccess "github.com/gabrielgcmr/sonnda/internal/features/patient/access"
 	accesspostgres "github.com/gabrielgcmr/sonnda/internal/features/patient/access/postgres"
+	patienthttp "github.com/gabrielgcmr/sonnda/internal/features/patient/http"
 	patientprofile "github.com/gabrielgcmr/sonnda/internal/features/patient/profile"
 	profilehttp "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/http"
 	patientpostgres "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/postgres"
 	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
+	patientcreationpostgres "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/patientcreation"
 )
 
 type PatientModule struct {
-	Service patientprofile.Service
-	Handler *profilehttp.Handler
+	Service         patientprofile.Service
+	ProfileHandler  *profilehttp.Handler
+	CreationHandler *patienthttp.CreationHandler
 }
 
 func NewPatientModule(db *postgress.Client) *PatientModule {
@@ -21,9 +25,11 @@ func NewPatientModule(db *postgress.Client) *PatientModule {
 
 	accessChecker := patientaccess.NewChecker(patientRepo, accessRepo)
 	svc := patientprofile.New(patientRepo, accessRepo, accessChecker)
+	creator := patientcreation.New(patientcreationpostgres.NewRepository(db))
 
 	return &PatientModule{
-		Service: svc,
-		Handler: profilehttp.NewHandler(svc),
+		Service:         svc,
+		ProfileHandler:  profilehttp.NewHandler(svc),
+		CreationHandler: patienthttp.NewCreationHandler(creator),
 	}
 }

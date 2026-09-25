@@ -9,6 +9,7 @@ import (
 	accounthttp "github.com/gabrielgcmr/sonnda/internal/features/account/http"
 	authhttp "github.com/gabrielgcmr/sonnda/internal/features/auth/http"
 	accesshttp "github.com/gabrielgcmr/sonnda/internal/features/patient/access/http"
+	patienthttp "github.com/gabrielgcmr/sonnda/internal/features/patient/http"
 	profilehttp "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/http"
 	openapigen "github.com/gabrielgcmr/sonnda/internal/generated/openapi"
 	openapispec "github.com/gabrielgcmr/sonnda/internal/openapispec"
@@ -17,13 +18,14 @@ import (
 )
 
 type APIDependencies struct {
-	Auth                 *authhttp.Middleware
-	Account              *accounthttp.Middleware
-	AccountHandler       *accounthttp.Handler
-	PatientAccessHandler *accesshttp.Handler
-	PatientHandler       *profilehttp.Handler
-	LabsHandler          *handlers.LabsHandler
-	ExamsHandler         *handlers.ExamsHandler
+	Auth                   *authhttp.Middleware
+	Account                *accounthttp.Middleware
+	AccountHandler         *accounthttp.Handler
+	PatientAccessHandler   *accesshttp.Handler
+	PatientCreationHandler *patienthttp.CreationHandler
+	PatientHandler         *profilehttp.Handler
+	LabsHandler            *handlers.LabsHandler
+	ExamsHandler           *handlers.ExamsHandler
 }
 
 type RootInfo struct {
@@ -87,7 +89,7 @@ func SetupRoutes(
 		patients := registered.Group("/patients")
 		{
 			//Cria paciente
-			patients.POST("", deps.PatientHandler.Create)
+			patients.POST("", deps.PatientCreationHandler.Create)
 			patients.GET("", deps.PatientHandler.ListPatients)
 			//Lista pacientes que o usuário tem acesso.
 			//patients.GET("", deps.PatientHandler.ListAcessiblePatients)

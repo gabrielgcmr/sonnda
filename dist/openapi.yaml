@@ -101,12 +101,15 @@ components:
           - INDIGENOUS
           - UNKNOWN
           type: string
+        relation_type:
+          $ref: "#/components/schemas/RelationshipType"
       required:
       - cpf
       - full_name
       - birth_date
       - gender
       - race
+      - relation_type
       type: object
     CreateUserRequest:
       description: Dados editáveis do cadastro. Identidade e email vêm da autenticação; o servidor define account_type como basic_care.
@@ -438,6 +441,14 @@ components:
       - detail
       - code
       type: object
+    RelationshipType:
+      description: Relação da conta que recebe acesso com o paciente.
+      enum:
+      - caregiver
+      - family
+      - professional
+      - self
+      type: string
     RootResponse:
       properties:
         docs:
