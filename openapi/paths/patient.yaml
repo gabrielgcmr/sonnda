@@ -1,6 +1,7 @@
 # openapi/paths/patient.yaml
 collection:
   post:
+    operationId: createPatient
     summary: Criar paciente
     tags: [Patient]
     requestBody:
@@ -30,6 +31,7 @@ collection:
       "500":
         $ref: "../../openapi.yaml#/components/responses/Problem"
   get:
+    operationId: listPatients
     summary: Listar pacientes
     tags: [Patient]
     responses:
@@ -45,15 +47,11 @@ collection:
         $ref: "../../openapi.yaml#/components/responses/Problem"
 item:
   get:
+    operationId: getPatient
     summary: Obter paciente
     tags: [Patient]
     parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+      - $ref: "../../openapi.yaml#/components/parameters/PatientId"
     responses:
       "200":
         description: OK

@@ -45,7 +45,7 @@ func NewLabs(
 func (h *LabsHandler) ListLabs(c *gin.Context) {
 	currentUser := helpers.MustGetCurrentUser(c)
 
-	patientID, ok := parsePatientIDParam(c, "id")
+	patientID, ok := parsePatientIDParam(c, "patientId")
 	if !ok {
 		return
 	}
@@ -86,7 +86,7 @@ func (h *LabsHandler) ListLabs(c *gin.Context) {
 func (h *LabsHandler) UploadAndProcessLabs(c *gin.Context) {
 	currentUser := helpers.MustGetCurrentUser(c)
 
-	patientID, ok := parsePatientIDParam(c, "id")
+	patientID, ok := parsePatientIDParam(c, "patientId")
 	if !ok {
 		return
 	}

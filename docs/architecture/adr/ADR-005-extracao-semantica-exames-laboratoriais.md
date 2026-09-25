@@ -208,7 +208,7 @@ significa que a nova LLM esteja integrada ou que dados antigos tenham sido repar
 O pipeline alvo para o upload unificado e:
 
 ```text
-Flutter: POST /v1/patients/:id/exames, multipart com campo file
+Flutter: POST /v1/patients/:patientId/exames, multipart com campo file
   -> salvar arquivo e exam_documents
   -> extrair texto localmente
        PDF nativo: pdftotext

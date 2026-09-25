@@ -14,6 +14,14 @@ components:
       schema:
         minimum: 0
         type: integer
+    PatientId:
+      description: Identificador do paciente
+      in: path
+      name: patientId
+      required: true
+      schema:
+        format: uuid
+        type: string
   responses:
     Problem:
       content:
@@ -552,6 +560,7 @@ openapi: 3.0.3
 paths:
   /:
     get:
+      operationId: getApiMetadata
       responses:
         "200":
           content:
@@ -565,6 +574,7 @@ paths:
       - Public
   /docs:
     get:
+      operationId: getApiDocs
       responses:
         "200":
           content:
@@ -578,6 +588,7 @@ paths:
       - Public
   /healthz:
     get:
+      operationId: getHealth
       responses:
         "200":
           content:
@@ -591,6 +602,7 @@ paths:
       - Public
   /readyz:
     get:
+      operationId: getReadiness
       responses:
         "200":
           content:
@@ -604,6 +616,7 @@ paths:
       - Public
   /v1/me:
     delete:
+      operationId: deleteCurrentAccount
       responses:
         "204":
           description: No Content
@@ -618,6 +631,7 @@ paths:
       - Me
     get:
       description: Retorna 403 com code PROFILE_NOT_FOUND quando a identidade está autenticada mas não possui cadastro local.
+      operationId: getCurrentAccount
       responses:
         "200":
           content:
@@ -639,6 +653,7 @@ paths:
         Cria o usuário da plataforma a partir da identidade autenticada (JWT do Supabase).
         Requer token válido do Supabase (Bearer).
         O servidor define account_type como basic_care.
+      operationId: createCurrentAccount
       requestBody:
         content:
           application/json:
@@ -666,6 +681,7 @@ paths:
       tags:
       - Me
     put:
+      operationId: updateCurrentAccount
       requestBody:
         content:
           application/json:
@@ -694,6 +710,7 @@ paths:
       - Me
   /v1/me/patients:
     get:
+      operationId: listAccessiblePatients
       parameters:
       - $ref: "#/components/parameters/LimitParam"
       - $ref: "#/components/parameters/OffsetParam"
@@ -715,6 +732,7 @@ paths:
       - Patient Access
   /v1/patients:
     get:
+      operationId: listPatients
       responses:
         "200":
           content:
@@ -730,6 +748,7 @@ paths:
       tags:
       - Patient
     post:
+      operationId: createPatient
       requestBody:
         content:
           application/json:
@@ -759,15 +778,11 @@ paths:
       summary: Criar paciente
       tags:
       - Patient
-  /v1/patients/{id}:
+  /v1/patients/{patientId}:
     get:
+      operationId: getPatient
       parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          format: uuid
-          type: string
+      - $ref: "#/components/parameters/PatientId"
       responses:
         "200":
           content:
@@ -786,15 +801,11 @@ paths:
       summary: Obter paciente
       tags:
       - Patient
-  /v1/patients/{id}/labs:
+  /v1/patients/{patientId}/labs:
     get:
+      operationId: listPatientLabs
       parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          format: uuid
-          type: string
+      - $ref: "#/components/parameters/PatientId"
       - description: Retorna a representação completa quando expand=full
         in: query
         name: expand
@@ -826,13 +837,9 @@ paths:
       tags:
       - Labs
     post:
+      operationId: uploadPatientLab
       parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          format: uuid
-          type: string
+      - $ref: "#/components/parameters/PatientId"
       requestBody:
         content:
           multipart/form-data:

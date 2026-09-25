@@ -17,6 +17,7 @@ paths:
   # Public
   /:
     get:
+      operationId: getApiMetadata
       summary: API metadata
       security: []
       tags: [Public]
@@ -29,6 +30,7 @@ paths:
                 $ref: "#/components/schemas/RootResponse"
   /healthz:
     get:
+      operationId: getHealth
       summary: Health check
       security: []
       tags: [Public]
@@ -41,6 +43,7 @@ paths:
                 $ref: "#/components/schemas/HealthResponse"
   /readyz:
     get:
+      operationId: getReadiness
       summary: Readiness check
       security: []
       tags: [Public]
@@ -53,6 +56,7 @@ paths:
                 $ref: "#/components/schemas/HealthResponse"
   /docs:
     get:
+      operationId: getApiDocs
       summary: API docs (Redoc)
       security: []
       tags: [Public]
@@ -71,20 +75,16 @@ paths:
   # patients
   /v1/patients:
     $ref: "./openapi/paths/patient.yaml#/collection"
-  /v1/patients/{id}:
+  /v1/patients/{patientId}:
     $ref: "./openapi/paths/patient.yaml#/item"
-  /v1/patients/{id}/labs:
+  /v1/patients/{patientId}/labs:
     get:
+      operationId: listPatientLabs
       summary: Listar laudos
       tags:
         - Labs
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+        - $ref: "#/components/parameters/PatientId"
         - name: expand
           in: query
           required: false
@@ -115,15 +115,11 @@ paths:
         "500":
           $ref: "#/components/responses/Problem"
     post:
+      operationId: uploadPatientLab
       summary: Upload de laudo
       tags: [Labs]
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+        - $ref: "#/components/parameters/PatientId"
       requestBody:
         required: true
         content:
@@ -164,6 +160,14 @@ components:
       bearerFormat: JWT
   # Parameters
   parameters:
+    PatientId:
+      name: patientId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Identificador do paciente
     LimitParam:
       name: limit
       in: query

@@ -26,8 +26,8 @@ func ParseBirthDate(dateStr string) (time.Time, error) {
 	return birthDate, nil
 }
 
-func parsePatientIDParam(c *gin.Context, id string) (uuid.UUID, bool) {
-	idStr := c.Param(id)
+func parsePatientIDParam(c *gin.Context, parameterName string) (uuid.UUID, bool) {
+	idStr := c.Param(parameterName)
 	if idStr == "" {
 		presenter.ErrorResponder(c, &apperr.AppError{
 			Kind:    apperr.REQUIRED_FIELD_MISSING,

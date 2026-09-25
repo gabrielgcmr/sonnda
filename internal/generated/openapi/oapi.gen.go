@@ -62,9 +62,9 @@ const (
 	Self         RelationshipType = "self"
 )
 
-// Defines values for GetV1PatientsIdLabsParamsExpand.
+// Defines values for ListPatientLabsParamsExpand.
 const (
-	Full GetV1PatientsIdLabsParamsExpand = "full"
+	Full ListPatientLabsParamsExpand = "full"
 )
 
 // AccessiblePatientSummary defines model for AccessiblePatientSummary.
@@ -302,11 +302,14 @@ type LimitParam = int
 // OffsetParam defines model for OffsetParam.
 type OffsetParam = int
 
+// PatientId defines model for PatientId.
+type PatientId = openapi_types.UUID
+
 // Problem defines model for Problem.
 type Problem = ProblemDetails
 
-// GetV1MePatientsParams defines parameters for GetV1MePatients.
-type GetV1MePatientsParams struct {
+// ListAccessiblePatientsParams defines parameters for ListAccessiblePatients.
+type ListAccessiblePatientsParams struct {
 	// Limit Número máximo de itens
 	Limit *LimitParam `form:"limit,omitempty" json:"limit,omitempty"`
 
@@ -314,10 +317,10 @@ type GetV1MePatientsParams struct {
 	Offset *OffsetParam `form:"offset,omitempty" json:"offset,omitempty"`
 }
 
-// GetV1PatientsIdLabsParams defines parameters for GetV1PatientsIdLabs.
-type GetV1PatientsIdLabsParams struct {
+// ListPatientLabsParams defines parameters for ListPatientLabs.
+type ListPatientLabsParams struct {
 	// Expand Retorna a representação completa quando expand=full
-	Expand *GetV1PatientsIdLabsParamsExpand `form:"expand,omitempty" json:"expand,omitempty"`
+	Expand *ListPatientLabsParamsExpand `form:"expand,omitempty" json:"expand,omitempty"`
 
 	// Include Lista de campos para expandir (ex.: results)
 	Include *string `form:"include,omitempty" json:"include,omitempty"`
@@ -329,25 +332,25 @@ type GetV1PatientsIdLabsParams struct {
 	Offset *OffsetParam `form:"offset,omitempty" json:"offset,omitempty"`
 }
 
-// GetV1PatientsIdLabsParamsExpand defines parameters for GetV1PatientsIdLabs.
-type GetV1PatientsIdLabsParamsExpand string
+// ListPatientLabsParamsExpand defines parameters for ListPatientLabs.
+type ListPatientLabsParamsExpand string
 
-// PostV1PatientsIdLabsMultipartBody defines parameters for PostV1PatientsIdLabs.
-type PostV1PatientsIdLabsMultipartBody struct {
+// UploadPatientLabMultipartBody defines parameters for UploadPatientLab.
+type UploadPatientLabMultipartBody struct {
 	File openapi_types.File `json:"file"`
 }
 
-// PostV1MeJSONRequestBody defines body for PostV1Me for application/json ContentType.
-type PostV1MeJSONRequestBody = CreateUserRequest
+// CreateCurrentAccountJSONRequestBody defines body for CreateCurrentAccount for application/json ContentType.
+type CreateCurrentAccountJSONRequestBody = CreateUserRequest
 
-// PutV1MeJSONRequestBody defines body for PutV1Me for application/json ContentType.
-type PutV1MeJSONRequestBody = UpdateUserRequest
+// UpdateCurrentAccountJSONRequestBody defines body for UpdateCurrentAccount for application/json ContentType.
+type UpdateCurrentAccountJSONRequestBody = UpdateUserRequest
 
-// PostV1PatientsJSONRequestBody defines body for PostV1Patients for application/json ContentType.
-type PostV1PatientsJSONRequestBody = CreatePatientRequest
+// CreatePatientJSONRequestBody defines body for CreatePatient for application/json ContentType.
+type CreatePatientJSONRequestBody = CreatePatientRequest
 
-// PostV1PatientsIdLabsMultipartRequestBody defines body for PostV1PatientsIdLabs for multipart/form-data ContentType.
-type PostV1PatientsIdLabsMultipartRequestBody PostV1PatientsIdLabsMultipartBody
+// UploadPatientLabMultipartRequestBody defines body for UploadPatientLab for multipart/form-data ContentType.
+type UploadPatientLabMultipartRequestBody UploadPatientLabMultipartBody
 
 // Getter for additional properties for Patient. Returns the specified
 // element and whether it was found
@@ -586,46 +589,46 @@ func (t *LabsList) UnmarshalJSON(b []byte) error {
 type ServerInterface interface {
 	// API metadata
 	// (GET /)
-	Get(c *gin.Context)
+	GetApiMetadata(c *gin.Context)
 	// API docs (Redoc)
 	// (GET /docs)
-	GetDocs(c *gin.Context)
+	GetApiDocs(c *gin.Context)
 	// Health check
 	// (GET /healthz)
-	GetHealthz(c *gin.Context)
+	GetHealth(c *gin.Context)
 	// Readiness check
 	// (GET /readyz)
-	GetReadyz(c *gin.Context)
+	GetReadiness(c *gin.Context)
 	// Remover usuário atual (hard delete)
 	// (DELETE /v1/me)
-	DeleteV1Me(c *gin.Context)
+	DeleteCurrentAccount(c *gin.Context)
 	// Obter perfil do usuário atual
 	// (GET /v1/me)
-	GetV1Me(c *gin.Context)
+	GetCurrentAccount(c *gin.Context)
 	// Criar usuário
 	// (POST /v1/me)
-	PostV1Me(c *gin.Context)
+	CreateCurrentAccount(c *gin.Context)
 	// Atualizar perfil do usuário atual
 	// (PUT /v1/me)
-	PutV1Me(c *gin.Context)
+	UpdateCurrentAccount(c *gin.Context)
 	// Listar pacientes acessíveis pela conta atual
 	// (GET /v1/me/patients)
-	GetV1MePatients(c *gin.Context, params GetV1MePatientsParams)
+	ListAccessiblePatients(c *gin.Context, params ListAccessiblePatientsParams)
 	// Listar pacientes
 	// (GET /v1/patients)
-	GetV1Patients(c *gin.Context)
+	ListPatients(c *gin.Context)
 	// Criar paciente
 	// (POST /v1/patients)
-	PostV1Patients(c *gin.Context)
+	CreatePatient(c *gin.Context)
 	// Obter paciente
-	// (GET /v1/patients/{id})
-	GetV1PatientsId(c *gin.Context, id openapi_types.UUID)
+	// (GET /v1/patients/{patientId})
+	GetPatient(c *gin.Context, patientId PatientId)
 	// Listar laudos
-	// (GET /v1/patients/{id}/labs)
-	GetV1PatientsIdLabs(c *gin.Context, id openapi_types.UUID, params GetV1PatientsIdLabsParams)
+	// (GET /v1/patients/{patientId}/labs)
+	ListPatientLabs(c *gin.Context, patientId PatientId, params ListPatientLabsParams)
 	// Upload de laudo
-	// (POST /v1/patients/{id}/labs)
-	PostV1PatientsIdLabs(c *gin.Context, id openapi_types.UUID)
+	// (POST /v1/patients/{patientId}/labs)
+	UploadPatientLab(c *gin.Context, patientId PatientId)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -637,8 +640,8 @@ type ServerInterfaceWrapper struct {
 
 type MiddlewareFunc func(c *gin.Context)
 
-// Get operation middleware
-func (siw *ServerInterfaceWrapper) Get(c *gin.Context) {
+// GetApiMetadata operation middleware
+func (siw *ServerInterfaceWrapper) GetApiMetadata(c *gin.Context) {
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		middleware(c)
@@ -647,11 +650,11 @@ func (siw *ServerInterfaceWrapper) Get(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.Get(c)
+	siw.Handler.GetApiMetadata(c)
 }
 
-// GetDocs operation middleware
-func (siw *ServerInterfaceWrapper) GetDocs(c *gin.Context) {
+// GetApiDocs operation middleware
+func (siw *ServerInterfaceWrapper) GetApiDocs(c *gin.Context) {
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		middleware(c)
@@ -660,11 +663,11 @@ func (siw *ServerInterfaceWrapper) GetDocs(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.GetDocs(c)
+	siw.Handler.GetApiDocs(c)
 }
 
-// GetHealthz operation middleware
-func (siw *ServerInterfaceWrapper) GetHealthz(c *gin.Context) {
+// GetHealth operation middleware
+func (siw *ServerInterfaceWrapper) GetHealth(c *gin.Context) {
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		middleware(c)
@@ -673,11 +676,11 @@ func (siw *ServerInterfaceWrapper) GetHealthz(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.GetHealthz(c)
+	siw.Handler.GetHealth(c)
 }
 
-// GetReadyz operation middleware
-func (siw *ServerInterfaceWrapper) GetReadyz(c *gin.Context) {
+// GetReadiness operation middleware
+func (siw *ServerInterfaceWrapper) GetReadiness(c *gin.Context) {
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		middleware(c)
@@ -686,11 +689,11 @@ func (siw *ServerInterfaceWrapper) GetReadyz(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.GetReadyz(c)
+	siw.Handler.GetReadiness(c)
 }
 
-// DeleteV1Me operation middleware
-func (siw *ServerInterfaceWrapper) DeleteV1Me(c *gin.Context) {
+// DeleteCurrentAccount operation middleware
+func (siw *ServerInterfaceWrapper) DeleteCurrentAccount(c *gin.Context) {
 
 	c.Set(BearerAuthScopes, []string{})
 
@@ -701,11 +704,11 @@ func (siw *ServerInterfaceWrapper) DeleteV1Me(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.DeleteV1Me(c)
+	siw.Handler.DeleteCurrentAccount(c)
 }
 
-// GetV1Me operation middleware
-func (siw *ServerInterfaceWrapper) GetV1Me(c *gin.Context) {
+// GetCurrentAccount operation middleware
+func (siw *ServerInterfaceWrapper) GetCurrentAccount(c *gin.Context) {
 
 	c.Set(BearerAuthScopes, []string{})
 
@@ -716,11 +719,11 @@ func (siw *ServerInterfaceWrapper) GetV1Me(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.GetV1Me(c)
+	siw.Handler.GetCurrentAccount(c)
 }
 
-// PostV1Me operation middleware
-func (siw *ServerInterfaceWrapper) PostV1Me(c *gin.Context) {
+// CreateCurrentAccount operation middleware
+func (siw *ServerInterfaceWrapper) CreateCurrentAccount(c *gin.Context) {
 
 	c.Set(BearerAuthScopes, []string{})
 
@@ -731,11 +734,11 @@ func (siw *ServerInterfaceWrapper) PostV1Me(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.PostV1Me(c)
+	siw.Handler.CreateCurrentAccount(c)
 }
 
-// PutV1Me operation middleware
-func (siw *ServerInterfaceWrapper) PutV1Me(c *gin.Context) {
+// UpdateCurrentAccount operation middleware
+func (siw *ServerInterfaceWrapper) UpdateCurrentAccount(c *gin.Context) {
 
 	c.Set(BearerAuthScopes, []string{})
 
@@ -746,18 +749,18 @@ func (siw *ServerInterfaceWrapper) PutV1Me(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.PutV1Me(c)
+	siw.Handler.UpdateCurrentAccount(c)
 }
 
-// GetV1MePatients operation middleware
-func (siw *ServerInterfaceWrapper) GetV1MePatients(c *gin.Context) {
+// ListAccessiblePatients operation middleware
+func (siw *ServerInterfaceWrapper) ListAccessiblePatients(c *gin.Context) {
 
 	var err error
 
 	c.Set(BearerAuthScopes, []string{})
 
 	// Parameter object where we will unmarshal all parameters from the context
-	var params GetV1MePatientsParams
+	var params ListAccessiblePatientsParams
 
 	// ------------- Optional query parameter "limit" -------------
 
@@ -782,11 +785,11 @@ func (siw *ServerInterfaceWrapper) GetV1MePatients(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.GetV1MePatients(c, params)
+	siw.Handler.ListAccessiblePatients(c, params)
 }
 
-// GetV1Patients operation middleware
-func (siw *ServerInterfaceWrapper) GetV1Patients(c *gin.Context) {
+// ListPatients operation middleware
+func (siw *ServerInterfaceWrapper) ListPatients(c *gin.Context) {
 
 	c.Set(BearerAuthScopes, []string{})
 
@@ -797,11 +800,11 @@ func (siw *ServerInterfaceWrapper) GetV1Patients(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.GetV1Patients(c)
+	siw.Handler.ListPatients(c)
 }
 
-// PostV1Patients operation middleware
-func (siw *ServerInterfaceWrapper) PostV1Patients(c *gin.Context) {
+// CreatePatient operation middleware
+func (siw *ServerInterfaceWrapper) CreatePatient(c *gin.Context) {
 
 	c.Set(BearerAuthScopes, []string{})
 
@@ -812,20 +815,20 @@ func (siw *ServerInterfaceWrapper) PostV1Patients(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.PostV1Patients(c)
+	siw.Handler.CreatePatient(c)
 }
 
-// GetV1PatientsId operation middleware
-func (siw *ServerInterfaceWrapper) GetV1PatientsId(c *gin.Context) {
+// GetPatient operation middleware
+func (siw *ServerInterfaceWrapper) GetPatient(c *gin.Context) {
 
 	var err error
 
-	// ------------- Path parameter "id" -------------
-	var id openapi_types.UUID
+	// ------------- Path parameter "patientId" -------------
+	var patientId PatientId
 
-	err = runtime.BindStyledParameterWithOptions("simple", "id", c.Param("id"), &id, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "patientId", c.Param("patientId"), &patientId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter id: %w", err), http.StatusBadRequest)
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter patientId: %w", err), http.StatusBadRequest)
 		return
 	}
 
@@ -838,27 +841,27 @@ func (siw *ServerInterfaceWrapper) GetV1PatientsId(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.GetV1PatientsId(c, id)
+	siw.Handler.GetPatient(c, patientId)
 }
 
-// GetV1PatientsIdLabs operation middleware
-func (siw *ServerInterfaceWrapper) GetV1PatientsIdLabs(c *gin.Context) {
+// ListPatientLabs operation middleware
+func (siw *ServerInterfaceWrapper) ListPatientLabs(c *gin.Context) {
 
 	var err error
 
-	// ------------- Path parameter "id" -------------
-	var id openapi_types.UUID
+	// ------------- Path parameter "patientId" -------------
+	var patientId PatientId
 
-	err = runtime.BindStyledParameterWithOptions("simple", "id", c.Param("id"), &id, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "patientId", c.Param("patientId"), &patientId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter id: %w", err), http.StatusBadRequest)
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter patientId: %w", err), http.StatusBadRequest)
 		return
 	}
 
 	c.Set(BearerAuthScopes, []string{})
 
 	// Parameter object where we will unmarshal all parameters from the context
-	var params GetV1PatientsIdLabsParams
+	var params ListPatientLabsParams
 
 	// ------------- Optional query parameter "expand" -------------
 
@@ -899,20 +902,20 @@ func (siw *ServerInterfaceWrapper) GetV1PatientsIdLabs(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.GetV1PatientsIdLabs(c, id, params)
+	siw.Handler.ListPatientLabs(c, patientId, params)
 }
 
-// PostV1PatientsIdLabs operation middleware
-func (siw *ServerInterfaceWrapper) PostV1PatientsIdLabs(c *gin.Context) {
+// UploadPatientLab operation middleware
+func (siw *ServerInterfaceWrapper) UploadPatientLab(c *gin.Context) {
 
 	var err error
 
-	// ------------- Path parameter "id" -------------
-	var id openapi_types.UUID
+	// ------------- Path parameter "patientId" -------------
+	var patientId PatientId
 
-	err = runtime.BindStyledParameterWithOptions("simple", "id", c.Param("id"), &id, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "patientId", c.Param("patientId"), &patientId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter id: %w", err), http.StatusBadRequest)
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter patientId: %w", err), http.StatusBadRequest)
 		return
 	}
 
@@ -925,7 +928,7 @@ func (siw *ServerInterfaceWrapper) PostV1PatientsIdLabs(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.PostV1PatientsIdLabs(c, id)
+	siw.Handler.UploadPatientLab(c, patientId)
 }
 
 // GinServerOptions provides options for the Gin server.
@@ -955,18 +958,18 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 		ErrorHandler:       errorHandler,
 	}
 
-	router.GET(options.BaseURL+"/", wrapper.Get)
-	router.GET(options.BaseURL+"/docs", wrapper.GetDocs)
-	router.GET(options.BaseURL+"/healthz", wrapper.GetHealthz)
-	router.GET(options.BaseURL+"/readyz", wrapper.GetReadyz)
-	router.DELETE(options.BaseURL+"/v1/me", wrapper.DeleteV1Me)
-	router.GET(options.BaseURL+"/v1/me", wrapper.GetV1Me)
-	router.POST(options.BaseURL+"/v1/me", wrapper.PostV1Me)
-	router.PUT(options.BaseURL+"/v1/me", wrapper.PutV1Me)
-	router.GET(options.BaseURL+"/v1/me/patients", wrapper.GetV1MePatients)
-	router.GET(options.BaseURL+"/v1/patients", wrapper.GetV1Patients)
-	router.POST(options.BaseURL+"/v1/patients", wrapper.PostV1Patients)
-	router.GET(options.BaseURL+"/v1/patients/:id", wrapper.GetV1PatientsId)
-	router.GET(options.BaseURL+"/v1/patients/:id/labs", wrapper.GetV1PatientsIdLabs)
-	router.POST(options.BaseURL+"/v1/patients/:id/labs", wrapper.PostV1PatientsIdLabs)
+	router.GET(options.BaseURL+"/", wrapper.GetApiMetadata)
+	router.GET(options.BaseURL+"/docs", wrapper.GetApiDocs)
+	router.GET(options.BaseURL+"/healthz", wrapper.GetHealth)
+	router.GET(options.BaseURL+"/readyz", wrapper.GetReadiness)
+	router.DELETE(options.BaseURL+"/v1/me", wrapper.DeleteCurrentAccount)
+	router.GET(options.BaseURL+"/v1/me", wrapper.GetCurrentAccount)
+	router.POST(options.BaseURL+"/v1/me", wrapper.CreateCurrentAccount)
+	router.PUT(options.BaseURL+"/v1/me", wrapper.UpdateCurrentAccount)
+	router.GET(options.BaseURL+"/v1/me/patients", wrapper.ListAccessiblePatients)
+	router.GET(options.BaseURL+"/v1/patients", wrapper.ListPatients)
+	router.POST(options.BaseURL+"/v1/patients", wrapper.CreatePatient)
+	router.GET(options.BaseURL+"/v1/patients/:patientId", wrapper.GetPatient)
+	router.GET(options.BaseURL+"/v1/patients/:patientId/labs", wrapper.ListPatientLabs)
+	router.POST(options.BaseURL+"/v1/patients/:patientId/labs", wrapper.UploadPatientLab)
 }

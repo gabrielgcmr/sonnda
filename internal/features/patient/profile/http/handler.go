@@ -35,7 +35,7 @@ func NewHandler(svc patientService) *Handler {
 func (h *Handler) GetPatient(c *gin.Context) {
 	currentUser := helpers.MustGetCurrentUser(c)
 
-	id := c.Param("id")
+	id := c.Param("patientId")
 	if id == "" {
 		presenter.ErrorResponder(c, &apperr.AppError{
 			Kind:    apperr.VALIDATION_FAILED,
@@ -66,7 +66,7 @@ func (h *Handler) GetPatient(c *gin.Context) {
 func (h *Handler) UpdatePatient(c *gin.Context) {
 	currentUser := helpers.MustGetCurrentUser(c)
 
-	id := c.Param("id")
+	id := c.Param("patientId")
 	if id == "" {
 		presenter.ErrorResponder(c, &apperr.AppError{
 			Kind:    apperr.VALIDATION_FAILED,
@@ -124,7 +124,7 @@ func (h *Handler) ListPatients(c *gin.Context) {
 func (h *Handler) HardDeletePatient(c *gin.Context) {
 	currentUser := helpers.MustGetCurrentUser(c)
 
-	id := c.Param("id")
+	id := c.Param("patientId")
 	if id == "" {
 		presenter.ErrorResponder(c, &apperr.AppError{
 			Kind:    apperr.VALIDATION_FAILED,

@@ -97,5 +97,3 @@ This project uses a **centralized error contract** based on `AppError`.
 - The app uses `log/slog` via `internal/kernel/observability` (request-scoped logger is injected by HTTP middleware).
 - Configure with `LOG_LEVEL` (`debug|info|warn|error`) and `LOG_FORMAT` (`text|json|pretty`).
 
-## Test
-- Add or update tests when behavior changes.

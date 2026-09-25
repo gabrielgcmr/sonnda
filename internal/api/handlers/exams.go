@@ -55,7 +55,7 @@ func NewExams(
 func (h *ExamsHandler) ListExamDocuments(c *gin.Context) {
 	currentUser := helpers.MustGetCurrentUser(c)
 
-	patientID, ok := parsePatientIDParam(c, "id")
+	patientID, ok := parsePatientIDParam(c, "patientId")
 	if !ok {
 		return
 	}
@@ -82,7 +82,7 @@ func (h *ExamsHandler) ListExamDocuments(c *gin.Context) {
 func (h *ExamsHandler) ListExamDocumentTexts(c *gin.Context) {
 	currentUser := helpers.MustGetCurrentUser(c)
 
-	patientID, ok := parsePatientIDParam(c, "id")
+	patientID, ok := parsePatientIDParam(c, "patientId")
 	if !ok {
 		return
 	}
@@ -107,14 +107,14 @@ func (h *ExamsHandler) ListExamDocumentTexts(c *gin.Context) {
 }
 
 // UploadExamDocument saves the original exam document for later routing.
-// POST /v1/patients/:id/exames
+// POST /v1/patients/:patientId/exames
 // field: file (PDF/JPEG/PNG)
 // field: collection_date (optional YYYY-MM-DD; confirmed by the patient)
 func (h *ExamsHandler) UploadExamDocument(c *gin.Context) {
 	currentUser := helpers.MustGetCurrentUser(c)
 	log := applog.FromContext(c.Request.Context())
 
-	patientID, ok := parsePatientIDParam(c, "id")
+	patientID, ok := parsePatientIDParam(c, "patientId")
 	if !ok {
 		return
 	}

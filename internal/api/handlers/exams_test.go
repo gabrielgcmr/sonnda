@@ -241,7 +241,7 @@ func TestListExamDocuments_UsesServiceWithDefaultPagination(t *testing.T) {
 		helpers.SetCurrentUser(c, &accountdomain.User{ID: uuid.Must(uuid.NewV7()), AccountType: accountdomain.AccountTypeBasicCare})
 		c.Next()
 	})
-	r.GET("/patients/:id/exames", h.ListExamDocuments)
+	r.GET("/patients/:patientId/exames", h.ListExamDocuments)
 
 	id := uuid.Must(uuid.NewV7())
 	req := httptest.NewRequest(http.MethodGet, "/patients/"+id.String()+"/exames", nil)
@@ -277,7 +277,7 @@ func TestListExamDocumentTexts_UsesService(t *testing.T) {
 		helpers.SetCurrentUser(c, &accountdomain.User{ID: uuid.Must(uuid.NewV7()), AccountType: accountdomain.AccountTypeBasicCare})
 		c.Next()
 	})
-	r.GET("/patients/:id/exames/document-texts", h.ListExamDocumentTexts)
+	r.GET("/patients/:patientId/exames/document-texts", h.ListExamDocumentTexts)
 
 	id := uuid.Must(uuid.NewV7())
 	req := httptest.NewRequest(http.MethodGet, "/patients/"+id.String()+"/exames/document-texts", nil)
@@ -304,7 +304,7 @@ func TestListExamDocuments_UsesQueryPagination(t *testing.T) {
 		helpers.SetCurrentUser(c, &accountdomain.User{ID: uuid.Must(uuid.NewV7()), AccountType: accountdomain.AccountTypeBasicCare})
 		c.Next()
 	})
-	r.GET("/patients/:id/exames", h.ListExamDocuments)
+	r.GET("/patients/:patientId/exames", h.ListExamDocuments)
 
 	id := uuid.Must(uuid.NewV7())
 	req := httptest.NewRequest(http.MethodGet, "/patients/"+id.String()+"/exames?limit=25&offset=50", nil)
@@ -348,7 +348,7 @@ func TestUploadExamDocument_WhenClassifiedAsLab_UsesStructuredLabPipeline(t *tes
 		helpers.SetCurrentUser(c, &accountdomain.User{ID: userID, AccountType: accountdomain.AccountTypeBasicCare})
 		c.Next()
 	})
-	r.POST("/v1/patients/:id/exames", h.UploadExamDocument)
+	r.POST("/v1/patients/:patientId/exames", h.UploadExamDocument)
 
 	req := httptest.NewRequest(http.MethodPost, "/v1/patients/"+patientID.String()+"/exames", body)
 	req.Header.Set("Content-Type", contentType)
@@ -413,7 +413,7 @@ func TestUploadExamDocument_LabFailureIsNotReportedAsSuccess(t *testing.T) {
 				helpers.SetCurrentUser(c, &accountdomain.User{ID: uuid.New(), AccountType: accountdomain.AccountTypeBasicCare})
 				c.Next()
 			})
-			r.POST("/v1/patients/:id/exames", h.UploadExamDocument)
+			r.POST("/v1/patients/:patientId/exames", h.UploadExamDocument)
 			body, contentType := multipartBody(t, "file", "exam.pdf", "application/pdf", []byte("%PDF-1.7\ntest"))
 			req := httptest.NewRequest(http.MethodPost, "/v1/patients/"+uuid.NewString()+"/exames", body)
 			req.Header.Set("Content-Type", contentType)

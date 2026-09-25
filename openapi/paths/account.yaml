@@ -1,6 +1,7 @@
 # openapi/paths/account.yaml
 me:
   post:
+    operationId: createCurrentAccount
     summary: Criar usuário
     description: |-
       Cria o usuário da plataforma a partir da identidade autenticada (JWT do Supabase).
@@ -31,6 +32,7 @@ me:
       "500":
         $ref: "../../openapi.yaml#/components/responses/Problem"
   get:
+    operationId: getCurrentAccount
     summary: Obter perfil do usuário atual
     description: Retorna 403 com code PROFILE_NOT_FOUND quando a identidade está autenticada mas não possui cadastro local.
     tags: [Me]
@@ -48,6 +50,7 @@ me:
       "500":
         $ref: "../../openapi.yaml#/components/responses/Problem"
   put:
+    operationId: updateCurrentAccount
     summary: Atualizar perfil do usuário atual
     tags: [Me]
     requestBody:
@@ -74,6 +77,7 @@ me:
       "500":
         $ref: "../../openapi.yaml#/components/responses/Problem"
   delete:
+    operationId: deleteCurrentAccount
     summary: Remover usuário atual (hard delete)
     tags: [Me]
     responses:

@@ -46,7 +46,7 @@ func TestListLabs_DefaultUsesSummary(t *testing.T) {
 		helpers.SetCurrentUser(c, &accountdomain.User{ID: uuid.Must(uuid.NewV7()), AccountType: accountdomain.AccountTypeBasicCare})
 		c.Next()
 	})
-	r.GET("/patients/:id/labs", h.ListLabs)
+	r.GET("/patients/:patientId/labs", h.ListLabs)
 
 	id := uuid.Must(uuid.NewV7()).String()
 	req := httptest.NewRequest(http.MethodGet, "/patients/"+id+"/labs", nil)
@@ -76,7 +76,7 @@ func TestListLabs_ExpandFullUsesFull(t *testing.T) {
 		helpers.SetCurrentUser(c, &accountdomain.User{ID: uuid.Must(uuid.NewV7()), AccountType: accountdomain.AccountTypeBasicCare})
 		c.Next()
 	})
-	r.GET("/patients/:id/labs", h.ListLabs)
+	r.GET("/patients/:patientId/labs", h.ListLabs)
 
 	id := uuid.Must(uuid.NewV7()).String()
 	req := httptest.NewRequest(http.MethodGet, "/patients/"+id+"/labs?expand=full", nil)
@@ -106,7 +106,7 @@ func TestListLabs_IncludeResultsUsesFull(t *testing.T) {
 		helpers.SetCurrentUser(c, &accountdomain.User{ID: uuid.Must(uuid.NewV7()), AccountType: accountdomain.AccountTypeBasicCare})
 		c.Next()
 	})
-	r.GET("/patients/:id/labs", h.ListLabs)
+	r.GET("/patients/:patientId/labs", h.ListLabs)
 
 	id := uuid.Must(uuid.NewV7()).String()
 	req := httptest.NewRequest(http.MethodGet, "/patients/"+id+"/labs?include=results", nil)

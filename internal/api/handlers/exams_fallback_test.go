@@ -36,7 +36,7 @@ func TestUploadContinuesAfterCloudOCRRecoversLocalFailure(t *testing.T) {
 		helpers.SetCurrentUser(c, &accountdomain.User{ID: uuid.New(), AccountType: accountdomain.AccountTypeBasicCare})
 		c.Next()
 	})
-	r.POST("/v1/patients/:id/exames", h.UploadExamDocument)
+	r.POST("/v1/patients/:patientId/exames", h.UploadExamDocument)
 	body, contentType := multipartBody(t, "file", "photo.jpg", "image/jpeg", []byte{0xff, 0xd8, 0xff, 0xe0})
 	req := httptest.NewRequest(http.MethodPost, "/v1/patients/"+uuid.NewString()+"/exames", body)
 	req.Header.Set("Content-Type", contentType)

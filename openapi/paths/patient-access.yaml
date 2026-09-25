@@ -1,6 +1,7 @@
 # openapi/paths/patient-access.yaml
 current-account-patients:
   get:
+    operationId: listAccessiblePatients
     summary: Listar pacientes acessíveis pela conta atual
     tags: [Patient Access]
     parameters:

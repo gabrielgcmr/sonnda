@@ -9,11 +9,11 @@
 
 ## Contexto
 
-A rota unificada `POST /v1/patients/:id/exames` precisa receber documentos de exames diferentes sem piorar a experiencia do paciente.
+A rota unificada `POST /v1/patients/:patientId/exames` precisa receber documentos de exames diferentes sem piorar a experiencia do paciente.
 
 Para laudos de imagem, o texto do laudo costuma ser suficiente nesta etapa. Para exames laboratoriais, porem, o dado mais importante nao e o texto corrido: sao os valores de cada analito, suas unidades e referencias.
 
-O pipeline anterior de laboratorios (`POST /v1/patients/:id/labs`) conseguia gerar dados estruturados, mas dependia de um recurso mais caro de extracao semantica. Para exames comuns, como hemograma e EAS, o vocabulario e limitado e o formato costuma ser repetitivo. O Tesseract tambem ja entrega um texto relativamente previsivel para muitos desses documentos.
+O pipeline anterior de laboratorios (`POST /v1/patients/:patientId/labs`) conseguia gerar dados estruturados, mas dependia de um recurso mais caro de extracao semantica. Para exames comuns, como hemograma e EAS, o vocabulario e limitado e o formato costuma ser repetitivo. O Tesseract tambem ja entrega um texto relativamente previsivel para muitos desses documentos.
 
 Isso cria uma oportunidade: usar OCR barato seguido de regras explicitas para transformar linhas conhecidas em dados estruturados, mantendo Document AI/LLM apenas como fallback futuro.
 

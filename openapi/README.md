@@ -17,7 +17,13 @@ Os contratos já extraídos por contexto são:
 Os demais contratos e componentes compartilhados continuam no arquivo principal.
 Os `$ref` são relativos ao arquivo que os contém. Assim, os módulos de paths
 referenciam os componentes compartilhados por `../../openapi.yaml#/components/...`.
-Não alteramos campos, respostas ou regras de validação nesta extração.
+
+## Convenções de operações
+
+- Toda operação deve declarar um `operationId` único, estável e em `lowerCamelCase`.
+- Parâmetros de caminho devem descrever o recurso, como `{patientId}` e `{problemId}`; não use `{id}`.
+- Parâmetros reutilizados devem ser declarados em `components/parameters`, como `PatientId`.
+- Renomear um `operationId` é uma mudança de contrato porque altera os métodos dos clientes gerados.
 
 ## Validar e gerar
 
