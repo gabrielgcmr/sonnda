@@ -3,6 +3,7 @@ package handlers
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
@@ -47,6 +48,39 @@ func parsePatientIDParam(c *gin.Context, parameterName string) (uuid.UUID, bool)
 	}
 
 	return parsedID, true
+}
+
+func parsePagination(c *gin.Context, defaultLimit, defaultOffset int) (limit, offset int, ok bool) {
+	limit = defaultLimit
+	offset = defaultOffset
+
+	if limitStr := c.Query("limit"); limitStr != "" {
+		parsed, err := strconv.Atoi(limitStr)
+		if err != nil || parsed <= 0 {
+			presenter.ErrorResponder(c, &apperr.AppError{
+				Kind:    apperr.VALIDATION_FAILED,
+				Message: "limit deve ser > 0",
+				Cause:   err,
+			})
+			return 0, 0, false
+		}
+		limit = parsed
+	}
+
+	if offsetStr := c.Query("offset"); offsetStr != "" {
+		parsed, err := strconv.Atoi(offsetStr)
+		if err != nil || parsed < 0 {
+			presenter.ErrorResponder(c, &apperr.AppError{
+				Kind:    apperr.VALIDATION_FAILED,
+				Message: "offset deve ser >= 0",
+				Cause:   err,
+			})
+			return 0, 0, false
+		}
+		offset = parsed
+	}
+
+	return limit, offset, true
 }
 
 func ParseGender(genderStr string) (demographics.Gender, error) {

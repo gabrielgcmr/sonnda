@@ -15,12 +15,14 @@ import (
 	"time"
 
 	helpers "github.com/gabrielgcmr/sonnda/internal/api/helpers"
-	examsvc "github.com/gabrielgcmr/sonnda/internal/application/services/exams"
-	labsvc "github.com/gabrielgcmr/sonnda/internal/application/services/labs"
-	labsuc "github.com/gabrielgcmr/sonnda/internal/application/usecase/labs"
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/exams"
+	domainstorage "github.com/gabrielgcmr/sonnda/internal/domain/storage"
 	domaintext "github.com/gabrielgcmr/sonnda/internal/domain/textextraction"
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
+	examsvc "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing"
+	exams "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/domain"
+	labsuc "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/processing"
+	patientaccess "github.com/gabrielgcmr/sonnda/internal/features/patient/access"
+	labsvc "github.com/gabrielgcmr/sonnda/internal/features/patient/exam/laboratory"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -156,21 +158,22 @@ type fakeTextExtractor struct {
 	input domaintext.ExtractInput
 }
 
+func newExamsHandler(
+	svc examsvc.Service,
+	laboratory labsuc.CreateLabReportFromDocumentUseCase,
+	storage domainstorage.FileStorageService,
+	extractor domaintext.Extractor,
+	accessChecker patientaccess.Checker,
+) *ExamsHandler {
+	return NewExams(svc, labsuc.NewProcessStoredDocument(svc, laboratory, extractor), storage, accessChecker)
+}
+
 func (f *fakeTextExtractor) Extract(ctx context.Context, input domaintext.ExtractInput) (*domaintext.ExtractOutput, error) {
 	f.input = input
 	return &domaintext.ExtractOutput{
 		Text:   "HEMOGRAMA\nHemoglobina 15,1 g/dL",
 		Method: "test_text_extractor",
 	}, nil
-}
-
-func TestDocumentTextForDisplayUsesNormalizedTextAndKeepsRawFallback(t *testing.T) {
-	if got := documentTextForDisplay(&domaintext.ExtractOutput{Text: "Hematocrito 43,8 \uFF05", NormalizedText: "Hematocrito 43,8 %"}); got != "Hematocrito 43,8 %" {
-		t.Fatalf("normalized display text = %q", got)
-	}
-	if got := documentTextForDisplay(&domaintext.ExtractOutput{Text: "Hematocrito 43,8 \uFF05"}); got != "Hematocrito 43,8 \uFF05" {
-		t.Fatalf("raw fallback text = %q", got)
-	}
 }
 
 func TestParseExamCollectionDate(t *testing.T) {
@@ -234,7 +237,7 @@ func TestListExamDocuments_UsesServiceWithDefaultPagination(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	svc := &fakeExamsService{}
-	h := NewExams(svc, nil, nil, nil, allowAllAccessChecker{})
+	h := newExamsHandler(svc, nil, nil, nil, allowAllAccessChecker{})
 
 	r := gin.New()
 	r.Use(func(c *gin.Context) {
@@ -270,7 +273,7 @@ func TestListExamDocumentTexts_UsesService(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	svc := &fakeExamsService{}
-	h := NewExams(svc, nil, nil, nil, allowAllAccessChecker{})
+	h := newExamsHandler(svc, nil, nil, nil, allowAllAccessChecker{})
 
 	r := gin.New()
 	r.Use(func(c *gin.Context) {
@@ -297,7 +300,7 @@ func TestListExamDocuments_UsesQueryPagination(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	svc := &fakeExamsService{}
-	h := NewExams(svc, nil, nil, nil, allowAllAccessChecker{})
+	h := newExamsHandler(svc, nil, nil, nil, allowAllAccessChecker{})
 
 	r := gin.New()
 	r.Use(func(c *gin.Context) {
@@ -332,7 +335,7 @@ func TestUploadExamDocument_WhenClassifiedAsLab_UsesStructuredLabPipeline(t *tes
 	textExtractor := &fakeTextExtractor{}
 	createLabUC := &fakeCreateLabReportUC{}
 	svc := &fakeExamsService{}
-	h := NewExams(svc, createLabUC, storage, textExtractor, allowAllAccessChecker{})
+	h := newExamsHandler(svc, createLabUC, storage, textExtractor, allowAllAccessChecker{})
 
 	body, contentType := multipartBodyWithFields(
 		t,
@@ -407,7 +410,7 @@ func TestUploadExamDocument_LabFailureIsNotReportedAsSuccess(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			svc := &fakeExamsService{}
-			h := NewExams(svc, &fakeCreateLabReportUC{err: tc.err}, &fakeExamStorage{}, &fakeTextExtractor{}, allowAllAccessChecker{})
+			h := newExamsHandler(svc, &fakeCreateLabReportUC{err: tc.err}, &fakeExamStorage{}, &fakeTextExtractor{}, allowAllAccessChecker{})
 			r := gin.New()
 			r.Use(func(c *gin.Context) {
 				helpers.SetCurrentUser(c, &accountdomain.User{ID: uuid.New(), AccountType: accountdomain.AccountTypeBasicCare})
@@ -432,48 +435,6 @@ func TestUploadExamDocument_LabFailureIsNotReportedAsSuccess(t *testing.T) {
 				t.Fatal("internal error details were exposed")
 			}
 		})
-	}
-}
-
-func TestBuildLabText_FormatsStructuredResults(t *testing.T) {
-	reportDate := time.Date(2026, time.August, 31, 0, 0, 0, 0, time.UTC)
-	patientName := "Gabriel Cactus Moreno Reboucas"
-	labName := "Laboratorio Exemplo"
-	unit := "g/dL"
-	value := "15,1"
-	reference := "13,5 a 17,5"
-
-	text := buildLabReportText(&labsvc.LabReportOutput{
-		PatientName: &patientName,
-		LabName:     &labName,
-		ReportDate:  &reportDate,
-		TestResults: []labsvc.TestResultOutput{
-			{
-				TestName: "HEMOGRAMA",
-				Items: []labsvc.TestItemOutput{
-					{
-						ParameterName: "Hemoglobina",
-						ResultValue:   &value,
-						ResultUnit:    &unit,
-						ReferenceText: &reference,
-					},
-				},
-			},
-		},
-	})
-
-	expectedParts := []string{
-		"Exame laboratorial",
-		"Paciente: Gabriel Cactus Moreno Reboucas",
-		"Laboratorio: Laboratorio Exemplo",
-		"Data do laudo: 31/08/2026",
-		"HEMOGRAMA",
-		"- Hemoglobina 15,1 g/dL (Referencia: 13,5 a 17,5)",
-	}
-	for _, part := range expectedParts {
-		if !strings.Contains(text, part) {
-			t.Fatalf("expected text to contain %q, got:\n%s", part, text)
-		}
 	}
 }
 

@@ -9,6 +9,7 @@ import (
 	accounthttp "github.com/gabrielgcmr/sonnda/internal/features/account/http"
 	authhttp "github.com/gabrielgcmr/sonnda/internal/features/auth/http"
 	accesshttp "github.com/gabrielgcmr/sonnda/internal/features/patient/access/http"
+	laboratoryhttp "github.com/gabrielgcmr/sonnda/internal/features/patient/exam/laboratory/http"
 	patienthttp "github.com/gabrielgcmr/sonnda/internal/features/patient/http"
 	profilehttp "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/http"
 	openapigen "github.com/gabrielgcmr/sonnda/internal/generated/openapi"
@@ -25,6 +26,7 @@ type APIDependencies struct {
 	PatientCreationHandler *patienthttp.CreationHandler
 	PatientHandler         *profilehttp.Handler
 	LabsHandler            *handlers.LabsHandler
+	LaboratoryHandler      *laboratoryhttp.Handler
 	ExamsHandler           *handlers.ExamsHandler
 }
 
@@ -99,7 +101,7 @@ func SetupRoutes(
 
 			labs := patients.Group("/:patientId/labs")
 			{
-				labs.GET("", deps.LabsHandler.ListLabs)
+				labs.GET("", deps.LaboratoryHandler.ListLabs)
 				labs.POST("", deps.LabsHandler.UploadAndProcessLabs)
 			}
 

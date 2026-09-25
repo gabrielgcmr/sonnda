@@ -5,14 +5,12 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	labsvc "github.com/gabrielgcmr/sonnda/internal/application/services/labs"
-	labsuc "github.com/gabrielgcmr/sonnda/internal/application/usecase/labs"
+	labsuc "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/processing"
 
 	helpers "github.com/gabrielgcmr/sonnda/internal/api/helpers"
 	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
@@ -22,62 +20,21 @@ import (
 )
 
 type LabsHandler struct {
-	svc           labsvc.Service
 	createUC      labsuc.CreateLabReportFromDocumentUseCase
 	storage       domainstorage.FileStorageService
 	accessChecker patientaccess.Checker
 }
 
 func NewLabs(
-	svc labsvc.Service,
 	createUC labsuc.CreateLabReportFromDocumentUseCase,
 	storageClient domainstorage.FileStorageService,
 	accessChecker patientaccess.Checker,
 ) *LabsHandler {
 	return &LabsHandler{
-		svc:           svc,
 		createUC:      createUC,
 		storage:       storageClient,
 		accessChecker: accessChecker,
 	}
-}
-
-func (h *LabsHandler) ListLabs(c *gin.Context) {
-	currentUser := helpers.MustGetCurrentUser(c)
-
-	patientID, ok := parsePatientIDParam(c, "patientId")
-	if !ok {
-		return
-	}
-
-	if err := h.accessChecker.RequireAccess(c.Request.Context(), currentUser.ID, patientID); err != nil {
-		presenter.ErrorResponder(c, err)
-		return
-	}
-
-	limit, offset, ok := parsePagination(c, 100, 0)
-	if !ok {
-		return
-	}
-
-	if shouldReturnFullLabs(c) {
-		list, err := h.svc.ListFull(c.Request.Context(), patientID, limit, offset)
-		if err != nil {
-			presenter.ErrorResponder(c, err)
-			return
-		}
-
-		c.JSON(http.StatusOK, list)
-		return
-	}
-
-	list, err := h.svc.List(c.Request.Context(), patientID, limit, offset)
-	if err != nil {
-		presenter.ErrorResponder(c, err)
-		return
-	}
-
-	c.JSON(http.StatusOK, list)
 }
 
 // Handler unico para upload de laudo
@@ -202,60 +159,6 @@ func (h *LabsHandler) handleFileUpload(
 	}
 
 	return uri, contentType, nil
-}
-
-func parsePagination(c *gin.Context, defaultLimit, defaultOffset int) (limit, offset int, ok bool) {
-	limit = defaultLimit
-	offset = defaultOffset
-
-	if limitStr := c.Query("limit"); limitStr != "" {
-		l, err := strconv.Atoi(limitStr)
-		if err != nil || l <= 0 {
-			presenter.ErrorResponder(c, &apperr.AppError{
-				Kind:    apperr.VALIDATION_FAILED,
-				Message: "limit deve ser > 0",
-				Cause:   err,
-			})
-			return 0, 0, false
-		}
-		limit = l
-	}
-
-	if offsetStr := c.Query("offset"); offsetStr != "" {
-		o, err := strconv.Atoi(offsetStr)
-		if err != nil || o < 0 {
-			presenter.ErrorResponder(c, &apperr.AppError{
-				Kind:    apperr.VALIDATION_FAILED,
-				Message: "offset deve ser >= 0",
-				Cause:   err,
-			})
-			return 0, 0, false
-		}
-		offset = o
-	}
-
-	return limit, offset, true
-}
-
-func shouldReturnFullLabs(c *gin.Context) bool {
-	if strings.EqualFold(strings.TrimSpace(c.Query("expand")), "full") {
-		return true
-	}
-
-	include := strings.TrimSpace(c.Query("include"))
-	if include == "" {
-		return false
-	}
-
-	for _, raw := range strings.Split(include, ",") {
-		value := strings.ToLower(strings.TrimSpace(raw))
-		switch value {
-		case "full", "results", "test_results":
-			return true
-		}
-	}
-
-	return false
 }
 
 // isSupportedMimeType checks whether the upload is of an accepted type.

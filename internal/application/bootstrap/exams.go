@@ -3,18 +3,19 @@ package bootstrap
 
 import (
 	"github.com/gabrielgcmr/sonnda/internal/api/handlers"
-	examsvc "github.com/gabrielgcmr/sonnda/internal/application/services/exams"
 	textsvc "github.com/gabrielgcmr/sonnda/internal/application/services/textextraction"
-	labsuc "github.com/gabrielgcmr/sonnda/internal/application/usecase/labs"
 	"github.com/gabrielgcmr/sonnda/internal/config"
 	"github.com/gabrielgcmr/sonnda/internal/domain/labextraction"
 	domainstorage "github.com/gabrielgcmr/sonnda/internal/domain/storage"
 	domaintext "github.com/gabrielgcmr/sonnda/internal/domain/textextraction"
+	examsvc "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing"
+	processingpostgres "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/postgres"
+	labsuc "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/processing"
 	patientaccess "github.com/gabrielgcmr/sonnda/internal/features/patient/access"
 	accesspostgres "github.com/gabrielgcmr/sonnda/internal/features/patient/access/postgres"
+	labpostgres "github.com/gabrielgcmr/sonnda/internal/features/patient/exam/laboratory/postgres"
 	patientpostgres "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/postgres"
 	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
-	"github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/repo"
 	textextractioninfra "github.com/gabrielgcmr/sonnda/internal/infrastructure/textextraction"
 )
 
@@ -31,8 +32,8 @@ func NewExamsModule(
 ) *ExamsModule {
 	patientRepo := patientpostgres.NewRepository(dbClient)
 	accessRepo := accesspostgres.NewRepository(dbClient)
-	examsRepo := repo.NewExamsRepository(dbClient)
-	labsRepo := repo.NewLabsRepository(dbClient)
+	examsRepo := processingpostgres.NewDocumentRepository(dbClient)
+	labsRepo := processingpostgres.NewRepository(dbClient, labpostgres.NewLabsRepository(dbClient))
 
 	svc := examsvc.New(patientRepo, examsRepo)
 	createLabUC := labsuc.NewCreateLabReportFromDocument(patientRepo, labsRepo, labExtractor)
@@ -41,9 +42,10 @@ func NewExamsModule(
 		RequireUsableText: true,
 	})
 	textExtractor := textsvc.NewFallbackExtractor(localExtractor, fallback)
+	processDocumentUC := labsuc.NewProcessStoredDocument(svc, createLabUC, textExtractor)
 	accessChecker := patientaccess.NewChecker(patientRepo, accessRepo)
 
 	return &ExamsModule{
-		Handler: handlers.NewExams(svc, createLabUC, storage, textExtractor, accessChecker),
+		Handler: handlers.NewExams(svc, processDocumentUC, storage, accessChecker),
 	}
 }

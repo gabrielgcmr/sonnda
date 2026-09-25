@@ -10,11 +10,18 @@ import (
 	"github.com/gabrielgcmr/sonnda/internal/api/helpers"
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
 	patientaccess "github.com/gabrielgcmr/sonnda/internal/features/patient/access"
+	laboratoryhttp "github.com/gabrielgcmr/sonnda/internal/features/patient/exam/laboratory/http"
 	patientprofile "github.com/gabrielgcmr/sonnda/internal/features/patient/profile"
 	profiledomain "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/domain"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
+
+type allowAllAccessChecker struct{}
+
+func (allowAllAccessChecker) RequireAccess(context.Context, uuid.UUID, uuid.UUID) error {
+	return nil
+}
 
 type accessTestPatients struct {
 	patientprofile.Repository
@@ -59,11 +66,12 @@ func TestPatientDocumentsDenyAccessBeforeReadingOrProcessing(t *testing.T) {
 			grants := &accessTestGrants{t: t, patientID: patientID, actorID: actor.ID}
 			accessChecker := patientaccess.NewChecker(accessTestPatients{}, grants)
 			// All data services are nil: reaching them after denial fails the test.
-			labs := NewLabs(nil, nil, nil, accessChecker)
-			exams := NewExams(nil, nil, nil, nil, accessChecker)
+			labs := NewLabs(nil, nil, accessChecker)
+			laboratory := laboratoryhttp.NewHandler(nil, accessChecker)
+			exams := NewExams(nil, nil, nil, accessChecker)
 			router := gin.New()
 			router.Use(func(c *gin.Context) { helpers.SetCurrentUser(c, actor) })
-			router.GET("/patients/:patientId/labs", labs.ListLabs)
+			router.GET("/patients/:patientId/labs", laboratory.ListLabs)
 			router.POST("/patients/:patientId/labs", labs.UploadAndProcessLabs)
 			router.GET("/patients/:patientId/exames", exams.ListExamDocuments)
 			router.GET("/patients/:patientId/exames/document-texts", exams.ListExamDocumentTexts)

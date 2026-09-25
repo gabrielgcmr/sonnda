@@ -12,10 +12,10 @@ import (
 	"testing"
 
 	"github.com/gabrielgcmr/sonnda/internal/api/helpers"
-	examsvc "github.com/gabrielgcmr/sonnda/internal/application/services/exams"
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/exams"
 	domaintext "github.com/gabrielgcmr/sonnda/internal/domain/textextraction"
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
+	examsvc "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing"
+	exams "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/domain"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -43,7 +43,7 @@ func TestUploadExamDocumentExplainsOCRReview(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			svc := &fakeExamsService{}
 			lab := &fakeCreateLabReportUC{}
-			h := NewExams(svc, lab, &fakeExamStorage{}, tc.extractor, allowAllAccessChecker{})
+			h := newExamsHandler(svc, lab, &fakeExamStorage{}, tc.extractor, allowAllAccessChecker{})
 			r := gin.New()
 			r.Use(func(c *gin.Context) {
 				helpers.SetCurrentUser(c, &accountdomain.User{ID: uuid.New(), AccountType: accountdomain.AccountTypeBasicCare})
