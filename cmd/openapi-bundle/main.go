@@ -12,7 +12,7 @@ import (
 
 func main() {
 	input := flag.String("input", "openapi.yaml", "OpenAPI source entrypoint")
-	output := flag.String("output", "bin/openapi.yaml", "standalone bundle output")
+	output := flag.String("output", "dist/openapi.yaml", "standalone bundle output")
 	flag.Parse()
 	data, err := openapitools.Bundle(*input)
 	if err == nil {

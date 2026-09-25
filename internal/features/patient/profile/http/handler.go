@@ -10,12 +10,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	openapi "github.com/gabrielgcmr/sonnda/internal/api/openapi/generated"
 	"github.com/gabrielgcmr/sonnda/internal/domain/entity/demographics"
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
 	accessdomain "github.com/gabrielgcmr/sonnda/internal/features/patient/access/domain"
 	patientprofile "github.com/gabrielgcmr/sonnda/internal/features/patient/profile"
 	profiledomain "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/domain"
+	openapi "github.com/gabrielgcmr/sonnda/internal/generated/openapi"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 	applog "github.com/gabrielgcmr/sonnda/internal/kernel/observability"
 

@@ -169,6 +169,13 @@ implementação em memória da interface de queries do SQLC, sem acessar banco r
 - `APP_ENV` define o ambiente (`dev | prod`).
 - Configurações carregadas na inicialização da aplicação (`internal/config`).
 
+## OpenAPI
+
+- `openapi.yaml` e `openapi/` são a fonte modular editável.
+- `dist/openapi.yaml` é o bundle validado consumido por todos os geradores.
+- `internal/generated/openapi` contém os tipos Go gerados.
+- `internal/openapispec` contém os bytes do bundle servidos em `/openapi.yaml`.
+
 ---
 
 ## Bootstrap e rotas

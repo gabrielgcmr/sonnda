@@ -11,10 +11,10 @@ import (
 	"github.com/google/uuid"
 
 	helpers "github.com/gabrielgcmr/sonnda/internal/api/helpers"
-	openapi "github.com/gabrielgcmr/sonnda/internal/api/openapi/generated"
 	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
 	"github.com/gabrielgcmr/sonnda/internal/features/account"
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
+	openapi "github.com/gabrielgcmr/sonnda/internal/generated/openapi"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 )
 

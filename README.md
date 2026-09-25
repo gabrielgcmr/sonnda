@@ -36,8 +36,10 @@ A Sonnda resolve um problema recorrente na pratica clinica: pacientes precisam c
 
 Fonte de verdade do contrato HTTP da API.
 
-- Spec: `openapi.yaml` (embutido no binario e servido em `/openapi.yaml`).
-- Codigo gerado: `internal/api/openapi/generated/oapi.gen.go`.
+- Fonte modular: `openapi.yaml` e os arquivos em `openapi/`.
+- Bundle distribuído e servido: `dist/openapi.yaml`.
+- Tipos Go gerados: `internal/generated/openapi/oapi.gen.go`.
+- Asset Go embutido: `internal/openapispec/spec.gen.go`.
 - Erros HTTP: RFC 9457 (Problem Details) via `application/problem+json`.
 
 ## Arquitetura
@@ -152,17 +154,20 @@ Estrutura atual do projeto:
 │   ├── embed.go
 │   ├── docs.html
 │   └── favicon.ico
+├── dist/
+│   └── openapi.yaml                # Bundle OpenAPI gerado
 ├── internal/
 │   ├── api/                        # [LEGADO - sendo migrado]
 │   │   ├── routes.go
-│   │   ├── openapi/
-│   │   │   ├── openapi_spec_gen.go # Asset gerado a partir da raiz
-│   │   │   └── generated/          # Código gerado via oapi-codegen
-│   │   │       └── oapi.gen.go
 │   │   ├── handlers/
 │   │   ├── helpers/
 │   │   ├── middleware/
 │   │   └── presenter/
+│   ├── generated/
+│   │   └── openapi/
+│   │       └── oapi.gen.go         # Tipos Go gerados do bundle
+│   ├── openapispec/
+│   │   └── spec.gen.go             # Bundle embutido no binário
 │   ├── application/                # Camada de aplicação
 │   │   ├── bootstrap/              # Injeção de dependências
 │   │   ├── services/               # Serviços de aplicação

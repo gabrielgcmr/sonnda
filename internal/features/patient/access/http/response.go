@@ -2,8 +2,8 @@
 package accesshttp
 
 import (
-	openapi "github.com/gabrielgcmr/sonnda/internal/api/openapi/generated"
 	patientaccess "github.com/gabrielgcmr/sonnda/internal/features/patient/access"
+	openapi "github.com/gabrielgcmr/sonnda/internal/generated/openapi"
 )
 
 func listPatientsResponse(result *patientaccess.ListPatientsOutput) openapi.AccessiblePatientsResponse {

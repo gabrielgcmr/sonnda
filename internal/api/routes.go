@@ -6,12 +6,12 @@ import (
 
 	"github.com/gabrielgcmr/sonnda/internal/api/handlers"
 
-	openapispec "github.com/gabrielgcmr/sonnda/internal/api/openapi"
-	openapigen "github.com/gabrielgcmr/sonnda/internal/api/openapi/generated"
 	accounthttp "github.com/gabrielgcmr/sonnda/internal/features/account/http"
 	authhttp "github.com/gabrielgcmr/sonnda/internal/features/auth/http"
 	accesshttp "github.com/gabrielgcmr/sonnda/internal/features/patient/access/http"
 	profilehttp "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/http"
+	openapigen "github.com/gabrielgcmr/sonnda/internal/generated/openapi"
+	openapispec "github.com/gabrielgcmr/sonnda/internal/openapispec"
 
 	"github.com/gin-gonic/gin"
 )

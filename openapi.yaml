@@ -70,75 +70,9 @@ paths:
     $ref: "./openapi/paths/patient-access.yaml#/current-account-patients"
   # patients
   /v1/patients:
-    post:
-      summary: Criar paciente
-      tags: [Patient]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreatePatientRequest"
-      responses:
-        "201":
-          description: Paciente criado
-          headers:
-            Location:
-              description: Caminho do novo recurso
-              schema:
-                type: string
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PatientCreatedResponse"
-        "400":
-          $ref: "#/components/responses/Problem"
-        "401":
-          $ref: "#/components/responses/Problem"
-        "422":
-          $ref: "#/components/responses/Problem"
-        "500":
-          $ref: "#/components/responses/Problem"
-    get:
-      summary: Listar pacientes
-      tags: [Patient]
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PatientsList"
-        "401":
-          $ref: "#/components/responses/Problem"
-        "500":
-          $ref: "#/components/responses/Problem"
+    $ref: "./openapi/paths/patient.yaml#/collection"
   /v1/patients/{id}:
-    get:
-      summary: Obter paciente
-      tags: [Patient]
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Patient"
-        "400":
-          $ref: "#/components/responses/Problem"
-        "401":
-          $ref: "#/components/responses/Problem"
-        "404":
-          $ref: "#/components/responses/Problem"
-        "500":
-          $ref: "#/components/responses/Problem"
+    $ref: "./openapi/paths/patient.yaml#/item"
   /v1/patients/{id}/labs:
     get:
       summary: Listar laudos
@@ -334,49 +268,9 @@ components:
     UpdateUserRequest:
       $ref: "./openapi/components/schemas/account.yaml#/UpdateUserRequest"
     CreatePatientRequest:
-      type: object
-      required:
-        - cpf
-        - full_name
-        - birth_date
-        - gender
-        - race
-      properties:
-        cpf:
-          type: string
-          pattern: "^[0-9]{11}$"
-          minLength: 11
-          maxLength: 11
-          description: "CPF sem pontuação (apenas dígitos)"
-        full_name:
-          type: string
-          minLength: 1
-        birth_date:
-          type: string
-          format: date
-        gender:
-          type: string
-          enum: [MALE, FEMALE, OTHER, UNKNOWN]
-        race:
-          type: string
-          enum: [WHITE, BLACK, ASIAN, MIXED, INDIGENOUS, UNKNOWN]
-        phone:
-          type: string
-          pattern: "^\\+?[0-9]{10,15}$"
-          minLength: 10
-          maxLength: 16
-          nullable: true
-        avatar_url:
-          type: string
-          format: uri
-          nullable: true
+      $ref: "./openapi/components/schemas/patient.yaml#/CreatePatientRequest"
     PatientCreatedResponse:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-      required: [id]
+      $ref: "./openapi/components/schemas/patient.yaml#/PatientCreatedResponse"
     User:
       $ref: "./openapi/components/schemas/account.yaml#/User"
     AccessiblePatientSummary:
@@ -384,43 +278,9 @@ components:
     AccessiblePatientsResponse:
       $ref: "./openapi/components/schemas/patient-access.yaml#/AccessiblePatientsResponse"
     Patient:
-      type: object
-      description: Representação simplificada do paciente.
-      additionalProperties: true
-      properties:
-        id:
-          type: string
-          format: uuid
-        cpf:
-          type: string
-          pattern: "^[0-9]{11}$"
-          minLength: 11
-          maxLength: 11
-        full_name:
-          type: string
-          minLength: 1
-        birth_date:
-          type: string
-          format: date
-        gender:
-          type: string
-          enum: [MALE, FEMALE, OTHER, UNKNOWN]
-        race:
-          type: string
-          enum: [WHITE, BLACK, ASIAN, MIXED, INDIGENOUS, UNKNOWN]
-        phone:
-          type: string
-          pattern: "^\\+?[0-9]{10,15}$"
-          nullable: true
-        avatar_url:
-          type: string
-          format: uri
-          nullable: true
-      required: [id]
+      $ref: "./openapi/components/schemas/patient.yaml#/Patient"
     PatientsList:
-      type: array
-      items:
-        $ref: "#/components/schemas/Patient"
+      $ref: "./openapi/components/schemas/patient.yaml#/PatientsList"
     LabsList:
       description: |-
         Lista de laudos. Por padrao retorna a representacao resumida

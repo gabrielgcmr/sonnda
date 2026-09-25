@@ -2,8 +2,8 @@
 package accounthttp
 
 import (
-	openapi "github.com/gabrielgcmr/sonnda/internal/api/openapi/generated"
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
+	openapi "github.com/gabrielgcmr/sonnda/internal/generated/openapi"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 

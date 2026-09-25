@@ -1,0 +1,83 @@
+# openapi/components/schemas/patient.yaml
+CreatePatientRequest:
+  type: object
+  required:
+    - cpf
+    - full_name
+    - birth_date
+    - gender
+    - race
+  properties:
+    cpf:
+      type: string
+      pattern: "^[0-9]{11}$"
+      minLength: 11
+      maxLength: 11
+      description: "CPF sem pontuação (apenas dígitos)"
+    full_name:
+      type: string
+      minLength: 1
+    birth_date:
+      type: string
+      format: date
+    gender:
+      type: string
+      enum: [MALE, FEMALE, OTHER, UNKNOWN]
+    race:
+      type: string
+      enum: [WHITE, BLACK, ASIAN, MIXED, INDIGENOUS, UNKNOWN]
+    phone:
+      type: string
+      pattern: "^\\+?[0-9]{10,15}$"
+      minLength: 10
+      maxLength: 16
+      nullable: true
+    avatar_url:
+      type: string
+      format: uri
+      nullable: true
+PatientCreatedResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+  required: [id]
+Patient:
+  type: object
+  description: Representação simplificada do paciente.
+  additionalProperties: true
+  properties:
+    id:
+      type: string
+      format: uuid
+    cpf:
+      type: string
+      pattern: "^[0-9]{11}$"
+      minLength: 11
+      maxLength: 11
+    full_name:
+      type: string
+      minLength: 1
+    birth_date:
+      type: string
+      format: date
+    gender:
+      type: string
+      enum: [MALE, FEMALE, OTHER, UNKNOWN]
+    race:
+      type: string
+      enum: [WHITE, BLACK, ASIAN, MIXED, INDIGENOUS, UNKNOWN]
+    phone:
+      type: string
+      pattern: "^\\+?[0-9]{10,15}$"
+      nullable: true
+    avatar_url:
+      type: string
+      format: uri
+      nullable: true
+  required: [id]
+PatientsList:
+  type: array
+  items:
+    $ref: "../../../openapi.yaml#/components/schemas/Patient"
