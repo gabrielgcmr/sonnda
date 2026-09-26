@@ -327,16 +327,25 @@ type OffsetParam = int
 // PatientId defines model for PatientId.
 type PatientId = openapi_types.UUID
 
-// Problem defines model for Problem.
-type Problem = ProblemDetails
+// OpenapiComponentsParametersLimitParam defines model for openapi_components_parameters_LimitParam.
+type OpenapiComponentsParametersLimitParam = int
+
+// OpenapiComponentsParametersOffsetParam defines model for openapi_components_parameters_OffsetParam.
+type OpenapiComponentsParametersOffsetParam = int
+
+// OpenapiComponentsParametersPatientId defines model for openapi_components_parameters_PatientId.
+type OpenapiComponentsParametersPatientId = openapi_types.UUID
+
+// OpenapiComponentsResponsesProblem defines model for Problem.
+type OpenapiComponentsResponsesProblem = ProblemDetails
 
 // ListAccessiblePatientsParams defines parameters for ListAccessiblePatients.
 type ListAccessiblePatientsParams struct {
 	// Limit Número máximo de itens
-	Limit *LimitParam `form:"limit,omitempty" json:"limit,omitempty"`
+	Limit *OpenapiComponentsParametersLimitParam `form:"limit,omitempty" json:"limit,omitempty"`
 
 	// Offset Número de itens para pular
-	Offset *OffsetParam `form:"offset,omitempty" json:"offset,omitempty"`
+	Offset *OpenapiComponentsParametersOffsetParam `form:"offset,omitempty" json:"offset,omitempty"`
 }
 
 // UploadExamDocumentMultipartBody defines parameters for UploadExamDocument.
@@ -674,7 +683,7 @@ type ServerInterface interface {
 	CreatePatient(c *gin.Context)
 	// Obter paciente
 	// (GET /v1/patients/{patientId})
-	GetPatient(c *gin.Context, patientId PatientId)
+	GetPatient(c *gin.Context, patientId OpenapiComponentsParametersPatientId)
 	// Enviar documento de exame
 	// (POST /v1/patients/{patientId}/exam-documents)
 	UploadExamDocument(c *gin.Context, patientId PatientId)
@@ -934,7 +943,7 @@ func (siw *ServerInterfaceWrapper) GetPatient(c *gin.Context) {
 	var err error
 
 	// ------------- Path parameter "patientId" -------------
-	var patientId PatientId
+	var patientId OpenapiComponentsParametersPatientId
 
 	err = runtime.BindStyledParameterWithOptions("simple", "patientId", c.Param("patientId"), &patientId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
