@@ -1,4 +1,5 @@
 // cmd/openapi-embed/main.go
+// cmd/openapi-embed/main.go
 package main
 
 import (
@@ -10,7 +11,7 @@ import (
 )
 
 func main() {
-	inputPath := flag.String("input", "dist/openapi.yaml", "path to the bundled OpenAPI file")
+	inputPath := flag.String("input", "../sonnda-contracts/dist/openapi.yaml", "path to the consumed OpenAPI bundle")
 	outputPath := flag.String("output", "internal/openapispec/spec.gen.go", "path to the generated Go file")
 	packageName := flag.String("package", "openapispec", "package name for the generated Go file")
 	flag.Parse()

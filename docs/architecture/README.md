@@ -171,8 +171,8 @@ implementação em memória da interface de queries do SQLC, sem acessar banco r
 
 ## OpenAPI
 
-- `openapi.yaml` e `openapi/` são a fonte modular editável.
-- `dist/openapi.yaml` é o bundle validado consumido por todos os geradores.
+- `../sonnda-contracts/openapi.yaml` e `../sonnda-contracts/openapi/` são a fonte modular editável.
+- `../sonnda-contracts/dist/openapi.yaml` é o bundle validado consumido pelos geradores da API.
 - `internal/generated/openapi` contém os tipos Go gerados.
 - `internal/openapispec` contém os bytes do bundle servidos em `/openapi.yaml`.
 

@@ -34,10 +34,10 @@ A Sonnda resolve um problema recorrente na pratica clinica: pacientes precisam c
 
 ## OpenAPI
 
-Fonte de verdade do contrato HTTP da API.
+O contrato HTTP é mantido no projeto irmão `../sonnda-contracts`.
 
-- Fonte modular: `openapi.yaml` e os arquivos em `openapi/`.
-- Bundle distribuído e servido: `dist/openapi.yaml`.
+- Fonte modular: `../sonnda-contracts/openapi.yaml` e os arquivos em `../sonnda-contracts/openapi/`.
+- Bundle consumido, gerado e servido: `../sonnda-contracts/dist/openapi.yaml`.
 - Tipos Go gerados: `internal/generated/openapi/oapi.gen.go`.
 - Asset Go embutido: `internal/openapispec/spec.gen.go`.
 - Erros HTTP: RFC 9457 (Problem Details) via `application/problem+json`.
@@ -134,7 +134,7 @@ Estrutura atual do projeto:
 ├── cmd/
 │   └── server/
 │       └── main.go                 # Ponto de entrada da aplicação
-├── openapi.yaml                    # Fonte de verdade do contrato HTTP
+├── ../sonnda-contracts/             # Fonte de verdade do contrato HTTP
 ├── docs/
 │   ├── README.md
 │   ├── api/                        # Documentação de endpoints
@@ -154,8 +154,6 @@ Estrutura atual do projeto:
 │   ├── embed.go
 │   ├── docs.html
 │   └── favicon.ico
-├── dist/
-│   └── openapi.yaml                # Bundle OpenAPI gerado
 ├── internal/
 │   ├── api/                        # [LEGADO - sendo migrado]
 │   │   ├── routes.go

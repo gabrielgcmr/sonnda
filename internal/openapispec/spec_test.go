@@ -11,7 +11,7 @@ import (
 )
 
 func TestEmbeddedSpecMatchesDistributionBundle(t *testing.T) {
-	want, err := os.ReadFile("../../dist/openapi.yaml")
+	want, err := os.ReadFile("../../../sonnda-contracts/dist/openapi.yaml")
 	if err != nil {
 		t.Fatal(err)
 	}

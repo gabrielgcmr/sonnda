@@ -7,8 +7,8 @@ MAIN     := ./cmd/api
 VERSION ?= 1.0.0
 LDFLAGS := -s -w -X github.com/gabrielgcmr/sonnda/cmd/api.version=$(VERSION)
 SQLC_SPEC := internal/infrastructure/persistence/postgres/sqlc/sqlc.yaml
-OPENAPI_SPEC := openapi.yaml
-OPENAPI_BUNDLE := dist/openapi.yaml
+CONTRACTS_DIR ?= ../sonnda-contracts
+OPENAPI_BUNDLE := $(CONTRACTS_DIR)/dist/openapi.yaml
 
 # ==============================================================================
 # 🎯 TARGETS PRINCIPAIS
@@ -68,11 +68,11 @@ OAPI_CODEGEN_OUTPUT  := internal/generated/openapi/oapi.gen.go
 OAPI_CODEGEN_PACKAGE := openapi
 OAPI_CODEGEN_GENERATE := types,gin
 
-openapi-bundle: openapi-validate
-	go run ./cmd/openapi-bundle -input $(OPENAPI_SPEC) -output $(OPENAPI_BUNDLE)
+openapi-bundle:
+	$(MAKE) -C $(CONTRACTS_DIR) bundle
 
 openapi-validate-bundle: openapi-bundle
-	go run ./cmd/openapi-validate -file $(OPENAPI_BUNDLE)
+	$(MAKE) -C $(CONTRACTS_DIR) validate-bundle
 
 openapi-embed: openapi-validate-bundle
 	go generate ./internal/openapispec
@@ -104,12 +104,12 @@ help:
 	@echo "  dev-air     - Inicia apenas o Backend (com Air)"
 	@echo "  build       - Gera o binário de produção"
 	@echo "  clean       - Limpa pastas geradas"
-	@echo "  generate    - Gera SQLC, bundle OpenAPI, embed e tipos Go"
-	@echo "  openapi-generate - Valida, cria o bundle, embed e tipos Go"
+	@echo "  generate    - Gera SQLC, sincroniza o bundle local, embed e tipos Go"
+	@echo "  openapi-generate - Valida o contrato, gera embed e tipos Go"
 	@echo "  openapi-embed - Gera o asset Go a partir do bundle"
-	@echo "  openapi-validate - Valida o OpenAPI local"
-	@echo "  openapi-bundle - Unifica o OpenAPI em dist/openapi.yaml"
-	@echo "  openapi-validate-bundle - Valida dist/openapi.yaml"
+	@echo "  openapi-validate - Valida o contrato em $(CONTRACTS_DIR)"
+	@echo "  openapi-bundle - Gera $(OPENAPI_BUNDLE)"
+	@echo "  openapi-validate-bundle - Valida $(OPENAPI_BUNDLE)"
 	@echo "  tools-air   - Instala o Air em ./bin"
 	@echo "  docker-up   - Sobe o docker"
 	@echo "  docker-down - Derruba o docker"
@@ -117,9 +117,5 @@ help:
 # ==============================================================================
 # 📚 OPENAPI
 # ==============================================================================
-OPENAPI_DOCS := $(OPENAPI_SPEC)
-
-OPENAPI_VALIDATE := ./cmd/openapi-validate
-
 openapi-validate:
-	go run $(OPENAPI_VALIDATE) -file $(OPENAPI_DOCS)
+	$(MAKE) -C $(CONTRACTS_DIR) validate
