@@ -102,6 +102,10 @@ func TestAccountRoutesPreserveErrors(t *testing.T) {
 		{http.MethodGet, "/v1/me"},
 		{http.MethodPut, "/v1/me"},
 		{http.MethodDelete, "/v1/me"},
+		{http.MethodPost, "/v1/patients/" + uuid.NewString() + "/exam-documents"},
+		{http.MethodGet, "/v1/exam-documents/" + uuid.NewString()},
+		{http.MethodGet, "/v1/patients/" + uuid.NewString() + "/lab-reports"},
+		{http.MethodGet, "/v1/lab-reports/" + uuid.NewString()},
 	} {
 		response := httptest.NewRecorder()
 		router.ServeHTTP(response, httptest.NewRequest(route.method, route.path, nil))

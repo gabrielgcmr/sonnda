@@ -98,6 +98,8 @@ func SetupRoutes(
 
 			//Dados básicos do paciente
 			patients.GET("/:patientId", deps.PatientHandler.GetPatient)
+			patients.GET("/:patientId/lab-reports", deps.LaboratoryHandler.ListLabs)
+			patients.POST("/:patientId/exam-documents", deps.ExamsHandler.UploadExamDocument)
 
 			labs := patients.Group("/:patientId/labs")
 			{
@@ -114,6 +116,8 @@ func SetupRoutes(
 			}
 
 		}
+		registered.GET("/exam-documents/:documentId", deps.ExamsHandler.GetExamDocument)
+		registered.GET("/lab-reports/:labReportId", deps.LaboratoryHandler.GetLabReport)
 	}
 }
 

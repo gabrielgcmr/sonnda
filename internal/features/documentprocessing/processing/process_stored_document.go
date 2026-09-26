@@ -211,7 +211,7 @@ func (u *processStoredDocumentUseCase) markNeedsReview(
 }
 
 func (u *processStoredDocumentUseCase) markProcessorFailure(ctx context.Context, documentID uuid.UUID, processingErr error) error {
-	message := "falha no processamento laboratorial"
+	message := "falha no processamento do documento"
 	var appErr *apperr.AppError
 	if errors.As(processingErr, &appErr) {
 		message = appErr.Message

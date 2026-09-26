@@ -20,6 +20,7 @@ import (
 type labService interface {
 	List(ctx context.Context, patientID uuid.UUID, limit, offset int) ([]laboratory.LabReportSummaryOutput, error)
 	ListFull(ctx context.Context, patientID uuid.UUID, limit, offset int) ([]*laboratory.LabReportOutput, error)
+	FindByID(ctx context.Context, reportID uuid.UUID) (*laboratory.LabReportOutput, error)
 }
 
 type Handler struct {
@@ -64,6 +65,29 @@ func (h *Handler) ListLabs(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, list)
+}
+
+func (h *Handler) GetLabReport(c *gin.Context) {
+	currentUser := helpers.MustGetCurrentUser(c)
+	reportID, err := uuid.Parse(c.Param("labReportId"))
+	if err != nil {
+		presenter.ErrorResponder(c, apperr.Validation("lab_report_id inválido", apperr.Violation{Field: "lab_report_id", Reason: "invalid"}))
+		return
+	}
+	report, err := h.svc.FindByID(c.Request.Context(), reportID)
+	if err != nil {
+		presenter.ErrorResponder(c, err)
+		return
+	}
+	if report == nil {
+		presenter.ErrorResponder(c, apperr.NotFound("laudo nao encontrado"))
+		return
+	}
+	if err := h.accessChecker.RequireAccess(c.Request.Context(), currentUser.ID, report.PatientID); err != nil {
+		presenter.ErrorResponder(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, report)
 }
 
 func parsePagination(c *gin.Context) (limit, offset int, ok bool) {

@@ -3,6 +3,7 @@ package processing
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
 	"time"
@@ -21,6 +22,7 @@ type processDocumentServiceStub struct {
 	routeCalls  []documents.RouteExamDocumentInput
 	textCreated bool
 	failed      bool
+	failedInput documents.MarkExamDocumentFailedInput
 }
 
 func (s *processDocumentServiceStub) Create(_ context.Context, input documents.CreateExamDocumentInput) (*documents.ExamDocumentOutput, error) {
@@ -50,8 +52,9 @@ func (s *processDocumentServiceStub) RouteDocument(_ context.Context, input docu
 	return s.document, nil
 }
 
-func (s *processDocumentServiceStub) MarkFailed(context.Context, documents.MarkExamDocumentFailedInput) (*documents.ExamDocumentOutput, error) {
+func (s *processDocumentServiceStub) MarkFailed(_ context.Context, input documents.MarkExamDocumentFailedInput) (*documents.ExamDocumentOutput, error) {
 	s.failed = true
+	s.failedInput = input
 	return s.document, nil
 }
 
@@ -72,6 +75,32 @@ func (p *processorCallStub) Kind() DocumentKind { return DocumentKindLaboratory 
 func (p *processorCallStub) Process(context.Context, ProcessingInput) error {
 	p.called = true
 	return nil
+}
+
+type processorErrorStub struct {
+	err error
+}
+
+func (processorErrorStub) Kind() DocumentKind { return DocumentKindLaboratory }
+func (p processorErrorStub) Process(context.Context, ProcessingInput) error {
+	return p.err
+}
+
+func TestProcessorFailureUsesGenericDocumentMessage(t *testing.T) {
+	processingErr := errors.New("processor failed")
+	documentService := &processDocumentServiceStub{routeKind: documentdomain.ExamTypeLaboratory}
+	useCase := NewProcessStoredDocument(documentService, processTextExtractorStub{}, processorErrorStub{err: processingErr})
+
+	_, err := useCase.Execute(context.Background(), ProcessStoredDocumentInput{
+		PatientID: uuid.New(), UploadedByUserID: uuid.New(), StorageURI: "gs://bucket/report.pdf",
+		OriginalFilename: "report.pdf", MimeType: "application/pdf",
+	})
+	if !errors.Is(err, processingErr) {
+		t.Fatalf("Execute error = %v, want original processor error", err)
+	}
+	if !documentService.failed || documentService.failedInput.ErrorMessage != "falha no processamento do documento" {
+		t.Fatalf("MarkFailed input = %+v, want generic document processing message", documentService.failedInput)
+	}
 }
 
 func TestUnregisteredDocumentKindMovesToReviewWithoutClinicalProcessor(t *testing.T) {

@@ -62,9 +62,14 @@ const (
 	Self         RelationshipType = "self"
 )
 
+// Defines values for ListPatientLabReportsParamsExpand.
+const (
+	ListPatientLabReportsParamsExpandFull ListPatientLabReportsParamsExpand = "full"
+)
+
 // Defines values for ListPatientLabsParamsExpand.
 const (
-	Full ListPatientLabsParamsExpand = "full"
+	ListPatientLabsParamsExpandFull ListPatientLabsParamsExpand = "full"
 )
 
 // AccessiblePatientSummary defines model for AccessiblePatientSummary.
@@ -112,6 +117,23 @@ type CreateUserRequest struct {
 	Cpf      string `json:"cpf"`
 	FullName string `json:"full_name"`
 	Phone    string `json:"phone"`
+}
+
+// ExamDocument defines model for ExamDocument.
+type ExamDocument struct {
+	Confidence       *float64           `json:"confidence"`
+	CreatedAt        time.Time          `json:"created_at"`
+	ErrorMessage     *string            `json:"error_message"`
+	ExamType         *string            `json:"exam_type"`
+	ExtractionMethod *string            `json:"extraction_method"`
+	Id               openapi_types.UUID `json:"id"`
+	MimeType         string             `json:"mime_type"`
+	OriginalFilename string             `json:"original_filename"`
+	PatientId        openapi_types.UUID `json:"patient_id"`
+	Status           string             `json:"status"`
+	StorageUri       string             `json:"storage_uri"`
+	UpdatedAt        time.Time          `json:"updated_at"`
+	UploadedByUserId openapi_types.UUID `json:"uploaded_by_user_id"`
 }
 
 // HealthResponse defines model for HealthResponse.
@@ -317,6 +339,27 @@ type ListAccessiblePatientsParams struct {
 	Offset *OffsetParam `form:"offset,omitempty" json:"offset,omitempty"`
 }
 
+// UploadExamDocumentMultipartBody defines parameters for UploadExamDocument.
+type UploadExamDocumentMultipartBody struct {
+	CollectionDate *openapi_types.Date `json:"collection_date,omitempty"`
+	File           openapi_types.File  `json:"file"`
+}
+
+// ListPatientLabReportsParams defines parameters for ListPatientLabReports.
+type ListPatientLabReportsParams struct {
+	Expand  *ListPatientLabReportsParamsExpand `form:"expand,omitempty" json:"expand,omitempty"`
+	Include *string                            `form:"include,omitempty" json:"include,omitempty"`
+
+	// Limit Número máximo de itens
+	Limit *LimitParam `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Offset Número de itens para pular
+	Offset *OffsetParam `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// ListPatientLabReportsParamsExpand defines parameters for ListPatientLabReports.
+type ListPatientLabReportsParamsExpand string
+
 // ListPatientLabsParams defines parameters for ListPatientLabs.
 type ListPatientLabsParams struct {
 	// Expand Retorna a representação completa quando expand=full
@@ -348,6 +391,9 @@ type UpdateCurrentAccountJSONRequestBody = UpdateUserRequest
 
 // CreatePatientJSONRequestBody defines body for CreatePatient for application/json ContentType.
 type CreatePatientJSONRequestBody = CreatePatientRequest
+
+// UploadExamDocumentMultipartRequestBody defines body for UploadExamDocument for multipart/form-data ContentType.
+type UploadExamDocumentMultipartRequestBody UploadExamDocumentMultipartBody
 
 // UploadPatientLabMultipartRequestBody defines body for UploadPatientLab for multipart/form-data ContentType.
 type UploadPatientLabMultipartRequestBody UploadPatientLabMultipartBody
@@ -599,6 +645,12 @@ type ServerInterface interface {
 	// Readiness check
 	// (GET /readyz)
 	GetReadiness(c *gin.Context)
+	// Obter documento de exame
+	// (GET /v1/exam-documents/{documentId})
+	GetExamDocument(c *gin.Context, documentId openapi_types.UUID)
+	// Obter laudo laboratorial
+	// (GET /v1/lab-reports/{labReportId})
+	GetLabReport(c *gin.Context, labReportId openapi_types.UUID)
 	// Remover usuário atual (hard delete)
 	// (DELETE /v1/me)
 	DeleteCurrentAccount(c *gin.Context)
@@ -623,6 +675,12 @@ type ServerInterface interface {
 	// Obter paciente
 	// (GET /v1/patients/{patientId})
 	GetPatient(c *gin.Context, patientId PatientId)
+	// Enviar documento de exame
+	// (POST /v1/patients/{patientId}/exam-documents)
+	UploadExamDocument(c *gin.Context, patientId PatientId)
+	// Listar laudos laboratoriais
+	// (GET /v1/patients/{patientId}/lab-reports)
+	ListPatientLabReports(c *gin.Context, patientId PatientId, params ListPatientLabReportsParams)
 	// Listar laudos
 	// (GET /v1/patients/{patientId}/labs)
 	ListPatientLabs(c *gin.Context, patientId PatientId, params ListPatientLabsParams)
@@ -690,6 +748,58 @@ func (siw *ServerInterfaceWrapper) GetReadiness(c *gin.Context) {
 	}
 
 	siw.Handler.GetReadiness(c)
+}
+
+// GetExamDocument operation middleware
+func (siw *ServerInterfaceWrapper) GetExamDocument(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "documentId" -------------
+	var documentId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "documentId", c.Param("documentId"), &documentId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter documentId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(BearerAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetExamDocument(c, documentId)
+}
+
+// GetLabReport operation middleware
+func (siw *ServerInterfaceWrapper) GetLabReport(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "labReportId" -------------
+	var labReportId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "labReportId", c.Param("labReportId"), &labReportId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter labReportId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(BearerAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetLabReport(c, labReportId)
 }
 
 // DeleteCurrentAccount operation middleware
@@ -844,6 +954,93 @@ func (siw *ServerInterfaceWrapper) GetPatient(c *gin.Context) {
 	siw.Handler.GetPatient(c, patientId)
 }
 
+// UploadExamDocument operation middleware
+func (siw *ServerInterfaceWrapper) UploadExamDocument(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "patientId" -------------
+	var patientId PatientId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "patientId", c.Param("patientId"), &patientId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter patientId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(BearerAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.UploadExamDocument(c, patientId)
+}
+
+// ListPatientLabReports operation middleware
+func (siw *ServerInterfaceWrapper) ListPatientLabReports(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "patientId" -------------
+	var patientId PatientId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "patientId", c.Param("patientId"), &patientId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter patientId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(BearerAuthScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListPatientLabReportsParams
+
+	// ------------- Optional query parameter "expand" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "expand", c.Request.URL.Query(), &params.Expand)
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter expand: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "include" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "include", c.Request.URL.Query(), &params.Include)
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter include: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", c.Request.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter limit: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "offset", c.Request.URL.Query(), &params.Offset)
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter offset: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.ListPatientLabReports(c, patientId, params)
+}
+
 // ListPatientLabs operation middleware
 func (siw *ServerInterfaceWrapper) ListPatientLabs(c *gin.Context) {
 
@@ -962,6 +1159,8 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.GET(options.BaseURL+"/docs", wrapper.GetApiDocs)
 	router.GET(options.BaseURL+"/healthz", wrapper.GetHealth)
 	router.GET(options.BaseURL+"/readyz", wrapper.GetReadiness)
+	router.GET(options.BaseURL+"/v1/exam-documents/:documentId", wrapper.GetExamDocument)
+	router.GET(options.BaseURL+"/v1/lab-reports/:labReportId", wrapper.GetLabReport)
 	router.DELETE(options.BaseURL+"/v1/me", wrapper.DeleteCurrentAccount)
 	router.GET(options.BaseURL+"/v1/me", wrapper.GetCurrentAccount)
 	router.POST(options.BaseURL+"/v1/me", wrapper.CreateCurrentAccount)
@@ -970,6 +1169,8 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.GET(options.BaseURL+"/v1/patients", wrapper.ListPatients)
 	router.POST(options.BaseURL+"/v1/patients", wrapper.CreatePatient)
 	router.GET(options.BaseURL+"/v1/patients/:patientId", wrapper.GetPatient)
+	router.POST(options.BaseURL+"/v1/patients/:patientId/exam-documents", wrapper.UploadExamDocument)
+	router.GET(options.BaseURL+"/v1/patients/:patientId/lab-reports", wrapper.ListPatientLabReports)
 	router.GET(options.BaseURL+"/v1/patients/:patientId/labs", wrapper.ListPatientLabs)
 	router.POST(options.BaseURL+"/v1/patients/:patientId/labs", wrapper.UploadPatientLab)
 }

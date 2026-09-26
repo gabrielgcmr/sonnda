@@ -18,6 +18,7 @@ import (
 type fakeLabService struct {
 	listCalled     bool
 	listFullCalled bool
+	report         *laboratory.LabReportOutput
 }
 
 func (f *fakeLabService) List(context.Context, uuid.UUID, int, int) ([]laboratory.LabReportSummaryOutput, error) {
@@ -28,6 +29,10 @@ func (f *fakeLabService) List(context.Context, uuid.UUID, int, int) ([]laborator
 func (f *fakeLabService) ListFull(context.Context, uuid.UUID, int, int) ([]*laboratory.LabReportOutput, error) {
 	f.listFullCalled = true
 	return []*laboratory.LabReportOutput{}, nil
+}
+
+func (f *fakeLabService) FindByID(context.Context, uuid.UUID) (*laboratory.LabReportOutput, error) {
+	return f.report, nil
 }
 
 type allowAllAccess struct{}
@@ -41,6 +46,37 @@ func TestListLabsReturnsSummaryByDefault(t *testing.T) {
 func TestListLabsCanReturnFullResults(t *testing.T) {
 	assertListMode(t, "?include=results", true)
 	assertListMode(t, "?expand=full", true)
+}
+
+func TestGetLabReportChecksAccessToOwningPatient(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	patientID := uuid.New()
+	reportID := uuid.New()
+	svc := &fakeLabService{report: &laboratory.LabReportOutput{ID: reportID, PatientID: patientID}}
+	access := &recordingAccess{patientID: patientID}
+	handler := NewHandler(svc, access)
+	router := gin.New()
+	router.Use(func(c *gin.Context) {
+		helpers.SetCurrentUser(c, &accountdomain.User{ID: uuid.New(), AccountType: accountdomain.AccountTypeBasicCare})
+		c.Next()
+	})
+	router.GET("/lab-reports/:labReportId", handler.GetLabReport)
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/lab-reports/"+reportID.String(), nil))
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d: %s", http.StatusOK, response.Code, response.Body.String())
+	}
+	if access.patientID != patientID {
+		t.Fatalf("access checked for patient %s, want %s", access.patientID, patientID)
+	}
+}
+
+type recordingAccess struct{ patientID uuid.UUID }
+
+func (a *recordingAccess) RequireAccess(_ context.Context, _, patientID uuid.UUID) error {
+	a.patientID = patientID
+	return nil
 }
 
 func assertListMode(t *testing.T, query string, wantFull bool) {

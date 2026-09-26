@@ -123,6 +123,22 @@ func (s *service) ListFull(ctx context.Context, patientID uuid.UUID, limit, offs
 	return out, nil
 }
 
+func (s *service) FindByID(ctx context.Context, reportID uuid.UUID) (*LabReportOutput, error) {
+	if reportID == uuid.Nil {
+		return nil, apperr.Validation("entrada inválida", apperr.Violation{Field: "id", Reason: "required"})
+	}
+
+	report, err := s.labsRepo.FindByID(ctx, reportID)
+	if err != nil {
+		return nil, mapRepoError("labs.find_by_id", err)
+	}
+	if report == nil {
+		return nil, nil
+	}
+
+	return mapDomainReportToOutput(report), nil
+}
+
 func mapDomainReportToOutput(report *labdomain.LabReport) *LabReportOutput {
 	output := &LabReportOutput{
 		ID:                report.ID,

@@ -142,6 +142,56 @@ components:
       - cpf
       - phone
       type: object
+    ExamDocument:
+      additionalProperties: false
+      properties:
+        confidence:
+          format: double
+          nullable: true
+          type: number
+        created_at:
+          format: date-time
+          type: string
+        error_message:
+          nullable: true
+          type: string
+        exam_type:
+          nullable: true
+          type: string
+        extraction_method:
+          nullable: true
+          type: string
+        id:
+          format: uuid
+          type: string
+        mime_type:
+          type: string
+        original_filename:
+          type: string
+        patient_id:
+          format: uuid
+          type: string
+        status:
+          type: string
+        storage_uri:
+          type: string
+        updated_at:
+          format: date-time
+          type: string
+        uploaded_by_user_id:
+          format: uuid
+          type: string
+      required:
+      - id
+      - patient_id
+      - uploaded_by_user_id
+      - storage_uri
+      - original_filename
+      - mime_type
+      - status
+      - created_at
+      - updated_at
+      type: object
     HealthResponse:
       properties:
         status:
@@ -614,6 +664,62 @@ paths:
       summary: Readiness check
       tags:
       - Public
+  /v1/exam-documents/{documentId}:
+    get:
+      operationId: getExamDocument
+      parameters:
+      - in: path
+        name: documentId
+        required: true
+        schema:
+          format: uuid
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExamDocument"
+          description: Documento de exame
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "500":
+          $ref: "#/components/responses/Problem"
+      summary: Obter documento de exame
+      tags:
+      - ExamDocuments
+  /v1/lab-reports/{labReportId}:
+    get:
+      operationId: getLabReport
+      parameters:
+      - in: path
+        name: labReportId
+        required: true
+        schema:
+          format: uuid
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LabReportFull"
+          description: Laudo laboratorial
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "500":
+          $ref: "#/components/responses/Problem"
+      summary: Obter laudo laboratorial
+      tags:
+      - LabReports
   /v1/me:
     delete:
       operationId: deleteCurrentAccount
@@ -801,6 +907,83 @@ paths:
       summary: Obter paciente
       tags:
       - Patient
+  /v1/patients/{patientId}/exam-documents:
+    post:
+      operationId: uploadExamDocument
+      parameters:
+      - $ref: "#/components/parameters/PatientId"
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              properties:
+                collection_date:
+                  format: date
+                  type: string
+                file:
+                  format: binary
+                  type: string
+              required:
+              - file
+              type: object
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExamDocument"
+          description: Documento recebido e classificado
+        "400":
+          $ref: "#/components/responses/Problem"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "413":
+          $ref: "#/components/responses/Problem"
+        "415":
+          $ref: "#/components/responses/Problem"
+        "500":
+          $ref: "#/components/responses/Problem"
+      summary: Enviar documento de exame
+      tags:
+      - ExamDocuments
+  /v1/patients/{patientId}/lab-reports:
+    get:
+      operationId: listPatientLabReports
+      parameters:
+      - $ref: "#/components/parameters/PatientId"
+      - in: query
+        name: expand
+        schema:
+          enum:
+          - full
+          type: string
+      - in: query
+        name: include
+        schema:
+          type: string
+      - $ref: "#/components/parameters/LimitParam"
+      - $ref: "#/components/parameters/OffsetParam"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LabsList"
+          description: Laudos do paciente
+        "400":
+          $ref: "#/components/responses/Problem"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "500":
+          $ref: "#/components/responses/Problem"
+      summary: Listar laudos laboratoriais
+      tags:
+      - LabReports
   /v1/patients/{patientId}/labs:
     get:
       operationId: listPatientLabs

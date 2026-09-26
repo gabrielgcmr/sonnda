@@ -33,6 +33,7 @@ type fakeExamsService struct {
 	listDocumentTextsCalled  bool
 	createDocumentTextCalled bool
 	createdInput             examsvc.CreateExamDocumentInput
+	document                 *examsvc.ExamDocumentOutput
 	routeInput               examsvc.RouteExamDocumentInput
 	documentTextInput        examsvc.CreateExamDocumentTextFromTextInput
 	failedInput              examsvc.MarkExamDocumentFailedInput
@@ -58,7 +59,7 @@ func (f *fakeExamsService) Create(ctx context.Context, input examsvc.CreateExamD
 }
 
 func (f *fakeExamsService) FindByID(ctx context.Context, id uuid.UUID) (*examsvc.ExamDocumentOutput, error) {
-	return nil, nil
+	return f.document, nil
 }
 
 func (f *fakeExamsService) ListByPatient(ctx context.Context, patientID uuid.UUID, limit, offset int) ([]examsvc.ExamDocumentOutput, error) {
@@ -314,6 +315,40 @@ func TestListExamDocuments_UsesServiceWithDefaultPagination(t *testing.T) {
 	}
 }
 
+func TestGetExamDocumentReturnsDocumentByID(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	documentID := uuid.New()
+	document := &examsvc.ExamDocumentOutput{ID: documentID, PatientID: uuid.New()}
+	svc := &fakeExamsService{document: document}
+	access := &recordingExamAccessChecker{}
+	h := newExamsHandler(svc, nil, nil, nil, access)
+	r := gin.New()
+	r.Use(func(c *gin.Context) {
+		helpers.SetCurrentUser(c, &accountdomain.User{ID: uuid.New(), AccountType: accountdomain.AccountTypeBasicCare})
+		c.Next()
+	})
+	r.GET("/exam-documents/:documentId", h.GetExamDocument)
+	response := httptest.NewRecorder()
+	r.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/exam-documents/"+documentID.String(), nil))
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d: %s", http.StatusOK, response.Code, response.Body.String())
+	}
+	if !strings.Contains(response.Body.String(), documentID.String()) {
+		t.Fatalf("response does not contain document id %s: %s", documentID, response.Body.String())
+	}
+	if access.patientID != document.PatientID {
+		t.Fatalf("access checked for patient %s, want %s", access.patientID, document.PatientID)
+	}
+}
+
+type recordingExamAccessChecker struct{ patientID uuid.UUID }
+
+func (a *recordingExamAccessChecker) RequireAccess(_ context.Context, _, patientID uuid.UUID) error {
+	a.patientID = patientID
+	return nil
+}
+
 func TestListExamDocumentTexts_UsesService(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
@@ -396,9 +431,9 @@ func TestUploadExamDocument_WhenClassifiedAsLab_UsesStructuredLabPipeline(t *tes
 		helpers.SetCurrentUser(c, &accountdomain.User{ID: userID, AccountType: accountdomain.AccountTypeBasicCare})
 		c.Next()
 	})
-	r.POST("/v1/patients/:patientId/exames", h.UploadExamDocument)
+	r.POST("/v1/patients/:patientId/exam-documents", h.UploadExamDocument)
 
-	req := httptest.NewRequest(http.MethodPost, "/v1/patients/"+patientID.String()+"/exames", body)
+	req := httptest.NewRequest(http.MethodPost, "/v1/patients/"+patientID.String()+"/exam-documents", body)
 	req.Header.Set("Content-Type", contentType)
 	resp := httptest.NewRecorder()
 
