@@ -456,7 +456,18 @@ components:
         updated_at:
           type: string
           format: date-time
-      required: [id, patient_id, uploaded_by_user_id, storage_uri, original_filename, mime_type, status, created_at, updated_at]
+      required:
+        [
+          id,
+          patient_id,
+          uploaded_by_user_id,
+          storage_uri,
+          original_filename,
+          mime_type,
+          status,
+          created_at,
+          updated_at,
+        ]
     LabsList:
       description: |-
         Lista de laudos. Por padrao retorna a representacao resumida
