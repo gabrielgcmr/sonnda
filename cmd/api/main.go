@@ -82,10 +82,6 @@ func main() {
 	}
 	defer docAIClient.Close()
 
-	docExtractor := documentaiinfra.NewDocumentAIAdapter(
-		*docAIClient,
-		cfg.Storage.GCPExtractLabsProcessorID,
-	)
 	var labTextExtractor *geminiinfra.LabReportTextExtractor
 	if strings.TrimSpace(cfg.Gemini.APIKey) != "" {
 		geminiClient, err := geminiinfra.NewClient(ctx, cfg.Gemini)
@@ -110,7 +106,7 @@ func main() {
 
 	//7. Módulos
 	fallbackOCR := documentaiinfra.NewTextExtractor(docAIClient, cfg.Storage.GCPExtractLabsProcessorID, cfg.OCR.FallbackTimeout)
-	modules := bootstrap.NewModules(dbClient, docExtractor, labTextExtractor, storageService, cfg.OCR, fallbackOCR)
+	modules := bootstrap.NewModules(dbClient, labTextExtractor, storageService, cfg.OCR, fallbackOCR)
 
 	//8 Middlewares
 	//8.1 API
@@ -136,7 +132,7 @@ func main() {
 			PatientAccessHandler:   modules.PatientAccess.Handler,
 			PatientCreationHandler: modules.Patient.CreationHandler,
 			PatientHandler:         modules.Patient.ProfileHandler,
-			LabsHandler:            modules.Labs.Handler,
+			LaboratoryHandler:      modules.Labs.LaboratoryHandler,
 			ExamsHandler:           modules.Exams.Handler,
 		},
 	})

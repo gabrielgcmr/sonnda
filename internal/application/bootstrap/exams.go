@@ -2,13 +2,13 @@
 package bootstrap
 
 import (
-	"github.com/gabrielgcmr/sonnda/internal/api/handlers"
 	textsvc "github.com/gabrielgcmr/sonnda/internal/application/services/textextraction"
 	"github.com/gabrielgcmr/sonnda/internal/config"
 	"github.com/gabrielgcmr/sonnda/internal/domain/labextraction"
 	domainstorage "github.com/gabrielgcmr/sonnda/internal/domain/storage"
 	domaintext "github.com/gabrielgcmr/sonnda/internal/domain/textextraction"
 	examsvc "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing"
+	documentprocessinghttp "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/http"
 	processingpostgres "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/postgres"
 	labsuc "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/processing"
 	laboratoryprocessor "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/processing/laboratory"
@@ -21,7 +21,7 @@ import (
 )
 
 type ExamsModule struct {
-	Handler *handlers.ExamsHandler
+	Handler *documentprocessinghttp.ExamsHandler
 }
 
 func NewExamsModule(
@@ -51,6 +51,6 @@ func NewExamsModule(
 	accessChecker := patientaccess.NewChecker(patientRepo, accessRepo)
 
 	return &ExamsModule{
-		Handler: handlers.NewExams(svc, processDocumentUC, storage, accessChecker),
+		Handler: documentprocessinghttp.NewExams(svc, processDocumentUC, storage, accessChecker),
 	}
 }

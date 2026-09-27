@@ -4,10 +4,9 @@ package api
 import (
 	"net/http"
 
-	"github.com/gabrielgcmr/sonnda/internal/api/handlers"
-
 	accounthttp "github.com/gabrielgcmr/sonnda/internal/features/account/http"
 	authhttp "github.com/gabrielgcmr/sonnda/internal/features/auth/http"
+	documentprocessinghttp "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/http"
 	accesshttp "github.com/gabrielgcmr/sonnda/internal/features/patient/access/http"
 	laboratoryhttp "github.com/gabrielgcmr/sonnda/internal/features/patient/exam/laboratory/http"
 	patienthttp "github.com/gabrielgcmr/sonnda/internal/features/patient/http"
@@ -25,9 +24,8 @@ type APIDependencies struct {
 	PatientAccessHandler   *accesshttp.Handler
 	PatientCreationHandler *patienthttp.CreationHandler
 	PatientHandler         *profilehttp.Handler
-	LabsHandler            *handlers.LabsHandler
 	LaboratoryHandler      *laboratoryhttp.Handler
-	ExamsHandler           *handlers.ExamsHandler
+	ExamsHandler           *documentprocessinghttp.ExamsHandler
 }
 
 type RootInfo struct {
@@ -104,7 +102,6 @@ func SetupRoutes(
 			labs := patients.Group("/:patientId/labs")
 			{
 				labs.GET("", deps.LaboratoryHandler.ListLabs)
-				labs.POST("", deps.LabsHandler.UploadAndProcessLabs)
 			}
 
 			exams := patients.Group("/:patientId/exames")

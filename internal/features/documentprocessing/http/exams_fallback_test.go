@@ -1,5 +1,5 @@
-// internal/api/handlers/exams_fallback_test.go
-package handlers
+// internal/features/documentprocessing/http/exams_fallback_test.go
+package http
 
 import (
 	"context"

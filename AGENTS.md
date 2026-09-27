@@ -56,7 +56,8 @@ Simple instructions for coding agents working on this repo.
   - **Bootstrap (`internal/application/bootstrap`)**: Wiring of dependencies, env/config loading.
 - **Config (`internal/config`)**: Environment configuration.
 - **API (`internal/api`)**: HTTP layer (RESTful API).
-  - **Handlers (`internal/api/handlers`)**: HTTP request handlers.
+- Feature-specific HTTP handlers live with their owning feature under `internal/features/<feature>/http`.
+- `internal/api` owns route composition, middleware, shared HTTP helpers and presenters; keep cross-feature wiring here, not feature behavior.
   - **Middleware (`internal/api/middleware`)**: HTTP middlewares (auth, logging, CORS, etc).
   - **Helpers (`internal/api/helpers`)**: HTTP helper functions (binding, validation, identity).
   - **Presenter (`internal/api/presenter`)**: Response formatting and error presentation.

@@ -1,5 +1,5 @@
-// internal/api/handlers/exams_test.go
-package handlers
+// internal/features/documentprocessing/http/exams_test.go
+package http
 
 import (
 	"bytes"
@@ -157,6 +157,12 @@ func (f *fakeExamStorage) GetSignedURL(ctx context.Context, uri string, expirati
 
 type fakeTextExtractor struct {
 	input domaintext.ExtractInput
+}
+
+type allowAllAccessChecker struct{}
+
+func (allowAllAccessChecker) RequireAccess(context.Context, uuid.UUID, uuid.UUID) error {
+	return nil
 }
 
 type testLaboratoryProcessor struct {

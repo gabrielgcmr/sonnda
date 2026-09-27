@@ -1,5 +1,5 @@
-// internal/api/handlers/exams.go
-package handlers
+// internal/features/documentprocessing/http/exams.go
+package http
 
 import (
 	"net/http"
@@ -11,7 +11,6 @@ import (
 	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
 	domainstorage "github.com/gabrielgcmr/sonnda/internal/domain/storage"
 	documents "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing"
-	documenthttp "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/http"
 	processing "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/processing"
 	patientaccess "github.com/gabrielgcmr/sonnda/internal/features/patient/access"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
@@ -37,7 +36,7 @@ func NewExams(
 
 func (h *ExamsHandler) ListExamDocuments(c *gin.Context) {
 	currentUser := helpers.MustGetCurrentUser(c)
-	patientID, ok := parsePatientIDParam(c, "patientId")
+	patientID, ok := helpers.ParsePatientIDParam(c, "patientId")
 	if !ok {
 		return
 	}
@@ -45,7 +44,7 @@ func (h *ExamsHandler) ListExamDocuments(c *gin.Context) {
 		presenter.ErrorResponder(c, err)
 		return
 	}
-	limit, offset, ok := parsePagination(c, 100, 0)
+	limit, offset, ok := helpers.ParsePagination(c, 100, 0)
 	if !ok {
 		return
 	}
@@ -82,7 +81,7 @@ func (h *ExamsHandler) GetExamDocument(c *gin.Context) {
 
 func (h *ExamsHandler) ListExamDocumentTexts(c *gin.Context) {
 	currentUser := helpers.MustGetCurrentUser(c)
-	patientID, ok := parsePatientIDParam(c, "patientId")
+	patientID, ok := helpers.ParsePatientIDParam(c, "patientId")
 	if !ok {
 		return
 	}
@@ -90,7 +89,7 @@ func (h *ExamsHandler) ListExamDocumentTexts(c *gin.Context) {
 		presenter.ErrorResponder(c, err)
 		return
 	}
-	limit, offset, ok := parsePagination(c, 100, 0)
+	limit, offset, ok := helpers.ParsePagination(c, 100, 0)
 	if !ok {
 		return
 	}
@@ -104,7 +103,7 @@ func (h *ExamsHandler) ListExamDocumentTexts(c *gin.Context) {
 
 func (h *ExamsHandler) UploadExamDocument(c *gin.Context) {
 	currentUser := helpers.MustGetCurrentUser(c)
-	patientID, ok := parsePatientIDParam(c, "patientId")
+	patientID, ok := helpers.ParsePatientIDParam(c, "patientId")
 	if !ok {
 		return
 	}
@@ -122,7 +121,7 @@ func (h *ExamsHandler) UploadExamDocument(c *gin.Context) {
 		presenter.ErrorResponder(c, &apperr.AppError{Kind: apperr.REQUIRED_FIELD_MISSING, Message: "arquivo e obrigatorio", Cause: err})
 		return
 	}
-	upload, err := documenthttp.UploadDocument(c.Request.Context(), fileHeader, patientID, h.storage)
+	upload, err := UploadDocument(c.Request.Context(), fileHeader, patientID, h.storage)
 	if err != nil {
 		presenter.ErrorResponder(c, err)
 		return

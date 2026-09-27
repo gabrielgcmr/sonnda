@@ -1,5 +1,5 @@
-// internal/api/handlers/patient_access_test.go
-package handlers
+// internal/api/patient_access_test.go
+package api
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 
 	"github.com/gabrielgcmr/sonnda/internal/api/helpers"
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
+	documentprocessinghttp "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/http"
 	patientaccess "github.com/gabrielgcmr/sonnda/internal/features/patient/access"
 	laboratoryhttp "github.com/gabrielgcmr/sonnda/internal/features/patient/exam/laboratory/http"
 	patientprofile "github.com/gabrielgcmr/sonnda/internal/features/patient/profile"
@@ -55,7 +56,6 @@ func TestPatientDocumentsDenyAccessBeforeReadingOrProcessing(t *testing.T) {
 	}{
 		{http.MethodGet, "/labs"},
 		{http.MethodGet, "/labs?full=true"},
-		{http.MethodPost, "/labs"},
 		{http.MethodGet, "/exames"},
 		{http.MethodGet, "/exames/document-texts"},
 		{http.MethodPost, "/exames"},
@@ -66,13 +66,11 @@ func TestPatientDocumentsDenyAccessBeforeReadingOrProcessing(t *testing.T) {
 			grants := &accessTestGrants{t: t, patientID: patientID, actorID: actor.ID}
 			accessChecker := patientaccess.NewChecker(accessTestPatients{}, grants)
 			// All data services are nil: reaching them after denial fails the test.
-			labs := NewLabs(nil, nil, accessChecker)
 			laboratory := laboratoryhttp.NewHandler(nil, accessChecker)
-			exams := NewExams(nil, nil, nil, accessChecker)
+			exams := documentprocessinghttp.NewExams(nil, nil, nil, accessChecker)
 			router := gin.New()
 			router.Use(func(c *gin.Context) { helpers.SetCurrentUser(c, actor) })
 			router.GET("/patients/:patientId/labs", laboratory.ListLabs)
-			router.POST("/patients/:patientId/labs", labs.UploadAndProcessLabs)
 			router.GET("/patients/:patientId/exames", exams.ListExamDocuments)
 			router.GET("/patients/:patientId/exames/document-texts", exams.ListExamDocumentTexts)
 			router.POST("/patients/:patientId/exames", exams.UploadExamDocument)
