@@ -57,9 +57,6 @@ func SetupRoutes(r *gin.Engine, deps *APIDependencies) {
 		deps.Account.RequireRegisteredUser())
 
 	patients := registered.Group("/patients")
-	patients.POST("", deps.PatientCreationHandler.Create)
-	patients.GET("", deps.PatientHandler.ListPatients)
-	patients.GET("/:patientId", deps.PatientHandler.GetPatient)
 	patients.GET("/:patientId/lab-reports", deps.LaboratoryHandler.ListLabs)
 	patients.GET("/:patientId/exam-documents", deps.ExamsHandler.ListExamDocuments)
 	patients.POST("/:patientId/exam-documents", deps.ExamsHandler.UploadExamDocument)

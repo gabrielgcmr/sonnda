@@ -9,13 +9,20 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gabrielgcmr/sonnda/internal/api"
+	patientcreation "github.com/gabrielgcmr/sonnda/internal/application/usecase/patientcreation"
+	"github.com/gabrielgcmr/sonnda/internal/domain/demographics"
 	"github.com/gabrielgcmr/sonnda/internal/features/account"
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
 	accounthttp "github.com/gabrielgcmr/sonnda/internal/features/account/http"
 	authdomain "github.com/gabrielgcmr/sonnda/internal/features/auth/domain"
 	authhttp "github.com/gabrielgcmr/sonnda/internal/features/auth/http"
+	patienthttp "github.com/gabrielgcmr/sonnda/internal/features/patient/http"
+	patientprofile "github.com/gabrielgcmr/sonnda/internal/features/patient/profile"
+	profiledomain "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/domain"
+	profilehttp "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/http"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -116,10 +123,12 @@ func newAccountRouter(repo *accountUserRepository) *gin.Engine {
 	})
 	router := gin.New()
 	api.SetupRoutes(router, &api.APIDependencies{
-		Auth:                 authMiddleware,
-		Account:              accounthttp.NewMiddleware(repo),
-		AccountHandler:       accounthttp.NewHandler(onboarding, service),
-		PatientAccessHandler: newPatientAccessTestHandler(),
+		Auth:                   authMiddleware,
+		Account:                accounthttp.NewMiddleware(repo),
+		AccountHandler:         accounthttp.NewHandler(onboarding, service),
+		PatientAccessHandler:   newPatientAccessTestHandler(),
+		PatientCreationHandler: patienthttp.NewCreationHandler(patientCreationRouteStub{}),
+		PatientHandler:         profilehttp.NewHandler(patientProfileRouteStub{}),
 	})
 	return router
 }
@@ -186,4 +195,42 @@ func (r *accountUserRepository) Delete(_ context.Context, id uuid.UUID) error {
 		r.profile = nil
 	}
 	return nil
+}
+
+type patientCreationRouteStub struct{}
+
+func (patientCreationRouteStub) Execute(_ context.Context, accountID uuid.UUID, _ patientcreation.Input) (*profiledomain.Patient, error) {
+	return &profiledomain.Patient{ID: uuid.MustParse("019a1f08-29a2-7b47-929d-bdc50bb59919"), OwnerUserID: &accountID}, nil
+}
+
+type patientProfileRouteStub struct{}
+
+func (patientProfileRouteStub) Get(_ context.Context, currentUser *accountdomain.User, id uuid.UUID) (*profiledomain.Patient, error) {
+	return patientRoutePatient(currentUser.ID, id), nil
+}
+
+func (patientProfileRouteStub) Update(context.Context, *accountdomain.User, uuid.UUID, patientprofile.UpdateInput) (*profiledomain.Patient, error) {
+	return nil, errors.New("unused")
+}
+
+func (patientProfileRouteStub) HardDelete(context.Context, *accountdomain.User, uuid.UUID) error {
+	return errors.New("unused")
+}
+
+func (patientProfileRouteStub) ListMyPatients(_ context.Context, currentUser *accountdomain.User, _, _ int) ([]*profiledomain.Patient, error) {
+	return []*profiledomain.Patient{patientRoutePatient(currentUser.ID, uuid.MustParse("019a1f08-29a2-7b47-929d-bdc50bb59919"))}, nil
+}
+
+func patientRoutePatient(ownerID, patientID uuid.UUID) *profiledomain.Patient {
+	return &profiledomain.Patient{
+		ID:          patientID,
+		OwnerUserID: &ownerID,
+		CPF:         "12345678901",
+		FullName:    "Paciente Teste",
+		BirthDate:   time.Date(1990, time.January, 1, 0, 0, 0, 0, time.UTC),
+		Gender:      demographics.GenderFemale,
+		Race:        demographics.RaceWhite,
+		CreatedAt:   time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC),
+		UpdatedAt:   time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC),
+	}
 }

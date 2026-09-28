@@ -46,6 +46,31 @@ func TestPatientAccessRouteRequiresAuthentication(t *testing.T) {
 	}
 }
 
+func TestPatientProfileHumaRoutes(t *testing.T) {
+	router := newAccountRouter(&accountUserRepository{})
+	accountRequest(t, router, http.MethodPost, "/me", accountPayload, http.StatusCreated)
+
+	created := accountRequest(t, router, http.MethodPost, "/patients", `{
+		"cpf":"12345678901",
+		"full_name":"Paciente Teste",
+		"birth_date":"1990-01-01",
+		"gender":"FEMALE",
+		"race":"WHITE",
+		"relation_type":"family"
+	}`, http.StatusCreated)
+	if created.Header().Get("Location") != "/patients/019a1f08-29a2-7b47-929d-bdc50bb59919" {
+		t.Fatalf("unexpected Location header: %q", created.Header().Get("Location"))
+	}
+
+	accountRequest(t, router, http.MethodGet, "/patients", "", http.StatusOK)
+	accountRequest(t, router, http.MethodGet, "/patients/019a1f08-29a2-7b47-929d-bdc50bb59919", "", http.StatusOK)
+
+	invalid := accountRequest(t, router, http.MethodGet, "/patients/not-a-uuid", "", http.StatusUnprocessableEntity)
+	if !strings.HasPrefix(invalid.Header().Get("Content-Type"), "application/problem+json") {
+		t.Fatalf("invalid path must return a Huma problem: %s", invalid.Body.String())
+	}
+}
+
 func newPatientAccessTestHandler() *accesshttp.Handler {
 	return accesshttp.NewHandler(patientaccess.NewService(patientAccessRouteRepository{}))
 }

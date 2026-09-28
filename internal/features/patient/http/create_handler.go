@@ -2,109 +2,120 @@
 package patienthttp
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
-	"github.com/gabrielgcmr/sonnda/internal/api/helpers"
+	"github.com/danielgtaylor/huma/v2"
+	helpers "github.com/gabrielgcmr/sonnda/internal/api/helpers"
 	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
 	patientcreation "github.com/gabrielgcmr/sonnda/internal/application/usecase/patientcreation"
 	"github.com/gabrielgcmr/sonnda/internal/domain/demographics"
 	patientprofile "github.com/gabrielgcmr/sonnda/internal/features/patient/profile"
-	openapi "github.com/gabrielgcmr/sonnda/internal/generated/openapi"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 	applog "github.com/gabrielgcmr/sonnda/internal/kernel/observability"
-
-	"github.com/gin-gonic/gin"
-	openapi_types "github.com/oapi-codegen/runtime/types"
+	"github.com/google/uuid"
 )
 
 type CreationHandler struct {
 	creator patientcreation.UseCase
 }
 
+type createPatientInput struct {
+	Body createPatientRequest
+}
+
 type createPatientRequest struct {
-	CPF          string             `json:"cpf" binding:"required"`
-	CNS          *string            `json:"cns,omitempty"`
-	FullName     string             `json:"full_name" binding:"required"`
-	BirthDate    openapi_types.Date `json:"birth_date" binding:"required"`
-	Gender       string             `json:"gender" binding:"required"`
-	Race         string             `json:"race" binding:"required"`
-	Phone        *string            `json:"phone,omitempty"`
-	AvatarURL    *string            `json:"avatar_url,omitempty"`
-	RelationType string             `json:"relation_type" binding:"required"`
+	CPF          string  `json:"cpf" minLength:"1"`
+	CNS          *string `json:"cns,omitempty"`
+	FullName     string  `json:"full_name" minLength:"1"`
+	BirthDate    string  `json:"birth_date" format:"date"`
+	Gender       string  `json:"gender" minLength:"1"`
+	Race         string  `json:"race" minLength:"1"`
+	Phone        *string `json:"phone,omitempty"`
+	AvatarURL    *string `json:"avatar_url,omitempty"`
+	RelationType string  `json:"relation_type" minLength:"1" doc:"Relação entre a conta atual e o paciente"`
+}
+
+type createPatientResponse struct {
+	ID uuid.UUID `json:"id" format:"uuid"`
+}
+
+type createPatientOutput struct {
+	Location string `header:"Location"`
+	Body     createPatientResponse
 }
 
 func NewCreationHandler(creator patientcreation.UseCase) *CreationHandler {
 	return &CreationHandler{creator: creator}
 }
 
-func (h *CreationHandler) Create(c *gin.Context) {
-	ctx := c.Request.Context()
+// RegisterHumaRoutes registers patient creation in the registered-account group.
+func (h *CreationHandler) RegisterHumaRoutes(registered huma.API, security []map[string][]string) {
+	huma.Register(registered, huma.Operation{
+		OperationID:   "createPatient",
+		Method:        http.MethodPost,
+		Path:          "/patients",
+		Summary:       "Criar paciente e conceder acesso inicial à conta atual",
+		Tags:          []string{"Patients"},
+		DefaultStatus: http.StatusCreated,
+		Errors:        []int{http.StatusUnauthorized, http.StatusForbidden, http.StatusConflict, http.StatusUnprocessableEntity},
+		Security:      security,
+	}, h.create)
+}
+
+func (h *CreationHandler) create(ctx context.Context, input *createPatientInput) (*createPatientOutput, error) {
 	applog.FromContext(ctx).Info("patient_create")
 
-	creatorAccount, ok := helpers.GetCurrentUser(c)
+	creatorAccount, ok := helpers.GetCurrentUserFromContext(ctx)
 	if !ok || creatorAccount == nil {
-		presenter.ErrorResponder(c, apperr.Unauthorized("autenticação necessária"))
-		return
+		return nil, huma.Error403Forbidden("conta registrada necessária")
 	}
 
-	var request createPatientRequest
-	if err := helpers.BindJSON(c, &request); err != nil {
-		presenter.ErrorResponder(c, err)
-		return
-	}
-	if request.BirthDate.Time.IsZero() {
-		presenter.ErrorResponder(c, apperr.Validation(
-			"data de nascimento é obrigatória",
-			apperr.Violation{Field: "birth_date", Reason: "required"},
-		))
-		return
+	birthDate, err := time.Parse(time.DateOnly, input.Body.BirthDate)
+	if err != nil {
+		return nil, huma.Error422UnprocessableEntity("data de nascimento inválida")
 	}
 
-	gender, err := parseGender(request.Gender)
+	gender, err := parseGender(input.Body.Gender)
 	if err != nil {
-		presenter.ErrorResponder(c, apperr.Validation(
-			"gênero inválido",
-			apperr.Violation{Field: "gender", Reason: "invalid"},
-		))
-		return
+		return nil, huma.Error422UnprocessableEntity("gênero inválido")
 	}
-	race, err := parseRace(request.Race)
+	race, err := parseRace(input.Body.Race)
 	if err != nil {
-		presenter.ErrorResponder(c, apperr.Validation(
-			"raça inválida",
-			apperr.Violation{Field: "race", Reason: "invalid"},
-		))
-		return
+		return nil, huma.Error422UnprocessableEntity("raça inválida")
 	}
 
 	avatarURL := ""
-	if request.AvatarURL != nil {
-		avatarURL = *request.AvatarURL
+	if input.Body.AvatarURL != nil {
+		avatarURL = *input.Body.AvatarURL
 	}
 
 	patient, err := h.creator.Execute(ctx, creatorAccount.ID, patientcreation.Input{
 		Profile: patientprofile.CreateInput{
-			CPF:       request.CPF,
-			CNS:       request.CNS,
-			FullName:  request.FullName,
-			BirthDate: request.BirthDate.Time,
+			CPF:       input.Body.CPF,
+			CNS:       input.Body.CNS,
+			FullName:  input.Body.FullName,
+			BirthDate: birthDate,
 			Gender:    gender,
 			Race:      race,
-			Phone:     request.Phone,
+			Phone:     input.Body.Phone,
 			AvatarURL: avatarURL,
 		},
 		Access: patientcreation.AccessInput{
-			RelationType: request.RelationType,
+			RelationType: input.Body.RelationType,
 		},
 	})
 	if err != nil {
-		presenter.ErrorResponder(c, err)
-		return
+		return nil, toHumaError(err)
 	}
 
-	c.Header("Location", "/v1/patients/"+patient.ID.String())
-	c.JSON(http.StatusCreated, openapi.PatientCreatedResponse{Id: openapi_types.UUID(patient.ID)})
+	return &createPatientOutput{
+		Location: "/patients/" + patient.ID.String(),
+		Body:     createPatientResponse{ID: patient.ID},
+	}, nil
 }
 
 func parseGender(value string) (demographics.Gender, error) {
@@ -121,4 +132,12 @@ func parseRace(value string) (demographics.Race, error) {
 		return "", fmt.Errorf("invalid race value %q: %w", value, err)
 	}
 	return race, nil
+}
+
+func toHumaError(err error) error {
+	var appErr *apperr.AppError
+	if errors.As(err, &appErr) && appErr != nil {
+		return huma.NewError(presenter.StatusFromCode(appErr.Kind), appErr.Message)
+	}
+	return huma.Error500InternalServerError("erro inesperado")
 }

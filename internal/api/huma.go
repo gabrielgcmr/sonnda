@@ -49,6 +49,8 @@ func registerHumaRoutes(api huma.API, deps *APIDependencies) {
 
 	deps.AccountHandler.RegisterHumaRoutes(authenticated, registered, bearerSecurity())
 	deps.PatientAccessHandler.RegisterHumaRoutes(registered, bearerSecurity())
+	deps.PatientCreationHandler.RegisterHumaRoutes(registered, bearerSecurity())
+	deps.PatientHandler.RegisterHumaRoutes(registered, bearerSecurity())
 }
 
 func registerHumaPublicRoutes(api huma.API) {

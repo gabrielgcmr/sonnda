@@ -3,18 +3,18 @@ package profilehttp
 
 import (
 	"context"
+	"errors"
 	"net/http"
+	"time"
 
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
-
+	"github.com/danielgtaylor/huma/v2"
+	helpers "github.com/gabrielgcmr/sonnda/internal/api/helpers"
+	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
 	patientprofile "github.com/gabrielgcmr/sonnda/internal/features/patient/profile"
 	profiledomain "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/domain"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
-
-	helpers "github.com/gabrielgcmr/sonnda/internal/api/helpers"
-	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
+	"github.com/google/uuid"
 )
 
 type patientService interface {
@@ -28,126 +28,116 @@ type Handler struct {
 	svc patientService
 }
 
+type patientIDInput struct {
+	PatientID uuid.UUID `path:"patientId" doc:"Identificador do paciente" format:"uuid"`
+}
+
+type patientResponse struct {
+	ID          uuid.UUID  `json:"id" format:"uuid"`
+	OwnerUserID *uuid.UUID `json:"owner_user_id,omitempty" format:"uuid"`
+	CPF         string     `json:"cpf"`
+	CNS         *string    `json:"cns,omitempty"`
+	FullName    string     `json:"full_name"`
+	BirthDate   time.Time  `json:"birth_date"`
+	Gender      string     `json:"gender"`
+	Race        string     `json:"race"`
+	AvatarURL   string     `json:"avatar_url"`
+	Phone       *string    `json:"phone,omitempty"`
+	CreatedAt   time.Time  `json:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at"`
+}
+
+type patientOutput struct {
+	Body patientResponse
+}
+
+type patientListOutput struct {
+	Body []patientResponse
+}
+
 func NewHandler(svc patientService) *Handler {
 	return &Handler{svc: svc}
 }
 
-func (h *Handler) GetPatient(c *gin.Context) {
-	currentUser := helpers.MustGetCurrentUser(c)
+// RegisterHumaRoutes registers patient profile reads in the registered-account group.
+func (h *Handler) RegisterHumaRoutes(registered huma.API, security []map[string][]string) {
+	huma.Register(registered, huma.Operation{
+		OperationID: "listPatients",
+		Method:      http.MethodGet,
+		Path:        "/patients",
+		Summary:     "Listar pacientes acessíveis pela conta atual",
+		Tags:        []string{"Patients"},
+		Errors:      []int{http.StatusUnauthorized, http.StatusForbidden},
+		Security:    security,
+	}, h.listPatients)
 
-	id := c.Param("patientId")
-	if id == "" {
-		presenter.ErrorResponder(c, &apperr.AppError{
-			Kind:    apperr.VALIDATION_FAILED,
-			Message: "patient_id é obrigatório",
-		})
-		return
-	}
-
-	parsedID, err := uuid.Parse(id)
-	if err != nil {
-		presenter.ErrorResponder(c, &apperr.AppError{
-			Kind:    apperr.VALIDATION_FAILED,
-			Message: "patient_id inválido",
-			Cause:   err,
-		})
-		return
-	}
-
-	p, err := h.svc.Get(c.Request.Context(), currentUser, parsedID)
-	if err != nil {
-		presenter.ErrorResponder(c, err)
-		return
-	}
-
-	c.JSON(http.StatusOK, p)
+	huma.Register(registered, huma.Operation{
+		OperationID: "getPatient",
+		Method:      http.MethodGet,
+		Path:        "/patients/{patientId}",
+		Summary:     "Obter perfil de um paciente",
+		Tags:        []string{"Patients"},
+		Errors:      []int{http.StatusUnauthorized, http.StatusForbidden, http.StatusNotFound, http.StatusUnprocessableEntity},
+		Security:    security,
+	}, h.getPatient)
 }
 
-func (h *Handler) UpdatePatient(c *gin.Context) {
-	currentUser := helpers.MustGetCurrentUser(c)
-
-	id := c.Param("patientId")
-	if id == "" {
-		presenter.ErrorResponder(c, &apperr.AppError{
-			Kind:    apperr.VALIDATION_FAILED,
-			Message: "patient_id é obrigatório",
-		})
-		return
+func (h *Handler) getPatient(ctx context.Context, input *patientIDInput) (*patientOutput, error) {
+	currentUser, ok := helpers.GetCurrentUserFromContext(ctx)
+	if !ok {
+		return nil, huma.Error403Forbidden("conta registrada necessária")
 	}
 
-	parsedID, err := uuid.Parse(id)
+	patient, err := h.svc.Get(ctx, currentUser, input.PatientID)
 	if err != nil {
-		presenter.ErrorResponder(c, &apperr.AppError{
-			Kind:    apperr.VALIDATION_FAILED,
-			Message: "patient_id inválido",
-			Cause:   err,
-		})
-		return
+		return nil, toHumaError(err)
 	}
-
-	var input patientprofile.UpdateInput
-	if err := c.ShouldBindJSON(&input); err != nil {
-		presenter.ErrorResponder(c, &apperr.AppError{
-			Kind:    apperr.VALIDATION_FAILED,
-			Message: "payload inválido",
-			Cause:   err,
-		})
-		return
-	}
-
-	p, err := h.svc.Update(c.Request.Context(), currentUser, parsedID, input)
-	if err != nil {
-		presenter.ErrorResponder(c, err)
-		return
-	}
-
-	c.JSON(http.StatusOK, p)
+	return &patientOutput{Body: patientResponseFromDomain(patient)}, nil
 }
 
-func (h *Handler) ListPatients(c *gin.Context) {
+func (h *Handler) listPatients(ctx context.Context, _ *struct{}) (*patientListOutput, error) {
 	if h == nil || h.svc == nil {
-		presenter.ErrorResponder(c, apperr.Internal("serviço indisponível", nil))
-		return
+		return nil, huma.Error500InternalServerError("serviço indisponível")
 	}
 
-	currentUser := helpers.MustGetCurrentUser(c)
+	currentUser, ok := helpers.GetCurrentUserFromContext(ctx)
+	if !ok {
+		return nil, huma.Error403Forbidden("conta registrada necessária")
+	}
 
-	list, err := h.svc.ListMyPatients(c.Request.Context(), currentUser, 100, 0)
+	patients, err := h.svc.ListMyPatients(ctx, currentUser, 100, 0)
 	if err != nil {
-		presenter.ErrorResponder(c, err)
-		return
+		return nil, toHumaError(err)
 	}
 
-	c.JSON(http.StatusOK, list)
+	response := make([]patientResponse, len(patients))
+	for i, patient := range patients {
+		response[i] = patientResponseFromDomain(patient)
+	}
+	return &patientListOutput{Body: response}, nil
 }
 
-func (h *Handler) HardDeletePatient(c *gin.Context) {
-	currentUser := helpers.MustGetCurrentUser(c)
-
-	id := c.Param("patientId")
-	if id == "" {
-		presenter.ErrorResponder(c, &apperr.AppError{
-			Kind:    apperr.VALIDATION_FAILED,
-			Message: "patient_id é obrigatório",
-		})
-		return
+func patientResponseFromDomain(patient *profiledomain.Patient) patientResponse {
+	return patientResponse{
+		ID:          patient.ID,
+		OwnerUserID: patient.OwnerUserID,
+		CPF:         patient.CPF,
+		CNS:         patient.CNS,
+		FullName:    patient.FullName,
+		BirthDate:   patient.BirthDate,
+		Gender:      string(patient.Gender),
+		Race:        string(patient.Race),
+		AvatarURL:   patient.AvatarURL,
+		Phone:       patient.Phone,
+		CreatedAt:   patient.CreatedAt,
+		UpdatedAt:   patient.UpdatedAt,
 	}
+}
 
-	parsedID, parseErr := uuid.Parse(id)
-	if parseErr != nil {
-		presenter.ErrorResponder(c, &apperr.AppError{
-			Kind:    apperr.INVALID_FIELD_FORMAT,
-			Message: "patient_id inválido",
-			Cause:   parseErr,
-		})
-		return
+func toHumaError(err error) error {
+	var appErr *apperr.AppError
+	if errors.As(err, &appErr) && appErr != nil {
+		return huma.NewError(presenter.StatusFromCode(appErr.Kind), appErr.Message)
 	}
-
-	if err := h.svc.HardDelete(c.Request.Context(), currentUser, parsedID); err != nil {
-		presenter.ErrorResponder(c, err)
-		return
-	}
-
-	c.Status(http.StatusNoContent)
-
+	return huma.Error500InternalServerError("erro inesperado")
 }
