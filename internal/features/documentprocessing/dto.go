@@ -44,7 +44,7 @@ type ExamDocumentOutput struct {
 	ID               uuid.UUID            `json:"id"`
 	PatientID        uuid.UUID            `json:"patient_id"`
 	UploadedByUserID uuid.UUID            `json:"uploaded_by_user_id"`
-	StorageURI       string               `json:"storage_uri"`
+	StorageURI       string               `json:"-"`
 	OriginalFilename string               `json:"original_filename"`
 	MimeType         string               `json:"mime_type"`
 	Status           exams.DocumentStatus `json:"status"`

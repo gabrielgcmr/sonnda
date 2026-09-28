@@ -133,9 +133,13 @@ func (f *fakeExamsService) ListDocumentTextsByPatient(ctx context.Context, patie
 }
 
 type fakeExamStorage struct {
-	uri         string
-	objectName  string
-	contentType string
+	uri                 string
+	objectName          string
+	contentType         string
+	signedURL           string
+	signedURLURI        string
+	signedURLExpiration int
+	signedURLError      error
 }
 
 func (f *fakeExamStorage) Upload(ctx context.Context, file io.Reader, objectName, contentType string) (string, error) {
@@ -152,7 +156,15 @@ func (f *fakeExamStorage) Delete(ctx context.Context, uri string) error {
 }
 
 func (f *fakeExamStorage) GetSignedURL(ctx context.Context, uri string, expirationMinutes int) (string, error) {
-	return "", nil
+	f.signedURLURI = uri
+	f.signedURLExpiration = expirationMinutes
+	if f.signedURLError != nil {
+		return "", f.signedURLError
+	}
+	if f.signedURL != "" {
+		return f.signedURL, nil
+	}
+	return "https://storage.example/exam.pdf?signature=test", nil
 }
 
 type fakeTextExtractor struct {
@@ -342,6 +354,45 @@ func TestGetExamDocumentReturnsDocumentByID(t *testing.T) {
 	}
 	if !strings.Contains(response.Body.String(), documentID.String()) {
 		t.Fatalf("response does not contain document id %s: %s", documentID, response.Body.String())
+	}
+	if strings.Contains(response.Body.String(), "storage_uri") {
+		t.Fatalf("response must not expose storage_uri: %s", response.Body.String())
+	}
+	if access.patientID != document.PatientID {
+		t.Fatalf("access checked for patient %s, want %s", access.patientID, document.PatientID)
+	}
+}
+
+func TestGetExamDocumentFileReturnsAuthorizedTemporaryURL(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	documentID := uuid.New()
+	document := &examsvc.ExamDocumentOutput{
+		ID: documentID, PatientID: uuid.New(), StorageURI: "gs://bucket/patients/exam.pdf",
+	}
+	svc := &fakeExamsService{document: document}
+	storage := &fakeExamStorage{signedURL: "https://storage.example/exam.pdf?signature=test"}
+	access := &recordingExamAccessChecker{}
+	h := newExamsHandler(svc, nil, storage, nil, access)
+	r := gin.New()
+	r.Use(func(c *gin.Context) {
+		helpers.SetCurrentUser(c, &accountdomain.User{ID: uuid.New(), AccountType: accountdomain.AccountTypeBasicCare})
+		c.Next()
+	})
+	r.GET("/exam-documents/:documentId/file", h.GetExamDocumentFile)
+	response := httptest.NewRecorder()
+	r.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/exam-documents/"+documentID.String()+"/file", nil))
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d: %s", http.StatusOK, response.Code, response.Body.String())
+	}
+	if !strings.Contains(response.Body.String(), storage.signedURL) {
+		t.Fatalf("response does not contain signed URL: %s", response.Body.String())
+	}
+	if storage.signedURLURI != document.StorageURI {
+		t.Fatalf("expected storage URI %q, got %q", document.StorageURI, storage.signedURLURI)
+	}
+	if storage.signedURLExpiration != examDocumentFileURLExpirationMinutes {
+		t.Fatalf("expected expiration %d, got %d", examDocumentFileURLExpirationMinutes, storage.signedURLExpiration)
 	}
 	if access.patientID != document.PatientID {
 		t.Fatalf("access checked for patient %s, want %s", access.patientID, document.PatientID)

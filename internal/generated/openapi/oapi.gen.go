@@ -91,6 +91,7 @@ type AccessiblePatientsResponse struct {
 type CreatePatientRequest struct {
 	AvatarUrl *string            `json:"avatar_url"`
 	BirthDate openapi_types.Date `json:"birth_date"`
+	Cns       *string            `json:"cns"`
 
 	// Cpf CPF sem pontuação (apenas dígitos)
 	Cpf      string                     `json:"cpf"`
@@ -131,9 +132,14 @@ type ExamDocument struct {
 	OriginalFilename string             `json:"original_filename"`
 	PatientId        openapi_types.UUID `json:"patient_id"`
 	Status           string             `json:"status"`
-	StorageUri       string             `json:"storage_uri"`
 	UpdatedAt        time.Time          `json:"updated_at"`
 	UploadedByUserId openapi_types.UUID `json:"uploaded_by_user_id"`
+}
+
+// ExamDocumentFile defines model for ExamDocumentFile.
+type ExamDocumentFile struct {
+	ExpiresAt time.Time `json:"expires_at"`
+	Url       string    `json:"url"`
 }
 
 // HealthResponse defines model for HealthResponse.
@@ -208,9 +214,6 @@ type LabTestResultFull struct {
 	TestName    string             `json:"test_name"`
 }
 
-// LabUploadResponse Retorno do processamento do laudo.
-type LabUploadResponse map[string]interface{}
-
 // LabsList Lista de laudos. Por padrao retorna a representacao resumida
 // (LabReportSummaryList). Quando expand=full ou include contem full,
 // results ou test_results, retorna LabReportFullList.
@@ -218,17 +221,20 @@ type LabsList struct {
 	union json.RawMessage
 }
 
-// Patient Representação simplificada do paciente.
+// Patient Representação do paciente retornada pela API.
 type Patient struct {
-	AvatarUrl            *string                `json:"avatar_url"`
-	BirthDate            *openapi_types.Date    `json:"birth_date,omitempty"`
-	Cpf                  *string                `json:"cpf,omitempty"`
-	FullName             *string                `json:"full_name,omitempty"`
-	Gender               *PatientGender         `json:"gender,omitempty"`
-	Id                   openapi_types.UUID     `json:"id"`
-	Phone                *string                `json:"phone"`
-	Race                 *PatientRace           `json:"race,omitempty"`
-	AdditionalProperties map[string]interface{} `json:"-"`
+	AvatarUrl   string              `json:"avatar_url"`
+	BirthDate   time.Time           `json:"birth_date"`
+	Cns         *string             `json:"cns,omitempty"`
+	Cpf         string              `json:"cpf"`
+	CreatedAt   time.Time           `json:"created_at"`
+	FullName    string              `json:"full_name"`
+	Gender      PatientGender       `json:"gender"`
+	Id          openapi_types.UUID  `json:"id"`
+	OwnerUserId *openapi_types.UUID `json:"owner_user_id,omitempty"`
+	Phone       *string             `json:"phone,omitempty"`
+	Race        PatientRace         `json:"race"`
+	UpdatedAt   time.Time           `json:"updated_at"`
 }
 
 // PatientGender defines model for Patient.Gender.
@@ -318,15 +324,6 @@ type User struct {
 	UpdatedAt   time.Time          `json:"updated_at"`
 }
 
-// LimitParam defines model for LimitParam.
-type LimitParam = int
-
-// OffsetParam defines model for OffsetParam.
-type OffsetParam = int
-
-// PatientId defines model for PatientId.
-type PatientId = openapi_types.UUID
-
 // OpenapiComponentsParametersLimitParam defines model for openapi_components_parameters_LimitParam.
 type OpenapiComponentsParametersLimitParam = int
 
@@ -336,11 +333,20 @@ type OpenapiComponentsParametersOffsetParam = int
 // OpenapiComponentsParametersPatientId defines model for openapi_components_parameters_PatientId.
 type OpenapiComponentsParametersPatientId = openapi_types.UUID
 
-// OpenapiComponentsResponsesProblem defines model for Problem.
+// OpenapiComponentsResponsesProblem defines model for openapi_components_responses_Problem.
 type OpenapiComponentsResponsesProblem = ProblemDetails
 
 // ListAccessiblePatientsParams defines parameters for ListAccessiblePatients.
 type ListAccessiblePatientsParams struct {
+	// Limit Número máximo de itens
+	Limit *OpenapiComponentsParametersLimitParam `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Offset Número de itens para pular
+	Offset *OpenapiComponentsParametersOffsetParam `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// ListExamDocumentsParams defines parameters for ListExamDocuments.
+type ListExamDocumentsParams struct {
 	// Limit Número máximo de itens
 	Limit *OpenapiComponentsParametersLimitParam `form:"limit,omitempty" json:"limit,omitempty"`
 
@@ -360,10 +366,10 @@ type ListPatientLabReportsParams struct {
 	Include *string                            `form:"include,omitempty" json:"include,omitempty"`
 
 	// Limit Número máximo de itens
-	Limit *LimitParam `form:"limit,omitempty" json:"limit,omitempty"`
+	Limit *OpenapiComponentsParametersLimitParam `form:"limit,omitempty" json:"limit,omitempty"`
 
 	// Offset Número de itens para pular
-	Offset *OffsetParam `form:"offset,omitempty" json:"offset,omitempty"`
+	Offset *OpenapiComponentsParametersOffsetParam `form:"offset,omitempty" json:"offset,omitempty"`
 }
 
 // ListPatientLabReportsParamsExpand defines parameters for ListPatientLabReports.
@@ -378,19 +384,14 @@ type ListPatientLabsParams struct {
 	Include *string `form:"include,omitempty" json:"include,omitempty"`
 
 	// Limit Número máximo de itens
-	Limit *LimitParam `form:"limit,omitempty" json:"limit,omitempty"`
+	Limit *OpenapiComponentsParametersLimitParam `form:"limit,omitempty" json:"limit,omitempty"`
 
 	// Offset Número de itens para pular
-	Offset *OffsetParam `form:"offset,omitempty" json:"offset,omitempty"`
+	Offset *OpenapiComponentsParametersOffsetParam `form:"offset,omitempty" json:"offset,omitempty"`
 }
 
 // ListPatientLabsParamsExpand defines parameters for ListPatientLabs.
 type ListPatientLabsParamsExpand string
-
-// UploadPatientLabMultipartBody defines parameters for UploadPatientLab.
-type UploadPatientLabMultipartBody struct {
-	File openapi_types.File `json:"file"`
-}
 
 // CreateCurrentAccountJSONRequestBody defines body for CreateCurrentAccount for application/json ContentType.
 type CreateCurrentAccountJSONRequestBody = CreateUserRequest
@@ -403,180 +404,6 @@ type CreatePatientJSONRequestBody = CreatePatientRequest
 
 // UploadExamDocumentMultipartRequestBody defines body for UploadExamDocument for multipart/form-data ContentType.
 type UploadExamDocumentMultipartRequestBody UploadExamDocumentMultipartBody
-
-// UploadPatientLabMultipartRequestBody defines body for UploadPatientLab for multipart/form-data ContentType.
-type UploadPatientLabMultipartRequestBody UploadPatientLabMultipartBody
-
-// Getter for additional properties for Patient. Returns the specified
-// element and whether it was found
-func (a Patient) Get(fieldName string) (value interface{}, found bool) {
-	if a.AdditionalProperties != nil {
-		value, found = a.AdditionalProperties[fieldName]
-	}
-	return
-}
-
-// Setter for additional properties for Patient
-func (a *Patient) Set(fieldName string, value interface{}) {
-	if a.AdditionalProperties == nil {
-		a.AdditionalProperties = make(map[string]interface{})
-	}
-	a.AdditionalProperties[fieldName] = value
-}
-
-// Override default JSON handling for Patient to handle AdditionalProperties
-func (a *Patient) UnmarshalJSON(b []byte) error {
-	object := make(map[string]json.RawMessage)
-	err := json.Unmarshal(b, &object)
-	if err != nil {
-		return err
-	}
-
-	if raw, found := object["avatar_url"]; found {
-		err = json.Unmarshal(raw, &a.AvatarUrl)
-		if err != nil {
-			return fmt.Errorf("error reading 'avatar_url': %w", err)
-		}
-		delete(object, "avatar_url")
-	}
-
-	if raw, found := object["birth_date"]; found {
-		err = json.Unmarshal(raw, &a.BirthDate)
-		if err != nil {
-			return fmt.Errorf("error reading 'birth_date': %w", err)
-		}
-		delete(object, "birth_date")
-	}
-
-	if raw, found := object["cpf"]; found {
-		err = json.Unmarshal(raw, &a.Cpf)
-		if err != nil {
-			return fmt.Errorf("error reading 'cpf': %w", err)
-		}
-		delete(object, "cpf")
-	}
-
-	if raw, found := object["full_name"]; found {
-		err = json.Unmarshal(raw, &a.FullName)
-		if err != nil {
-			return fmt.Errorf("error reading 'full_name': %w", err)
-		}
-		delete(object, "full_name")
-	}
-
-	if raw, found := object["gender"]; found {
-		err = json.Unmarshal(raw, &a.Gender)
-		if err != nil {
-			return fmt.Errorf("error reading 'gender': %w", err)
-		}
-		delete(object, "gender")
-	}
-
-	if raw, found := object["id"]; found {
-		err = json.Unmarshal(raw, &a.Id)
-		if err != nil {
-			return fmt.Errorf("error reading 'id': %w", err)
-		}
-		delete(object, "id")
-	}
-
-	if raw, found := object["phone"]; found {
-		err = json.Unmarshal(raw, &a.Phone)
-		if err != nil {
-			return fmt.Errorf("error reading 'phone': %w", err)
-		}
-		delete(object, "phone")
-	}
-
-	if raw, found := object["race"]; found {
-		err = json.Unmarshal(raw, &a.Race)
-		if err != nil {
-			return fmt.Errorf("error reading 'race': %w", err)
-		}
-		delete(object, "race")
-	}
-
-	if len(object) != 0 {
-		a.AdditionalProperties = make(map[string]interface{})
-		for fieldName, fieldBuf := range object {
-			var fieldVal interface{}
-			err := json.Unmarshal(fieldBuf, &fieldVal)
-			if err != nil {
-				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
-			}
-			a.AdditionalProperties[fieldName] = fieldVal
-		}
-	}
-	return nil
-}
-
-// Override default JSON handling for Patient to handle AdditionalProperties
-func (a Patient) MarshalJSON() ([]byte, error) {
-	var err error
-	object := make(map[string]json.RawMessage)
-
-	if a.AvatarUrl != nil {
-		object["avatar_url"], err = json.Marshal(a.AvatarUrl)
-		if err != nil {
-			return nil, fmt.Errorf("error marshaling 'avatar_url': %w", err)
-		}
-	}
-
-	if a.BirthDate != nil {
-		object["birth_date"], err = json.Marshal(a.BirthDate)
-		if err != nil {
-			return nil, fmt.Errorf("error marshaling 'birth_date': %w", err)
-		}
-	}
-
-	if a.Cpf != nil {
-		object["cpf"], err = json.Marshal(a.Cpf)
-		if err != nil {
-			return nil, fmt.Errorf("error marshaling 'cpf': %w", err)
-		}
-	}
-
-	if a.FullName != nil {
-		object["full_name"], err = json.Marshal(a.FullName)
-		if err != nil {
-			return nil, fmt.Errorf("error marshaling 'full_name': %w", err)
-		}
-	}
-
-	if a.Gender != nil {
-		object["gender"], err = json.Marshal(a.Gender)
-		if err != nil {
-			return nil, fmt.Errorf("error marshaling 'gender': %w", err)
-		}
-	}
-
-	object["id"], err = json.Marshal(a.Id)
-	if err != nil {
-		return nil, fmt.Errorf("error marshaling 'id': %w", err)
-	}
-
-	if a.Phone != nil {
-		object["phone"], err = json.Marshal(a.Phone)
-		if err != nil {
-			return nil, fmt.Errorf("error marshaling 'phone': %w", err)
-		}
-	}
-
-	if a.Race != nil {
-		object["race"], err = json.Marshal(a.Race)
-		if err != nil {
-			return nil, fmt.Errorf("error marshaling 'race': %w", err)
-		}
-	}
-
-	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
-		if err != nil {
-			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
-		}
-	}
-	return json.Marshal(object)
-}
 
 // AsLabReportSummaryList returns the union data inside the LabsList as a LabReportSummaryList
 func (t LabsList) AsLabReportSummaryList() (LabReportSummaryList, error) {
@@ -657,6 +484,9 @@ type ServerInterface interface {
 	// Obter documento de exame
 	// (GET /v1/exam-documents/{documentId})
 	GetExamDocument(c *gin.Context, documentId openapi_types.UUID)
+	// Obter URL temporária do arquivo de exame
+	// (GET /v1/exam-documents/{documentId}/file)
+	GetExamDocumentFile(c *gin.Context, documentId openapi_types.UUID)
 	// Obter laudo laboratorial
 	// (GET /v1/lab-reports/{labReportId})
 	GetLabReport(c *gin.Context, labReportId openapi_types.UUID)
@@ -684,18 +514,18 @@ type ServerInterface interface {
 	// Obter paciente
 	// (GET /v1/patients/{patientId})
 	GetPatient(c *gin.Context, patientId OpenapiComponentsParametersPatientId)
+	// Listar documentos de exame
+	// (GET /v1/patients/{patientId}/exam-documents)
+	ListExamDocuments(c *gin.Context, patientId OpenapiComponentsParametersPatientId, params ListExamDocumentsParams)
 	// Enviar documento de exame
 	// (POST /v1/patients/{patientId}/exam-documents)
-	UploadExamDocument(c *gin.Context, patientId PatientId)
+	UploadExamDocument(c *gin.Context, patientId OpenapiComponentsParametersPatientId)
 	// Listar laudos laboratoriais
 	// (GET /v1/patients/{patientId}/lab-reports)
-	ListPatientLabReports(c *gin.Context, patientId PatientId, params ListPatientLabReportsParams)
+	ListPatientLabReports(c *gin.Context, patientId OpenapiComponentsParametersPatientId, params ListPatientLabReportsParams)
 	// Listar laudos
 	// (GET /v1/patients/{patientId}/labs)
-	ListPatientLabs(c *gin.Context, patientId PatientId, params ListPatientLabsParams)
-	// Upload de laudo
-	// (POST /v1/patients/{patientId}/labs)
-	UploadPatientLab(c *gin.Context, patientId PatientId)
+	ListPatientLabs(c *gin.Context, patientId OpenapiComponentsParametersPatientId, params ListPatientLabsParams)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -783,6 +613,32 @@ func (siw *ServerInterfaceWrapper) GetExamDocument(c *gin.Context) {
 	}
 
 	siw.Handler.GetExamDocument(c, documentId)
+}
+
+// GetExamDocumentFile operation middleware
+func (siw *ServerInterfaceWrapper) GetExamDocumentFile(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "documentId" -------------
+	var documentId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "documentId", c.Param("documentId"), &documentId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter documentId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(BearerAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetExamDocumentFile(c, documentId)
 }
 
 // GetLabReport operation middleware
@@ -963,13 +819,58 @@ func (siw *ServerInterfaceWrapper) GetPatient(c *gin.Context) {
 	siw.Handler.GetPatient(c, patientId)
 }
 
+// ListExamDocuments operation middleware
+func (siw *ServerInterfaceWrapper) ListExamDocuments(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "patientId" -------------
+	var patientId OpenapiComponentsParametersPatientId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "patientId", c.Param("patientId"), &patientId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter patientId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(BearerAuthScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListExamDocumentsParams
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", c.Request.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter limit: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "offset", c.Request.URL.Query(), &params.Offset)
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter offset: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.ListExamDocuments(c, patientId, params)
+}
+
 // UploadExamDocument operation middleware
 func (siw *ServerInterfaceWrapper) UploadExamDocument(c *gin.Context) {
 
 	var err error
 
 	// ------------- Path parameter "patientId" -------------
-	var patientId PatientId
+	var patientId OpenapiComponentsParametersPatientId
 
 	err = runtime.BindStyledParameterWithOptions("simple", "patientId", c.Param("patientId"), &patientId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
@@ -995,7 +896,7 @@ func (siw *ServerInterfaceWrapper) ListPatientLabReports(c *gin.Context) {
 	var err error
 
 	// ------------- Path parameter "patientId" -------------
-	var patientId PatientId
+	var patientId OpenapiComponentsParametersPatientId
 
 	err = runtime.BindStyledParameterWithOptions("simple", "patientId", c.Param("patientId"), &patientId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
@@ -1056,7 +957,7 @@ func (siw *ServerInterfaceWrapper) ListPatientLabs(c *gin.Context) {
 	var err error
 
 	// ------------- Path parameter "patientId" -------------
-	var patientId PatientId
+	var patientId OpenapiComponentsParametersPatientId
 
 	err = runtime.BindStyledParameterWithOptions("simple", "patientId", c.Param("patientId"), &patientId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
@@ -1111,32 +1012,6 @@ func (siw *ServerInterfaceWrapper) ListPatientLabs(c *gin.Context) {
 	siw.Handler.ListPatientLabs(c, patientId, params)
 }
 
-// UploadPatientLab operation middleware
-func (siw *ServerInterfaceWrapper) UploadPatientLab(c *gin.Context) {
-
-	var err error
-
-	// ------------- Path parameter "patientId" -------------
-	var patientId PatientId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "patientId", c.Param("patientId"), &patientId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter patientId: %w", err), http.StatusBadRequest)
-		return
-	}
-
-	c.Set(BearerAuthScopes, []string{})
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		middleware(c)
-		if c.IsAborted() {
-			return
-		}
-	}
-
-	siw.Handler.UploadPatientLab(c, patientId)
-}
-
 // GinServerOptions provides options for the Gin server.
 type GinServerOptions struct {
 	BaseURL      string
@@ -1169,6 +1044,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.GET(options.BaseURL+"/healthz", wrapper.GetHealth)
 	router.GET(options.BaseURL+"/readyz", wrapper.GetReadiness)
 	router.GET(options.BaseURL+"/v1/exam-documents/:documentId", wrapper.GetExamDocument)
+	router.GET(options.BaseURL+"/v1/exam-documents/:documentId/file", wrapper.GetExamDocumentFile)
 	router.GET(options.BaseURL+"/v1/lab-reports/:labReportId", wrapper.GetLabReport)
 	router.DELETE(options.BaseURL+"/v1/me", wrapper.DeleteCurrentAccount)
 	router.GET(options.BaseURL+"/v1/me", wrapper.GetCurrentAccount)
@@ -1178,8 +1054,8 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.GET(options.BaseURL+"/v1/patients", wrapper.ListPatients)
 	router.POST(options.BaseURL+"/v1/patients", wrapper.CreatePatient)
 	router.GET(options.BaseURL+"/v1/patients/:patientId", wrapper.GetPatient)
+	router.GET(options.BaseURL+"/v1/patients/:patientId/exam-documents", wrapper.ListExamDocuments)
 	router.POST(options.BaseURL+"/v1/patients/:patientId/exam-documents", wrapper.UploadExamDocument)
 	router.GET(options.BaseURL+"/v1/patients/:patientId/lab-reports", wrapper.ListPatientLabReports)
 	router.GET(options.BaseURL+"/v1/patients/:patientId/labs", wrapper.ListPatientLabs)
-	router.POST(options.BaseURL+"/v1/patients/:patientId/labs", wrapper.UploadPatientLab)
 }

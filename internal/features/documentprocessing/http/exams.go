@@ -25,6 +25,13 @@ type ExamsHandler struct {
 	accessChecker patientaccess.Checker
 }
 
+const examDocumentFileURLExpirationMinutes = 15
+
+type examDocumentFileResponse struct {
+	URL       string    `json:"url"`
+	ExpiresAt time.Time `json:"expires_at"`
+}
+
 func NewExams(
 	svc documents.Service,
 	processor processing.ProcessStoredDocumentUseCase,
@@ -77,6 +84,41 @@ func (h *ExamsHandler) GetExamDocument(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, document)
+}
+
+func (h *ExamsHandler) GetExamDocumentFile(c *gin.Context) {
+	currentUser := helpers.MustGetCurrentUser(c)
+	documentID, err := uuid.Parse(c.Param("documentId"))
+	if err != nil {
+		presenter.ErrorResponder(c, apperr.Validation("document_id invÃ¡lido", apperr.Violation{Field: "document_id", Reason: "invalid"}))
+		return
+	}
+	document, err := h.svc.FindByID(c.Request.Context(), documentID)
+	if err != nil {
+		presenter.ErrorResponder(c, err)
+		return
+	}
+	if document == nil {
+		presenter.ErrorResponder(c, apperr.NotFound("documento nao encontrado"))
+		return
+	}
+	if err := h.accessChecker.RequireAccess(c.Request.Context(), currentUser.ID, document.PatientID); err != nil {
+		presenter.ErrorResponder(c, err)
+		return
+	}
+	if h.storage == nil {
+		presenter.ErrorResponder(c, apperr.Internal("armazenamento de documentos indisponivel", nil))
+		return
+	}
+	url, err := h.storage.GetSignedURL(c.Request.Context(), document.StorageURI, examDocumentFileURLExpirationMinutes)
+	if err != nil {
+		presenter.ErrorResponder(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, examDocumentFileResponse{
+		URL:       url,
+		ExpiresAt: time.Now().UTC().Add(examDocumentFileURLExpirationMinutes * time.Minute),
+	})
 }
 
 func (h *ExamsHandler) ListExamDocumentTexts(c *gin.Context) {
