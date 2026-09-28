@@ -28,6 +28,30 @@ go run ./cmd/extract-text -input "samples/exam/exemplo.pdf"
 Nesse modo, o metodo selecionado e exibido em `stderr`; o texto continua em
 `stdout`, permitindo redireciona-lo para outro comando ou arquivo.
 
+## Resumo de resultados laboratoriais
+
+No Windows, inicie o fluxo completo com um seletor de arquivo:
+
+```powershell
+make lab-summary
+```
+
+Selecione um PDF ou imagem; o OCR e o resumo rodam em sequencia, e o arquivo
+`<nome>_resumo.txt` e salvo ao lado do original. Se ja existir, um sufixo numerico
+e acrescentado para evitar sobrescrita. O fluxo exige Document AI configurado e
+`GEMINI_API_KEY`; nao altera as rotas nem o contrato da API.
+
+Tambem e possivel executar as etapas separadamente, gerando primeiro o texto OCR:
+
+```powershell
+go run ./cmd/extract-text -input samples/exam/laudo.pdf -documentai -output samples/text
+go run ./cmd/extract-lab-summary -input samples/text/laudo.txt -output samples/summary/laudo.txt
+```
+
+O resumo inclui laboratorio, data de coleta e resultados estruturados. Valores,
+inclusive resultados textuais como `Negativo`, e unidades sao preservados; dados
+do paciente, medico e intervalos de referencia sao omitidos.
+
 PDF nativo usa `pdftotext -raw`. Imagem `.jpg`, `.jpeg` ou `.png` usa `tesseract`.
 Para fotos, o comando testa rotacoes de 0, 90, 180 e 270 graus, depois cria versoes
 temporarias em tons de cinza com contraste alto e binarizacao. A melhor rotacao e

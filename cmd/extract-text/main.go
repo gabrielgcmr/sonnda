@@ -25,7 +25,7 @@ func main() {
 	flag.StringVar(&inputPath, "input", "", "file or directory with PDFs/images")
 	flag.StringVar(&outputDir, "output", "", "directory for generated .txt files; defaults to stdout")
 	flag.BoolVar(&requireUsable, "require-usable", false, "fail when extracted text does not pass the runtime quality filter")
-	flag.BoolVar(&useDocumentAI, "document-ai", false, "extract text with Google Document AI using the local file contents")
+	flag.BoolVar(&useDocumentAI, "documentai", false, "extract text with Google Document AI using the local file contents")
 	flag.Parse()
 
 	if strings.TrimSpace(inputPath) == "" {
