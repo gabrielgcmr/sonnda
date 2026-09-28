@@ -12,8 +12,7 @@ import (
 )
 
 // Client é o contrato genérico de acesso ao Document AI.
-// Ele não conhece nenhum domínio (labs, examImage, etc.):
-// recebe um processorID e uma URI do GCS e devolve o Document cru.
+// Ele não conhece nenhum domínio (labs, examImage, etc.).
 type Client struct {
 	client    *documentaiclient.DocumentProcessorClient
 	projectID string
@@ -52,10 +51,8 @@ func (c *Client) ProcessDocument(
 	ctx context.Context,
 	processorID, gcsURI, mimeType string,
 ) (*documentaipb.Document, error) {
-	name := fmt.Sprintf("projects/%s/locations/%s/processors/%s", c.projectID, c.location, processorID)
-
 	req := &documentaipb.ProcessRequest{
-		Name: name,
+		Name: c.processorName(processorID),
 		Source: &documentaipb.ProcessRequest_GcsDocument{
 			GcsDocument: &documentaipb.GcsDocument{
 				GcsUri:   gcsURI,
@@ -63,13 +60,38 @@ func (c *Client) ProcessDocument(
 			},
 		},
 	}
+	return c.process(ctx, req)
+}
 
+func (c *Client) ProcessRawDocument(
+	ctx context.Context,
+	processorID string,
+	content []byte,
+	mimeType string,
+) (*documentaipb.Document, error) {
+	req := &documentaipb.ProcessRequest{
+		Name: c.processorName(processorID),
+		Source: &documentaipb.ProcessRequest_RawDocument{
+			RawDocument: &documentaipb.RawDocument{
+				Content:  content,
+				MimeType: mimeType,
+			},
+		},
+	}
+	return c.process(ctx, req)
+}
+
+func (c *Client) processorName(processorID string) string {
+	return fmt.Sprintf("projects/%s/locations/%s/processors/%s", c.projectID, c.location, processorID)
+}
+
+func (c *Client) process(ctx context.Context, req *documentaipb.ProcessRequest) (*documentaipb.Document, error) {
 	resp, err := c.client.ProcessDocument(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("falha no processamento do DocAI: %w", err)
 	}
 
-	if resp.Document == nil {
+	if resp == nil || resp.Document == nil {
 		return nil, fmt.Errorf("document AI retornou resposta sem documento")
 	}
 

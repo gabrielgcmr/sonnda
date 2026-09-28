@@ -12,16 +12,20 @@ import (
 	"strings"
 
 	domaintext "github.com/gabrielgcmr/sonnda/internal/domain/textextraction"
+	documentaiinfra "github.com/gabrielgcmr/sonnda/internal/infrastructure/documentai"
 	textextractioninfra "github.com/gabrielgcmr/sonnda/internal/infrastructure/textextraction"
+	"github.com/joho/godotenv"
 )
 
 func main() {
 	var inputPath string
 	var outputDir string
 	var requireUsable bool
+	var useDocumentAI bool
 	flag.StringVar(&inputPath, "input", "", "file or directory with PDFs/images")
-	flag.StringVar(&outputDir, "output", "", "directory for generated .txt files")
+	flag.StringVar(&outputDir, "output", "", "directory for generated .txt files; defaults to stdout")
 	flag.BoolVar(&requireUsable, "require-usable", false, "fail when extracted text does not pass the runtime quality filter")
+	flag.BoolVar(&useDocumentAI, "document-ai", false, "extract text with Google Document AI using the local file contents")
 	flag.Parse()
 
 	if strings.TrimSpace(inputPath) == "" {
@@ -37,16 +41,29 @@ func main() {
 		RequireUsableText: requireUsable,
 	})
 	ctx := context.Background()
+	var documentAIClient *documentaiinfra.Client
+	var documentAIProcessorID string
+	if useDocumentAI {
+		_ = godotenv.Load()
+		projectID := strings.TrimSpace(os.Getenv("GCP_PROJECT_ID"))
+		location := strings.TrimSpace(os.Getenv("GCP_LOCATION"))
+		documentAIProcessorID = strings.TrimSpace(os.Getenv("GCP_EXTRACT_LABS_PROCESSOR_ID"))
+		if projectID == "" || location == "" || documentAIProcessorID == "" {
+			exitWithError(2, errors.New("Document AI requires GCP_PROJECT_ID, GCP_LOCATION, and GCP_EXTRACT_LABS_PROCESSOR_ID"))
+		}
+		var err error
+		documentAIClient, err = documentaiinfra.NewClient(ctx, projectID, location)
+		if err != nil {
+			exitWithError(1, fmt.Errorf("create Document AI client: %w", err))
+		}
+		defer documentAIClient.Close()
+	}
 
 	if !info.IsDir() {
-		if err := extractOne(ctx, extractor, inputPath, inputPath, outputDir); err != nil {
+		if err := extractOne(ctx, extractor, documentAIClient, documentAIProcessorID, inputPath, inputPath, outputDir); err != nil {
 			exitWithError(1, err)
 		}
 		return
-	}
-
-	if outputDir == "" {
-		outputDir = filepath.Join("samples", "text")
 	}
 
 	var failed int
@@ -59,7 +76,7 @@ func main() {
 		if entry.IsDir() || mimeTypeFromPath(path) == "" {
 			return nil
 		}
-		if err := extractOne(ctx, extractor, inputPath, path, outputDir); err != nil {
+		if err := extractOne(ctx, extractor, documentAIClient, documentAIProcessorID, inputPath, path, outputDir); err != nil {
 			failed++
 			fmt.Fprintf(os.Stderr, "fail %s: %v\n", path, err)
 		}
@@ -73,22 +90,49 @@ func main() {
 	}
 }
 
-func extractOne(ctx context.Context, extractor domaintext.Extractor, rootPath, inputPath, outputDir string) error {
+func extractOne(
+	ctx context.Context,
+	extractor domaintext.Extractor,
+	documentAIClient *documentaiinfra.Client,
+	documentAIProcessorID string,
+	rootPath, inputPath, outputDir string,
+) error {
 	mimeType := mimeTypeFromPath(inputPath)
 	if mimeType == "" {
 		return fmt.Errorf("unsupported file extension")
 	}
-	output, err := extractor.Extract(ctx, domaintext.ExtractInput{
-		LocalPath:        inputPath,
-		MimeType:         mimeType,
-		OriginalFilename: filepath.Base(inputPath),
-	})
+	var output *domaintext.ExtractOutput
+	var err error
+	if documentAIClient != nil {
+		content, readErr := os.ReadFile(inputPath)
+		if readErr != nil {
+			return fmt.Errorf("read input: %w", readErr)
+		}
+		document, processErr := documentAIClient.ProcessRawDocument(ctx, documentAIProcessorID, content, mimeType)
+		if processErr != nil {
+			return processErr
+		}
+		output = &domaintext.ExtractOutput{
+			Text:           document.GetText(),
+			NormalizedText: domaintext.NormalizeForSemanticExtraction(document.GetText()),
+			Method:         "document_ai_ocr",
+		}
+		if strings.TrimSpace(output.Text) == "" {
+			return fmt.Errorf("Document AI returned no text")
+		}
+	} else {
+		output, err = extractor.Extract(ctx, domaintext.ExtractInput{
+			LocalPath:        inputPath,
+			MimeType:         mimeType,
+			OriginalFilename: filepath.Base(inputPath),
+		})
+	}
 	if err != nil {
 		return err
 	}
 	if outputDir == "" {
-		fmt.Fprintf(os.Stderr, "method: %s\n", output.Method)
-		fmt.Print(output.Text)
+		fmt.Fprintf(os.Stderr, "extracted %s (%s)\n", inputPath, output.Method)
+		fmt.Printf("===== %s =====\n%s\n", filepath.Base(inputPath), output.Text)
 		return nil
 	}
 
