@@ -11,9 +11,6 @@ import (
 	laboratoryhttp "github.com/gabrielgcmr/sonnda/internal/features/patient/exam/laboratory/http"
 	patienthttp "github.com/gabrielgcmr/sonnda/internal/features/patient/http"
 	profilehttp "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/http"
-	openapigen "github.com/gabrielgcmr/sonnda/internal/generated/openapi"
-	openapispec "github.com/gabrielgcmr/sonnda/internal/openapispec"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -34,90 +31,54 @@ type RootInfo struct {
 	Env     string
 }
 
-func SetupRoutes(
-	r gin.IRouter,
-	deps *APIDependencies,
+type RootResponse struct {
+	Name        string `json:"name"`
+	Version     string `json:"version"`
+	Environment string `json:"environment"`
+	Docs        string `json:"docs"`
+	OpenAPI     string `json:"openapi"`
+	Health      string `json:"health"`
+	Ready       string `json:"ready"`
+}
 
-) {
+func SetupRoutes(r *gin.Engine, deps *APIDependencies) {
 	r.GET("/favicon.ico", func(c *gin.Context) {
 		c.Data(http.StatusOK, "image/x-icon", faviconData)
 	})
-	// Rotas públicas (sem versão)
+
+	humaAPI := newHumaAPI(r)
+	registerHumaRoutes(humaAPI, deps)
 	registerPublicRoutes(r)
-	registerDocsRoutes(r)
-	registerOpenAPIRoute(r)
 
-	v1 := r.Group("/v1")
-
-	// ---------------------------------------------------------------------
-	// NÍVEL 2: Autenticado (Tem Token do Supabase)
-	// Aqui o cara provou que é dono do e-mail, mas talvez não tenha cadastro no banco.
-	// ---------------------------------------------------------------------
-
-	auth := deps.Auth
-	account := deps.Account
-	authRoutes := v1.Group("")
-	authRoutes.Use(auth.RequireBearer())
-	{
-		// Criação de usuário (Onboarding)
-		// OpenAPI: POST /v1/me
-		authRoutes.POST("/me", deps.AccountHandler.CreateUser)
-		// Legacy: keep /v1/users for backwards-compat
-		authRoutes.POST("/users", deps.AccountHandler.CreateUser)
-	}
-
-	// ---------------------------------------------------------------------
-	// NÍVEL 3: Registrado (Tem Token + Tem usuário no Banco)
-	// Aqui é a área logada do app (Pacientes, Prontuários).
-	// ---------------------------------------------------------------------
-
-	registered := v1.Group("")
+	// These endpoints have not moved to Huma yet, but no route path is versioned.
+	registered := r.Group("")
 	registered.Use(
-		auth.RequireBearer(),
-		account.RequireRegisteredUser())
-	{
-		//Perfil de usuário
-		me := registered.Group("/me")
-		{
-			me.GET("", deps.AccountHandler.GetUser)
-			me.PUT("", deps.AccountHandler.UpdateUser)
-			me.DELETE("", deps.AccountHandler.HardDeleteUser)
-			me.GET("/patients", deps.PatientAccessHandler.ListForCurrentAccount)
-		}
+		deps.Auth.RequireBearer(),
+		deps.Account.RequireRegisteredUser())
 
-		//Pacientes
-		patients := registered.Group("/patients")
-		{
-			//Cria paciente
-			patients.POST("", deps.PatientCreationHandler.Create)
-			patients.GET("", deps.PatientHandler.ListPatients)
-			//Lista pacientes que o usuário tem acesso.
-			//patients.GET("", deps.PatientHandler.ListAcessiblePatients)
+	me := registered.Group("/me")
+	me.GET("/patients", deps.PatientAccessHandler.ListForCurrentAccount)
 
-			//Dados básicos do paciente
-			patients.GET("/:patientId", deps.PatientHandler.GetPatient)
-			patients.GET("/:patientId/lab-reports", deps.LaboratoryHandler.ListLabs)
-			patients.GET("/:patientId/exam-documents", deps.ExamsHandler.ListExamDocuments)
-			patients.POST("/:patientId/exam-documents", deps.ExamsHandler.UploadExamDocument)
+	patients := registered.Group("/patients")
+	patients.POST("", deps.PatientCreationHandler.Create)
+	patients.GET("", deps.PatientHandler.ListPatients)
+	patients.GET("/:patientId", deps.PatientHandler.GetPatient)
+	patients.GET("/:patientId/lab-reports", deps.LaboratoryHandler.ListLabs)
+	patients.GET("/:patientId/exam-documents", deps.ExamsHandler.ListExamDocuments)
+	patients.POST("/:patientId/exam-documents", deps.ExamsHandler.UploadExamDocument)
 
-			labs := patients.Group("/:patientId/labs")
-			{
-				labs.GET("", deps.LaboratoryHandler.ListLabs)
-			}
+	labs := patients.Group("/:patientId/labs")
+	labs.GET("", deps.LaboratoryHandler.ListLabs)
 
-			exams := patients.Group("/:patientId/exames")
-			{
-				exams.GET("", deps.ExamsHandler.ListExamDocuments)
-				exams.GET("/document-texts", deps.ExamsHandler.ListExamDocumentTexts)
-				exams.GET("/reports", deps.ExamsHandler.ListExamDocumentTexts)
-				exams.POST("", deps.ExamsHandler.UploadExamDocument)
-			}
+	exams := patients.Group("/:patientId/exames")
+	exams.GET("", deps.ExamsHandler.ListExamDocuments)
+	exams.GET("/document-texts", deps.ExamsHandler.ListExamDocumentTexts)
+	exams.GET("/reports", deps.ExamsHandler.ListExamDocumentTexts)
+	exams.POST("", deps.ExamsHandler.UploadExamDocument)
 
-		}
-		registered.GET("/exam-documents/:documentId", deps.ExamsHandler.GetExamDocument)
-		registered.GET("/exam-documents/:documentId/file", deps.ExamsHandler.GetExamDocumentFile)
-		registered.GET("/lab-reports/:labReportId", deps.LaboratoryHandler.GetLabReport)
-	}
+	registered.GET("/exam-documents/:documentId", deps.ExamsHandler.GetExamDocument)
+	registered.GET("/exam-documents/:documentId/file", deps.ExamsHandler.GetExamDocumentFile)
+	registered.GET("/lab-reports/:labReportId", deps.LaboratoryHandler.GetLabReport)
 }
 
 func registerRootRoute(r gin.IRouter, info RootInfo) {
@@ -135,12 +96,12 @@ func registerRootRoute(r gin.IRouter, info RootInfo) {
 	}
 
 	r.GET("/", func(c *gin.Context) {
-		c.JSON(http.StatusOK, openapigen.RootResponse{
+		c.JSON(http.StatusOK, RootResponse{
 			Name:        name,
 			Version:     version,
 			Environment: environment,
 			Docs:        "/docs",
-			Openapi:     "/openapi.yaml",
+			OpenAPI:     "/openapi.yaml",
 			Health:      "/healthz",
 			Ready:       "/readyz",
 		})
@@ -148,18 +109,5 @@ func registerRootRoute(r gin.IRouter, info RootInfo) {
 }
 
 func registerPublicRoutes(r gin.IRouter) {
-	r.GET("/healthz", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{"status": "ok"}) })
 	r.GET("/readyz", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{"status": "ok"}) })
-}
-
-func registerDocsRoutes(r gin.IRouter) {
-	r.GET("/docs", func(c *gin.Context) {
-		c.Data(http.StatusOK, "text/html; charset=utf-8", docsHTML)
-	})
-}
-
-func registerOpenAPIRoute(r gin.IRouter) {
-	r.GET("/openapi.yaml", func(c *gin.Context) {
-		c.Data(http.StatusOK, "application/yaml; charset=utf-8", openapispec.OpenAPISpec)
-	})
 }

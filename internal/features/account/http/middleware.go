@@ -22,7 +22,7 @@ func NewMiddleware(userRepo account.Repository) *Middleware {
 	return &Middleware{userRepo: userRepo}
 }
 
-func (m *Middleware) resolveCurrentUser(ctx context.Context, identity *authdomain.Identity) (*accountdomain.User, error) {
+func (m *Middleware) ResolveRegisteredUser(ctx context.Context, identity *authdomain.Identity) (*accountdomain.User, error) {
 	if identity == nil {
 		return nil, apperr.Unauthorized("autenticação necessária")
 	}
@@ -43,7 +43,7 @@ func (m *Middleware) RequireRegisteredUser() gin.HandlerFunc {
 			return
 		}
 
-		currentUser, err := m.resolveCurrentUser(c.Request.Context(), identity)
+		currentUser, err := m.ResolveRegisteredUser(c.Request.Context(), identity)
 		if err != nil {
 			presenter.ErrorResponder(c, err)
 			return
@@ -66,7 +66,7 @@ func (m *Middleware) LoadCurrentUser() gin.HandlerFunc {
 			return
 		}
 
-		currentUser, _ := m.resolveCurrentUser(c.Request.Context(), identity)
+		currentUser, _ := m.ResolveRegisteredUser(c.Request.Context(), identity)
 		if currentUser != nil {
 			helpers.SetCurrentUser(c, currentUser)
 		}

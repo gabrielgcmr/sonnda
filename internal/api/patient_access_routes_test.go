@@ -16,9 +16,9 @@ import (
 
 func TestPatientAccessRouteOmitsRelationshipMetadata(t *testing.T) {
 	router := newAccountRouter(&accountUserRepository{})
-	accountRequest(t, router, http.MethodPost, "/v1/me", accountPayload, http.StatusCreated)
+	accountRequest(t, router, http.MethodPost, "/me", accountPayload, http.StatusCreated)
 
-	response := accountRequest(t, router, http.MethodGet, "/v1/me/patients?limit=150&offset=2", "", http.StatusOK)
+	response := accountRequest(t, router, http.MethodGet, "/me/patients?limit=150&offset=2", "", http.StatusOK)
 	var body struct {
 		Patients []map[string]any `json:"patients"`
 		Total    int64            `json:"total"`
@@ -39,7 +39,7 @@ func TestPatientAccessRouteOmitsRelationshipMetadata(t *testing.T) {
 func TestPatientAccessRouteRequiresAuthentication(t *testing.T) {
 	router := newAccountRouter(&accountUserRepository{})
 	response := httptest.NewRecorder()
-	router.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/v1/me/patients", nil))
+	router.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/me/patients", nil))
 	if response.Code != http.StatusUnauthorized {
 		t.Fatalf("status = %d, want %d", response.Code, http.StatusUnauthorized)
 	}

@@ -20,6 +20,8 @@ require (
 	google.golang.org/genai v1.71.0
 )
 
+require github.com/danielgtaylor/huma/v2 v2.30.0
+
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect

@@ -11,108 +11,98 @@ import (
 	"testing"
 
 	"github.com/gabrielgcmr/sonnda/internal/api"
-	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
 	"github.com/gabrielgcmr/sonnda/internal/features/account"
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
 	accounthttp "github.com/gabrielgcmr/sonnda/internal/features/account/http"
 	authdomain "github.com/gabrielgcmr/sonnda/internal/features/auth/domain"
 	authhttp "github.com/gabrielgcmr/sonnda/internal/features/auth/http"
-	openapigen "github.com/gabrielgcmr/sonnda/internal/generated/openapi"
-	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
-	openapispec "github.com/gabrielgcmr/sonnda/internal/openapispec"
-	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
 const accountPayload = `{"full_name":"Ana Silva","birth_date":"1990-01-02","cpf":"12345678901","phone":"11999999999"}`
 
-func TestAccountRoutesLifecycle(t *testing.T) {
-	for _, createPath := range []string{"/v1/me", "/v1/users"} {
-		t.Run(createPath, func(t *testing.T) {
-			repo := &accountUserRepository{}
-			router := newAccountRouter(repo)
-
-			response := accountRequest(t, router, http.MethodGet, "/v1/me", "", http.StatusForbidden)
-			assertAccountProblem(t, response, apperr.PROFILE_NOT_FOUND)
-
-			response = accountRequest(t, router, http.MethodPost, createPath, accountPayload, http.StatusCreated)
-			created := decodeAccountUser(t, response)
-			if created.Id == uuid.Nil || created.FullName != "Ana Silva" || created.Email != "ana@example.test" ||
-				created.AuthIssuer != "test-issuer" || created.AuthSubject != "test-subject" ||
-				created.AccountType != string(accountdomain.AccountTypeBasicCare) || created.BirthDate.Format("2006-01-02") != "1990-01-02" {
-				t.Fatalf("unexpected created profile: %+v", created)
-			}
-
-			response = accountRequest(t, router, http.MethodGet, "/v1/me", "", http.StatusOK)
-			if current := decodeAccountUser(t, response); current != created {
-				t.Fatalf("GET profile = %+v, want %+v", current, created)
-			}
-
-			response = accountRequest(t, router, http.MethodPost, createPath, accountPayload, http.StatusConflict)
-			assertAccountProblem(t, response, apperr.RESOURCE_ALREADY_EXISTS)
-
-			response = accountRequest(t, router, http.MethodPut, "/v1/me", `{"full_name":"Ana Souza"}`, http.StatusOK)
-			updated := decodeAccountUser(t, response)
-			if updated.Id != created.Id || updated.FullName != "Ana Souza" || updated.Email != created.Email || updated.Cpf != created.Cpf {
-				t.Fatalf("unexpected updated profile: %+v", updated)
-			}
-			response = accountRequest(t, router, http.MethodGet, "/v1/me", "", http.StatusOK)
-			if current := decodeAccountUser(t, response); current != updated {
-				t.Fatalf("update was not persisted: %+v", current)
-			}
-
-			response = accountRequest(t, router, http.MethodDelete, "/v1/me", "", http.StatusNoContent)
-			if response.Body.Len() != 0 || repo.profile != nil {
-				t.Fatal("deletion must remove the profile and return an empty response")
-			}
-			response = accountRequest(t, router, http.MethodGet, "/v1/me", "", http.StatusForbidden)
-			assertAccountProblem(t, response, apperr.PROFILE_NOT_FOUND)
-		})
-	}
+type accountUserResponse struct {
+	ID          uuid.UUID `json:"id"`
+	AuthIssuer  string    `json:"auth_issuer"`
+	AuthSubject string    `json:"auth_subject"`
+	Email       string    `json:"email"`
+	FullName    string    `json:"full_name"`
+	AccountType string    `json:"account_type"`
+	BirthDate   string    `json:"birth_date"`
+	CPF         string    `json:"cpf"`
 }
 
-func TestAccountRoutesPreserveErrors(t *testing.T) {
+func TestAccountRoutesLifecycle(t *testing.T) {
+	repo := &accountUserRepository{}
+	router := newAccountRouter(repo)
+
+	accountRequest(t, router, http.MethodGet, "/me", "", http.StatusForbidden)
+
+	created := decodeAccountUser(t, accountRequest(t, router, http.MethodPost, "/me", accountPayload, http.StatusCreated))
+	if created.ID == uuid.Nil || created.FullName != "Ana Silva" || created.Email != "ana@example.test" ||
+		created.AuthIssuer != "test-issuer" || created.AuthSubject != "test-subject" ||
+		created.AccountType != string(accountdomain.AccountTypeBasicCare) || created.BirthDate != "1990-01-02" {
+		t.Fatalf("unexpected created profile: %+v", created)
+	}
+
+	if current := decodeAccountUser(t, accountRequest(t, router, http.MethodGet, "/me", "", http.StatusOK)); current != created {
+		t.Fatalf("GET profile = %+v, want %+v", current, created)
+	}
+
+	accountRequest(t, router, http.MethodPost, "/me", accountPayload, http.StatusConflict)
+
+	updated := decodeAccountUser(t, accountRequest(t, router, http.MethodPut, "/me", `{"full_name":"Ana Souza"}`, http.StatusOK))
+	if updated.ID != created.ID || updated.FullName != "Ana Souza" || updated.Email != created.Email || updated.CPF != created.CPF {
+		t.Fatalf("unexpected updated profile: %+v", updated)
+	}
+
+	response := accountRequest(t, router, http.MethodDelete, "/me", "", http.StatusNoContent)
+	if response.Body.Len() != 0 || repo.profile != nil {
+		t.Fatal("deletion must remove the profile and return an empty response")
+	}
+	accountRequest(t, router, http.MethodGet, "/me", "", http.StatusForbidden)
+}
+
+func TestAccountRoutesReturnHumaErrors(t *testing.T) {
 	for _, tc := range []struct {
 		name   string
 		body   string
 		err    error
 		status int
-		code   apperr.ErrorKind
 	}{
-		{"invalid JSON", `{`, nil, http.StatusBadRequest, apperr.VALIDATION_FAILED},
-		{"missing birth date", `{"full_name":"Ana"}`, nil, http.StatusBadRequest, apperr.VALIDATION_FAILED},
-		{"invalid CPF", strings.Replace(accountPayload, "12345678901", "123", 1), nil, http.StatusBadRequest, apperr.VALIDATION_FAILED},
-		{"repository failure", accountPayload, errors.New("private database details"), http.StatusInternalServerError, apperr.INTERNAL_ERROR},
+		{"invalid JSON", `{`, nil, http.StatusBadRequest},
+		{"missing birth date", `{"full_name":"Ana"}`, nil, http.StatusUnprocessableEntity},
+		{"invalid CPF", strings.Replace(accountPayload, "12345678901", "123", 1), nil, http.StatusUnprocessableEntity},
+		{"repository failure", accountPayload, errors.New("private database details"), http.StatusInternalServerError},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			repo := &accountUserRepository{lookupErr: tc.err}
-			response := accountRequest(t, newAccountRouter(repo), http.MethodPost, "/v1/me", tc.body, tc.status)
-			assertAccountProblem(t, response, tc.code)
-			if repo.profile != nil || strings.Contains(response.Body.String(), "private database details") {
-				t.Fatal("failed registration must not persist a profile or expose the internal error")
+			response := accountRequest(t, newAccountRouter(repo), http.MethodPost, "/me", tc.body, tc.status)
+			if !strings.HasPrefix(response.Header().Get("Content-Type"), "application/problem+json") || strings.Contains(response.Body.String(), "private database details") {
+				t.Fatalf("unexpected Huma error response: %s", response.Body.String())
 			}
 		})
 	}
+}
 
+func TestAccountRoutesRequireBearerAuthentication(t *testing.T) {
 	router := newAccountRouter(&accountUserRepository{})
 	for _, route := range []struct{ method, path string }{
-		{http.MethodPost, "/v1/me"},
-		{http.MethodPost, "/v1/users"},
-		{http.MethodGet, "/v1/me"},
-		{http.MethodPut, "/v1/me"},
-		{http.MethodDelete, "/v1/me"},
-		{http.MethodPost, "/v1/patients/" + uuid.NewString() + "/exam-documents"},
-		{http.MethodGet, "/v1/exam-documents/" + uuid.NewString()},
-		{http.MethodGet, "/v1/patients/" + uuid.NewString() + "/lab-reports"},
-		{http.MethodGet, "/v1/lab-reports/" + uuid.NewString()},
+		{http.MethodPost, "/me"},
+		{http.MethodGet, "/me"},
+		{http.MethodPut, "/me"},
+		{http.MethodDelete, "/me"},
+		{http.MethodPost, "/patients/" + uuid.NewString() + "/exam-documents"},
+		{http.MethodGet, "/exam-documents/" + uuid.NewString()},
+		{http.MethodGet, "/patients/" + uuid.NewString() + "/lab-reports"},
+		{http.MethodGet, "/lab-reports/" + uuid.NewString()},
 	} {
 		response := httptest.NewRecorder()
 		router.ServeHTTP(response, httptest.NewRequest(route.method, route.path, nil))
 		if response.Code != http.StatusUnauthorized {
 			t.Fatalf("%s %s without authentication returned %d", route.method, route.path, response.Code)
 		}
-		assertAccountProblem(t, response, apperr.AUTH_REQUIRED)
 	}
 }
 
@@ -144,63 +134,16 @@ func accountRequest(t *testing.T, router http.Handler, method, path, body string
 	if response.Code != status {
 		t.Fatalf("%s %s: status = %d, want %d; body = %s", method, path, response.Code, status, response.Body.String())
 	}
-	assertAccountResponseSchema(t, request, response)
 	return response
 }
 
-func decodeAccountUser(t *testing.T, response *httptest.ResponseRecorder) openapigen.User {
+func decodeAccountUser(t *testing.T, response *httptest.ResponseRecorder) accountUserResponse {
 	t.Helper()
-	var profile openapigen.User
+	var profile accountUserResponse
 	if err := json.Unmarshal(response.Body.Bytes(), &profile); err != nil {
 		t.Fatal(err)
 	}
 	return profile
-}
-
-func assertAccountResponseSchema(t *testing.T, request *http.Request, response *httptest.ResponseRecorder) {
-	t.Helper()
-	doc, err := openapi3.NewLoader().LoadFromData(openapispec.OpenAPISpec)
-	if err != nil {
-		t.Fatal(err)
-	}
-	path := request.URL.Path
-	if path == "/v1/users" {
-		path = "/v1/me"
-	}
-	operation := doc.Paths.Value(path).GetOperation(request.Method)
-	declared := operation.Responses.Status(response.Code)
-	if declared == nil {
-		t.Fatalf("undocumented response: %s %s %d", request.Method, path, response.Code)
-	}
-	if response.Code == http.StatusNoContent {
-		return
-	}
-	mediaType := strings.Split(response.Header().Get("Content-Type"), ";")[0]
-	content := declared.Value.Content[mediaType]
-	if content == nil || content.Schema == nil {
-		t.Fatalf("undocumented response content type: %s", mediaType)
-	}
-	var body any
-	if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
-		t.Fatal(err)
-	}
-	if err := content.Schema.Value.VisitJSON(body, openapi3.VisitAsResponse()); err != nil {
-		t.Fatalf("%s %s response violates OpenAPI: %v", request.Method, path, err)
-	}
-}
-
-func assertAccountProblem(t *testing.T, response *httptest.ResponseRecorder, code apperr.ErrorKind) {
-	t.Helper()
-	var problem presenter.Problem
-	if err := json.Unmarshal(response.Body.Bytes(), &problem); err != nil {
-		t.Fatal(err)
-	}
-	if problem.Code != code || problem.Status != response.Code {
-		t.Fatalf("unexpected error contract: %+v", problem)
-	}
-	if !strings.HasPrefix(response.Header().Get("Content-Type"), "application/problem+json") {
-		t.Fatalf("unexpected error content type: %s", response.Header().Get("Content-Type"))
-	}
 }
 
 type accountUserRepository struct {

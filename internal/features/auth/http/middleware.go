@@ -1,4 +1,4 @@
-// internal/features/auth/middleware.go
+// internal/features/auth/http/middleware.go
 package authhttp
 
 import (
@@ -19,40 +19,42 @@ func NewMiddleware(authenticate func(context.Context, string) (*authdomain.Ident
 	return &Middleware{authenticate: authenticate}
 }
 
+// AuthenticateBearer validates an Authorization header independently of the
+// HTTP adapter, so both Gin and Huma use the same authentication policy.
+func (m *Middleware) AuthenticateBearer(ctx context.Context, authorization string) (*authdomain.Identity, error) {
+	header := strings.TrimSpace(authorization)
+	if header == "" {
+		return nil, apperr.Unauthorized("missing authorization header")
+	}
+
+	parts := strings.SplitN(header, " ", 2)
+	if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
+		return nil, apperr.Unauthorized("invalid authorization header")
+	}
+	token := strings.TrimSpace(parts[1])
+	if token == "" {
+		return nil, apperr.Unauthorized("missing bearer token")
+	}
+
+	identity, err := m.authenticate(ctx, token)
+	if err != nil {
+		if appErr, ok := err.(*apperr.AppError); ok {
+			return nil, appErr
+		}
+		return nil, apperr.Internal("internal auth error", err)
+	}
+	if identity == nil {
+		return nil, apperr.Unauthorized("token inválido ou expirado")
+	}
+
+	return identity, nil
+}
+
 func (m *Middleware) RequireBearer() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		header := strings.TrimSpace(c.GetHeader("Authorization"))
-		if header == "" {
-			presenter.ErrorResponder(c, apperr.Unauthorized("missing authorization header"))
-			c.Abort()
-			return
-		}
-
-		parts := strings.SplitN(header, " ", 2)
-		if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
-			presenter.ErrorResponder(c, apperr.Unauthorized("invalid authorization header"))
-			c.Abort()
-			return
-		}
-		token := strings.TrimSpace(parts[1])
-		if token == "" {
-			presenter.ErrorResponder(c, apperr.Unauthorized("missing bearer token"))
-			c.Abort()
-			return
-		}
-
-		identity, err := m.authenticate(c.Request.Context(), token)
+		identity, err := m.AuthenticateBearer(c.Request.Context(), c.GetHeader("Authorization"))
 		if err != nil {
-			if appErr, ok := err.(*apperr.AppError); ok {
-				presenter.ErrorResponder(c, appErr)
-			} else {
-				presenter.ErrorResponder(c, apperr.Internal("internal auth error", err))
-			}
-			c.Abort()
-			return
-		}
-		if identity == nil {
-			presenter.ErrorResponder(c, apperr.Unauthorized("token inválido ou expirado"))
+			presenter.ErrorResponder(c, err)
 			c.Abort()
 			return
 		}

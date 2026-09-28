@@ -3,19 +3,19 @@ package accounthttp
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strings"
+	"time"
 
-	authhttp "github.com/gabrielgcmr/sonnda/internal/features/auth/http"
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
-
-	helpers "github.com/gabrielgcmr/sonnda/internal/api/helpers"
+	"github.com/danielgtaylor/huma/v2"
+	"github.com/gabrielgcmr/sonnda/internal/api/helpers"
 	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
 	"github.com/gabrielgcmr/sonnda/internal/features/account"
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
-	openapi "github.com/gabrielgcmr/sonnda/internal/generated/openapi"
+	authhttp "github.com/gabrielgcmr/sonnda/internal/features/auth/http"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
+	"github.com/google/uuid"
 )
 
 type userService interface {
@@ -28,111 +28,193 @@ type Handler struct {
 	userSvc    userService
 }
 
-func NewHandler(
-	onboarding account.Onboarding,
-	userSvc userService,
-
-) *Handler {
-	return &Handler{
-		onboarding: onboarding,
-		userSvc:    userSvc,
-	}
+type createAccountInput struct {
+	Body createAccountRequest
 }
 
-func (h *Handler) CreateUser(c *gin.Context) {
-	identity, ok := authhttp.GetIdentity(c)
+type createAccountRequest struct {
+	FullName  string `json:"full_name" doc:"Nome completo" minLength:"2" maxLength:"120"`
+	BirthDate string `json:"birth_date" doc:"Data de nascimento" format:"date"`
+	CPF       string `json:"cpf" doc:"CPF sem pontuação" pattern:"^[0-9]{11}$"`
+	Phone     string `json:"phone" doc:"Telefone" pattern:"^\\+?[0-9]{10,15}$"`
+}
+
+type updateAccountInput struct {
+	Body updateAccountRequest
+}
+
+type updateAccountRequest struct {
+	FullName  *string `json:"full_name,omitempty" doc:"Nome completo" minLength:"2" maxLength:"120"`
+	BirthDate *string `json:"birth_date,omitempty" doc:"Data de nascimento" format:"date"`
+	CPF       *string `json:"cpf,omitempty" doc:"CPF sem pontuação" pattern:"^[0-9]{11}$"`
+	Phone     *string `json:"phone,omitempty" doc:"Telefone" pattern:"^\\+?[0-9]{10,15}$"`
+}
+
+type accountUserResponse struct {
+	ID          uuid.UUID `json:"id" format:"uuid"`
+	AuthIssuer  string    `json:"auth_issuer"`
+	AuthSubject string    `json:"auth_subject"`
+	Email       string    `json:"email" format:"email"`
+	FullName    string    `json:"full_name"`
+	AccountType string    `json:"account_type"`
+	BirthDate   string    `json:"birth_date" format:"date"`
+	CPF         string    `json:"cpf"`
+	Phone       string    `json:"phone"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+type accountUserOutput struct {
+	Body accountUserResponse
+}
+
+func NewHandler(onboarding account.Onboarding, userSvc userService) *Handler {
+	return &Handler{onboarding: onboarding, userSvc: userSvc}
+}
+
+// RegisterHumaRoutes registers all account operations into the application's
+// single Huma API. The groups define authentication, not a URL version.
+func (h *Handler) RegisterHumaRoutes(authenticated huma.API, registered huma.API, security []map[string][]string) {
+	huma.Register(authenticated, huma.Operation{
+		OperationID:   "createCurrentAccount",
+		Method:        http.MethodPost,
+		Path:          "/me",
+		Summary:       "Criar perfil da conta autenticada",
+		Tags:          []string{"Account"},
+		DefaultStatus: http.StatusCreated,
+		Errors:        []int{http.StatusUnauthorized, http.StatusConflict, http.StatusUnprocessableEntity},
+		Security:      security,
+	}, h.createCurrentAccount)
+
+	huma.Register(registered, huma.Operation{
+		OperationID: "getCurrentAccount",
+		Method:      http.MethodGet,
+		Path:        "/me",
+		Summary:     "Obter perfil da conta autenticada",
+		Tags:        []string{"Account"},
+		Errors:      []int{http.StatusUnauthorized, http.StatusForbidden},
+		Security:    security,
+	}, h.getCurrentAccount)
+
+	huma.Register(registered, huma.Operation{
+		OperationID: "updateCurrentAccount",
+		Method:      http.MethodPut,
+		Path:        "/me",
+		Summary:     "Atualizar perfil da conta autenticada",
+		Tags:        []string{"Account"},
+		Errors:      []int{http.StatusUnauthorized, http.StatusForbidden, http.StatusUnprocessableEntity},
+		Security:    security,
+	}, h.updateCurrentAccount)
+
+	huma.Register(registered, huma.Operation{
+		OperationID:   "deleteCurrentAccount",
+		Method:        http.MethodDelete,
+		Path:          "/me",
+		Summary:       "Excluir perfil da conta autenticada",
+		Tags:          []string{"Account"},
+		DefaultStatus: http.StatusNoContent,
+		Errors:        []int{http.StatusUnauthorized, http.StatusForbidden},
+		Security:      security,
+	}, h.deleteCurrentAccount)
+}
+
+func (h *Handler) createCurrentAccount(ctx context.Context, input *createAccountInput) (*accountUserOutput, error) {
+	identity, ok := authhttp.GetIdentityFromContext(ctx)
 	if !ok {
-		presenter.ErrorResponder(c, apperr.Unauthorized("autenticação necessária"))
-		return
+		return nil, huma.Error401Unauthorized("autenticação necessária")
 	}
-
-	var req openapi.CreateUserRequest
-	if err := helpers.BindJSON(c, &req); err != nil {
-		presenter.ErrorResponder(c, err)
-		return
-	}
-
-	if req.BirthDate.Time.IsZero() {
-		presenter.ErrorResponder(c, apperr.Validation("data de nascimento é obrigatória",
-			apperr.Violation{
-				Field:  "birth_date",
-				Reason: "required",
-			}))
-		return
-	}
-	birthDate := req.BirthDate.Time
-
 	if identity.Email == nil || strings.TrimSpace(*identity.Email) == "" {
-		presenter.ErrorResponder(c, apperr.Validation("email é obrigatório"))
-		return
+		return nil, huma.Error422UnprocessableEntity("email é obrigatório")
 	}
-	email := strings.TrimSpace(*identity.Email)
 
-	input := account.RegisterInput{
+	birthDate, err := time.Parse(time.DateOnly, input.Body.BirthDate)
+	if err != nil {
+		return nil, huma.Error422UnprocessableEntity("data de nascimento inválida")
+	}
+
+	created, err := h.onboarding.Register(ctx, account.RegisterInput{
 		Issuer:      identity.Issuer,
 		Subject:     identity.Subject,
-		Email:       email,
-		FullName:    req.FullName,
+		Email:       strings.TrimSpace(*identity.Email),
 		AccountType: accountdomain.AccountTypeBasicCare,
+		FullName:    input.Body.FullName,
 		BirthDate:   birthDate,
-		CPF:         req.Cpf,
-		Phone:       req.Phone,
-	}
-
-	created, err := h.onboarding.Register(c.Request.Context(), input)
+		CPF:         input.Body.CPF,
+		Phone:       input.Body.Phone,
+	})
 	if err != nil {
-		presenter.ErrorResponder(c, err)
-		return
+		return nil, toHumaError(err)
 	}
 
-	c.JSON(http.StatusCreated, userResponse(created))
+	return &accountUserOutput{Body: accountUserResponseFromDomain(created)}, nil
 }
 
-func (h *Handler) GetUser(c *gin.Context) {
-	currentUser := helpers.MustGetCurrentUser(c)
-	c.JSON(http.StatusOK, userResponse(currentUser))
+func (h *Handler) getCurrentAccount(ctx context.Context, _ *struct{}) (*accountUserOutput, error) {
+	currentUser, ok := helpers.GetCurrentUserFromContext(ctx)
+	if !ok {
+		return nil, huma.Error403Forbidden("conta registrada necessária")
+	}
+	return &accountUserOutput{Body: accountUserResponseFromDomain(currentUser)}, nil
 }
 
-func (h *Handler) UpdateUser(c *gin.Context) {
-	currentUser := helpers.MustGetCurrentUser(c)
-
-	var req openapi.UpdateUserRequest
-	if err := helpers.BindJSON(c, &req); err != nil {
-		presenter.ErrorResponder(c, err)
-		return
+func (h *Handler) updateCurrentAccount(ctx context.Context, input *updateAccountInput) (*accountUserOutput, error) {
+	currentUser, ok := helpers.GetCurrentUserFromContext(ctx)
+	if !ok {
+		return nil, huma.Error403Forbidden("conta registrada necessária")
 	}
 
-	input := account.UserUpdateInput{
-		UserID: currentUser.ID,
-		CPF:    req.Cpf,
-		Phone:  req.Phone,
+	update := account.UserUpdateInput{
+		UserID:   currentUser.ID,
+		FullName: input.Body.FullName,
+		CPF:      input.Body.CPF,
+		Phone:    input.Body.Phone,
+	}
+	if input.Body.BirthDate != nil {
+		birthDate, err := time.Parse(time.DateOnly, *input.Body.BirthDate)
+		if err != nil {
+			return nil, huma.Error422UnprocessableEntity("data de nascimento inválida")
+		}
+		update.BirthDate = &birthDate
 	}
 
-	if req.FullName != nil {
-		input.FullName = req.FullName
-	}
-	if req.BirthDate != nil {
-		parsed := req.BirthDate.Time
-		input.BirthDate = &parsed
-	}
-
-	updated, err := h.userSvc.Update(c.Request.Context(), input)
+	updated, err := h.userSvc.Update(ctx, update)
 	if err != nil {
-		presenter.ErrorResponder(c, err)
-		return
+		return nil, toHumaError(err)
 	}
-
-	c.JSON(http.StatusOK, userResponse(updated))
+	return &accountUserOutput{Body: accountUserResponseFromDomain(updated)}, nil
 }
 
-func (h *Handler) HardDeleteUser(c *gin.Context) {
-	currentUser := helpers.MustGetCurrentUser(c)
-
-	if err := h.userSvc.Delete(c.Request.Context(), currentUser.ID); err != nil {
-		presenter.ErrorResponder(c, err)
-		return
+func (h *Handler) deleteCurrentAccount(ctx context.Context, _ *struct{}) (*struct{}, error) {
+	currentUser, ok := helpers.GetCurrentUserFromContext(ctx)
+	if !ok {
+		return nil, huma.Error403Forbidden("conta registrada necessária")
 	}
+	if err := h.userSvc.Delete(ctx, currentUser.ID); err != nil {
+		return nil, toHumaError(err)
+	}
+	return &struct{}{}, nil
+}
 
-	c.Status(http.StatusNoContent)
+func accountUserResponseFromDomain(user *accountdomain.User) accountUserResponse {
+	return accountUserResponse{
+		ID:          user.ID,
+		AuthIssuer:  user.AuthIssuer,
+		AuthSubject: user.AuthSubject,
+		Email:       user.Email,
+		FullName:    user.FullName,
+		AccountType: string(user.AccountType),
+		BirthDate:   user.BirthDate.Format(time.DateOnly),
+		CPF:         user.CPF,
+		Phone:       user.Phone,
+		CreatedAt:   user.CreatedAt,
+		UpdatedAt:   user.UpdatedAt,
+	}
+}
 
+func toHumaError(err error) error {
+	var appErr *apperr.AppError
+	if errors.As(err, &appErr) && appErr != nil {
+		return huma.NewError(presenter.StatusFromCode(appErr.Kind), appErr.Message)
+	}
+	return huma.Error500InternalServerError("erro inesperado")
 }
