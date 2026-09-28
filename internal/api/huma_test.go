@@ -38,8 +38,10 @@ func TestHumaServesHealthDocsAndOneOpenAPISpec(t *testing.T) {
 		"operationId: getCurrentAccount",
 		"operationId: updateCurrentAccount",
 		"operationId: deleteCurrentAccount",
+		"operationId: listCurrentAccountPatients",
 		"bearerAuth:",
 		"/me:",
+		"/me/patients:",
 	} {
 		if !strings.Contains(generated, expected) {
 			t.Fatalf("generated OpenAPI is missing %q", expected)

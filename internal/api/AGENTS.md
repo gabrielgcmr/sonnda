@@ -4,8 +4,8 @@
 Simple instructions for coding in api package
 
 ## Error handling (MANDATORY)
-- HTTP error presentation is centralized in `internal/api/presenter`.
-- Handlers and middlewares must call `presenter.ErrorResponder(c, err)`; do not manually build error JSON.
+- Huma routes must return Huma errors (`huma.Error*`, `huma.NewError`, or `huma.WriteErr`) and use the standard Huma Problem Details response.
+- Gin routes that have not yet migrated use `internal/api/presenter.ErrorResponder`; do not manually build error JSON.
 - Known failures must be returned as `*apperr.AppError` from services/usecases; avoid expose `err.Error()` in responses.
 
 ### Access Log

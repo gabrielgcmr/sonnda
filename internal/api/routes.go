@@ -56,9 +56,6 @@ func SetupRoutes(r *gin.Engine, deps *APIDependencies) {
 		deps.Auth.RequireBearer(),
 		deps.Account.RequireRegisteredUser())
 
-	me := registered.Group("/me")
-	me.GET("/patients", deps.PatientAccessHandler.ListForCurrentAccount)
-
 	patients := registered.Group("/patients")
 	patients.POST("", deps.PatientCreationHandler.Create)
 	patients.GET("", deps.PatientHandler.ListPatients)

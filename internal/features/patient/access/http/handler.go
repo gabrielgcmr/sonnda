@@ -2,13 +2,16 @@
 package accesshttp
 
 import (
+	"context"
+	"errors"
 	"net/http"
-	"strconv"
 
+	"github.com/danielgtaylor/huma/v2"
 	helpers "github.com/gabrielgcmr/sonnda/internal/api/helpers"
 	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
 	patientaccess "github.com/gabrielgcmr/sonnda/internal/features/patient/access"
-	"github.com/gin-gonic/gin"
+	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
+	"github.com/google/uuid"
 )
 
 type Handler struct {
@@ -19,30 +22,73 @@ func NewHandler(service patientaccess.Service) *Handler {
 	return &Handler{service: service}
 }
 
-func (h *Handler) ListForCurrentAccount(c *gin.Context) {
-	currentUser := helpers.MustGetCurrentUser(c)
-	limit, offset := accessPagination(c)
-
-	result, err := h.service.ListForAccount(c.Request.Context(), currentUser.ID, limit, offset)
-	if err != nil {
-		presenter.ErrorResponder(c, err)
-		return
-	}
-
-	c.JSON(http.StatusOK, listPatientsResponse(result))
+type listPatientsInput struct {
+	Limit  int `query:"limit" doc:"Quantidade máxima de pacientes retornados" default:"20"`
+	Offset int `query:"offset" doc:"Quantidade de pacientes a pular" default:"0"`
 }
 
-func accessPagination(c *gin.Context) (int, int) {
-	limit, offset := 20, 0
-	if raw := c.Query("limit"); raw != "" {
-		if parsed, err := strconv.Atoi(raw); err == nil && parsed > 0 {
-			limit = parsed
+type accessiblePatientResponse struct {
+	ID        uuid.UUID `json:"id" format:"uuid"`
+	FullName  string    `json:"full_name"`
+	AvatarURL *string   `json:"avatar_url,omitempty"`
+}
+
+type listPatientsResponse struct {
+	Patients []accessiblePatientResponse `json:"patients"`
+	Total    int64                       `json:"total"`
+	Limit    int                         `json:"limit"`
+	Offset   int                         `json:"offset"`
+}
+
+type listPatientsOutput struct {
+	Body listPatientsResponse
+}
+
+// RegisterHumaRoutes registers the authenticated current-account patient list.
+func (h *Handler) RegisterHumaRoutes(registered huma.API, security []map[string][]string) {
+	huma.Register(registered, huma.Operation{
+		OperationID: "listCurrentAccountPatients",
+		Method:      http.MethodGet,
+		Path:        "/me/patients",
+		Summary:     "Listar pacientes acessíveis pela conta atual",
+		Tags:        []string{"Patient access"},
+		Errors:      []int{http.StatusUnauthorized, http.StatusForbidden},
+		Security:    security,
+	}, h.listForCurrentAccount)
+}
+
+func (h *Handler) listForCurrentAccount(ctx context.Context, input *listPatientsInput) (*listPatientsOutput, error) {
+	currentUser, ok := helpers.GetCurrentUserFromContext(ctx)
+	if !ok {
+		return nil, huma.Error403Forbidden("conta registrada necessária")
+	}
+
+	result, err := h.service.ListForAccount(ctx, currentUser.ID, input.Limit, input.Offset)
+	if err != nil {
+		return nil, toHumaError(err)
+	}
+
+	patients := make([]accessiblePatientResponse, len(result.Patients))
+	for i, patient := range result.Patients {
+		patients[i] = accessiblePatientResponse{
+			ID:        patient.ID,
+			FullName:  patient.FullName,
+			AvatarURL: patient.AvatarURL,
 		}
 	}
-	if raw := c.Query("offset"); raw != "" {
-		if parsed, err := strconv.Atoi(raw); err == nil && parsed >= 0 {
-			offset = parsed
-		}
+
+	return &listPatientsOutput{Body: listPatientsResponse{
+		Patients: patients,
+		Total:    result.Total,
+		Limit:    result.Limit,
+		Offset:   result.Offset,
+	}}, nil
+}
+
+func toHumaError(err error) error {
+	var appErr *apperr.AppError
+	if errors.As(err, &appErr) && appErr != nil {
+		return huma.NewError(presenter.StatusFromCode(appErr.Kind), appErr.Message)
 	}
-	return limit, offset
+	return huma.Error500InternalServerError("erro inesperado")
 }

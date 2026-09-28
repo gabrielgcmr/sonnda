@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	patientaccess "github.com/gabrielgcmr/sonnda/internal/features/patient/access"
@@ -40,8 +41,8 @@ func TestPatientAccessRouteRequiresAuthentication(t *testing.T) {
 	router := newAccountRouter(&accountUserRepository{})
 	response := httptest.NewRecorder()
 	router.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/me/patients", nil))
-	if response.Code != http.StatusUnauthorized {
-		t.Fatalf("status = %d, want %d", response.Code, http.StatusUnauthorized)
+	if response.Code != http.StatusUnauthorized || !strings.HasPrefix(response.Header().Get("Content-Type"), "application/problem+json") {
+		t.Fatalf("unexpected authentication error: status = %d, body = %s", response.Code, response.Body.String())
 	}
 }
 

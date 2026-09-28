@@ -1,5 +1,38 @@
 <!-- docs/architecture/error-handling.md -->
-# Error Handling (Go + Gin)
+# Error Handling (Go + Huma/Gin)
+
+## Rotas Huma e migração do contrato HTTP
+
+As operações registradas por Huma (`huma.Register`) usam o modelo de erro
+RFC 9457 padrão da Huma. Elas escrevem erros com `huma.WriteErr`,
+`huma.NewError` ou `huma.Error*`.
+
+`AppError` continua sendo a classificação interna de falhas entre domínio,
+aplicação, autenticação e persistência. Na fronteira Huma, ele fornece o
+status HTTP e uma mensagem segura. As extensões públicas do antigo formato
+Sonnda (`code`, `traceId`, `violations`, `instance` e `timestamp`) não são
+devolvidas pelo modelo padrão da Huma.
+
+```text
+domínio/aplicação -> AppError (classificação interna)
+                   -> StatusError / WriteErr da Huma
+                   -> application/problem+json da Huma
+```
+
+| Tipo de rota | Corpo de erro HTTP | Serialização |
+| --- | --- | --- |
+| Huma (`/me`) | RFC 9457 padrão da Huma | Huma |
+| Gin ainda não migrada | Problem Details Sonnda com extensões | `presenter.ErrorResponder` |
+
+A coexistência é temporária. Não adicionar novas rotas ao formato
+Gin/Presenter. Quando todas as rotas forem Huma, o presenter HTTP legado e
+seus campos públicos devem ser removidos; `AppError` permanece como
+classificação interna e para a política de logs.
+
+As rotas Huma não devem chamar `presenter.ErrorResponder` nem desligar os
+transformers da Huma para imitar o formato anterior. Os schemas, links e a
+documentação produzidos pela configuração padrão fazem parte do comportamento
+adotado.
 
 Este documento descreve a arquitetura de tratamento de erros da Sonnda API, inspirada em Hexagonal/Clean Architecture e aplicada de forma pragmática em Go.
 
@@ -7,7 +40,7 @@ Este documento descreve a arquitetura de tratamento de erros da Sonnda API, insp
 - ADR: `docs/architecture/adr/ADR-002-error-handling-contrato.md`
 - Catálogo de códigos: `internal/kernel/apperr/catalog.go`
 - Política de log por erro: `internal/kernel/apperr/logging.go`
-- Presenter HTTP (canonical): `internal/api/presenter` (veja `ErrorResponder`)
+- Presenter HTTP legado (Gin): `internal/api/presenter` (veja `ErrorResponder`)
 - Middleware de AccessLog: `internal/api/middleware/access_log.go`
 - Middleware de Recovery: `internal/api/middleware/recovery.go`
 
@@ -23,7 +56,7 @@ Este documento descreve a arquitetura de tratamento de erros da Sonnda API, insp
 
 ---
 
-## Contrato HTTP de erro
+## Contrato HTTP de erro legado (Gin)
 
 Formato padrão (RFC 9457 - Problem Details):
 
@@ -49,7 +82,7 @@ Implementado por `internal/api/presenter.ToProblem` + `internal/api/presenter.Er
 
 ---
 
-## Fluxo por camada (visão geral)
+## Fluxo legado por camada (Gin)
 
 ```
 HTTP Handler (Gin)
