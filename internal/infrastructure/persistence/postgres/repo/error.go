@@ -1,10 +1,10 @@
 // internal/infrastructure/persistence/postgres/repo/error.go
+// internal/infrastructure/persistence/postgres/repo/error.go
 package repo
 
 import (
 	"errors"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 )
@@ -12,11 +12,6 @@ import (
 /* ============================================================
    Common errors
    ============================================================ */
-
-var (
-	//Common
-	ErrRepositoryFailure = repository.ErrRepositoryFailure
-)
 
 func IsUniqueViolationError(err error) bool {
 	var pgErr *pgconn.PgError

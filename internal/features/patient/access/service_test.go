@@ -6,9 +6,9 @@ import (
 	"errors"
 	"testing"
 
-	domainrepository "github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	accessdomain "github.com/gabrielgcmr/sonnda/internal/features/patient/access/domain"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
+	"github.com/gabrielgcmr/sonnda/internal/kernel/persistence"
 	"github.com/google/uuid"
 )
 
@@ -62,7 +62,7 @@ func TestListForAccountOmitsRelationshipMetadata(t *testing.T) {
 
 func TestListForAccountMapsRepositoryFailure(t *testing.T) {
 	dbErr := errors.New("database unavailable")
-	err := errors.Join(domainrepository.ErrRepositoryFailure, dbErr)
+	err := errors.Join(persistence.ErrPersistenceFailure, dbErr)
 	_, got := NewService(&listRepository{err: err}).ListForAccount(context.Background(), uuid.New(), 20, 0)
 	var appErr *apperr.AppError
 	if !errors.As(got, &appErr) || appErr.Kind != apperr.INFRA_DATABASE_ERROR || !errors.Is(got, dbErr) {

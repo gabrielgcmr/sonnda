@@ -14,7 +14,7 @@ O backend está migrando de camadas globais para contextos em `internal/features
 
 - **Domain (`internal/domain`)**  
   Modelos do domínio, regras de negócio e invariantes.  
-  - Entities em `internal/domain/entity`; repositories em `internal/domain/repository`; storage abstractions em `internal/domain/storage`; contrato de extracao laboratorial em `internal/domain/labextraction`.
+  - Entities em `internal/domain/entity`; storage abstractions em `internal/domain/storage`; contrato de extracao laboratorial em `internal/domain/labextraction`.
 
 - **Application (`internal/application`)**  
   Orquestração e cross-cutting concerns.  
@@ -43,6 +43,7 @@ O backend está migrando de camadas globais para contextos em `internal/features
 - **Kernel (`internal/kernel`)**  
   Preocupações transversais (cross-cutting concerns).  
   - Error contract (`internal/kernel/apperr`): `AppError` e catalog de códigos.
+  - Persistence (`internal/kernel/persistence`): sentinelas compartilhados de falha de persistência.
   - Observability (`internal/kernel/observability`): logging (slog) com escopo de requisição.
   - **Auth (`internal/infrastructure/auth`)**: integração com o provedor de autenticação.
 
@@ -90,8 +91,7 @@ A segunda etapa trouxe a interface `account.Repository` e o adaptador
 `account/postgres.Repository` para a feature. O bootstrap fornece o pool ao
 adaptador, que usa o SQLC já gerado, sem importar o pacote de repositórios legado.
 Os erros de conflito e usuário ausente pertencem ao contrato de account. A falha
-genérica de persistência pertence a `internal/domain/repository/errors.go`; o
-pacote legado mantém uma referência ao mesmo erro para preservar a compatibilidade.
+genérica de persistência pertence a `internal/kernel/persistence/errors.go`.
 O mapeamento de erros da aplicação deixa de importar a implementação Postgres.
 
 As entidades `User` e `AccountType`, seus parâmetros, erros de validação e testes

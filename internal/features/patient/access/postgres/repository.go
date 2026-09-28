@@ -6,11 +6,11 @@ import (
 	"errors"
 	"fmt"
 
-	domainrepository "github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	patientaccess "github.com/gabrielgcmr/sonnda/internal/features/patient/access"
 	accessdomain "github.com/gabrielgcmr/sonnda/internal/features/patient/access/domain"
 	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
 	patientaccesssqlc "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/sqlc/generated/patientaccess"
+	"github.com/gabrielgcmr/sonnda/internal/kernel/persistence"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -41,7 +41,7 @@ func (p *Repository) ListAccessiblePatientsByUser(ctx context.Context, granteeID
 	})
 	if err != nil {
 		return nil, 0, errors.Join(
-			domainrepository.ErrRepositoryFailure,
+			persistence.ErrPersistenceFailure,
 			fmt.Errorf("list accessible patients: %w", err),
 		)
 	}
@@ -50,7 +50,7 @@ func (p *Repository) ListAccessiblePatientsByUser(ctx context.Context, granteeID
 	total, err := p.queries.CountAccessiblePatientsByUser(ctx, pgtype.UUID{Bytes: granteeID, Valid: true})
 	if err != nil {
 		return nil, 0, errors.Join(
-			domainrepository.ErrRepositoryFailure,
+			persistence.ErrPersistenceFailure,
 			fmt.Errorf("count accessible patients: %w", err),
 		)
 	}
@@ -85,7 +85,7 @@ func (p *Repository) HasActiveAccess(ctx context.Context, patientID uuid.UUID, g
 			return false, nil
 		}
 		return false, errors.Join(
-			domainrepository.ErrRepositoryFailure,
+			persistence.ErrPersistenceFailure,
 			fmt.Errorf("find patient access: %w", err),
 		)
 	}
@@ -113,7 +113,7 @@ func (p *Repository) Upsert(ctx context.Context, access *accessdomain.PatientAcc
 	})
 	if err != nil {
 		return errors.Join(
-			domainrepository.ErrRepositoryFailure,
+			persistence.ErrPersistenceFailure,
 			fmt.Errorf("upsert patient access: %w", err),
 		)
 	}

@@ -5,12 +5,12 @@ import (
 	"context"
 	"errors"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	processing "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing"
 	processingdomain "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/domain"
 	laboratory "github.com/gabrielgcmr/sonnda/internal/features/patient/exam/laboratory"
 	labdomain "github.com/gabrielgcmr/sonnda/internal/features/patient/exam/laboratory/domain"
 	pginfra "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
+	"github.com/gabrielgcmr/sonnda/internal/kernel/persistence"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -39,7 +39,7 @@ func (r *Repository) CreateFromDocument(
 	metadata processingdomain.LaboratoryReportMetadata,
 ) error {
 	if report == nil {
-		return repository.ErrRepositoryFailure
+		return persistence.ErrPersistenceFailure
 	}
 	if metadata.ExamDocumentID != nil {
 		var belongs bool
@@ -144,7 +144,7 @@ func (r *Repository) persistMetadata(ctx context.Context, report *labdomain.LabR
 		return mapProcessingWriteError(err)
 	}
 	if result.RowsAffected() == 0 {
-		return repository.ErrRepositoryFailure
+		return persistence.ErrPersistenceFailure
 	}
 	return nil
 }

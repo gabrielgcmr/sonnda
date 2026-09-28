@@ -7,11 +7,11 @@ import (
 
 	repohelpers "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/repo"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	labrepository "github.com/gabrielgcmr/sonnda/internal/features/patient/exam/laboratory"
 	labs "github.com/gabrielgcmr/sonnda/internal/features/patient/exam/laboratory/domain"
 	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
 	labsqlc "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/sqlc/generated/lab"
+	"github.com/gabrielgcmr/sonnda/internal/kernel/persistence"
 
 	"github.com/google/uuid"
 )
@@ -33,7 +33,7 @@ func NewLabsRepository(client *postgress.Client) *LabsRepository {
 // Create implements [repository.LabsRepository].
 func (l *LabsRepository) Create(ctx context.Context, report *labs.LabReport) error {
 	if report == nil {
-		return repository.ErrRepositoryFailure
+		return persistence.ErrPersistenceFailure
 	}
 
 	tx, err := l.client.BeginTx(ctx)

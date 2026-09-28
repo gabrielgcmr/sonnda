@@ -8,7 +8,7 @@ import (
 	"github.com/gabrielgcmr/sonnda/internal/api/helpers"
 	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
 	patientcreation "github.com/gabrielgcmr/sonnda/internal/application/usecase/patientcreation"
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/demographics"
+	"github.com/gabrielgcmr/sonnda/internal/domain/demographics"
 	patientprofile "github.com/gabrielgcmr/sonnda/internal/features/patient/profile"
 	openapi "github.com/gabrielgcmr/sonnda/internal/generated/openapi"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"

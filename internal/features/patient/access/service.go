@@ -6,8 +6,8 @@ import (
 	"errors"
 	"fmt"
 
-	domainrepository "github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
+	"github.com/gabrielgcmr/sonnda/internal/kernel/persistence"
 	"github.com/google/uuid"
 )
 
@@ -36,7 +36,7 @@ func (s *service) ListForAccount(ctx context.Context, accountID uuid.UUID, limit
 	if err != nil {
 		kind := apperr.INTERNAL_ERROR
 		message := "erro inesperado"
-		if errors.Is(err, domainrepository.ErrRepositoryFailure) {
+		if errors.Is(err, persistence.ErrPersistenceFailure) {
 			kind = apperr.INFRA_DATABASE_ERROR
 			message = "falha técnica"
 		}

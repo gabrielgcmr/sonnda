@@ -10,10 +10,10 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	"github.com/gabrielgcmr/sonnda/internal/features/account"
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
 	usersqlc "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/sqlc/generated/user"
+	"github.com/gabrielgcmr/sonnda/internal/kernel/persistence"
 )
 
 var _ account.Repository = (*Repository)(nil)
@@ -48,7 +48,7 @@ func (r *Repository) Create(ctx context.Context, u *accountdomain.User) error {
 		if isUniqueViolation(err) {
 			return account.ErrUserAlreadyExists
 		}
-		return errors.Join(repository.ErrRepositoryFailure, err)
+		return errors.Join(persistence.ErrPersistenceFailure, err)
 	}
 
 	// NÇœo sobrescreve a entidade; app-source-of-truth mantÇ¸m valores do domÇðnio.
@@ -59,7 +59,7 @@ func (r *Repository) Create(ctx context.Context, u *accountdomain.User) error {
 func (r *Repository) SoftDelete(ctx context.Context, id uuid.UUID) error {
 	rows, err := r.queries.SoftDeleteUser(ctx, id)
 	if err != nil {
-		return errors.Join(repository.ErrRepositoryFailure, err)
+		return errors.Join(persistence.ErrPersistenceFailure, err)
 	}
 	if rows == 0 {
 		return account.ErrUserNotFound
@@ -70,7 +70,7 @@ func (r *Repository) SoftDelete(ctx context.Context, id uuid.UUID) error {
 func (r *Repository) Delete(ctx context.Context, id uuid.UUID) error {
 	rows, err := r.queries.DeleteUser(ctx, id)
 	if err != nil {
-		return errors.Join(repository.ErrRepositoryFailure, err)
+		return errors.Join(persistence.ErrPersistenceFailure, err)
 	}
 	if rows == 0 {
 		return account.ErrUserNotFound
@@ -89,7 +89,7 @@ func (r *Repository) FindByAuthIdentity(ctx context.Context, issuer string, subj
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
-		return nil, errors.Join(repository.ErrRepositoryFailure, err)
+		return nil, errors.Join(persistence.ErrPersistenceFailure, err)
 	}
 
 	return &accountdomain.User{
@@ -114,7 +114,7 @@ func (r *Repository) FindByCPF(ctx context.Context, cpf string) (*accountdomain.
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
-		return nil, errors.Join(repository.ErrRepositoryFailure, err)
+		return nil, errors.Join(persistence.ErrPersistenceFailure, err)
 	}
 
 	return &accountdomain.User{
@@ -139,7 +139,7 @@ func (r *Repository) FindByID(ctx context.Context, id uuid.UUID) (*accountdomain
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
-		return nil, errors.Join(repository.ErrRepositoryFailure, err)
+		return nil, errors.Join(persistence.ErrPersistenceFailure, err)
 	}
 
 	return &accountdomain.User{
@@ -175,7 +175,7 @@ func (r *Repository) Update(ctx context.Context, u *accountdomain.User) error {
 		if isUniqueViolation(err) {
 			return account.ErrUserAlreadyExists
 		}
-		return errors.Join(repository.ErrRepositoryFailure, err)
+		return errors.Join(persistence.ErrPersistenceFailure, err)
 	}
 
 	u.ID = row.ID
@@ -195,7 +195,7 @@ func (r *Repository) FindByEmail(ctx context.Context, email string) (*accountdom
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
-		return nil, errors.Join(repository.ErrRepositoryFailure, err)
+		return nil, errors.Join(persistence.ErrPersistenceFailure, err)
 	}
 
 	return &accountdomain.User{

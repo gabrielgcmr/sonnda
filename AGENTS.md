@@ -39,13 +39,12 @@ Simple instructions for coding agents working on this repo.
   - User entities and account types belong to `internal/features/account/domain` (package `accountdomain`). Other contexts may import this pure domain package without depending on account application services.
 - The shared database client and generated sqlc code remain in `internal/infrastructure` during this migration.
 - OpenAPI sources belong to `sonnda-contracts`; this API consumes the release pinned in `contracts.lock` and caches its verified bundle in `dist/openapi.yaml`. Generated Go types live in `internal/generated/openapi`, and the embedded HTTP spec lives in `internal/openapispec`.
-  - The shared persistence failure sentinel belongs to `internal/domain/repository/errors.go`; account application code must not import concrete Postgres repositories.
+  - The shared persistence failure sentinel belongs to `internal/kernel/persistence/errors.go`; account application code must not import concrete Postgres repositories.
   - `internal/application/bootstrap/account.go` composes the account handler and middleware in a single `AccountModule`; patient access is composed independently in `PatientAccessModule`.
   - Add account behavior to this feature, not to the former global user service, registration use case or user handler paths.
   - Other contexts keep their existing organization until explicitly migrated.
 - **Domain (`internal/domain`)**: Core business models and rules (infrastructure and HTTP agnostic).
   - **Entity (`internal/domain/entity`)**: Core business entities.
-  - **Repository (`internal/domain/repository`)**: Domain repository interfaces.
   - **Storage (`internal/domain/storage`)**: Storage interfaces (file storage abstractions).
   - **Lab Extraction (`internal/domain/labextraction`)**: contract for structured lab report extraction.
 - **Application (`internal/application`)**: Where orchestration and cross-cutting concerns live.

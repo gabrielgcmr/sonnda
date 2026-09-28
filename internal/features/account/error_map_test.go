@@ -6,9 +6,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
-	legacyrepo "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/repo"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
+	"github.com/gabrielgcmr/sonnda/internal/kernel/persistence"
 )
 
 func TestRepositoryErrorsKeepApplicationCodesAndCauses(t *testing.T) {
@@ -20,8 +19,7 @@ func TestRepositoryErrorsKeepApplicationCodesAndCauses(t *testing.T) {
 	}{
 		{"conflict", fmt.Errorf("insert: %w", ErrUserAlreadyExists), apperr.RESOURCE_ALREADY_EXISTS},
 		{"not found", fmt.Errorf("update: %w", ErrUserNotFound), apperr.NOT_FOUND},
-		{"persistence", errors.Join(repository.ErrRepositoryFailure, failure), apperr.INFRA_DATABASE_ERROR},
-		{"legacy persistence", errors.Join(legacyrepo.ErrRepositoryFailure, failure), apperr.INFRA_DATABASE_ERROR},
+		{"persistence", errors.Join(persistence.ErrPersistenceFailure, failure), apperr.INFRA_DATABASE_ERROR},
 		{"unknown", failure, apperr.INTERNAL_ERROR},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

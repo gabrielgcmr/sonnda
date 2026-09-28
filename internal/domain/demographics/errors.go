@@ -1,4 +1,4 @@
-// internal/domain/entity/demographics/errors.go
+// internal/domain/demographics/errors.go
 package demographics
 
 import "errors"

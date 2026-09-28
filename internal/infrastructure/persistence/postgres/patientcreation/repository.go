@@ -7,13 +7,13 @@ import (
 	"fmt"
 
 	patientcreation "github.com/gabrielgcmr/sonnda/internal/application/usecase/patientcreation"
-	domainrepository "github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	accessdomain "github.com/gabrielgcmr/sonnda/internal/features/patient/access/domain"
 	patientprofile "github.com/gabrielgcmr/sonnda/internal/features/patient/profile"
 	profiledomain "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/domain"
 	postgres "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
 	patientsqlc "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/sqlc/generated/patient"
 	patientaccesssqlc "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/sqlc/generated/patientaccess"
+	"github.com/gabrielgcmr/sonnda/internal/kernel/persistence"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -34,7 +34,7 @@ func (r *Repository) CreateWithInitialAccess(
 	access *accessdomain.PatientAccess,
 ) error {
 	if r == nil || r.client == nil {
-		return errors.Join(domainrepository.ErrRepositoryFailure, errors.New("postgres client not configured"))
+		return errors.Join(persistence.ErrPersistenceFailure, errors.New("postgres client not configured"))
 	}
 	if err := access.Validate(); err != nil {
 		return fmt.Errorf("invalid patient access: %w", err)
@@ -42,7 +42,7 @@ func (r *Repository) CreateWithInitialAccess(
 
 	tx, err := r.client.BeginTx(ctx)
 	if err != nil {
-		return errors.Join(domainrepository.ErrRepositoryFailure, err)
+		return errors.Join(persistence.ErrPersistenceFailure, err)
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 
@@ -65,7 +65,7 @@ func (r *Repository) CreateWithInitialAccess(
 		if isUniqueViolation(err) {
 			return patientprofile.ErrPatientAlreadyExists
 		}
-		return errors.Join(domainrepository.ErrRepositoryFailure, err)
+		return errors.Join(persistence.ErrPersistenceFailure, err)
 	}
 
 	patient.ID = row.ID
@@ -78,11 +78,11 @@ func (r *Repository) CreateWithInitialAccess(
 		RelationType: string(access.RelationType),
 		GrantedBy:    nullableUUID(access.GrantedBy),
 	}); err != nil {
-		return errors.Join(domainrepository.ErrRepositoryFailure, fmt.Errorf("upsert initial patient access: %w", err))
+		return errors.Join(persistence.ErrPersistenceFailure, fmt.Errorf("upsert initial patient access: %w", err))
 	}
 
 	if err := tx.Commit(ctx); err != nil {
-		return errors.Join(domainrepository.ErrRepositoryFailure, err)
+		return errors.Join(persistence.ErrPersistenceFailure, err)
 	}
 	return nil
 }

@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/demographics"
+	"github.com/gabrielgcmr/sonnda/internal/domain/demographics"
 
 	"github.com/google/uuid"
 )

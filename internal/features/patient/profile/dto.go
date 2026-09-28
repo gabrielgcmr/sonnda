@@ -4,7 +4,7 @@ package patientprofile
 import (
 	"time"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/demographics"
+	"github.com/gabrielgcmr/sonnda/internal/domain/demographics"
 )
 
 type CreateInput struct {

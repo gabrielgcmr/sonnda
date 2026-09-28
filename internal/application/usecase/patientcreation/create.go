@@ -8,11 +8,11 @@ import (
 	"strings"
 	"time"
 
-	domainrepository "github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	accessdomain "github.com/gabrielgcmr/sonnda/internal/features/patient/access/domain"
 	patientprofile "github.com/gabrielgcmr/sonnda/internal/features/patient/profile"
 	profiledomain "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/domain"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
+	"github.com/gabrielgcmr/sonnda/internal/kernel/persistence"
 
 	"github.com/google/uuid"
 )
@@ -119,7 +119,7 @@ func mapRepositoryError(err error) error {
 	switch {
 	case errors.Is(err, patientprofile.ErrPatientAlreadyExists):
 		return apperr.AlreadyExists("paciente já cadastrado")
-	case errors.Is(err, domainrepository.ErrRepositoryFailure):
+	case errors.Is(err, persistence.ErrPersistenceFailure):
 		return apperr.Internal("falha técnica", fmt.Errorf("create patient with initial access: %w", err))
 	default:
 		return apperr.Internal("erro inesperado", fmt.Errorf("create patient with initial access: %w", err))

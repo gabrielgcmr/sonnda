@@ -7,12 +7,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/demographics"
-	domainrepository "github.com/gabrielgcmr/sonnda/internal/domain/repository"
+	"github.com/gabrielgcmr/sonnda/internal/domain/demographics"
 	accessdomain "github.com/gabrielgcmr/sonnda/internal/features/patient/access/domain"
 	patientprofile "github.com/gabrielgcmr/sonnda/internal/features/patient/profile"
 	profiledomain "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/domain"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
+	"github.com/gabrielgcmr/sonnda/internal/kernel/persistence"
 
 	"github.com/google/uuid"
 )
@@ -106,7 +106,7 @@ func TestExecuteMapsAtomicPersistenceFailures(t *testing.T) {
 		kind apperr.ErrorKind
 	}{
 		{name: "duplicate patient", err: patientprofile.ErrPatientAlreadyExists, kind: apperr.RESOURCE_ALREADY_EXISTS},
-		{name: "database", err: errors.Join(domainrepository.ErrRepositoryFailure, errors.New("db down")), kind: apperr.INTERNAL_ERROR},
+		{name: "database", err: errors.Join(persistence.ErrPersistenceFailure, errors.New("db down")), kind: apperr.INTERNAL_ERROR},
 	}
 
 	for _, test := range tests {

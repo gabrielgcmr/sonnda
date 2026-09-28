@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/demographics"
-	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
+	"github.com/gabrielgcmr/sonnda/internal/domain/demographics"
 	profiledomain "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/domain"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
+	"github.com/gabrielgcmr/sonnda/internal/kernel/persistence"
 )
 
 func mapDomainError(err error) error {
@@ -49,7 +49,7 @@ func mapRepoError(op string, err error) error {
 	case errors.Is(err, ErrPatientNotFound):
 		return patientNotFound()
 
-	case errors.Is(err, repository.ErrRepositoryFailure):
+	case errors.Is(err, persistence.ErrPersistenceFailure):
 		return apperr.Internal("falha técnica", fmt.Errorf("%s: %w", op, err))
 
 	default:

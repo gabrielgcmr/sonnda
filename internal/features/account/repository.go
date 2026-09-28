@@ -17,7 +17,7 @@ var (
 
 // Repository persists account profiles. Lookups return (nil, nil) when absent;
 // updates and deletions return ErrUserNotFound when the target no longer exists.
-// Infrastructure failures wrap repository.ErrRepositoryFailure and their cause.
+// Infrastructure failures wrap persistence.ErrPersistenceFailure and their cause.
 type Repository interface {
 	// CRUD basico
 	Create(ctx context.Context, u *accountdomain.User) error

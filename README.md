@@ -48,7 +48,6 @@ A arquitetura segue uma abordagem em camadas com baixo acoplamento e clara separ
 
 - **Domain (`internal/domain`)**: Modelos e regras de negócio centrais (agnóstico de infraestrutura e HTTP).
   - **Entity (`internal/domain/entity`)**: Entidades de negócio centrais.
-  - **Repository (`internal/domain/repository`)**: Interfaces de repositórios do domínio.
   - **Storage (`internal/domain/storage`)**: Interfaces de armazenamento de arquivos (abstrações).
   - **Lab Extraction (`internal/domain/labextraction`)**: Contrato para extração estruturada de laudos laboratoriais.
 

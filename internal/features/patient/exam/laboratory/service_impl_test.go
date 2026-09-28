@@ -6,10 +6,10 @@ import (
 	"errors"
 	"testing"
 
-	repo "github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	labs "github.com/gabrielgcmr/sonnda/internal/features/patient/exam/laboratory/domain"
 	profiledomain "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/domain"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
+	"github.com/gabrielgcmr/sonnda/internal/kernel/persistence"
 
 	"github.com/google/uuid"
 )
@@ -104,7 +104,7 @@ func TestList_PatientNotFound_ReturnsNotFound(t *testing.T) {
 
 func TestList_PatientRepoError_ReturnsInfraDatabaseError(t *testing.T) {
 	sentinel := errors.New("db down")
-	svc := New(&fakePatientRepo{findByIDErr: errors.Join(repo.ErrRepositoryFailure, sentinel)}, &fakeLabsRepo{})
+	svc := New(&fakePatientRepo{findByIDErr: errors.Join(persistence.ErrPersistenceFailure, sentinel)}, &fakeLabsRepo{})
 
 	_, err := svc.List(context.Background(), uuid.Must(uuid.NewV7()), 10, 0)
 

@@ -92,8 +92,10 @@ func mapDocumentToExtractedLabs(doc *documentaipb.Document) *labextraction.Extra
 			v := extractEntityValue(doc, ent)
 			out.ReportDate = &v
 
-		// -------- test_result (painel com filhos) --------
-		case "test_result":
+		// O schema original usava test_result/test_item. O schema atual do
+		// processor usa panel/observation. Mantemos os dois para que uma troca
+		// de versao do processor nao interrompa a extracao de documentos.
+		case "test_result", "panel":
 			out.Tests = append(out.Tests, mapTestResult(doc, ent))
 		}
 	}
@@ -126,7 +128,7 @@ func mapTestResult(doc *documentaipb.Document, ent *documentaipb.Document_Entity
 			v := extractEntityValue(doc, prop)
 			tr.ReleaseAt = &v
 
-		case "test_item":
+		case "test_item", "observation":
 			tr.Items = append(tr.Items, mapTestItem(doc, prop))
 		}
 	}
@@ -142,7 +144,13 @@ func mapTestItem(doc *documentaipb.Document, ent *documentaipb.Document_Entity) 
 		case "parameter_name":
 			item.ParameterName = extractEntityText(doc, prop)
 
-		case "result_value":
+		case "result_value", "value_number", "value_text":
+			// value_number e value_text sao mutuamente exclusivos no schema novo.
+			// Nao sobrescrevemos um valor ja extraido caso o Document AI devolva
+			// ambos na mesma observacao.
+			if item.ResultValue != nil && strings.TrimSpace(*item.ResultValue) != "" {
+				continue
+			}
 			v := extractEntityText(doc, prop)
 			item.ResultValue = &v
 

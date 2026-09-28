@@ -8,10 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	"github.com/gabrielgcmr/sonnda/internal/features/account"
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
 	usersqlc "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/sqlc/generated/user"
+	"github.com/gabrielgcmr/sonnda/internal/kernel/persistence"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -70,7 +70,7 @@ func TestLookupsPreserveProfileAndMissingResultSemantics(t *testing.T) {
 
 			queries.err = errors.New("database unavailable")
 			found, err = lookup.find(repo)
-			if found != nil || !errors.Is(err, repository.ErrRepositoryFailure) || !errors.Is(err, queries.err) {
+			if found != nil || !errors.Is(err, persistence.ErrPersistenceFailure) || !errors.Is(err, queries.err) {
 				t.Fatalf("lookup failure must preserve the category and cause: %v", err)
 			}
 		})
@@ -114,7 +114,7 @@ func TestWriteErrorsPreserveRepositoryContract(t *testing.T) {
 			profile := testProfile()
 			before := *profile
 			err := operation.write(repo, profile)
-			if !errors.Is(err, repository.ErrRepositoryFailure) || !errors.Is(err, failure) || *profile != before {
+			if !errors.Is(err, persistence.ErrPersistenceFailure) || !errors.Is(err, failure) || *profile != before {
 				t.Fatalf("failure must preserve cause and entity: %v", err)
 			}
 

@@ -5,12 +5,12 @@ import (
 	"context"
 	"errors"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/entity/demographics"
-	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
+	"github.com/gabrielgcmr/sonnda/internal/domain/demographics"
 	patientprofile "github.com/gabrielgcmr/sonnda/internal/features/patient/profile"
 	profiledomain "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/domain"
 	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
 	patientsqlc "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/sqlc/generated/patient"
+	"github.com/gabrielgcmr/sonnda/internal/kernel/persistence"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -83,7 +83,7 @@ func (r *Repository) createWithQueries(
 		if isUniqueViolation(err) {
 			return patientprofile.ErrPatientAlreadyExists
 		}
-		return errors.Join(repository.ErrRepositoryFailure, err)
+		return errors.Join(persistence.ErrPersistenceFailure, err)
 	}
 
 	p.ID = row.ID
@@ -114,7 +114,7 @@ func (p *Repository) FindByCPF(ctx context.Context, cpf string) (*profiledomain.
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
-		return nil, errors.Join(repository.ErrRepositoryFailure, err)
+		return nil, errors.Join(persistence.ErrPersistenceFailure, err)
 	}
 
 	return &profiledomain.Patient{
@@ -140,7 +140,7 @@ func (p *Repository) FindByID(ctx context.Context, id uuid.UUID) (*profiledomain
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
-		return nil, errors.Join(repository.ErrRepositoryFailure, err)
+		return nil, errors.Join(persistence.ErrPersistenceFailure, err)
 	}
 
 	return &profiledomain.Patient{

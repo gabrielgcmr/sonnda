@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	repo "github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
+	"github.com/gabrielgcmr/sonnda/internal/kernel/persistence"
 )
 
 func mapRepoError(op string, err error) error {
@@ -22,7 +22,7 @@ func mapRepoError(op string, err error) error {
 	// A maioria dos erros aqui vem de DB, então tratamos como infra por padrão.
 	// Se quisermos diferenciar depois, dá pra adicionar casos específicos.
 	switch {
-	case errors.Is(err, repo.ErrRepositoryFailure):
+	case errors.Is(err, persistence.ErrPersistenceFailure):
 		fallthrough
 	default:
 		return &apperr.AppError{

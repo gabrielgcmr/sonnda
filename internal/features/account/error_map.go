@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/repository"
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
+	"github.com/gabrielgcmr/sonnda/internal/kernel/persistence"
 )
 
 func mapDomainError(err error) error {
@@ -60,7 +60,7 @@ func mapRepoError(op string, err error) error {
 			Cause:   err,
 		}
 
-	case errors.Is(err, repository.ErrRepositoryFailure):
+	case errors.Is(err, persistence.ErrPersistenceFailure):
 		return &apperr.AppError{
 			Kind:    apperr.INFRA_DATABASE_ERROR,
 			Message: "falha técnica",
