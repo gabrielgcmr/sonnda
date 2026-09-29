@@ -47,7 +47,7 @@ type listPatientsOutput struct {
 // RegisterHumaRoutes registers the authenticated current-account patient list.
 func (h *Handler) RegisterHumaRoutes(registered huma.API, security []map[string][]string) {
 	huma.Register(registered, huma.Operation{
-		OperationID: "listCurrentAccountPatients",
+		OperationID: "listAccessiblePatients",
 		Method:      http.MethodGet,
 		Path:        "/me/patients",
 		Summary:     "Listar pacientes acessíveis pela conta atual",

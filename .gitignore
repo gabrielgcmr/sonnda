@@ -24,5 +24,6 @@ tools/
 
 # Contract bundle downloaded from sonnda-contracts releases
 dist/
+artifacts/
 
 

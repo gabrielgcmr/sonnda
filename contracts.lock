@@ -1,5 +1,0 @@
-# sonnda-api/contracts.lock
-source=https://github.com/gabrielgcmr/sonnda-contracts/releases/download
-asset=openapi.yaml
-version=v0.2.0
-sha256=3C083F24DC9BB8B1AF3263ACE757CD03B278E47D7700167A597A7FCD7DC487F1

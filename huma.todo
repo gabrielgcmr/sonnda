@@ -1,0 +1,40 @@
+# OpenAPI com Huma como fonte única
+
+## Resumo
+
+- Padronizar `GET /me/patients` como `operationId: listAccessiblePatients`.
+- Remover `sonnda-contracts`, `contracts.lock` e a pinagem por SHA-256.
+- Fazer a API Huma exportar um artefato OpenAPI JSON no CI; web e mobile geram seus clientes a partir do artefato do mesmo commit da API.
+
+## Mudanças principais
+
+- API:
+  - Alterar o `operationId` Huma de `listCurrentAccountPatients` para `listAccessiblePatients`.
+  - Adicionar um exportador OpenAPI que registra as rotas Huma sem depender de serviços externos e grava `openapi.json`.
+  - No CI, validar o JSON, executar os testes Go e publicar o OpenAPI como artefato imutável identificado pelo SHA do commit da API.
+  - Remover sincronização/download de contrato, `contracts.lock`, bundle estático, embedding OpenAPI legado e tipos Gin/OpenAPI não usados.
+  - Manter `/openapi.json`, `/openapi.yaml` e `/docs` servidos dinamicamente pelo Huma.
+
+- Web:
+  - Substituir `contracts:sync` por geração de `src/generated/openapi.d.ts` a partir do artefato OpenAPI do CI.
+  - Manter o tipo gerado versionado e falhar no CI se a regeneração criar diff não commitado.
+  - Remover script de download, `contracts.lock` e referências documentais ao `sonnda-contracts`.
+
+- Mobile:
+  - Adicionar cliente Dart gerado com `openapi-generator` em modo `dart-dio`.
+  - Configurar Dio com base URL, bearer token do Supabase, timeout e conversão de erros centralizados.
+  - Migrar as features para usar o cliente/modelos gerados; manter `ApiClient` apenas como fachada temporária enquanto os controllers são adaptados.
+  - Gerar o código Dart no CI a partir do mesmo artefato OpenAPI e falhar se houver diff não commitado.
+
+## Testes
+
+- API: verificar que o exportador contém todos os paths e `operationId`s Huma, incluindo `listAccessiblePatients`.
+- Web: gerar tipos, rodar build e testes.
+- Mobile: gerar cliente, rodar análise e `flutter test`; cobrir bearer token, erro Problem Details e upload multipart.
+- CI: assegurar que API, web e mobile usam o OpenAPI do mesmo SHA de commit.
+
+## Premissas
+
+- Não haverá versão no path; a rastreabilidade virá do SHA do commit e dos metadados do artefato CI.
+- SHA-256 do arquivo e `contracts.lock` deixam de ser necessários, pois não haverá download de release externa.
+- Artefatos do CI devem ser imutáveis e vinculados explicitamente ao commit/imagem da API consumida pelos builds web e mobile.

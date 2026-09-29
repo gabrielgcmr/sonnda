@@ -171,11 +171,11 @@ implementação em memória da interface de queries do SQLC, sem acessar banco r
 
 ## OpenAPI
 
-- O projeto `sonnda-contracts` é a fonte modular editável e publica releases do contrato.
-- `contracts.lock` fixa a release e o SHA-256 consumidos por esta API.
-- `dist/openapi.yaml` é o bundle baixado e verificado que alimenta os geradores da API.
-- `internal/generated/openapi` contém os tipos Go gerados.
-- `internal/openapispec` contém os bytes do bundle servidos em `/openapi.yaml`.
+- As rotas Huma são a fonte de verdade do contrato HTTP.
+- O CI exporta `artifacts/openapi.json` e o publica como artefato imutável
+  identificado pelo SHA do commit da API.
+- `/openapi.json`, `/openapi.yaml` e `/docs` continuam servidos dinamicamente
+  pelo Huma.
 
 ---
 

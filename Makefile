@@ -7,13 +7,11 @@ MAIN     := ./cmd/api
 VERSION ?= 1.0.0
 LDFLAGS := -s -w -X github.com/gabrielgcmr/sonnda/cmd/api.version=$(VERSION)
 SQLC_SPEC := internal/infrastructure/persistence/postgres/sqlc/sqlc.yaml
-CONTRACT_LOCK := contracts.lock
-OPENAPI_BUNDLE := dist/openapi.yaml
 
 # ==============================================================================
 # 🎯 TARGETS PRINCIPAIS
 # ==============================================================================
-.PHONY: all dev dev-air build clean generate test help lab-summary contract-sync contract-verify openapi-validate openapi-bundle openapi-validate-bundle openapi-embed openapi-generate oapi-codegen tools-air
+.PHONY: all dev dev-air build clean generate test help lab-summary openapi-export tools-air
 
 all: build
 
@@ -67,30 +65,10 @@ sqlc-check:
 # ==============================================================================
 # 🧬 CODEGEN
 # ==============================================================================
-OAPI_CODEGEN_INPUT   := $(OPENAPI_BUNDLE)
-OAPI_CODEGEN_OUTPUT  := internal/generated/openapi/oapi.gen.go
-OAPI_CODEGEN_PACKAGE := openapi
-OAPI_CODEGEN_GENERATE := types,gin
+openapi-export:
+	go run ./cmd/openapi-export -output artifacts/openapi.json -version $(VERSION)
 
-contract-sync:
-	go run ./cmd/contract-sync -lock $(CONTRACT_LOCK) -output $(OPENAPI_BUNDLE)
-
-contract-verify:
-	go run ./cmd/contract-sync -verify -lock $(CONTRACT_LOCK) -output $(OPENAPI_BUNDLE)
-
-openapi-bundle: contract-sync
-
-openapi-validate-bundle: contract-verify
-
-openapi-embed: openapi-validate-bundle
-	go generate ./internal/openapispec
-
-oapi-codegen: openapi-validate-bundle
-	go tool oapi-codegen -generate $(OAPI_CODEGEN_GENERATE) -package $(OAPI_CODEGEN_PACKAGE) -o $(OAPI_CODEGEN_OUTPUT) $(OAPI_CODEGEN_INPUT)
-
-openapi-generate: openapi-embed oapi-codegen
-
-generate: sqlc openapi-generate
+generate: sqlc
 
 # ==============================================================================
 # 🐘 DOCKER
@@ -113,11 +91,8 @@ help:
 	@echo "  lab-summary - Seleciona um laudo e gera resumo (Windows)"
 	@echo "  build       - Gera o binário de produção"
 	@echo "  clean       - Limpa pastas geradas"
-	@echo "  generate    - Gera SQLC, sincroniza o bundle local, embed e tipos Go"
-	@echo "  openapi-generate - Gera embed e tipos Go a partir do contrato verificado"
-	@echo "  openapi-embed - Gera o asset Go a partir do bundle"
-	@echo "  contract-sync - Baixa e verifica o bundle definido em $(CONTRACT_LOCK)"
-	@echo "  contract-verify - Verifica o checksum do bundle local"
+	@echo "  generate    - Gera o SQLC"
+	@echo "  openapi-export - Exporta o OpenAPI dinamico do Huma para artifacts/openapi.json"
 	@echo "  tools-air   - Instala o Air em ./bin"
 	@echo "  docker-up   - Sobe o docker"
 	@echo "  docker-down - Derruba o docker"
@@ -125,4 +100,3 @@ help:
 # ==============================================================================
 # 📚 OPENAPI
 # ==============================================================================
-openapi-validate: contract-verify

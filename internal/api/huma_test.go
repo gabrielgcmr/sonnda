@@ -7,6 +7,8 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/gabrielgcmr/sonnda/internal/api"
 )
 
 func TestHumaServesHealthDocsAndOneOpenAPISpec(t *testing.T) {
@@ -48,7 +50,7 @@ func TestHumaServesHealthDocsAndOneOpenAPISpec(t *testing.T) {
 		"operationId: getCurrentAccount",
 		"operationId: updateCurrentAccount",
 		"operationId: deleteCurrentAccount",
-		"operationId: listCurrentAccountPatients",
+		"operationId: listAccessiblePatients",
 		"operationId: createPatient",
 		"operationId: listPatients",
 		"operationId: getPatient",
@@ -81,6 +83,25 @@ func TestHumaServesHealthDocsAndOneOpenAPISpec(t *testing.T) {
 	router.ServeHTTP(legacy, httptest.NewRequest(http.MethodGet, "/v1/me", nil))
 	if legacy.Code != http.StatusNotFound {
 		t.Fatalf("GET /v1/me = %d, want 404", legacy.Code)
+	}
+}
+
+func TestOpenAPIExportsAllHumaOperationsWithoutInfrastructure(t *testing.T) {
+	spec, err := json.Marshal(api.OpenAPI(api.RootInfo{Name: "Sonnda API", Version: "test", Env: "ci"}))
+	if err != nil {
+		t.Fatalf("marshal OpenAPI: %v", err)
+	}
+
+	for _, expected := range []string{
+		`"version":"test"`,
+		`"operationId":"listAccessiblePatients"`,
+		`"/patients/{patientId}/exam-documents"`,
+		`"/patients/{patientId}/exam-document-texts"`,
+		`"/patients/{patientId}/lab-reports"`,
+	} {
+		if !strings.Contains(string(spec), expected) {
+			t.Fatalf("exported OpenAPI is missing %q", expected)
+		}
 	}
 }
 
