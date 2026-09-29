@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -68,7 +69,7 @@ func (h *TemporaryLabExtractionHandler) extract(ctx context.Context, input *temp
 	if _, err := humaCurrentUser(ctx); err != nil {
 		return nil, err
 	}
-	if h.textExtractor == nil || h.labExtractor == nil {
+	if isNilExtractor(h.textExtractor) || isNilExtractor(h.labExtractor) {
 		return nil, toHumaError(apperr.Internal("A extracao laboratorial esta indisponivel.", nil))
 	}
 
@@ -107,6 +108,14 @@ func (h *TemporaryLabExtractionHandler) extract(ctx context.Context, input *temp
 	return &temporaryLabExtractionOutput{Body: temporaryLabExtractionResponse{
 		Status: status, Warnings: report.Metadata.Warnings, Report: *report,
 	}}, nil
+}
+
+func isNilExtractor(extractor any) bool {
+	if extractor == nil {
+		return true
+	}
+	value := reflect.ValueOf(extractor)
+	return value.Kind() == reflect.Ptr && value.IsNil()
 }
 
 func writeTemporaryPDF(header *multipart.FileHeader) (string, error) {

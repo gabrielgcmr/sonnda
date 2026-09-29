@@ -36,6 +36,13 @@ type temporaryLabExtractorStub struct {
 	err    error
 }
 
+func TestIsNilExtractorRecognizesTypedNilPointer(t *testing.T) {
+	var extractor *temporaryLabExtractorStub
+	if !isNilExtractor(extractor) {
+		t.Fatal("typed nil extractor must be treated as unavailable")
+	}
+}
+
 func (s *temporaryLabExtractorStub) ExtractLabReport(_ context.Context, input labextraction.ExtractLabReportInput) (*labextraction.ExtractedLabReport, error) {
 	s.called = true
 	if s.err != nil {

@@ -1,0 +1,18 @@
+# .dockerignore
+.env
+.env.*
+!.env.example
+secrets/
+.git/
+.github/
+bin/
+artifacts/
+dist/
+tmp/
+samples/
+.gocache/
+.gotmp/
+.idea/
+.vscode/
+Dockerfile*
+docker-compose.yml

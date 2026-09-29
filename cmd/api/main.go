@@ -15,6 +15,7 @@ import (
 
 	"github.com/gabrielgcmr/sonnda/internal/application/bootstrap"
 	"github.com/gabrielgcmr/sonnda/internal/config"
+	"github.com/gabrielgcmr/sonnda/internal/domain/labextraction"
 	authhttp "github.com/gabrielgcmr/sonnda/internal/features/auth/http"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/observability"
@@ -82,7 +83,7 @@ func main() {
 	}
 	defer docAIClient.Close()
 
-	var labTextExtractor *geminiinfra.LabReportTextExtractor
+	var labTextExtractor labextraction.LabReportTextExtractor
 	if strings.TrimSpace(cfg.Gemini.APIKey) != "" {
 		geminiClient, err := geminiinfra.NewClient(ctx, cfg.Gemini)
 		if err != nil {

@@ -1,6 +1,6 @@
 # Dockerfile
 # Etapa 1: build
-FROM golang:1.25.6-alpine AS build
+FROM golang:1.27.1-alpine3.24 AS build
 WORKDIR /app
 ARG VERSION=0.1.0
 
@@ -18,10 +18,11 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
   -o /bin/sonnda ./cmd/api
 
 # Etapa 2: runtime
-FROM alpine:3.20
+FROM alpine:3.24
 WORKDIR /app
 
-RUN apk add --no-cache ca-certificates tzdata
+# poppler-utils fornece pdftotext, usado pela extracao de texto de PDFs.
+RUN apk add --no-cache ca-certificates poppler-utils tzdata
 
 COPY --from=build /bin/sonnda /app/sonnda
 
