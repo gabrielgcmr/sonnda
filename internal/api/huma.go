@@ -25,8 +25,12 @@ type healthOutput struct {
 	Body healthResponse
 }
 
-func newHumaAPI(r *gin.Engine) huma.API {
-	config := huma.DefaultConfig("Sonnda API", "dev")
+type rootOutput struct {
+	Body RootResponse
+}
+
+func newHumaAPI(r *gin.Engine, info RootInfo) huma.API {
+	config := huma.DefaultConfig(info.Name, info.Version)
 	config.Components.SecuritySchemes = map[string]*huma.SecurityScheme{
 		bearerAuthScheme: {
 			Type:         "http",
@@ -38,8 +42,8 @@ func newHumaAPI(r *gin.Engine) huma.API {
 	return humagin.New(r, config)
 }
 
-func registerHumaRoutes(api huma.API, deps *APIDependencies) {
-	registerHumaPublicRoutes(api)
+func registerHumaRoutes(api huma.API, deps *APIDependencies, rootInfo RootInfo) {
+	registerHumaPublicRoutes(api, rootInfo)
 
 	authenticated := huma.NewGroup(api)
 	authenticated.UseMiddleware(requireBearer(api, deps.Auth))
@@ -51,14 +55,36 @@ func registerHumaRoutes(api huma.API, deps *APIDependencies) {
 	deps.PatientAccessHandler.RegisterHumaRoutes(registered, bearerSecurity())
 	deps.PatientCreationHandler.RegisterHumaRoutes(registered, bearerSecurity())
 	deps.PatientHandler.RegisterHumaRoutes(registered, bearerSecurity())
+	deps.ExamsHandler.RegisterHumaRoutes(registered, bearerSecurity())
+	deps.LaboratoryHandler.RegisterHumaRoutes(registered, bearerSecurity())
 }
 
-func registerHumaPublicRoutes(api huma.API) {
+func registerHumaPublicRoutes(api huma.API, info RootInfo) {
+	huma.Register(api, huma.Operation{
+		OperationID: "getApiMetadata",
+		Method:      http.MethodGet,
+		Path:        "/",
+		Summary:     "API metadata",
+		Tags:        []string{"Public"},
+	}, func(_ context.Context, _ *struct{}) (*rootOutput, error) {
+		return &rootOutput{Body: rootResponse(info)}, nil
+	})
+
 	huma.Register(api, huma.Operation{
 		OperationID: "getHealth",
 		Method:      http.MethodGet,
 		Path:        "/healthz",
 		Summary:     "Health check",
+		Tags:        []string{"Health"},
+	}, func(_ context.Context, _ *struct{}) (*healthOutput, error) {
+		return &healthOutput{Body: healthResponse{Status: "ok"}}, nil
+	})
+
+	huma.Register(api, huma.Operation{
+		OperationID: "getReadiness",
+		Method:      http.MethodGet,
+		Path:        "/readyz",
+		Summary:     "Readiness check",
 		Tags:        []string{"Health"},
 	}, func(_ context.Context, _ *struct{}) (*healthOutput, error) {
 		return &healthOutput{Body: healthResponse{Status: "ok"}}, nil

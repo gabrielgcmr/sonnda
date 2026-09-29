@@ -15,6 +15,7 @@ import (
 )
 
 type APIDependencies struct {
+	RootInfo               RootInfo
 	Auth                   *authhttp.Middleware
 	Account                *accounthttp.Middleware
 	AccountHandler         *accounthttp.Handler
@@ -46,9 +47,9 @@ func SetupRoutes(r *gin.Engine, deps *APIDependencies) {
 		c.Data(http.StatusOK, "image/x-icon", faviconData)
 	})
 
-	humaAPI := newHumaAPI(r)
-	registerHumaRoutes(humaAPI, deps)
-	registerPublicRoutes(r)
+	rootInfo := normalizedRootInfo(deps.RootInfo)
+	humaAPI := newHumaAPI(r, rootInfo)
+	registerHumaRoutes(humaAPI, deps, rootInfo)
 
 	// These endpoints have not moved to Huma yet, but no route path is versioned.
 	registered := r.Group("")
@@ -57,25 +58,13 @@ func SetupRoutes(r *gin.Engine, deps *APIDependencies) {
 		deps.Account.RequireRegisteredUser())
 
 	patients := registered.Group("/patients")
-	patients.GET("/:patientId/lab-reports", deps.LaboratoryHandler.ListLabs)
-	patients.GET("/:patientId/exam-documents", deps.ExamsHandler.ListExamDocuments)
-	patients.POST("/:patientId/exam-documents", deps.ExamsHandler.UploadExamDocument)
-
-	labs := patients.Group("/:patientId/labs")
-	labs.GET("", deps.LaboratoryHandler.ListLabs)
-
 	exams := patients.Group("/:patientId/exames")
 	exams.GET("", deps.ExamsHandler.ListExamDocuments)
-	exams.GET("/document-texts", deps.ExamsHandler.ListExamDocumentTexts)
 	exams.GET("/reports", deps.ExamsHandler.ListExamDocumentTexts)
 	exams.POST("", deps.ExamsHandler.UploadExamDocument)
-
-	registered.GET("/exam-documents/:documentId", deps.ExamsHandler.GetExamDocument)
-	registered.GET("/exam-documents/:documentId/file", deps.ExamsHandler.GetExamDocumentFile)
-	registered.GET("/lab-reports/:labReportId", deps.LaboratoryHandler.GetLabReport)
 }
 
-func registerRootRoute(r gin.IRouter, info RootInfo) {
+func normalizedRootInfo(info RootInfo) RootInfo {
 	environment := info.Env
 	if environment == "" {
 		environment = "dev"
@@ -89,19 +78,17 @@ func registerRootRoute(r gin.IRouter, info RootInfo) {
 		version = "dev"
 	}
 
-	r.GET("/", func(c *gin.Context) {
-		c.JSON(http.StatusOK, RootResponse{
-			Name:        name,
-			Version:     version,
-			Environment: environment,
-			Docs:        "/docs",
-			OpenAPI:     "/openapi.yaml",
-			Health:      "/healthz",
-			Ready:       "/readyz",
-		})
-	})
+	return RootInfo{Name: name, Version: version, Env: environment}
 }
 
-func registerPublicRoutes(r gin.IRouter) {
-	r.GET("/readyz", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{"status": "ok"}) })
+func rootResponse(info RootInfo) RootResponse {
+	return RootResponse{
+		Name:        info.Name,
+		Version:     info.Version,
+		Environment: info.Env,
+		Docs:        "/docs",
+		OpenAPI:     "/openapi.yaml",
+		Health:      "/healthz",
+		Ready:       "/readyz",
+	}
 }

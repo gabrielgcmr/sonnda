@@ -45,12 +45,13 @@ func New(opts Options) *App {
 		middleware.Recovery(logger),
 	)
 
-	registerRootRoute(r, RootInfo{
+	deps := *opts.Deps
+	deps.RootInfo = RootInfo{
 		Name:    opts.Name,
 		Version: opts.Version,
 		Env:     opts.Env,
-	})
-	SetupRoutes(r, opts.Deps)
+	}
+	SetupRoutes(r, &deps)
 
 	return &App{
 		router: r,
