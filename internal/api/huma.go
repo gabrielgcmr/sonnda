@@ -56,6 +56,7 @@ func registerHumaRoutes(api huma.API, deps *APIDependencies, rootInfo RootInfo) 
 	deps.PatientCreationHandler.RegisterHumaRoutes(registered, bearerSecurity())
 	deps.PatientHandler.RegisterHumaRoutes(registered, bearerSecurity())
 	deps.ExamsHandler.RegisterHumaRoutes(registered, bearerSecurity())
+	deps.TemporaryLabExtractionHandler.RegisterHumaRoutes(registered, bearerSecurity())
 	deps.LaboratoryHandler.RegisterHumaRoutes(registered, bearerSecurity())
 }
 

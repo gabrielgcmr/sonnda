@@ -21,7 +21,8 @@ import (
 )
 
 type ExamsModule struct {
-	Handler *documentprocessinghttp.ExamsHandler
+	Handler                       *documentprocessinghttp.ExamsHandler
+	TemporaryLabExtractionHandler *documentprocessinghttp.TemporaryLabExtractionHandler
 }
 
 func NewExamsModule(
@@ -51,6 +52,7 @@ func NewExamsModule(
 	accessChecker := patientaccess.NewChecker(patientRepo, accessRepo)
 
 	return &ExamsModule{
-		Handler: documentprocessinghttp.NewExams(svc, processDocumentUC, storage, accessChecker),
+		Handler:                       documentprocessinghttp.NewExams(svc, processDocumentUC, storage, accessChecker),
+		TemporaryLabExtractionHandler: documentprocessinghttp.NewTemporaryLabExtraction(localExtractor, labTextExtractor),
 	}
 }

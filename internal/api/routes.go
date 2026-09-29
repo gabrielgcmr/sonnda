@@ -15,15 +15,16 @@ import (
 )
 
 type APIDependencies struct {
-	RootInfo               RootInfo
-	Auth                   *authhttp.Middleware
-	Account                *accounthttp.Middleware
-	AccountHandler         *accounthttp.Handler
-	PatientAccessHandler   *accesshttp.Handler
-	PatientCreationHandler *patienthttp.CreationHandler
-	PatientHandler         *profilehttp.Handler
-	LaboratoryHandler      *laboratoryhttp.Handler
-	ExamsHandler           *documentprocessinghttp.ExamsHandler
+	RootInfo                      RootInfo
+	Auth                          *authhttp.Middleware
+	Account                       *accounthttp.Middleware
+	AccountHandler                *accounthttp.Handler
+	PatientAccessHandler          *accesshttp.Handler
+	PatientCreationHandler        *patienthttp.CreationHandler
+	PatientHandler                *profilehttp.Handler
+	LaboratoryHandler             *laboratoryhttp.Handler
+	ExamsHandler                  *documentprocessinghttp.ExamsHandler
+	TemporaryLabExtractionHandler *documentprocessinghttp.TemporaryLabExtractionHandler
 }
 
 type RootInfo struct {
