@@ -139,11 +139,11 @@ func (h *ExamsHandler) listExamDocuments(ctx context.Context, input *listExamDoc
 		return nil, err
 	}
 	if err := h.accessChecker.RequireAccess(ctx, currentUser.ID, input.PatientID); err != nil {
-		return nil, toHumaError(err)
+		return nil, humaerror.From(err)
 	}
 	list, err := h.svc.ListByPatient(ctx, input.PatientID, input.Limit, input.Offset)
 	if err != nil {
-		return nil, toHumaError(err)
+		return nil, humaerror.From(err)
 	}
 	return &listExamDocumentsOutput{Body: list}, nil
 }
@@ -154,11 +154,11 @@ func (h *ExamsHandler) listExamDocumentTexts(ctx context.Context, input *listExa
 		return nil, err
 	}
 	if err := h.accessChecker.RequireAccess(ctx, currentUser.ID, input.PatientID); err != nil {
-		return nil, toHumaError(err)
+		return nil, humaerror.From(err)
 	}
 	list, err := h.svc.ListDocumentTextsByPatient(ctx, input.PatientID, input.Limit, input.Offset)
 	if err != nil {
-		return nil, toHumaError(err)
+		return nil, humaerror.From(err)
 	}
 	return &listExamDocumentTextsOutput{Body: list}, nil
 }
@@ -181,7 +181,7 @@ func (h *ExamsHandler) getExamDocumentFile(ctx context.Context, input *examDocum
 	}
 	url, err := h.storage.GetSignedURL(ctx, document.StorageURI, examDocumentFileURLExpirationMinutes)
 	if err != nil {
-		return nil, toHumaError(err)
+		return nil, humaerror.From(err)
 	}
 	return &examDocumentFileOutput{Body: examDocumentFileResponse{
 		URL:       url,
@@ -195,11 +195,11 @@ func (h *ExamsHandler) uploadExamDocument(ctx context.Context, input *uploadExam
 		return nil, err
 	}
 	if err := h.accessChecker.RequireAccess(ctx, currentUser.ID, input.PatientID); err != nil {
-		return nil, toHumaError(err)
+		return nil, humaerror.From(err)
 	}
 	collectionDate, err := parseExamCollectionDate(input.RawBody.Data().CollectionDate)
 	if err != nil {
-		return nil, toHumaError(err)
+		return nil, humaerror.From(err)
 	}
 	fileHeaders := input.RawBody.Form.File["file"]
 	if len(fileHeaders) != 1 {
@@ -207,7 +207,7 @@ func (h *ExamsHandler) uploadExamDocument(ctx context.Context, input *uploadExam
 	}
 	upload, err := UploadDocument(ctx, fileHeaders[0], input.PatientID, h.storage)
 	if err != nil {
-		return nil, toHumaError(err)
+		return nil, humaerror.From(err)
 	}
 	defer os.Remove(upload.LocalPath)
 
@@ -221,7 +221,7 @@ func (h *ExamsHandler) uploadExamDocument(ctx context.Context, input *uploadExam
 		CollectionDate:   collectionDate,
 	})
 	if err != nil {
-		return nil, toHumaError(err)
+		return nil, humaerror.From(err)
 	}
 	return &examDocumentOutput{Body: *document}, nil
 }
@@ -233,13 +233,13 @@ func (h *ExamsHandler) findAccessibleDocument(ctx context.Context, documentID uu
 	}
 	document, err := h.svc.FindByID(ctx, documentID)
 	if err != nil {
-		return nil, toHumaError(err)
+		return nil, humaerror.From(err)
 	}
 	if document == nil {
 		return nil, huma.Error404NotFound("documento não encontrado")
 	}
 	if err := h.accessChecker.RequireAccess(ctx, currentUser.ID, document.PatientID); err != nil {
-		return nil, toHumaError(err)
+		return nil, humaerror.From(err)
 	}
 	return document, nil
 }
@@ -250,10 +250,6 @@ func humaCurrentUser(ctx context.Context) (*accountdomain.User, error) {
 		return nil, huma.Error403Forbidden("conta registrada necessária")
 	}
 	return currentUser, nil
-}
-
-func toHumaError(err error) error {
-	return humaerror.From(err)
 }
 
 func parseExamCollectionDate(raw string) (*time.Time, error) {

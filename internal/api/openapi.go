@@ -4,33 +4,29 @@ package api
 import (
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humagin"
+	"github.com/gabrielgcmr/sonnda/internal/api/humaerror"
 	"github.com/gin-gonic/gin"
 )
 
 // OpenAPI creates the Huma specification without connecting to infrastructure.
 // Route registration only captures operation metadata; handlers are never run.
-func OpenAPI(info RootInfo) *huma.OpenAPI {
+func OpenAPI(info APIInfo) *huma.OpenAPI {
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
-	rootInfo := normalizedRootInfo(info)
-	humaAPI := newHumaAPI(router, rootInfo)
+	apiInfo := normalizedAPIInfo(info)
+	humaAPI := newHumaAPI(router, apiInfo)
 	registerHumaRoutes(humaAPI, &APIDependencies{})
 	return humaAPI.OpenAPI()
 }
 
 const bearerAuthScheme = "bearerAuth"
 
-type RootInfo struct {
+type APIInfo struct {
 	Name    string
 	Version string
-	Env     string
 }
 
-func normalizedRootInfo(info RootInfo) RootInfo {
-	environment := info.Env
-	if environment == "" {
-		environment = "dev"
-	}
+func normalizedAPIInfo(info APIInfo) APIInfo {
 	name := info.Name
 	if name == "" {
 		name = "Sonnda API"
@@ -40,11 +36,12 @@ func normalizedRootInfo(info RootInfo) RootInfo {
 		version = "dev"
 	}
 
-	return RootInfo{Name: name, Version: version, Env: environment}
+	return APIInfo{Name: name, Version: version}
 }
 
-func newHumaAPI(r *gin.Engine, info RootInfo) huma.API {
+func newHumaAPI(r *gin.Engine, info APIInfo) huma.API {
 	config := huma.DefaultConfig(info.Name, info.Version)
+	config.Transformers = append(config.Transformers, humaerror.Transform)
 	config.Components.SecuritySchemes = map[string]*huma.SecurityScheme{
 		bearerAuthScheme: {
 			Type:         "http",

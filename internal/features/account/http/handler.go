@@ -141,7 +141,7 @@ func (h *Handler) createCurrentAccount(ctx context.Context, input *createAccount
 		Phone:       input.Body.Phone,
 	})
 	if err != nil {
-		return nil, toHumaError(err)
+		return nil, humaerror.From(err)
 	}
 
 	return &accountUserOutput{Body: accountUserResponseFromDomain(created)}, nil
@@ -177,7 +177,7 @@ func (h *Handler) updateCurrentAccount(ctx context.Context, input *updateAccount
 
 	updated, err := h.userSvc.Update(ctx, update)
 	if err != nil {
-		return nil, toHumaError(err)
+		return nil, humaerror.From(err)
 	}
 	return &accountUserOutput{Body: accountUserResponseFromDomain(updated)}, nil
 }
@@ -188,7 +188,7 @@ func (h *Handler) deleteCurrentAccount(ctx context.Context, _ *struct{}) (*struc
 		return nil, huma.Error403Forbidden("conta registrada necessária")
 	}
 	if err := h.userSvc.Delete(ctx, currentUser.ID); err != nil {
-		return nil, toHumaError(err)
+		return nil, humaerror.From(err)
 	}
 	return &struct{}{}, nil
 }
@@ -207,8 +207,4 @@ func accountUserResponseFromDomain(user *accountdomain.User) accountUserResponse
 		CreatedAt:   user.CreatedAt,
 		UpdatedAt:   user.UpdatedAt,
 	}
-}
-
-func toHumaError(err error) error {
-	return humaerror.From(err)
 }

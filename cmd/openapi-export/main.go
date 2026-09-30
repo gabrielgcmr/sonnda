@@ -15,10 +15,9 @@ func main() {
 	outputPath := flag.String("output", "artifacts/openapi.json", "OpenAPI JSON output path")
 	name := flag.String("name", "Sonnda API", "API name")
 	version := flag.String("version", "dev", "API revision or version")
-	environment := flag.String("environment", "ci", "API environment")
 	flag.Parse()
 
-	spec := api.OpenAPI(api.RootInfo{Name: *name, Version: *version, Env: *environment})
+	spec := api.OpenAPI(api.APIInfo{Name: *name, Version: *version})
 	data, err := json.MarshalIndent(spec, "", "  ")
 	if err != nil {
 		fail(fmt.Errorf("marshal OpenAPI: %w", err))

@@ -63,7 +63,7 @@ func (h *Handler) listForCurrentAccount(ctx context.Context, input *listPatients
 
 	result, err := h.service.ListForAccount(ctx, currentUser.ID, input.Limit, input.Offset)
 	if err != nil {
-		return nil, toHumaError(err)
+		return nil, humaerror.From(err)
 	}
 
 	patients := make([]accessiblePatientResponse, len(result.Patients))
@@ -81,8 +81,4 @@ func (h *Handler) listForCurrentAccount(ctx context.Context, input *listPatients
 		Limit:    result.Limit,
 		Offset:   result.Offset,
 	}}, nil
-}
-
-func toHumaError(err error) error {
-	return humaerror.From(err)
 }

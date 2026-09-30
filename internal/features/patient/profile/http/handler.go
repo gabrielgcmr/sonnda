@@ -88,7 +88,7 @@ func (h *Handler) getPatient(ctx context.Context, input *patientIDInput) (*patie
 
 	patient, err := h.svc.Get(ctx, currentUser, input.PatientID)
 	if err != nil {
-		return nil, toHumaError(err)
+		return nil, humaerror.From(err)
 	}
 	return &patientOutput{Body: patientResponseFromDomain(patient)}, nil
 }
@@ -105,7 +105,7 @@ func (h *Handler) listPatients(ctx context.Context, _ *struct{}) (*patientListOu
 
 	patients, err := h.svc.ListMyPatients(ctx, currentUser, 100, 0)
 	if err != nil {
-		return nil, toHumaError(err)
+		return nil, humaerror.From(err)
 	}
 
 	response := make([]patientResponse, len(patients))
@@ -130,8 +130,4 @@ func patientResponseFromDomain(patient *profiledomain.Patient) patientResponse {
 		CreatedAt:   patient.CreatedAt,
 		UpdatedAt:   patient.UpdatedAt,
 	}
-}
-
-func toHumaError(err error) error {
-	return humaerror.From(err)
 }

@@ -9,27 +9,51 @@ import (
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 )
 
-// From translates an application error into Huma's RFC 9457 error model.
-func From(err error) *huma.ErrorModel {
+// Error exposes only Huma's public model while retaining the original error
+// for errors.Is/errors.As and request-scoped diagnostics.
+type Error struct {
+	*huma.ErrorModel
+	cause error
+	code  apperr.ErrorKind
+}
+
+func (e *Error) Unwrap() error { return e.cause }
+
+// From translates an application error without serializing its internal cause.
+func From(err error) huma.StatusError {
+	return from(err)
+}
+
+func from(err error) *Error {
+	model := &huma.ErrorModel{
+		Status: http.StatusInternalServerError,
+		Title:  http.StatusText(http.StatusInternalServerError),
+		Detail: "erro inesperado",
+	}
+	result := &Error{ErrorModel: model, cause: err, code: apperr.INTERNAL_ERROR}
 	var appErr *apperr.AppError
 	if !errors.As(err, &appErr) || appErr == nil {
-		return huma.NewError(http.StatusInternalServerError, "erro inesperado").(*huma.ErrorModel)
+		return result
 	}
 
-	details := make([]error, 0, len(appErr.Violations))
+	result.code = appErr.Kind
+	model.Status = StatusFromKind(appErr.Kind)
+	model.Title = http.StatusText(model.Status)
+	model.Detail = appErr.Message
 	for _, violation := range appErr.Violations {
-		details = append(details, &huma.ErrorDetail{
+		model.Errors = append(model.Errors, &huma.ErrorDetail{
 			Location: violation.Field,
 			Message:  violation.Reason,
 		})
 	}
 
-	return huma.NewError(StatusFromKind(appErr.Kind), appErr.Message, details...).(*huma.ErrorModel)
+	return result
 }
 
 // Write writes an application error using Huma's configured error writer.
 func Write(api huma.API, ctx huma.Context, err error) error {
-	model := From(err)
+	model := from(err)
+	observe(ctx, model)
 	details := make([]error, len(model.Errors))
 	for i, detail := range model.Errors {
 		details[i] = detail

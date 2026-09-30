@@ -107,7 +107,7 @@ func (h *CreationHandler) create(ctx context.Context, input *createPatientInput)
 		},
 	})
 	if err != nil {
-		return nil, toHumaError(err)
+		return nil, humaerror.From(err)
 	}
 
 	return &createPatientOutput{
@@ -130,8 +130,4 @@ func parseRace(value string) (demographics.Race, error) {
 		return "", fmt.Errorf("invalid race value %q: %w", value, err)
 	}
 	return race, nil
-}
-
-func toHumaError(err error) error {
-	return humaerror.From(err)
 }

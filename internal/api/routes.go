@@ -18,7 +18,7 @@ import (
 )
 
 type APIDependencies struct {
-	RootInfo                      RootInfo
+	APIInfo                       APIInfo
 	Auth                          *authhttp.Middleware
 	Account                       *accounthttp.Middleware
 	AccountHandler                *accounthttp.Handler
@@ -30,14 +30,16 @@ type APIDependencies struct {
 	TemporaryLabExtractionHandler *documentprocessinghttp.TemporaryLabExtractionHandler
 }
 
-func SetupRoutes(r *gin.Engine, deps *APIDependencies) {
+// SetupRoutes registers the endpoints and returns the configured Huma API.
+func SetupRoutes(r *gin.Engine, deps *APIDependencies) huma.API {
 	r.GET("/favicon.ico", func(c *gin.Context) {
 		c.Data(http.StatusOK, "image/x-icon", static.FaviconICO)
 	})
 
-	rootInfo := normalizedRootInfo(deps.RootInfo)
-	humaAPI := newHumaAPI(r, rootInfo)
+	apiInfo := normalizedAPIInfo(deps.APIInfo)
+	humaAPI := newHumaAPI(r, apiInfo)
 	registerHumaRoutes(humaAPI, deps)
+	return humaAPI
 }
 
 func registerHumaRoutes(api huma.API, deps *APIDependencies) {

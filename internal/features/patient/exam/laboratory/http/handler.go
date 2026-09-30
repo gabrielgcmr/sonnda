@@ -80,18 +80,18 @@ func (h *Handler) listLabReports(ctx context.Context, input *listLabReportsInput
 		return nil, err
 	}
 	if err := h.accessChecker.RequireAccess(ctx, currentUser.ID, input.PatientID); err != nil {
-		return nil, toHumaError(err)
+		return nil, humaerror.From(err)
 	}
 	if shouldReturnFullLabsFor(input.Expand, input.Include) {
 		list, err := h.svc.ListFull(ctx, input.PatientID, input.Limit, input.Offset)
 		if err != nil {
-			return nil, toHumaError(err)
+			return nil, humaerror.From(err)
 		}
 		return &listLabReportsOutput{Body: list}, nil
 	}
 	list, err := h.svc.List(ctx, input.PatientID, input.Limit, input.Offset)
 	if err != nil {
-		return nil, toHumaError(err)
+		return nil, humaerror.From(err)
 	}
 	return &listLabReportsOutput{Body: list}, nil
 }
@@ -103,13 +103,13 @@ func (h *Handler) getLabReport(ctx context.Context, input *labReportInput) (*lab
 	}
 	report, err := h.svc.FindByID(ctx, input.LabReportID)
 	if err != nil {
-		return nil, toHumaError(err)
+		return nil, humaerror.From(err)
 	}
 	if report == nil {
 		return nil, huma.Error404NotFound("laudo não encontrado")
 	}
 	if err := h.accessChecker.RequireAccess(ctx, currentUser.ID, report.PatientID); err != nil {
-		return nil, toHumaError(err)
+		return nil, humaerror.From(err)
 	}
 	return &labReportOutput{Body: *report}, nil
 }
@@ -120,10 +120,6 @@ func humaCurrentUser(ctx context.Context) (*accountdomain.User, error) {
 		return nil, huma.Error403Forbidden("conta registrada necessária")
 	}
 	return currentUser, nil
-}
-
-func toHumaError(err error) error {
-	return humaerror.From(err)
 }
 
 func shouldReturnFullLabsFor(expand, include string) bool {
