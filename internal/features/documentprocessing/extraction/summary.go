@@ -26,8 +26,8 @@ func FormatSummary(report *labextraction.ExtractedLabReport) string {
 	}
 
 	collectionDates := uniqueCollectionDates(report.Tests)
-	if len(collectionDates) == 1 {
-		writeSummaryLine(&builder, "Coleta: "+formatCollectionDate(collectionDates[0]))
+	if len(collectionDates) > 0 {
+		writeSummaryLine(&builder, "Data de coleta: "+strings.Join(collectionDates, ", "))
 		headerWritten = true
 	}
 
@@ -41,9 +41,6 @@ func FormatSummary(report *labextraction.ExtractedLabReport) string {
 		}
 		builder.WriteString(test.TestName)
 		builder.WriteByte('\n')
-		if len(collectionDates) > 1 && test.CollectedAt != nil {
-			writeSummaryLine(&builder, "Coleta: "+formatCollectionDate(*test.CollectedAt))
-		}
 		for _, item := range test.Items {
 			if strings.TrimSpace(item.ParameterName) == "" {
 				continue
@@ -80,6 +77,7 @@ func uniqueCollectionDates(tests []labextraction.ExtractedTestResult) []string {
 		if date == "" {
 			continue
 		}
+		date = formatCollectionDate(date)
 		if _, exists := seen[date]; exists {
 			continue
 		}
