@@ -3,17 +3,15 @@ package profilehttp
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"time"
 
 	"github.com/danielgtaylor/huma/v2"
 	helpers "github.com/gabrielgcmr/sonnda/internal/api/helpers"
-	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
+	"github.com/gabrielgcmr/sonnda/internal/api/humaerror"
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
 	patientprofile "github.com/gabrielgcmr/sonnda/internal/features/patient/profile"
 	profiledomain "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/domain"
-	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 	"github.com/google/uuid"
 )
 
@@ -90,7 +88,7 @@ func (h *Handler) getPatient(ctx context.Context, input *patientIDInput) (*patie
 
 	patient, err := h.svc.Get(ctx, currentUser, input.PatientID)
 	if err != nil {
-		return nil, toHumaError(err)
+		return nil, humaerror.From(err)
 	}
 	return &patientOutput{Body: patientResponseFromDomain(patient)}, nil
 }
@@ -107,7 +105,7 @@ func (h *Handler) listPatients(ctx context.Context, _ *struct{}) (*patientListOu
 
 	patients, err := h.svc.ListMyPatients(ctx, currentUser, 100, 0)
 	if err != nil {
-		return nil, toHumaError(err)
+		return nil, humaerror.From(err)
 	}
 
 	response := make([]patientResponse, len(patients))
@@ -132,12 +130,4 @@ func patientResponseFromDomain(patient *profiledomain.Patient) patientResponse {
 		CreatedAt:   patient.CreatedAt,
 		UpdatedAt:   patient.UpdatedAt,
 	}
-}
-
-func toHumaError(err error) error {
-	var appErr *apperr.AppError
-	if errors.As(err, &appErr) && appErr != nil {
-		return huma.NewError(presenter.StatusFromCode(appErr.Kind), appErr.Message)
-	}
-	return huma.Error500InternalServerError("erro inesperado")
 }

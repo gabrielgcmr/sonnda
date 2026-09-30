@@ -3,8 +3,8 @@
 
 - Keep profile services, onboarding and application DTOs in this package. It must not import Gin or the HTTP layer.
 - Keep HTTP binding, request identity and response presentation in `http/`.
-- Return known failures through `internal/kernel/apperr`; HTTP handlers and middleware call `presenter.ErrorResponder(c, err)`.
-- Preserve exactly one access log per request. Do not log 4xx details in handlers; the shared presenter writes the detailed 5xx error log.
+- Return known failures through `internal/kernel/apperr`; Huma handlers call `humaerror.From(err)` directly and Huma middleware uses `humaerror.Write(api, ctx, err)`.
+- Preserve exactly one access log per request. Do not log 4xx details in handlers; the shared Huma error adapter handles detailed 5xx logging with the original cause.
 - Compose dependencies in `internal/application/bootstrap/account.go`.
 - This is migration stage 2 for persistence: the repository interface and user persistence errors live in `repository.go`; the concrete SQLC/pgx adapter lives in `postgres/`.
 - Application code depends on `Repository`, never on the Postgres adapter or the legacy concrete repositories. Generic persistence failures use `internal/kernel/persistence.ErrPersistenceFailure`.

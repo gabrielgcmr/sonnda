@@ -11,6 +11,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/danielgtaylor/huma/v2"
+	"github.com/danielgtaylor/huma/v2/adapters/humagin"
 	"github.com/gabrielgcmr/sonnda/internal/api/helpers"
 	domaintext "github.com/gabrielgcmr/sonnda/internal/domain/textextraction"
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
@@ -46,12 +48,12 @@ func TestUploadExamDocumentExplainsOCRReview(t *testing.T) {
 			h := newExamsHandler(svc, lab, &fakeExamStorage{}, tc.extractor, allowAllAccessChecker{})
 			r := gin.New()
 			r.Use(func(c *gin.Context) {
-				helpers.SetCurrentUser(c, &accountdomain.User{ID: uuid.New(), AccountType: accountdomain.AccountTypeBasicCare})
+				c.Request = c.Request.WithContext(helpers.ContextWithCurrentUser(c.Request.Context(), &accountdomain.User{ID: uuid.New(), AccountType: accountdomain.AccountTypeBasicCare}))
 				c.Next()
 			})
-			r.POST("/v1/patients/:patientId/exames", h.UploadExamDocument)
+			h.RegisterHumaRoutes(humagin.New(r, huma.DefaultConfig("test", "test")), nil)
 			body, contentType := multipartBody(t, "file", "hemograma.jpg", "image/jpeg", []byte{0xff, 0xd8, 0xff, 0xe0})
-			req := httptest.NewRequest(http.MethodPost, "/v1/patients/"+uuid.NewString()+"/exames", body)
+			req := httptest.NewRequest(http.MethodPost, "/patients/"+uuid.NewString()+"/exam-documents", body)
 			req.Header.Set("Content-Type", contentType)
 			resp := httptest.NewRecorder()
 			r.ServeHTTP(resp, req)

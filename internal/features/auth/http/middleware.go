@@ -5,10 +5,8 @@ import (
 	"context"
 	"strings"
 
-	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
 	authdomain "github.com/gabrielgcmr/sonnda/internal/features/auth/domain"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
-	"github.com/gin-gonic/gin"
 )
 
 type Middleware struct {
@@ -48,18 +46,4 @@ func (m *Middleware) AuthenticateBearer(ctx context.Context, authorization strin
 	}
 
 	return identity, nil
-}
-
-func (m *Middleware) RequireBearer() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		identity, err := m.AuthenticateBearer(c.Request.Context(), c.GetHeader("Authorization"))
-		if err != nil {
-			presenter.ErrorResponder(c, err)
-			c.Abort()
-			return
-		}
-
-		SetIdentity(c, identity)
-		c.Next()
-	}
 }

@@ -7,13 +7,14 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 	applog "github.com/gabrielgcmr/sonnda/internal/kernel/observability"
 )
 
 // Recovery captura panics, loga stacktrace estruturado e devolve 500 sem derrubar o servidor.
-func Recovery(l *slog.Logger) gin.HandlerFunc {
+// writeError is supplied by the API composition so recovery uses the same
+// response configuration as normal errors, including content negotiation.
+func Recovery(l *slog.Logger, writeError func(*gin.Context, error)) gin.HandlerFunc {
 	if l == nil {
 		l = slog.Default()
 	}
@@ -22,6 +23,8 @@ func Recovery(l *slog.Logger) gin.HandlerFunc {
 		defer func() {
 			if rec := recover(); rec != nil {
 				c.Set("error_code", apperr.INTERNAL_ERROR)
+				c.Set("panic_recovered", true)
+				c.Abort()
 
 				rid, _ := c.Get("request_id")
 				route := c.FullPath()
@@ -47,11 +50,8 @@ func Recovery(l *slog.Logger) gin.HandlerFunc {
 				reqLog.Error("panic_recovered", attrs...)
 
 				if !c.Writer.Written() {
-					c.Set("panic_recovered", true)
-					presenter.ErrorResponder(c, apperr.Internal("erro inesperado", nil))
-					return
+					writeError(c, apperr.Internal("erro inesperado", nil))
 				}
-				c.Abort()
 			}
 		}()
 

@@ -1,5 +1,4 @@
 // internal/application/bootstrap/modules.go
-// internal/application/bootstrap/modules.go
 package bootstrap
 
 import (

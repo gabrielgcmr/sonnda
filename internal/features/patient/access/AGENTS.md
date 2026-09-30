@@ -9,6 +9,7 @@
 - Keep access entities and validation rules in `domain/`, application services and repository contracts in the feature root, HTTP in `http/`, and the pgx/sqlc adapter in `postgres/`.
 - The unversioned `GET /me/patients` listing belongs to this feature and must not expose `RelationshipType` until the domain defines its public meaning.
 - Register this route through Huma and use its generated OpenAPI schema. Do not add a Gin route or a generated-contract DTO for it.
+- Translate application failures with `humaerror.From(err)` directly; keep error responses and diagnostics in the shared Huma adapter.
 - Shared database clients and generated sqlc code remain in `internal/infrastructure`.
 - Access request types are dormant domain code until their workflow and authorization rules are defined; do not expose request endpoints during the structural migration.
 - Keep the shared patient access checker in this feature and express its input as account and patient identifiers.

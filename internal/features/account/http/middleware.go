@@ -4,14 +4,10 @@ package accounthttp
 import (
 	"context"
 
-	helpers "github.com/gabrielgcmr/sonnda/internal/api/helpers"
-	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
 	"github.com/gabrielgcmr/sonnda/internal/features/account"
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
 	authdomain "github.com/gabrielgcmr/sonnda/internal/features/auth/domain"
-	authhttp "github.com/gabrielgcmr/sonnda/internal/features/auth/http"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
-	"github.com/gin-gonic/gin"
 )
 
 type Middleware struct {
@@ -33,44 +29,4 @@ func (m *Middleware) ResolveRegisteredUser(ctx context.Context, identity *authdo
 	}
 
 	return currentUser, nil
-}
-
-func (m *Middleware) RequireRegisteredUser() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		identity, ok := authhttp.GetIdentity(c)
-		if !ok || identity == nil {
-			presenter.ErrorResponder(c, apperr.Unauthorized("autenticação necessária"))
-			return
-		}
-
-		currentUser, err := m.ResolveRegisteredUser(c.Request.Context(), identity)
-		if err != nil {
-			presenter.ErrorResponder(c, err)
-			return
-		}
-		if currentUser == nil {
-			presenter.ErrorResponder(c, apperr.ProfileNotFound())
-			return
-		}
-
-		helpers.SetCurrentUser(c, currentUser)
-		c.Next()
-	}
-}
-
-func (m *Middleware) LoadCurrentUser() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		identity, ok := authhttp.GetIdentity(c)
-		if !ok || identity == nil {
-			c.Next()
-			return
-		}
-
-		currentUser, _ := m.ResolveRegisteredUser(c.Request.Context(), identity)
-		if currentUser != nil {
-			helpers.SetCurrentUser(c, currentUser)
-		}
-
-		c.Next()
-	}
 }

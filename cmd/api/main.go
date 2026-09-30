@@ -123,7 +123,6 @@ func main() {
 	app := api.New(api.Options{
 		Name:       "Sonnda API",
 		Version:    version,
-		Env:        cfg.App.Env,
 		Logger:     appLogger,
 		CORSConfig: cfg.CORS,
 		Deps: &api.APIDependencies{

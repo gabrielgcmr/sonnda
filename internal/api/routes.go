@@ -4,6 +4,8 @@ package api
 import (
 	"net/http"
 
+	"github.com/danielgtaylor/huma/v2"
+	"github.com/gabrielgcmr/sonnda/internal/api/middleware"
 	accounthttp "github.com/gabrielgcmr/sonnda/internal/features/account/http"
 	authhttp "github.com/gabrielgcmr/sonnda/internal/features/auth/http"
 	documentprocessinghttp "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/http"
@@ -11,11 +13,12 @@ import (
 	laboratoryhttp "github.com/gabrielgcmr/sonnda/internal/features/patient/exam/laboratory/http"
 	patienthttp "github.com/gabrielgcmr/sonnda/internal/features/patient/http"
 	profilehttp "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/http"
+	"github.com/gabrielgcmr/sonnda/static"
 	"github.com/gin-gonic/gin"
 )
 
 type APIDependencies struct {
-	RootInfo                      RootInfo
+	APIInfo                       APIInfo
 	Auth                          *authhttp.Middleware
 	Account                       *accounthttp.Middleware
 	AccountHandler                *accounthttp.Handler
@@ -27,69 +30,36 @@ type APIDependencies struct {
 	TemporaryLabExtractionHandler *documentprocessinghttp.TemporaryLabExtractionHandler
 }
 
-type RootInfo struct {
-	Name    string
-	Version string
-	Env     string
-}
-
-type RootResponse struct {
-	Name        string `json:"name"`
-	Version     string `json:"version"`
-	Environment string `json:"environment"`
-	Docs        string `json:"docs"`
-	OpenAPI     string `json:"openapi"`
-	Health      string `json:"health"`
-	Ready       string `json:"ready"`
-}
-
-func SetupRoutes(r *gin.Engine, deps *APIDependencies) {
+// SetupRoutes registers the endpoints and returns the configured Huma API.
+func SetupRoutes(r *gin.Engine, deps *APIDependencies) huma.API {
 	r.GET("/favicon.ico", func(c *gin.Context) {
-		c.Data(http.StatusOK, "image/x-icon", faviconData)
+		c.Data(http.StatusOK, "image/x-icon", static.FaviconICO)
 	})
 
-	rootInfo := normalizedRootInfo(deps.RootInfo)
-	humaAPI := newHumaAPI(r, rootInfo)
-	registerHumaRoutes(humaAPI, deps, rootInfo)
-
-	// These endpoints have not moved to Huma yet, but no route path is versioned.
-	registered := r.Group("")
-	registered.Use(
-		deps.Auth.RequireBearer(),
-		deps.Account.RequireRegisteredUser())
-
-	patients := registered.Group("/patients")
-	exams := patients.Group("/:patientId/exames")
-	exams.GET("", deps.ExamsHandler.ListExamDocuments)
-	exams.GET("/reports", deps.ExamsHandler.ListExamDocumentTexts)
-	exams.POST("", deps.ExamsHandler.UploadExamDocument)
+	apiInfo := normalizedAPIInfo(deps.APIInfo)
+	humaAPI := newHumaAPI(r, apiInfo)
+	registerHumaRoutes(humaAPI, deps)
+	return humaAPI
 }
 
-func normalizedRootInfo(info RootInfo) RootInfo {
-	environment := info.Env
-	if environment == "" {
-		environment = "dev"
-	}
-	name := info.Name
-	if name == "" {
-		name = "Sonnda API"
-	}
-	version := info.Version
-	if version == "" {
-		version = "dev"
-	}
+func registerHumaRoutes(api huma.API, deps *APIDependencies) {
+	registerHealthRoute(api)
 
-	return RootInfo{Name: name, Version: version, Env: environment}
+	authenticated := huma.NewGroup(api)
+	authenticated.UseMiddleware(middleware.RequireBearer(api, deps.Auth))
+
+	registered := huma.NewGroup(authenticated)
+	registered.UseMiddleware(middleware.RequireRegisteredAccount(api, deps.Account))
+
+	deps.AccountHandler.RegisterHumaRoutes(authenticated, registered, bearerSecurity())
+	deps.PatientAccessHandler.RegisterHumaRoutes(registered, bearerSecurity())
+	deps.PatientCreationHandler.RegisterHumaRoutes(registered, bearerSecurity())
+	deps.PatientHandler.RegisterHumaRoutes(registered, bearerSecurity())
+	deps.ExamsHandler.RegisterHumaRoutes(registered, bearerSecurity())
+	deps.TemporaryLabExtractionHandler.RegisterHumaRoutes(registered, bearerSecurity())
+	deps.LaboratoryHandler.RegisterHumaRoutes(registered, bearerSecurity())
 }
 
-func rootResponse(info RootInfo) RootResponse {
-	return RootResponse{
-		Name:        info.Name,
-		Version:     info.Version,
-		Environment: info.Env,
-		Docs:        "/docs",
-		OpenAPI:     "/openapi.yaml",
-		Health:      "/healthz",
-		Ready:       "/readyz",
-	}
+func bearerSecurity() []map[string][]string {
+	return []map[string][]string{{bearerAuthScheme: {}}}
 }

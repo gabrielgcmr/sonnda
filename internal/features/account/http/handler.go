@@ -3,18 +3,16 @@ package accounthttp
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/gabrielgcmr/sonnda/internal/api/helpers"
-	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
+	"github.com/gabrielgcmr/sonnda/internal/api/humaerror"
 	"github.com/gabrielgcmr/sonnda/internal/features/account"
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
 	authhttp "github.com/gabrielgcmr/sonnda/internal/features/auth/http"
-	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 	"github.com/google/uuid"
 )
 
@@ -143,7 +141,7 @@ func (h *Handler) createCurrentAccount(ctx context.Context, input *createAccount
 		Phone:       input.Body.Phone,
 	})
 	if err != nil {
-		return nil, toHumaError(err)
+		return nil, humaerror.From(err)
 	}
 
 	return &accountUserOutput{Body: accountUserResponseFromDomain(created)}, nil
@@ -179,7 +177,7 @@ func (h *Handler) updateCurrentAccount(ctx context.Context, input *updateAccount
 
 	updated, err := h.userSvc.Update(ctx, update)
 	if err != nil {
-		return nil, toHumaError(err)
+		return nil, humaerror.From(err)
 	}
 	return &accountUserOutput{Body: accountUserResponseFromDomain(updated)}, nil
 }
@@ -190,7 +188,7 @@ func (h *Handler) deleteCurrentAccount(ctx context.Context, _ *struct{}) (*struc
 		return nil, huma.Error403Forbidden("conta registrada necessária")
 	}
 	if err := h.userSvc.Delete(ctx, currentUser.ID); err != nil {
-		return nil, toHumaError(err)
+		return nil, humaerror.From(err)
 	}
 	return &struct{}{}, nil
 }
@@ -209,12 +207,4 @@ func accountUserResponseFromDomain(user *accountdomain.User) accountUserResponse
 		CreatedAt:   user.CreatedAt,
 		UpdatedAt:   user.UpdatedAt,
 	}
-}
-
-func toHumaError(err error) error {
-	var appErr *apperr.AppError
-	if errors.As(err, &appErr) && appErr != nil {
-		return huma.NewError(presenter.StatusFromCode(appErr.Kind), appErr.Message)
-	}
-	return huma.Error500InternalServerError("erro inesperado")
 }

@@ -56,10 +56,11 @@ Simple instructions for coding agents working on this repo.
 - **Config (`internal/config`)**: Environment configuration.
 - **API (`internal/api`)**: HTTP layer (RESTful API).
 - Feature-specific HTTP handlers live with their owning feature under `internal/features/<feature>/http`.
-- `internal/api` owns route composition, middleware, shared HTTP helpers and presenters; keep cross-feature wiring here, not feature behavior.
+- `internal/api` owns route composition, middleware and shared HTTP adapters; keep cross-feature wiring here, not feature behavior.
   - **Middleware (`internal/api/middleware`)**: HTTP middlewares (auth, logging, CORS, etc).
   - **Helpers (`internal/api/helpers`)**: HTTP helper functions (binding, validation, identity).
-  - **Presenter (`internal/api/presenter`)**: Response formatting and error presentation.
+  - **Huma errors (`internal/api/humaerror`)**: Application-to-HTTP error translation and request-scoped error observability.
+  - **Presenter (`internal/api/presenter`)**: Legacy Gin error responses only; retain it for legacy code that will be reused, not for new Huma handlers.
 - **Infrastructure (`internal/infrastructure`)**: Concrete implementations and outbound integrations.
   - **Persistence (`internal/infrastructure/persistence`)**: Database repositories, cache, file storage.
   - **Auth (`internal/infrastructure/auth`)**: Authentication provider implementations.
@@ -81,15 +82,18 @@ This project uses a **centralized error contract** based on `AppError`.
 - Application-level errors must be represented as `*apperr.AppError`.
 - Location: `internal/kernel/apperr`
 - `AppError` contains:
-  - `Code` (`ErrorCode`) - stable, machine-readable contract
+  - `Kind` (`ErrorKind`) - stable, machine-readable application code
   - `Message` - safe, human-readable message
   - `Cause` - optional internal error (wrapped with `%w`)
 - **Prefer using helper constructors** from `internal/kernel/apperr/factory.go` instead of manually constructing them.
 - Services/use cases **must return `AppError` for known failures** (validation, conflicts, not found, infra errors).
 - Domain **never** imports HTTP, Gin, or `apperr`.
-- Handlers and middlewares **must call**: `presenter.WriteError(c, err)` or similar helper from the presenter layer.
-- HTTP error presentation is centralized in: `internal/api/presenter`.
-- Feature HTTP handlers and middleware must use `presenter.ErrorResponder(c, err)` and retain the shared access/error logging policy.
+- Huma handlers translate application failures with `humaerror.From(err)` from `internal/api/humaerror`; call it directly instead of defining local `toHumaError` wrappers.
+- Huma middleware writes application failures with `humaerror.Write(api, ctx, err)`. HTTP-only validation errors may use the standard `huma.Error*` helpers.
+- Responses use Huma's standard Problem Details model. Keep internal causes and application error codes in diagnostics, not in the public JSON.
+- Register `humaerror.Transform` before Huma's schema transformers to observe errors returned by handlers.
+- Preserve one access log per request, one detailed log with causes for application 5xx failures, and no detailed 4xx logs. Recovery logs the panic stacktrace once and uses the same Huma response writer.
+- Existing legacy Gin code may keep `presenter.ErrorResponder(c, err)`; do not introduce it into Huma handlers or delete the legacy presenter without migrating its consumers.
 
 ---
 

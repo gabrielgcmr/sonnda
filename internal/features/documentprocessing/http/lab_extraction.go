@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/gabrielgcmr/sonnda/internal/api/humaerror"
 	"github.com/gabrielgcmr/sonnda/internal/domain/labextraction"
 	domaintext "github.com/gabrielgcmr/sonnda/internal/domain/textextraction"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
@@ -70,7 +71,7 @@ func (h *TemporaryLabExtractionHandler) extract(ctx context.Context, input *temp
 		return nil, err
 	}
 	if isNilExtractor(h.textExtractor) || isNilExtractor(h.labExtractor) {
-		return nil, toHumaError(apperr.Internal("A extracao laboratorial esta indisponivel.", nil))
+		return nil, humaerror.From(apperr.Internal("A extracao laboratorial esta indisponivel.", nil))
 	}
 
 	files := input.RawBody.Form.File["file"]
@@ -79,7 +80,7 @@ func (h *TemporaryLabExtractionHandler) extract(ctx context.Context, input *temp
 	}
 	path, err := writeTemporaryPDF(files[0])
 	if err != nil {
-		return nil, toHumaError(err)
+		return nil, humaerror.From(err)
 	}
 	defer os.Remove(path)
 
@@ -87,15 +88,15 @@ func (h *TemporaryLabExtractionHandler) extract(ctx context.Context, input *temp
 		LocalPath: path, MimeType: "application/pdf", OriginalFilename: files[0].Filename,
 	})
 	if err != nil || text == nil || strings.TrimSpace(text.Text) == "" {
-		return nil, toHumaError(apperr.DomainRuleViolation("Nao foi encontrado texto legivel no PDF. Envie o PDF original com texto selecionavel.", apperr.Violation{Field: "file", Reason: "text_not_readable"}))
+		return nil, humaerror.From(apperr.DomainRuleViolation("Nao foi encontrado texto legivel no PDF. Envie o PDF original com texto selecionavel.", apperr.Violation{Field: "file", Reason: "text_not_readable"}))
 	}
 
 	report, err := h.labExtractor.ExtractLabReport(ctx, labextraction.ExtractLabReportInput{Text: text.Text})
 	if err != nil {
-		return nil, toHumaError(apperr.Internal("Nao foi possivel extrair os dados laboratoriais.", err))
+		return nil, humaerror.From(apperr.Internal("Nao foi possivel extrair os dados laboratoriais.", err))
 	}
 	if report == nil {
-		return nil, toHumaError(apperr.Internal("Nao foi possivel extrair os dados laboratoriais.", nil))
+		return nil, humaerror.From(apperr.Internal("Nao foi possivel extrair os dados laboratoriais.", nil))
 	}
 	report.Normalize()
 	status := report.Metadata.Status

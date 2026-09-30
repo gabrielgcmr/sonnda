@@ -5,6 +5,9 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/danielgtaylor/huma/v2"
+	"github.com/danielgtaylor/huma/v2/adapters/humagin"
+	"github.com/gabrielgcmr/sonnda/internal/api/humaerror"
 	"github.com/gabrielgcmr/sonnda/internal/api/middleware"
 	"github.com/gabrielgcmr/sonnda/internal/config"
 	"github.com/gin-gonic/gin"
@@ -13,7 +16,6 @@ import (
 type Options struct {
 	Name       string
 	Version    string
-	Env        string
 	Logger     *slog.Logger
 	Deps       *APIDependencies
 	CORSConfig config.CORSConfig
@@ -35,23 +37,26 @@ func New(opts Options) *App {
 		logger = slog.Default()
 	}
 
-	// Middlewares globais (infra)
-	// IMPORTANTE: CORS deve ser o PRIMEIRO middleware para garantir que
-	// headers de CORS sejam incluídos em TODAS as respostas, inclusive em erros (404, 401, etc).
-	r.Use(middleware.SetupCors(opts.CORSConfig))
+	// Assigned during route setup before the server accepts requests. Keeping
+	// recovery registered here also protects Huma's docs and native Gin routes.
+	var humaAPI huma.API
 	r.Use(
 		middleware.RequestID(),
 		middleware.AccessLog(logger),
-		middleware.Recovery(logger),
+		middleware.Recovery(logger, func(c *gin.Context, err error) {
+			op := &huma.Operation{Method: c.Request.Method, Path: c.FullPath()}
+			_ = humaerror.Write(humaAPI, humagin.NewContext(op, c), err)
+		}),
+		// Keep CORS inside observability/recovery so even early responses are traced.
+		middleware.SetupCors(opts.CORSConfig),
 	)
 
 	deps := *opts.Deps
-	deps.RootInfo = RootInfo{
+	deps.APIInfo = APIInfo{
 		Name:    opts.Name,
 		Version: opts.Version,
-		Env:     opts.Env,
 	}
-	SetupRoutes(r, &deps)
+	humaAPI = SetupRoutes(r, &deps)
 
 	return &App{
 		router: r,

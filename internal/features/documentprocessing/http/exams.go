@@ -3,7 +3,6 @@ package http
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"os"
 	"strings"
@@ -11,14 +10,13 @@ import (
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/gabrielgcmr/sonnda/internal/api/helpers"
-	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
+	"github.com/gabrielgcmr/sonnda/internal/api/humaerror"
 	domainstorage "github.com/gabrielgcmr/sonnda/internal/domain/storage"
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
 	documents "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing"
 	processing "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/processing"
 	patientaccess "github.com/gabrielgcmr/sonnda/internal/features/patient/access"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
-	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
@@ -141,11 +139,11 @@ func (h *ExamsHandler) listExamDocuments(ctx context.Context, input *listExamDoc
 		return nil, err
 	}
 	if err := h.accessChecker.RequireAccess(ctx, currentUser.ID, input.PatientID); err != nil {
-		return nil, toHumaError(err)
+		return nil, humaerror.From(err)
 	}
 	list, err := h.svc.ListByPatient(ctx, input.PatientID, input.Limit, input.Offset)
 	if err != nil {
-		return nil, toHumaError(err)
+		return nil, humaerror.From(err)
 	}
 	return &listExamDocumentsOutput{Body: list}, nil
 }
@@ -156,11 +154,11 @@ func (h *ExamsHandler) listExamDocumentTexts(ctx context.Context, input *listExa
 		return nil, err
 	}
 	if err := h.accessChecker.RequireAccess(ctx, currentUser.ID, input.PatientID); err != nil {
-		return nil, toHumaError(err)
+		return nil, humaerror.From(err)
 	}
 	list, err := h.svc.ListDocumentTextsByPatient(ctx, input.PatientID, input.Limit, input.Offset)
 	if err != nil {
-		return nil, toHumaError(err)
+		return nil, humaerror.From(err)
 	}
 	return &listExamDocumentTextsOutput{Body: list}, nil
 }
@@ -183,7 +181,7 @@ func (h *ExamsHandler) getExamDocumentFile(ctx context.Context, input *examDocum
 	}
 	url, err := h.storage.GetSignedURL(ctx, document.StorageURI, examDocumentFileURLExpirationMinutes)
 	if err != nil {
-		return nil, toHumaError(err)
+		return nil, humaerror.From(err)
 	}
 	return &examDocumentFileOutput{Body: examDocumentFileResponse{
 		URL:       url,
@@ -197,11 +195,11 @@ func (h *ExamsHandler) uploadExamDocument(ctx context.Context, input *uploadExam
 		return nil, err
 	}
 	if err := h.accessChecker.RequireAccess(ctx, currentUser.ID, input.PatientID); err != nil {
-		return nil, toHumaError(err)
+		return nil, humaerror.From(err)
 	}
 	collectionDate, err := parseExamCollectionDate(input.RawBody.Data().CollectionDate)
 	if err != nil {
-		return nil, toHumaError(err)
+		return nil, humaerror.From(err)
 	}
 	fileHeaders := input.RawBody.Form.File["file"]
 	if len(fileHeaders) != 1 {
@@ -209,7 +207,7 @@ func (h *ExamsHandler) uploadExamDocument(ctx context.Context, input *uploadExam
 	}
 	upload, err := UploadDocument(ctx, fileHeaders[0], input.PatientID, h.storage)
 	if err != nil {
-		return nil, toHumaError(err)
+		return nil, humaerror.From(err)
 	}
 	defer os.Remove(upload.LocalPath)
 
@@ -223,7 +221,7 @@ func (h *ExamsHandler) uploadExamDocument(ctx context.Context, input *uploadExam
 		CollectionDate:   collectionDate,
 	})
 	if err != nil {
-		return nil, toHumaError(err)
+		return nil, humaerror.From(err)
 	}
 	return &examDocumentOutput{Body: *document}, nil
 }
@@ -235,13 +233,13 @@ func (h *ExamsHandler) findAccessibleDocument(ctx context.Context, documentID uu
 	}
 	document, err := h.svc.FindByID(ctx, documentID)
 	if err != nil {
-		return nil, toHumaError(err)
+		return nil, humaerror.From(err)
 	}
 	if document == nil {
 		return nil, huma.Error404NotFound("documento não encontrado")
 	}
 	if err := h.accessChecker.RequireAccess(ctx, currentUser.ID, document.PatientID); err != nil {
-		return nil, toHumaError(err)
+		return nil, humaerror.From(err)
 	}
 	return document, nil
 }
@@ -252,159 +250,6 @@ func humaCurrentUser(ctx context.Context) (*accountdomain.User, error) {
 		return nil, huma.Error403Forbidden("conta registrada necessária")
 	}
 	return currentUser, nil
-}
-
-func toHumaError(err error) error {
-	var appErr *apperr.AppError
-	if errors.As(err, &appErr) && appErr != nil {
-		return huma.NewError(presenter.StatusFromCode(appErr.Kind), appErr.Message)
-	}
-	return huma.Error500InternalServerError("erro inesperado")
-}
-
-func (h *ExamsHandler) ListExamDocuments(c *gin.Context) {
-	currentUser := helpers.MustGetCurrentUser(c)
-	patientID, ok := helpers.ParsePatientIDParam(c, "patientId")
-	if !ok {
-		return
-	}
-	if err := h.accessChecker.RequireAccess(c.Request.Context(), currentUser.ID, patientID); err != nil {
-		presenter.ErrorResponder(c, err)
-		return
-	}
-	limit, offset, ok := helpers.ParsePagination(c, 100, 0)
-	if !ok {
-		return
-	}
-	list, err := h.svc.ListByPatient(c.Request.Context(), patientID, limit, offset)
-	if err != nil {
-		presenter.ErrorResponder(c, err)
-		return
-	}
-	c.JSON(http.StatusOK, list)
-}
-
-func (h *ExamsHandler) GetExamDocument(c *gin.Context) {
-	currentUser := helpers.MustGetCurrentUser(c)
-	documentID, err := uuid.Parse(c.Param("documentId"))
-	if err != nil {
-		presenter.ErrorResponder(c, apperr.Validation("document_id inválido", apperr.Violation{Field: "document_id", Reason: "invalid"}))
-		return
-	}
-	document, err := h.svc.FindByID(c.Request.Context(), documentID)
-	if err != nil {
-		presenter.ErrorResponder(c, err)
-		return
-	}
-	if document == nil {
-		presenter.ErrorResponder(c, apperr.NotFound("documento nao encontrado"))
-		return
-	}
-	if err := h.accessChecker.RequireAccess(c.Request.Context(), currentUser.ID, document.PatientID); err != nil {
-		presenter.ErrorResponder(c, err)
-		return
-	}
-	c.JSON(http.StatusOK, document)
-}
-
-func (h *ExamsHandler) GetExamDocumentFile(c *gin.Context) {
-	currentUser := helpers.MustGetCurrentUser(c)
-	documentID, err := uuid.Parse(c.Param("documentId"))
-	if err != nil {
-		presenter.ErrorResponder(c, apperr.Validation("document_id invÃ¡lido", apperr.Violation{Field: "document_id", Reason: "invalid"}))
-		return
-	}
-	document, err := h.svc.FindByID(c.Request.Context(), documentID)
-	if err != nil {
-		presenter.ErrorResponder(c, err)
-		return
-	}
-	if document == nil {
-		presenter.ErrorResponder(c, apperr.NotFound("documento nao encontrado"))
-		return
-	}
-	if err := h.accessChecker.RequireAccess(c.Request.Context(), currentUser.ID, document.PatientID); err != nil {
-		presenter.ErrorResponder(c, err)
-		return
-	}
-	if h.storage == nil {
-		presenter.ErrorResponder(c, apperr.Internal("armazenamento de documentos indisponivel", nil))
-		return
-	}
-	url, err := h.storage.GetSignedURL(c.Request.Context(), document.StorageURI, examDocumentFileURLExpirationMinutes)
-	if err != nil {
-		presenter.ErrorResponder(c, err)
-		return
-	}
-	c.JSON(http.StatusOK, examDocumentFileResponse{
-		URL:       url,
-		ExpiresAt: time.Now().UTC().Add(examDocumentFileURLExpirationMinutes * time.Minute),
-	})
-}
-
-func (h *ExamsHandler) ListExamDocumentTexts(c *gin.Context) {
-	currentUser := helpers.MustGetCurrentUser(c)
-	patientID, ok := helpers.ParsePatientIDParam(c, "patientId")
-	if !ok {
-		return
-	}
-	if err := h.accessChecker.RequireAccess(c.Request.Context(), currentUser.ID, patientID); err != nil {
-		presenter.ErrorResponder(c, err)
-		return
-	}
-	limit, offset, ok := helpers.ParsePagination(c, 100, 0)
-	if !ok {
-		return
-	}
-	list, err := h.svc.ListDocumentTextsByPatient(c.Request.Context(), patientID, limit, offset)
-	if err != nil {
-		presenter.ErrorResponder(c, err)
-		return
-	}
-	c.JSON(http.StatusOK, list)
-}
-
-func (h *ExamsHandler) UploadExamDocument(c *gin.Context) {
-	currentUser := helpers.MustGetCurrentUser(c)
-	patientID, ok := helpers.ParsePatientIDParam(c, "patientId")
-	if !ok {
-		return
-	}
-	if err := h.accessChecker.RequireAccess(c.Request.Context(), currentUser.ID, patientID); err != nil {
-		presenter.ErrorResponder(c, err)
-		return
-	}
-	collectionDate, err := parseExamCollectionDate(c.PostForm("collection_date"))
-	if err != nil {
-		presenter.ErrorResponder(c, err)
-		return
-	}
-	fileHeader, err := c.FormFile("file")
-	if err != nil {
-		presenter.ErrorResponder(c, &apperr.AppError{Kind: apperr.REQUIRED_FIELD_MISSING, Message: "arquivo e obrigatorio", Cause: err})
-		return
-	}
-	upload, err := UploadDocument(c.Request.Context(), fileHeader, patientID, h.storage)
-	if err != nil {
-		presenter.ErrorResponder(c, err)
-		return
-	}
-	defer os.Remove(upload.LocalPath)
-
-	document, err := h.processor.Execute(c.Request.Context(), processing.ProcessStoredDocumentInput{
-		PatientID:        patientID,
-		UploadedByUserID: currentUser.ID,
-		StorageURI:       upload.StorageURI,
-		OriginalFilename: upload.OriginalFilename,
-		MimeType:         upload.MimeType,
-		LocalPath:        upload.LocalPath,
-		CollectionDate:   collectionDate,
-	})
-	if err != nil {
-		presenter.ErrorResponder(c, err)
-		return
-	}
-	c.JSON(http.StatusCreated, document)
 }
 
 func parseExamCollectionDate(raw string) (*time.Time, error) {
