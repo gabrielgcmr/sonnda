@@ -7,6 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/danielgtaylor/huma/v2"
+	"github.com/danielgtaylor/huma/v2/adapters/humagin"
 	"github.com/gabrielgcmr/sonnda/internal/api/helpers"
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
 	documentprocessinghttp "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/http"
@@ -56,9 +58,8 @@ func TestPatientDocumentsDenyAccessBeforeReadingOrProcessing(t *testing.T) {
 	}{
 		{http.MethodGet, "/labs"},
 		{http.MethodGet, "/labs?full=true"},
-		{http.MethodGet, "/exames"},
-		{http.MethodGet, "/exames/document-texts"},
-		{http.MethodPost, "/exames"},
+		{http.MethodGet, "/exam-documents"},
+		{http.MethodGet, "/exam-document-texts"},
 	} {
 		t.Run(tc.method+tc.path, func(t *testing.T) {
 			actor := &accountdomain.User{ID: uuid.New(), AccountType: accountdomain.AccountTypeProfessional}
@@ -67,13 +68,11 @@ func TestPatientDocumentsDenyAccessBeforeReadingOrProcessing(t *testing.T) {
 			accessChecker := patientaccess.NewChecker(accessTestPatients{}, grants)
 			// All data services are nil: reaching them after denial fails the test.
 			laboratory := laboratoryhttp.NewHandler(nil, accessChecker)
-			exams := documentprocessinghttp.NewExams(nil, nil, nil, accessChecker)
+			exams := documentprocessinghttp.NewExams(nil, nil, nil, nil, accessChecker)
 			router := gin.New()
 			router.Use(func(c *gin.Context) { helpers.SetCurrentUser(c, actor) })
 			router.GET("/patients/:patientId/labs", laboratory.ListLabs)
-			router.GET("/patients/:patientId/exames", exams.ListExamDocuments)
-			router.GET("/patients/:patientId/exames/document-texts", exams.ListExamDocumentTexts)
-			router.POST("/patients/:patientId/exames", exams.UploadExamDocument)
+			exams.RegisterHumaRoutes(humagin.New(router, huma.DefaultConfig("test", "test")), nil)
 			response := httptest.NewRecorder()
 			router.ServeHTTP(response, httptest.NewRequest(tc.method, "/patients/"+patientID.String()+tc.path, nil))
 			if response.Code != http.StatusForbidden {

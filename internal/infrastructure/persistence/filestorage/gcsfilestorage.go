@@ -85,7 +85,7 @@ func (a *GCSObjectStorage) Delete(ctx context.Context, uri string) error {
 	objectName := extractObjectName(uri, a.bucketName)
 
 	object := a.client.Bucket(a.bucketName).Object(objectName)
-	if err := object.Delete(ctx); err != nil {
+	if err := object.Delete(ctx); err != nil && !errors.Is(err, storage.ErrObjectNotExist) {
 		return wrapStorageError("falha ao remover arquivo", "gcs.delete", fmt.Errorf("uri=%s: %w", uri, err))
 	}
 	return nil

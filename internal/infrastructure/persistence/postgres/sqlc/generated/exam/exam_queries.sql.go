@@ -9,181 +9,15 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
-
-const createExamDocument = `-- name: CreateExamDocument :one
-INSERT INTO exam_documents (
-    id,
-    patient_id,
-    uploaded_by_user_id,
-    storage_uri,
-    original_filename,
-    mime_type,
-    status,
-    exam_type,
-    extraction_method,
-    confidence,
-    extracted_text,
-    error_message,
-    created_at,
-    updated_at
-) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
-)
-RETURNING id, patient_id, uploaded_by_user_id, storage_uri, original_filename, mime_type, status, exam_type, extraction_method, confidence, extracted_text, error_message, created_at, updated_at
-`
-
-type CreateExamDocumentParams struct {
-	ID               uuid.UUID          `json:"id"`
-	PatientID        uuid.UUID          `json:"patient_id"`
-	UploadedByUserID uuid.UUID          `json:"uploaded_by_user_id"`
-	StorageUri       string             `json:"storage_uri"`
-	OriginalFilename string             `json:"original_filename"`
-	MimeType         string             `json:"mime_type"`
-	Status           string             `json:"status"`
-	ExamType         pgtype.Text        `json:"exam_type"`
-	ExtractionMethod pgtype.Text        `json:"extraction_method"`
-	Confidence       pgtype.Float8      `json:"confidence"`
-	ExtractedText    pgtype.Text        `json:"extracted_text"`
-	ErrorMessage     pgtype.Text        `json:"error_message"`
-	CreatedAt        pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
-}
-
-// internal/infrastructure/persistence/postgres/sqlc/sql/queries/exam_queries.sql
-func (q *Queries) CreateExamDocument(ctx context.Context, arg CreateExamDocumentParams) (ExamDocument, error) {
-	row := q.db.QueryRow(ctx, createExamDocument,
-		arg.ID,
-		arg.PatientID,
-		arg.UploadedByUserID,
-		arg.StorageUri,
-		arg.OriginalFilename,
-		arg.MimeType,
-		arg.Status,
-		arg.ExamType,
-		arg.ExtractionMethod,
-		arg.Confidence,
-		arg.ExtractedText,
-		arg.ErrorMessage,
-		arg.CreatedAt,
-		arg.UpdatedAt,
-	)
-	var i ExamDocument
-	err := row.Scan(
-		&i.ID,
-		&i.PatientID,
-		&i.UploadedByUserID,
-		&i.StorageUri,
-		&i.OriginalFilename,
-		&i.MimeType,
-		&i.Status,
-		&i.ExamType,
-		&i.ExtractionMethod,
-		&i.Confidence,
-		&i.ExtractedText,
-		&i.ErrorMessage,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const createExamDocumentText = `-- name: CreateExamDocumentText :one
-INSERT INTO exam_document_texts (
-    id,
-    exam_document_id,
-    patient_id,
-    uploaded_by_user_id,
-    category,
-    title,
-    modality,
-    body_site,
-    performed_at,
-    facility_name,
-    interpreting_doctor,
-    text,
-    conclusion,
-    extraction_method,
-    confidence,
-    created_at,
-    updated_at
-) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9,
-    $10, $11, $12, $13, $14, $15, $16, $17
-)
-RETURNING id, exam_document_id, patient_id, uploaded_by_user_id, category, title, modality, body_site, performed_at, facility_name, interpreting_doctor, text, conclusion, extraction_method, confidence, created_at, updated_at
-`
-
-type CreateExamDocumentTextParams struct {
-	ID                 uuid.UUID          `json:"id"`
-	ExamDocumentID     pgtype.UUID        `json:"exam_document_id"`
-	PatientID          uuid.UUID          `json:"patient_id"`
-	UploadedByUserID   uuid.UUID          `json:"uploaded_by_user_id"`
-	Category           string             `json:"category"`
-	Title              pgtype.Text        `json:"title"`
-	Modality           pgtype.Text        `json:"modality"`
-	BodySite           pgtype.Text        `json:"body_site"`
-	PerformedAt        pgtype.Timestamptz `json:"performed_at"`
-	FacilityName       pgtype.Text        `json:"facility_name"`
-	InterpretingDoctor pgtype.Text        `json:"interpreting_doctor"`
-	Text               string             `json:"text"`
-	Conclusion         pgtype.Text        `json:"conclusion"`
-	ExtractionMethod   pgtype.Text        `json:"extraction_method"`
-	Confidence         pgtype.Float8      `json:"confidence"`
-	CreatedAt          pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
-}
-
-func (q *Queries) CreateExamDocumentText(ctx context.Context, arg CreateExamDocumentTextParams) (ExamDocumentText, error) {
-	row := q.db.QueryRow(ctx, createExamDocumentText,
-		arg.ID,
-		arg.ExamDocumentID,
-		arg.PatientID,
-		arg.UploadedByUserID,
-		arg.Category,
-		arg.Title,
-		arg.Modality,
-		arg.BodySite,
-		arg.PerformedAt,
-		arg.FacilityName,
-		arg.InterpretingDoctor,
-		arg.Text,
-		arg.Conclusion,
-		arg.ExtractionMethod,
-		arg.Confidence,
-		arg.CreatedAt,
-		arg.UpdatedAt,
-	)
-	var i ExamDocumentText
-	err := row.Scan(
-		&i.ID,
-		&i.ExamDocumentID,
-		&i.PatientID,
-		&i.UploadedByUserID,
-		&i.Category,
-		&i.Title,
-		&i.Modality,
-		&i.BodySite,
-		&i.PerformedAt,
-		&i.FacilityName,
-		&i.InterpretingDoctor,
-		&i.Text,
-		&i.Conclusion,
-		&i.ExtractionMethod,
-		&i.Confidence,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
 
 const getExamDocumentByID = `-- name: GetExamDocumentByID :one
-SELECT id, patient_id, uploaded_by_user_id, storage_uri, original_filename, mime_type, status, exam_type, extraction_method, confidence, extracted_text, error_message, created_at, updated_at
+SELECT id, patient_id, uploaded_by_user_id, review_status, lab_report_id, confirmed_by_user_id, confirmed_at, storage_uri, original_filename, mime_type, status, exam_type, extraction_method, confidence, extracted_text, error_message, created_at, updated_at
 FROM exam_documents
 WHERE id = $1
 `
 
+// internal/infrastructure/persistence/postgres/sqlc/sql/queries/exam_queries.sql
 func (q *Queries) GetExamDocumentByID(ctx context.Context, id uuid.UUID) (ExamDocument, error) {
 	row := q.db.QueryRow(ctx, getExamDocumentByID, id)
 	var i ExamDocument
@@ -191,6 +25,10 @@ func (q *Queries) GetExamDocumentByID(ctx context.Context, id uuid.UUID) (ExamDo
 		&i.ID,
 		&i.PatientID,
 		&i.UploadedByUserID,
+		&i.ReviewStatus,
+		&i.LabReportID,
+		&i.ConfirmedByUserID,
+		&i.ConfirmedAt,
 		&i.StorageUri,
 		&i.OriginalFilename,
 		&i.MimeType,
@@ -206,66 +44,15 @@ func (q *Queries) GetExamDocumentByID(ctx context.Context, id uuid.UUID) (ExamDo
 	return i, err
 }
 
-const getExamDocumentTextByDocumentID = `-- name: GetExamDocumentTextByDocumentID :one
-SELECT id, exam_document_id, patient_id, uploaded_by_user_id, category, title, modality, body_site, performed_at, facility_name, interpreting_doctor, text, conclusion, extraction_method, confidence, created_at, updated_at
-FROM exam_document_texts
-WHERE exam_document_id = $1
+const getExamDocumentExtraction = `-- name: GetExamDocumentExtraction :one
+SELECT snapshot FROM exam_document_extractions WHERE document_id = $1
 `
 
-func (q *Queries) GetExamDocumentTextByDocumentID(ctx context.Context, examDocumentID pgtype.UUID) (ExamDocumentText, error) {
-	row := q.db.QueryRow(ctx, getExamDocumentTextByDocumentID, examDocumentID)
-	var i ExamDocumentText
-	err := row.Scan(
-		&i.ID,
-		&i.ExamDocumentID,
-		&i.PatientID,
-		&i.UploadedByUserID,
-		&i.Category,
-		&i.Title,
-		&i.Modality,
-		&i.BodySite,
-		&i.PerformedAt,
-		&i.FacilityName,
-		&i.InterpretingDoctor,
-		&i.Text,
-		&i.Conclusion,
-		&i.ExtractionMethod,
-		&i.Confidence,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const getExamDocumentTextByID = `-- name: GetExamDocumentTextByID :one
-SELECT id, exam_document_id, patient_id, uploaded_by_user_id, category, title, modality, body_site, performed_at, facility_name, interpreting_doctor, text, conclusion, extraction_method, confidence, created_at, updated_at
-FROM exam_document_texts
-WHERE id = $1
-`
-
-func (q *Queries) GetExamDocumentTextByID(ctx context.Context, id uuid.UUID) (ExamDocumentText, error) {
-	row := q.db.QueryRow(ctx, getExamDocumentTextByID, id)
-	var i ExamDocumentText
-	err := row.Scan(
-		&i.ID,
-		&i.ExamDocumentID,
-		&i.PatientID,
-		&i.UploadedByUserID,
-		&i.Category,
-		&i.Title,
-		&i.Modality,
-		&i.BodySite,
-		&i.PerformedAt,
-		&i.FacilityName,
-		&i.InterpretingDoctor,
-		&i.Text,
-		&i.Conclusion,
-		&i.ExtractionMethod,
-		&i.Confidence,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
+func (q *Queries) GetExamDocumentExtraction(ctx context.Context, documentID uuid.UUID) ([]byte, error) {
+	row := q.db.QueryRow(ctx, getExamDocumentExtraction, documentID)
+	var snapshot []byte
+	err := row.Scan(&snapshot)
+	return snapshot, err
 }
 
 const listExamDocumentTextsByPatientID = `-- name: ListExamDocumentTextsByPatientID :many
@@ -321,7 +108,7 @@ func (q *Queries) ListExamDocumentTextsByPatientID(ctx context.Context, arg List
 }
 
 const listExamDocumentsByPatientID = `-- name: ListExamDocumentsByPatientID :many
-SELECT id, patient_id, uploaded_by_user_id, storage_uri, original_filename, mime_type, status, exam_type, extraction_method, confidence, extracted_text, error_message, created_at, updated_at
+SELECT id, patient_id, uploaded_by_user_id, review_status, lab_report_id, confirmed_by_user_id, confirmed_at, storage_uri, original_filename, mime_type, status, exam_type, extraction_method, confidence, extracted_text, error_message, created_at, updated_at
 FROM exam_documents
 WHERE patient_id = $1
 ORDER BY created_at DESC
@@ -347,6 +134,10 @@ func (q *Queries) ListExamDocumentsByPatientID(ctx context.Context, arg ListExam
 			&i.ID,
 			&i.PatientID,
 			&i.UploadedByUserID,
+			&i.ReviewStatus,
+			&i.LabReportID,
+			&i.ConfirmedByUserID,
+			&i.ConfirmedAt,
 			&i.StorageUri,
 			&i.OriginalFilename,
 			&i.MimeType,
@@ -367,137 +158,4 @@ func (q *Queries) ListExamDocumentsByPatientID(ctx context.Context, arg ListExam
 		return nil, err
 	}
 	return items, nil
-}
-
-const updateExamDocumentClassified = `-- name: UpdateExamDocumentClassified :one
-UPDATE exam_documents
-SET
-    status = $2,
-    exam_type = $3,
-    extraction_method = $4,
-    confidence = $5,
-    extracted_text = $6,
-    error_message = $8,
-    updated_at = $7
-WHERE id = $1
-RETURNING id, patient_id, uploaded_by_user_id, storage_uri, original_filename, mime_type, status, exam_type, extraction_method, confidence, extracted_text, error_message, created_at, updated_at
-`
-
-type UpdateExamDocumentClassifiedParams struct {
-	ID               uuid.UUID          `json:"id"`
-	Status           string             `json:"status"`
-	ExamType         pgtype.Text        `json:"exam_type"`
-	ExtractionMethod pgtype.Text        `json:"extraction_method"`
-	Confidence       pgtype.Float8      `json:"confidence"`
-	ExtractedText    pgtype.Text        `json:"extracted_text"`
-	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
-	ErrorMessage     pgtype.Text        `json:"error_message"`
-}
-
-func (q *Queries) UpdateExamDocumentClassified(ctx context.Context, arg UpdateExamDocumentClassifiedParams) (ExamDocument, error) {
-	row := q.db.QueryRow(ctx, updateExamDocumentClassified,
-		arg.ID,
-		arg.Status,
-		arg.ExamType,
-		arg.ExtractionMethod,
-		arg.Confidence,
-		arg.ExtractedText,
-		arg.UpdatedAt,
-		arg.ErrorMessage,
-	)
-	var i ExamDocument
-	err := row.Scan(
-		&i.ID,
-		&i.PatientID,
-		&i.UploadedByUserID,
-		&i.StorageUri,
-		&i.OriginalFilename,
-		&i.MimeType,
-		&i.Status,
-		&i.ExamType,
-		&i.ExtractionMethod,
-		&i.Confidence,
-		&i.ExtractedText,
-		&i.ErrorMessage,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const updateExamDocumentFailed = `-- name: UpdateExamDocumentFailed :one
-UPDATE exam_documents
-SET
-    status = 'failed',
-    error_message = $2,
-    updated_at = $3
-WHERE id = $1
-RETURNING id, patient_id, uploaded_by_user_id, storage_uri, original_filename, mime_type, status, exam_type, extraction_method, confidence, extracted_text, error_message, created_at, updated_at
-`
-
-type UpdateExamDocumentFailedParams struct {
-	ID           uuid.UUID          `json:"id"`
-	ErrorMessage pgtype.Text        `json:"error_message"`
-	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
-}
-
-func (q *Queries) UpdateExamDocumentFailed(ctx context.Context, arg UpdateExamDocumentFailedParams) (ExamDocument, error) {
-	row := q.db.QueryRow(ctx, updateExamDocumentFailed, arg.ID, arg.ErrorMessage, arg.UpdatedAt)
-	var i ExamDocument
-	err := row.Scan(
-		&i.ID,
-		&i.PatientID,
-		&i.UploadedByUserID,
-		&i.StorageUri,
-		&i.OriginalFilename,
-		&i.MimeType,
-		&i.Status,
-		&i.ExamType,
-		&i.ExtractionMethod,
-		&i.Confidence,
-		&i.ExtractedText,
-		&i.ErrorMessage,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const updateExamDocumentProcessing = `-- name: UpdateExamDocumentProcessing :one
-UPDATE exam_documents
-SET
-    status = 'processing',
-    extraction_method = $2,
-    error_message = NULL,
-    updated_at = $3
-WHERE id = $1
-RETURNING id, patient_id, uploaded_by_user_id, storage_uri, original_filename, mime_type, status, exam_type, extraction_method, confidence, extracted_text, error_message, created_at, updated_at
-`
-
-type UpdateExamDocumentProcessingParams struct {
-	ID               uuid.UUID          `json:"id"`
-	ExtractionMethod pgtype.Text        `json:"extraction_method"`
-	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
-}
-
-func (q *Queries) UpdateExamDocumentProcessing(ctx context.Context, arg UpdateExamDocumentProcessingParams) (ExamDocument, error) {
-	row := q.db.QueryRow(ctx, updateExamDocumentProcessing, arg.ID, arg.ExtractionMethod, arg.UpdatedAt)
-	var i ExamDocument
-	err := row.Scan(
-		&i.ID,
-		&i.PatientID,
-		&i.UploadedByUserID,
-		&i.StorageUri,
-		&i.OriginalFilename,
-		&i.MimeType,
-		&i.Status,
-		&i.ExamType,
-		&i.ExtractionMethod,
-		&i.Confidence,
-		&i.ExtractedText,
-		&i.ErrorMessage,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
 }

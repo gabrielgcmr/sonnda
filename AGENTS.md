@@ -20,7 +20,7 @@ Simple instructions for coding agents working on this repo.
 - Backend: API Restful in Go
   - Gin + sqlc + Supabase
   - **Auth**: Supabase
-  - **Persistence**: Database: PostgreSQL (Supabase managed) and Redis (Upstash), File Storage: Supabase.
+  - **Persistence**: Database: PostgreSQL (Supabase managed) and Redis (Upstash), File Storage: Google Cloud Storage (GCS).
   - **External integrations**: Google Cloud Document AI,
 
 - **Development tools**:
@@ -32,6 +32,8 @@ Simple instructions for coding agents working on this repo.
 ## Arquitetura
 - The architecture is migrating incrementally from global layers to business contexts under `internal/features`, preserving separation of concerns.
 - **Features (`internal/features`)**: Context-specific application flows.
+  - **Document processing (`internal/features/documentprocessing`)**: PDF drafts, immutable extraction snapshots and resumable discard. `extraction` owns the shared stateless PDF/text-to-laboratory-summary service used by HTTP and CLI. No automatic classification or clinical persistence on upload.
+  - **Laboratory confirmation (`internal/application/usecase/labdocumentconfirmation`)**: Persists reviewed snapshots atomically with the document confirmation. Patient laboratory owns clinical reports; confirmation never re-extracts data. See ADR-006.
   - **Account (`internal/features/account`)**: Profile services, onboarding, DTOs and error mapping; HTTP handler and middleware live in `account/http`.
   - **Patient profile (`internal/features/patient/profile`)**: Patient registration services, DTOs, error mapping and repository contract; its domain model lives in `profile/domain`, HTTP handler in `profile/http`, and Postgres adapter in `profile/postgres`.
   - **Patient access (`internal/features/patient/access`)**: Account-to-patient grants, accessible-patient listing, relationship metadata, application and HTTP services, repository contracts and persistence. Access determines whether an account is linked to a patient; it does not define action-level authorization.

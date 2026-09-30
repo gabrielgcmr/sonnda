@@ -3,6 +3,8 @@ package postgres
 
 import (
 	"context"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"time"
 
 	repohelpers "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/repo"
@@ -46,10 +48,21 @@ func (l *LabsRepository) Create(ctx context.Context, report *labs.LabReport) err
 		defer cancel()
 		_ = tx.Rollback(cleanupCtx)
 	}()
+	if err := l.CreateInTx(ctx, tx, report); err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
+}
+
+// CreateInTx lets a cross-feature use case commit the clinical report with its document.
+func (l *LabsRepository) CreateInTx(ctx context.Context, tx pgx.Tx, report *labs.LabReport) error {
+	if report == nil {
+		return persistence.ErrPersistenceFailure
+	}
 	queries := l.queries.WithTx(tx)
 
 	// Laudo, resultados e itens sao gravados juntos; metadata documental pertence a documentprocessing.
-	_, err = tx.Exec(ctx, `
+	_, err := tx.Exec(ctx, `
 		INSERT INTO lab_reports (
 			id, patient_id, patient_name, patient_dob, lab_name, lab_phone,
 			insurance_provider, requesting_doctor, technical_manager, report_date, uploaded_by_user_id
@@ -100,7 +113,7 @@ func (l *LabsRepository) Create(ctx context.Context, report *labs.LabReport) err
 		}
 	}
 
-	return tx.Commit(ctx)
+	return nil
 }
 
 // Delete implements [repository.LabsRepository].
@@ -171,6 +184,7 @@ func (l *LabsRepository) FindByID(ctx context.Context, reportID uuid.UUID) (*lab
 
 	return &labs.LabReport{
 		ID:                reportRow.ID,
+		ExamDocumentID:    nullableReportDocumentID(reportRow.ExamDocumentID),
 		PatientID:         reportRow.PatientID,
 		PatientName:       repohelpers.FromPgTextToNullableString(reportRow.PatientName),
 		PatientDOB:        repohelpers.FromPgTimestamptzToNullableTimestamptz(reportRow.PatientDob),
@@ -242,4 +256,12 @@ func (l *LabsRepository) ListLabs(ctx context.Context, patientID uuid.UUID, limi
 	}
 
 	return reports, nil
+}
+
+func nullableReportDocumentID(value pgtype.UUID) *uuid.UUID {
+	if !value.Valid {
+		return nil
+	}
+	id := uuid.UUID(value.Bytes)
+	return &id
 }

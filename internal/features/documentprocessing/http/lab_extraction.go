@@ -2,14 +2,14 @@
 package http
 
 import (
+	"bytes"
 	"context"
+	"github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/extraction"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"os"
-	"path/filepath"
 	"reflect"
-	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/gabrielgcmr/sonnda/internal/domain/labextraction"
@@ -24,8 +24,7 @@ type temporaryLabTextExtractor interface {
 }
 
 type TemporaryLabExtractionHandler struct {
-	textExtractor temporaryLabTextExtractor
-	labExtractor  labextraction.LabReportTextExtractor
+	extractor *extraction.Service
 }
 
 type temporaryLabExtractionForm struct {
@@ -36,11 +35,7 @@ type temporaryLabExtractionInput struct {
 	RawBody huma.MultipartFormFiles[temporaryLabExtractionForm]
 }
 
-type temporaryLabExtractionResponse struct {
-	Status   labextraction.ExtractionStatus    `json:"status"`
-	Warnings []labextraction.ExtractionWarning `json:"warnings,omitempty"`
-	Report   labextraction.ExtractedLabReport  `json:"report"`
-}
+type temporaryLabExtractionResponse = extraction.Result
 
 type temporaryLabExtractionOutput struct {
 	Body temporaryLabExtractionResponse
@@ -50,27 +45,25 @@ func NewTemporaryLabExtraction(
 	textExtractor temporaryLabTextExtractor,
 	labExtractor labextraction.LabReportTextExtractor,
 ) *TemporaryLabExtractionHandler {
-	return &TemporaryLabExtractionHandler{textExtractor: textExtractor, labExtractor: labExtractor}
+	return &TemporaryLabExtractionHandler{extractor: extraction.New(textExtractor, labExtractor)}
 }
 
 func (h *TemporaryLabExtractionHandler) RegisterHumaRoutes(registered huma.API, security []map[string][]string) {
 	huma.Register(registered, huma.Operation{
-		OperationID: "extractTemporaryLabReport",
-		Method:      http.MethodPost,
-		Path:        "/lab-extractions",
-		Summary:     "Extrair dados laboratoriais sem persistir o documento",
-		Tags:        []string{"Lab extraction"},
-		Errors:      []int{http.StatusUnauthorized, http.StatusRequestEntityTooLarge, http.StatusUnsupportedMediaType, http.StatusUnprocessableEntity},
-		Security:    security,
+		OperationID:  "extractTemporaryLabReport",
+		Method:       http.MethodPost,
+		Path:         "/lab-extractions",
+		Summary:      "Extrair dados laboratoriais sem persistir o documento",
+		MaxBodyBytes: 11 * 1024 * 1024,
+		Tags:         []string{"Lab extraction"},
+		Errors:       []int{http.StatusUnauthorized, http.StatusRequestEntityTooLarge, http.StatusUnsupportedMediaType, http.StatusUnprocessableEntity},
+		Security:     security,
 	}, h.extract)
 }
 
 func (h *TemporaryLabExtractionHandler) extract(ctx context.Context, input *temporaryLabExtractionInput) (*temporaryLabExtractionOutput, error) {
 	if _, err := humaCurrentUser(ctx); err != nil {
 		return nil, err
-	}
-	if isNilExtractor(h.textExtractor) || isNilExtractor(h.labExtractor) {
-		return nil, toHumaError(apperr.Internal("A extracao laboratorial esta indisponivel.", nil))
 	}
 
 	files := input.RawBody.Form.File["file"]
@@ -79,35 +72,15 @@ func (h *TemporaryLabExtractionHandler) extract(ctx context.Context, input *temp
 	}
 	path, err := writeTemporaryPDF(files[0])
 	if err != nil {
-		return nil, toHumaError(err)
+		return nil, toHumaError(ctx, err)
 	}
 	defer os.Remove(path)
 
-	text, err := h.textExtractor.Extract(ctx, domaintext.ExtractInput{
-		LocalPath: path, MimeType: "application/pdf", OriginalFilename: files[0].Filename,
-	})
-	if err != nil || text == nil || strings.TrimSpace(text.Text) == "" {
-		return nil, toHumaError(apperr.DomainRuleViolation("Nao foi encontrado texto legivel no PDF. Envie o PDF original com texto selecionavel.", apperr.Violation{Field: "file", Reason: "text_not_readable"}))
-	}
-
-	report, err := h.labExtractor.ExtractLabReport(ctx, labextraction.ExtractLabReportInput{Text: text.Text})
+	result, err := h.extractor.ExtractPDF(ctx, path, files[0].Filename)
 	if err != nil {
-		return nil, toHumaError(apperr.Internal("Nao foi possivel extrair os dados laboratoriais.", err))
+		return nil, toHumaError(ctx, err)
 	}
-	if report == nil {
-		return nil, toHumaError(apperr.Internal("Nao foi possivel extrair os dados laboratoriais.", nil))
-	}
-	report.Normalize()
-	status := report.Metadata.Status
-	if status == "" {
-		status = labextraction.ExtractionStatusSucceeded
-	}
-	if !report.HasStructuredResults() && status == labextraction.ExtractionStatusSucceeded {
-		status = labextraction.ExtractionStatusNeedsReview
-	}
-	return &temporaryLabExtractionOutput{Body: temporaryLabExtractionResponse{
-		Status: status, Warnings: report.Metadata.Warnings, Report: *report,
-	}}, nil
+	return &temporaryLabExtractionOutput{Body: *result}, nil
 }
 
 func isNilExtractor(extractor any) bool {
@@ -128,24 +101,34 @@ func writeTemporaryPDF(header *multipart.FileHeader) (string, error) {
 	if header.Size > temporaryLabExtractionMaxFileSize {
 		return "", &apperr.AppError{Kind: apperr.UPLOAD_SIZE_EXCEEDED, Message: "o PDF deve ter no maximo 10 MB"}
 	}
-	if normalizeMimeType(header.Header.Get("Content-Type")) != "application/pdf" && strings.ToLower(filepath.Ext(header.Filename)) != ".pdf" {
-		return "", &apperr.AppError{Kind: apperr.INVALID_FIELD_FORMAT, Message: "envie um arquivo PDF"}
-	}
 
 	source, err := header.Open()
 	if err != nil {
 		return "", apperr.Internal("falha ao abrir arquivo", err)
 	}
 	defer source.Close()
+	signature := make([]byte, 5)
+	if _, err := io.ReadFull(source, signature); err != nil || !bytes.Equal(signature, []byte("%PDF-")) {
+		return "", apperr.Validation("Envie um arquivo PDF válido.")
+	}
+	if _, err := source.Seek(0, io.SeekStart); err != nil {
+		return "", apperr.Internal("falha ao ler arquivo", err)
+	}
 	target, err := os.CreateTemp("", "sonnda-lab-extraction-*.pdf")
 	if err != nil {
 		return "", apperr.Internal("falha ao preparar arquivo temporario", err)
 	}
 	path := target.Name()
-	if _, err := io.Copy(target, source); err != nil {
+	count, err := io.Copy(target, io.LimitReader(source, temporaryLabExtractionMaxFileSize+1))
+	if err != nil {
 		target.Close()
 		os.Remove(path)
 		return "", apperr.Internal("falha ao preparar arquivo temporario", err)
+	}
+	if count > temporaryLabExtractionMaxFileSize {
+		_ = target.Close()
+		_ = os.Remove(path)
+		return "", &apperr.AppError{Kind: apperr.UPLOAD_SIZE_EXCEEDED, Message: "O PDF deve ter no máximo 10 MB."}
 	}
 	if err := target.Close(); err != nil {
 		os.Remove(path)

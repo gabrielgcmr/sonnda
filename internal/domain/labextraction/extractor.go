@@ -25,8 +25,3 @@ func (input ExtractLabReportInput) Validate() error {
 type LabReportTextExtractor interface {
 	ExtractLabReport(ctx context.Context, input ExtractLabReportInput) (*ExtractedLabReport, error)
 }
-
-// LabReportExtractor mantem Document AI ate a integracao da etapa 4 da ADR-005.
-type LabReportExtractor interface {
-	ExtractLabReport(ctx context.Context, documentURI, mimeType string) (*ExtractedLabReport, error)
-}

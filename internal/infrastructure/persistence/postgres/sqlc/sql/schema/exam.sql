@@ -1,7 +1,12 @@
+-- internal/infrastructure/persistence/postgres/sqlc/sql/schema/exam.sql
 CREATE TABLE exam_documents (
     id                  UUID PRIMARY KEY,
     patient_id          UUID NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
     uploaded_by_user_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    review_status TEXT CHECK (review_status IN ('pending', 'confirmed', 'deleting')),
+    lab_report_id UUID,
+    confirmed_by_user_id UUID REFERENCES users(id),
+    confirmed_at TIMESTAMPTZ,
     storage_uri         TEXT NOT NULL,
     original_filename   TEXT NOT NULL,
     mime_type           TEXT NOT NULL,
@@ -60,3 +65,8 @@ CREATE TABLE exam_document_texts (
 CREATE INDEX idx_exam_document_texts_patient ON exam_document_texts(patient_id);
 CREATE INDEX idx_exam_document_texts_patient_created_at ON exam_document_texts(patient_id, created_at DESC);
 CREATE INDEX idx_exam_document_texts_category ON exam_document_texts(category);
+
+CREATE TABLE exam_document_extractions (
+    document_id UUID PRIMARY KEY REFERENCES exam_documents(id) ON DELETE CASCADE,
+    snapshot JSONB NOT NULL
+);

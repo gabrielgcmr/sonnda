@@ -1,5 +1,5 @@
-// cmd/extract-lab-summary/format.go
-package main
+// internal/features/documentprocessing/extraction/summary.go
+package extraction
 
 import (
 	"fmt"
@@ -9,13 +9,17 @@ import (
 	"github.com/gabrielgcmr/sonnda/internal/domain/labextraction"
 )
 
-func formatLabSummary(report *labextraction.ExtractedLabReport) string {
+func FormatSummary(report *labextraction.ExtractedLabReport) string {
 	if report == nil {
 		return "Nenhum resultado estruturado encontrado.\n"
 	}
 
 	var builder strings.Builder
 	headerWritten := false
+	if report.PatientName != nil {
+		writeSummaryLine(&builder, "Paciente: "+*report.PatientName)
+		headerWritten = true
+	}
 	if report.LabName != nil {
 		writeSummaryLine(&builder, "Laboratório: "+*report.LabName)
 		headerWritten = true
@@ -86,7 +90,7 @@ func uniqueCollectionDates(tests []labextraction.ExtractedTestResult) []string {
 }
 
 func formatCollectionDate(value string) string {
-	for _, layout := range []string{"2006-01-02 15:04:05", "2006-01-02T15:04:05", "2006-01-02 15:04", "2006-01-02"} {
+	for _, layout := range []string{time.RFC3339Nano, "2006-01-02 15:04:05", "2006-01-02T15:04:05", "2006-01-02 15:04", "2006-01-02"} {
 		parsed, err := time.Parse(layout, value)
 		if err == nil {
 			if layout == "2006-01-02" {

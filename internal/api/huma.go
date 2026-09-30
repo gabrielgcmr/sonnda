@@ -50,6 +50,11 @@ func registerHumaRoutes(api huma.API, deps *APIDependencies, rootInfo RootInfo) 
 
 	registered := huma.NewGroup(authenticated)
 	registered.UseMiddleware(requireRegisteredAccount(api, deps.Account))
+	registered.UseMiddleware(func(ctx huma.Context, next func(huma.Context)) {
+		c := humagin.Unwrap(ctx)
+		c.Request = c.Request.WithContext(presenter.WithErrorContext(c.Request.Context(), c))
+		next(ctx)
+	})
 
 	deps.AccountHandler.RegisterHumaRoutes(authenticated, registered, bearerSecurity())
 	deps.PatientAccessHandler.RegisterHumaRoutes(registered, bearerSecurity())

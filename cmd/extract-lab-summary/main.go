@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/gabrielgcmr/sonnda/internal/config"
-	"github.com/gabrielgcmr/sonnda/internal/domain/labextraction"
+	"github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/extraction"
 	geminiinfra "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/gemini"
 	"github.com/joho/godotenv"
 )
@@ -53,12 +53,12 @@ func summarizeFile(inputPath, outputPath string) error {
 	if err != nil {
 		return fmt.Errorf("create lab report extractor: %w", err)
 	}
-	report, err := extractor.ExtractLabReport(ctx, labextraction.ExtractLabReportInput{Text: string(text)})
+	result, err := extraction.New(nil, extractor).ExtractText(ctx, string(text))
 	if err != nil {
 		return fmt.Errorf("extract lab results: %w", err)
 	}
 
-	summary := formatLabSummary(report)
+	summary := result.SummaryText
 	if strings.TrimSpace(outputPath) == "" {
 		_, err = fmt.Print(summary)
 		return err

@@ -106,6 +106,51 @@ func TestTemporaryLabExtractionRejectsNonPDF(t *testing.T) {
 	}
 }
 
+func TestTemporaryExtractionFailureStillRemovesPDF(t *testing.T) {
+	reader := &temporaryTextExtractorStub{}
+	provider := &temporaryLabExtractorStub{err: errors.New("provider unavailable")}
+	router := gin.New()
+	router.Use(func(c *gin.Context) { helpers.SetCurrentUser(c, &accountdomain.User{ID: uuid.New()}) })
+	NewTemporaryLabExtraction(reader, provider).RegisterHumaRoutes(humagin.New(router, huma.DefaultConfig("test", "test")), nil)
+	body, contentType := temporaryLabMultipart(t, "exam.pdf", "application/pdf", []byte("%PDF-1.4"))
+	request := httptest.NewRequest(http.MethodPost, "/lab-extractions", body)
+	request.Header.Set("Content-Type", contentType)
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, request)
+	if response.Code < 500 || bytes.Contains(response.Body.Bytes(), []byte("provider unavailable")) {
+		t.Fatalf("unsafe failure response: %d %s", response.Code, response.Body.String())
+	}
+	if _, err := os.Stat(reader.path); !os.IsNotExist(err) {
+		t.Fatal("temporary PDF leaked on failure")
+	}
+}
+
+func TestTemporaryPDFValidation(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		content []byte
+		status  int
+	}{
+		{"empty", nil, 400},
+		{"renamed text", []byte("not a PDF"), 400},
+		{"over limit", append([]byte("%PDF-"), make([]byte, temporaryLabExtractionMaxFileSize)...), 413},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			router := gin.New()
+			router.Use(func(c *gin.Context) { helpers.SetCurrentUser(c, &accountdomain.User{ID: uuid.New()}) })
+			NewTemporaryLabExtraction(&temporaryTextExtractorStub{}, &temporaryLabExtractorStub{}).RegisterHumaRoutes(humagin.New(router, huma.DefaultConfig("test", "test")), nil)
+			body, contentType := temporaryLabMultipart(t, "exam.pdf", "application/pdf", tc.content)
+			request := httptest.NewRequest(http.MethodPost, "/lab-extractions", body)
+			request.Header.Set("Content-Type", contentType)
+			response := httptest.NewRecorder()
+			router.ServeHTTP(response, request)
+			if response.Code != tc.status {
+				t.Fatalf("status %d: %s", response.Code, response.Body.String())
+			}
+		})
+	}
+}
+
 func temporaryLabMultipart(t *testing.T, filename, _ string, content []byte) (*bytes.Buffer, string) {
 	t.Helper()
 	body := &bytes.Buffer{}

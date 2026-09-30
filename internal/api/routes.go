@@ -52,17 +52,6 @@ func SetupRoutes(r *gin.Engine, deps *APIDependencies) {
 	humaAPI := newHumaAPI(r, rootInfo)
 	registerHumaRoutes(humaAPI, deps, rootInfo)
 
-	// These endpoints have not moved to Huma yet, but no route path is versioned.
-	registered := r.Group("")
-	registered.Use(
-		deps.Auth.RequireBearer(),
-		deps.Account.RequireRegisteredUser())
-
-	patients := registered.Group("/patients")
-	exams := patients.Group("/:patientId/exames")
-	exams.GET("", deps.ExamsHandler.ListExamDocuments)
-	exams.GET("/reports", deps.ExamsHandler.ListExamDocumentTexts)
-	exams.POST("", deps.ExamsHandler.UploadExamDocument)
 }
 
 func normalizedRootInfo(info RootInfo) RootInfo {

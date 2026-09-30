@@ -1,6 +1,9 @@
 <!-- internal/domain/labextraction/README.md -->
 # Contrato de extracao laboratorial por texto
 
+Fluxos atuais: ver [ADR-006](../../../docs/architecture/adr/ADR-006-revisao-exames-laboratoriais.md). A extração compartilhada é coordenada por `documentprocessing/extraction`; o upload do paciente cria um rascunho e exige confirmação antes de gravar resultados clínicos.
+
+
 Etapa 1 da ADR-005. Este pacote define a entrada textual, a saida existente em Go
 e o JSON Schema versionado. Ainda nao chama Gemini nem muda o upload atual.
 

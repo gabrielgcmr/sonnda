@@ -10,20 +10,29 @@ import (
 )
 
 type ExamDocument struct {
-	ID               uuid.UUID          `json:"id"`
-	PatientID        uuid.UUID          `json:"patient_id"`
-	UploadedByUserID uuid.UUID          `json:"uploaded_by_user_id"`
-	StorageUri       string             `json:"storage_uri"`
-	OriginalFilename string             `json:"original_filename"`
-	MimeType         string             `json:"mime_type"`
-	Status           string             `json:"status"`
-	ExamType         pgtype.Text        `json:"exam_type"`
-	ExtractionMethod pgtype.Text        `json:"extraction_method"`
-	Confidence       pgtype.Float8      `json:"confidence"`
-	ExtractedText    pgtype.Text        `json:"extracted_text"`
-	ErrorMessage     pgtype.Text        `json:"error_message"`
-	CreatedAt        pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
+	ID                uuid.UUID          `json:"id"`
+	PatientID         uuid.UUID          `json:"patient_id"`
+	UploadedByUserID  uuid.UUID          `json:"uploaded_by_user_id"`
+	ReviewStatus      pgtype.Text        `json:"review_status"`
+	LabReportID       pgtype.UUID        `json:"lab_report_id"`
+	ConfirmedByUserID pgtype.UUID        `json:"confirmed_by_user_id"`
+	ConfirmedAt       pgtype.Timestamptz `json:"confirmed_at"`
+	StorageUri        string             `json:"storage_uri"`
+	OriginalFilename  string             `json:"original_filename"`
+	MimeType          string             `json:"mime_type"`
+	Status            string             `json:"status"`
+	ExamType          pgtype.Text        `json:"exam_type"`
+	ExtractionMethod  pgtype.Text        `json:"extraction_method"`
+	Confidence        pgtype.Float8      `json:"confidence"`
+	ExtractedText     pgtype.Text        `json:"extracted_text"`
+	ErrorMessage      pgtype.Text        `json:"error_message"`
+	CreatedAt         pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
+}
+
+type ExamDocumentExtraction struct {
+	DocumentID uuid.UUID `json:"document_id"`
+	Snapshot   []byte    `json:"snapshot"`
 }
 
 type ExamDocumentText struct {

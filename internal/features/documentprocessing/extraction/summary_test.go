@@ -1,5 +1,5 @@
-// cmd/extract-lab-summary/format_test.go
-package main
+// internal/features/documentprocessing/extraction/summary_test.go
+package extraction
 
 import (
 	"strings"
@@ -26,10 +26,10 @@ func TestFormatLabSummary(t *testing.T) {
 		}},
 	}
 
-	got := formatLabSummary(report)
+	got := FormatSummary(report)
 	want := "Laboratório: Laboratório Excelência\nColeta: 05/05/2026 11:48\n\nHemácias\nResultado: 4,40 milhões/mm3\n"
 	if got != want {
-		t.Fatalf("formatLabSummary() = %q, want %q", got, want)
+		t.Fatalf("FormatSummary() = %q, want %q", got, want)
 	}
 	if strings.Contains(got, "referência") || strings.Contains(got, "paciente") {
 		t.Fatalf("summary contains fields that should be omitted: %q", got)
@@ -47,8 +47,8 @@ func TestFormatLabSummaryKeepsTextResultsAndMultipleDates(t *testing.T) {
 		},
 	}
 
-	got := formatLabSummary(report)
+	got := FormatSummary(report)
 	if !strings.Contains(got, "Coleta: 05/05/2026\nResultado: Negativo") || !strings.Contains(got, "Coleta: 06/05/2026") {
-		t.Fatalf("formatLabSummary() did not preserve text result or per-test dates: %q", got)
+		t.Fatalf("FormatSummary() did not preserve text result or per-test dates: %q", got)
 	}
 }
