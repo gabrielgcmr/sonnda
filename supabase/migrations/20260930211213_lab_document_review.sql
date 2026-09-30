@@ -1,4 +1,4 @@
--- supabase/migrations/20260930162723_lab_document_review.sql
+-- supabase/migrations/20260930211213_lab_document_review.sql
 ALTER TABLE public.exam_documents
  ADD COLUMN review_status TEXT CHECK (review_status IN ('pending', 'confirmed', 'deleting')),
  ADD COLUMN lab_report_id UUID REFERENCES public.lab_reports(id) ON DELETE RESTRICT,
@@ -14,7 +14,7 @@ ALTER TABLE public.exam_documents ADD CONSTRAINT exam_review_consistency CHECK (
  OR (review_status = 'confirmed' AND lab_report_id IS NOT NULL AND confirmed_by_user_id IS NOT NULL AND confirmed_at IS NOT NULL)
 );
 -- Snapshots are inserted once; confirmation never rewrites extracted values.
-CREATE FUNCTION public.prevent_extraction_update() RETURNS trigger LANGUAGE plpgsql AS $$
+CREATE FUNCTION public.prevent_extraction_update() RETURNS trigger LANGUAGE plpgsql SET search_path = '' AS $$
 BEGIN
  RAISE EXCEPTION 'Extraction snapshots are immutable';
 END;

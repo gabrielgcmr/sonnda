@@ -280,7 +280,7 @@ func TestReviewMigrationPreservesLegacyAndProtectsSnapshots(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	path := filepath.Join("..", "..", "..", "..", "supabase", "migrations", "20260930162723_lab_document_review.sql")
+	path := filepath.Join("..", "..", "..", "..", "supabase", "migrations", "20260930211213_lab_document_review.sql")
 	migration, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)

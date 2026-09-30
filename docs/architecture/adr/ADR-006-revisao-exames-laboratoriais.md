@@ -46,7 +46,7 @@ O web mostra PDF, resumo, dados completos e avisos; não permite edição. Exige
 
 ## Implantação e verificação
 
-1. Aplicar `supabase/migrations/20260930162723_lab_document_review.sql` no ambiente de destino pelo processo de migrations do projeto.
+1. Aplicar `supabase/migrations/20260930211213_lab_document_review.sql` no ambiente de destino pelo processo de migrations do projeto.
 2. Liberar API e web de forma coordenada. Publicar o OpenAPI identificado pelo SHA da API e gerar o consumidor web desse artefato.
 3. Verificar extração temporária, criação/retomada de rascunho, confirmação repetida, exclusão e leitura de exames anteriores.
 
