@@ -3,17 +3,15 @@ package profilehttp
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"time"
 
 	"github.com/danielgtaylor/huma/v2"
 	helpers "github.com/gabrielgcmr/sonnda/internal/api/helpers"
-	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
+	"github.com/gabrielgcmr/sonnda/internal/api/humaerror"
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
 	patientprofile "github.com/gabrielgcmr/sonnda/internal/features/patient/profile"
 	profiledomain "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/domain"
-	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 	"github.com/google/uuid"
 )
 
@@ -135,9 +133,5 @@ func patientResponseFromDomain(patient *profiledomain.Patient) patientResponse {
 }
 
 func toHumaError(err error) error {
-	var appErr *apperr.AppError
-	if errors.As(err, &appErr) && appErr != nil {
-		return huma.NewError(presenter.StatusFromCode(appErr.Kind), appErr.Message)
-	}
-	return huma.Error500InternalServerError("erro inesperado")
+	return humaerror.From(err)
 }

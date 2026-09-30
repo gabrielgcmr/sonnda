@@ -3,18 +3,16 @@ package accounthttp
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/gabrielgcmr/sonnda/internal/api/helpers"
-	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
+	"github.com/gabrielgcmr/sonnda/internal/api/humaerror"
 	"github.com/gabrielgcmr/sonnda/internal/features/account"
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
 	authhttp "github.com/gabrielgcmr/sonnda/internal/features/auth/http"
-	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 	"github.com/google/uuid"
 )
 
@@ -212,9 +210,5 @@ func accountUserResponseFromDomain(user *accountdomain.User) accountUserResponse
 }
 
 func toHumaError(err error) error {
-	var appErr *apperr.AppError
-	if errors.As(err, &appErr) && appErr != nil {
-		return huma.NewError(presenter.StatusFromCode(appErr.Kind), appErr.Message)
-	}
-	return huma.Error500InternalServerError("erro inesperado")
+	return humaerror.From(err)
 }

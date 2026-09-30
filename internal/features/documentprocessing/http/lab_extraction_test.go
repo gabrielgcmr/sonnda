@@ -61,7 +61,7 @@ func TestTemporaryLabExtractionDiscardsPDFAndReturnsStructuredResult(t *testing.
 	labExtractor := &temporaryLabExtractorStub{}
 	router := gin.New()
 	router.Use(func(c *gin.Context) {
-		helpers.SetCurrentUser(c, &accountdomain.User{ID: uuid.New(), AccountType: accountdomain.AccountTypeBasicCare})
+		c.Request = c.Request.WithContext(helpers.ContextWithCurrentUser(c.Request.Context(), &accountdomain.User{ID: uuid.New(), AccountType: accountdomain.AccountTypeBasicCare}))
 		c.Next()
 	})
 	api := humagin.New(router, huma.DefaultConfig("test", "test"))
@@ -91,7 +91,7 @@ func TestTemporaryLabExtractionRejectsNonPDF(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
 	router.Use(func(c *gin.Context) {
-		helpers.SetCurrentUser(c, &accountdomain.User{ID: uuid.New(), AccountType: accountdomain.AccountTypeBasicCare})
+		c.Request = c.Request.WithContext(helpers.ContextWithCurrentUser(c.Request.Context(), &accountdomain.User{ID: uuid.New(), AccountType: accountdomain.AccountTypeBasicCare}))
 		c.Next()
 	})
 	api := humagin.New(router, huma.DefaultConfig("test", "test"))

@@ -14,6 +14,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/danielgtaylor/huma/v2"
+	"github.com/danielgtaylor/huma/v2/adapters/humagin"
 	helpers "github.com/gabrielgcmr/sonnda/internal/api/helpers"
 	domainstorage "github.com/gabrielgcmr/sonnda/internal/domain/storage"
 	domaintext "github.com/gabrielgcmr/sonnda/internal/domain/textextraction"
@@ -305,13 +307,13 @@ func TestListExamDocuments_UsesServiceWithDefaultPagination(t *testing.T) {
 
 	r := gin.New()
 	r.Use(func(c *gin.Context) {
-		helpers.SetCurrentUser(c, &accountdomain.User{ID: uuid.Must(uuid.NewV7()), AccountType: accountdomain.AccountTypeBasicCare})
+		c.Request = c.Request.WithContext(helpers.ContextWithCurrentUser(c.Request.Context(), &accountdomain.User{ID: uuid.Must(uuid.NewV7()), AccountType: accountdomain.AccountTypeBasicCare}))
 		c.Next()
 	})
-	r.GET("/patients/:patientId/exames", h.ListExamDocuments)
+	h.RegisterHumaRoutes(humagin.New(r, huma.DefaultConfig("test", "test")), nil)
 
 	id := uuid.Must(uuid.NewV7())
-	req := httptest.NewRequest(http.MethodGet, "/patients/"+id.String()+"/exames", nil)
+	req := httptest.NewRequest(http.MethodGet, "/patients/"+id.String()+"/exam-documents", nil)
 	resp := httptest.NewRecorder()
 
 	r.ServeHTTP(resp, req)
@@ -342,10 +344,10 @@ func TestGetExamDocumentReturnsDocumentByID(t *testing.T) {
 	h := newExamsHandler(svc, nil, nil, nil, access)
 	r := gin.New()
 	r.Use(func(c *gin.Context) {
-		helpers.SetCurrentUser(c, &accountdomain.User{ID: uuid.New(), AccountType: accountdomain.AccountTypeBasicCare})
+		c.Request = c.Request.WithContext(helpers.ContextWithCurrentUser(c.Request.Context(), &accountdomain.User{ID: uuid.New(), AccountType: accountdomain.AccountTypeBasicCare}))
 		c.Next()
 	})
-	r.GET("/exam-documents/:documentId", h.GetExamDocument)
+	h.RegisterHumaRoutes(humagin.New(r, huma.DefaultConfig("test", "test")), nil)
 	response := httptest.NewRecorder()
 	r.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/exam-documents/"+documentID.String(), nil))
 
@@ -375,10 +377,10 @@ func TestGetExamDocumentFileReturnsAuthorizedTemporaryURL(t *testing.T) {
 	h := newExamsHandler(svc, nil, storage, nil, access)
 	r := gin.New()
 	r.Use(func(c *gin.Context) {
-		helpers.SetCurrentUser(c, &accountdomain.User{ID: uuid.New(), AccountType: accountdomain.AccountTypeBasicCare})
+		c.Request = c.Request.WithContext(helpers.ContextWithCurrentUser(c.Request.Context(), &accountdomain.User{ID: uuid.New(), AccountType: accountdomain.AccountTypeBasicCare}))
 		c.Next()
 	})
-	r.GET("/exam-documents/:documentId/file", h.GetExamDocumentFile)
+	h.RegisterHumaRoutes(humagin.New(r, huma.DefaultConfig("test", "test")), nil)
 	response := httptest.NewRecorder()
 	r.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/exam-documents/"+documentID.String()+"/file", nil))
 
@@ -414,13 +416,13 @@ func TestListExamDocumentTexts_UsesService(t *testing.T) {
 
 	r := gin.New()
 	r.Use(func(c *gin.Context) {
-		helpers.SetCurrentUser(c, &accountdomain.User{ID: uuid.Must(uuid.NewV7()), AccountType: accountdomain.AccountTypeBasicCare})
+		c.Request = c.Request.WithContext(helpers.ContextWithCurrentUser(c.Request.Context(), &accountdomain.User{ID: uuid.Must(uuid.NewV7()), AccountType: accountdomain.AccountTypeBasicCare}))
 		c.Next()
 	})
-	r.GET("/patients/:patientId/exames/document-texts", h.ListExamDocumentTexts)
+	h.RegisterHumaRoutes(humagin.New(r, huma.DefaultConfig("test", "test")), nil)
 
 	id := uuid.Must(uuid.NewV7())
-	req := httptest.NewRequest(http.MethodGet, "/patients/"+id.String()+"/exames/document-texts", nil)
+	req := httptest.NewRequest(http.MethodGet, "/patients/"+id.String()+"/exam-document-texts", nil)
 	resp := httptest.NewRecorder()
 
 	r.ServeHTTP(resp, req)
@@ -441,13 +443,13 @@ func TestListExamDocuments_UsesQueryPagination(t *testing.T) {
 
 	r := gin.New()
 	r.Use(func(c *gin.Context) {
-		helpers.SetCurrentUser(c, &accountdomain.User{ID: uuid.Must(uuid.NewV7()), AccountType: accountdomain.AccountTypeBasicCare})
+		c.Request = c.Request.WithContext(helpers.ContextWithCurrentUser(c.Request.Context(), &accountdomain.User{ID: uuid.Must(uuid.NewV7()), AccountType: accountdomain.AccountTypeBasicCare}))
 		c.Next()
 	})
-	r.GET("/patients/:patientId/exames", h.ListExamDocuments)
+	h.RegisterHumaRoutes(humagin.New(r, huma.DefaultConfig("test", "test")), nil)
 
 	id := uuid.Must(uuid.NewV7())
-	req := httptest.NewRequest(http.MethodGet, "/patients/"+id.String()+"/exames?limit=25&offset=50", nil)
+	req := httptest.NewRequest(http.MethodGet, "/patients/"+id.String()+"/exam-documents?limit=25&offset=50", nil)
 	resp := httptest.NewRecorder()
 
 	r.ServeHTTP(resp, req)
@@ -485,12 +487,12 @@ func TestUploadExamDocument_WhenClassifiedAsLab_UsesStructuredLabPipeline(t *tes
 
 	r := gin.New()
 	r.Use(func(c *gin.Context) {
-		helpers.SetCurrentUser(c, &accountdomain.User{ID: userID, AccountType: accountdomain.AccountTypeBasicCare})
+		c.Request = c.Request.WithContext(helpers.ContextWithCurrentUser(c.Request.Context(), &accountdomain.User{ID: userID, AccountType: accountdomain.AccountTypeBasicCare}))
 		c.Next()
 	})
-	r.POST("/v1/patients/:patientId/exam-documents", h.UploadExamDocument)
+	h.RegisterHumaRoutes(humagin.New(r, huma.DefaultConfig("test", "test")), nil)
 
-	req := httptest.NewRequest(http.MethodPost, "/v1/patients/"+patientID.String()+"/exam-documents", body)
+	req := httptest.NewRequest(http.MethodPost, "/patients/"+patientID.String()+"/exam-documents", body)
 	req.Header.Set("Content-Type", contentType)
 	resp := httptest.NewRecorder()
 
@@ -550,12 +552,12 @@ func TestUploadExamDocument_LabFailureIsNotReportedAsSuccess(t *testing.T) {
 			h := newExamsHandler(svc, &fakeCreateLabReportUC{err: tc.err}, &fakeExamStorage{}, &fakeTextExtractor{}, allowAllAccessChecker{})
 			r := gin.New()
 			r.Use(func(c *gin.Context) {
-				helpers.SetCurrentUser(c, &accountdomain.User{ID: uuid.New(), AccountType: accountdomain.AccountTypeBasicCare})
+				c.Request = c.Request.WithContext(helpers.ContextWithCurrentUser(c.Request.Context(), &accountdomain.User{ID: uuid.New(), AccountType: accountdomain.AccountTypeBasicCare}))
 				c.Next()
 			})
-			r.POST("/v1/patients/:patientId/exames", h.UploadExamDocument)
+			h.RegisterHumaRoutes(humagin.New(r, huma.DefaultConfig("test", "test")), nil)
 			body, contentType := multipartBody(t, "file", "exam.pdf", "application/pdf", []byte("%PDF-1.7\ntest"))
-			req := httptest.NewRequest(http.MethodPost, "/v1/patients/"+uuid.NewString()+"/exames", body)
+			req := httptest.NewRequest(http.MethodPost, "/patients/"+uuid.NewString()+"/exam-documents", body)
 			req.Header.Set("Content-Type", contentType)
 			resp := httptest.NewRecorder()
 			r.ServeHTTP(resp, req)

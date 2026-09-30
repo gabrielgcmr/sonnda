@@ -7,6 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/danielgtaylor/huma/v2"
+	"github.com/danielgtaylor/huma/v2/adapters/humagin"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
@@ -57,10 +59,10 @@ func TestGetLabReportChecksAccessToOwningPatient(t *testing.T) {
 	handler := NewHandler(svc, access)
 	router := gin.New()
 	router.Use(func(c *gin.Context) {
-		helpers.SetCurrentUser(c, &accountdomain.User{ID: uuid.New(), AccountType: accountdomain.AccountTypeBasicCare})
+		c.Request = c.Request.WithContext(helpers.ContextWithCurrentUser(c.Request.Context(), &accountdomain.User{ID: uuid.New(), AccountType: accountdomain.AccountTypeBasicCare}))
 		c.Next()
 	})
-	router.GET("/lab-reports/:labReportId", handler.GetLabReport)
+	handler.RegisterHumaRoutes(humagin.New(router, huma.DefaultConfig("test", "test")), nil)
 	response := httptest.NewRecorder()
 	router.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/lab-reports/"+reportID.String(), nil))
 
@@ -87,12 +89,12 @@ func assertListMode(t *testing.T, query string, wantFull bool) {
 	handler := NewHandler(svc, allowAllAccess{})
 	router := gin.New()
 	router.Use(func(c *gin.Context) {
-		helpers.SetCurrentUser(c, &accountdomain.User{ID: uuid.New(), AccountType: accountdomain.AccountTypeBasicCare})
+		c.Request = c.Request.WithContext(helpers.ContextWithCurrentUser(c.Request.Context(), &accountdomain.User{ID: uuid.New(), AccountType: accountdomain.AccountTypeBasicCare}))
 		c.Next()
 	})
-	router.GET("/patients/:patientId/labs", handler.ListLabs)
+	handler.RegisterHumaRoutes(humagin.New(router, huma.DefaultConfig("test", "test")), nil)
 	response := httptest.NewRecorder()
-	router.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/patients/"+uuid.NewString()+"/labs"+query, nil))
+	router.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/patients/"+uuid.NewString()+"/lab-reports"+query, nil))
 
 	if response.Code != http.StatusOK {
 		t.Fatalf("expected status %d, got %d: %s", http.StatusOK, response.Code, response.Body.String())
