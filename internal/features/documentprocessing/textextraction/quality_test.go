@@ -1,4 +1,4 @@
-// internal/domain/textextraction/quality_test.go
+// internal/features/documentprocessing/textextraction/quality_test.go
 package textextraction
 
 import "testing"

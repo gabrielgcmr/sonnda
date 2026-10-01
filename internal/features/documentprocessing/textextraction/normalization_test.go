@@ -1,4 +1,4 @@
-// internal/domain/textextraction/normalization_test.go
+// internal/features/documentprocessing/textextraction/normalization_test.go
 package textextraction
 
 import "testing"

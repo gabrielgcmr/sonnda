@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/labextraction"
-	domaintext "github.com/gabrielgcmr/sonnda/internal/domain/textextraction"
+	"github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/labextraction"
+	domaintext "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/textextraction"
 	"github.com/santhosh-tekuri/jsonschema/v6"
 	"google.golang.org/genai"
 )

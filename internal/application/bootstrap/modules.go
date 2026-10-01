@@ -3,8 +3,8 @@ package bootstrap
 
 import (
 	"github.com/gabrielgcmr/sonnda/internal/config"
-	"github.com/gabrielgcmr/sonnda/internal/domain/labextraction"
 	domainstorage "github.com/gabrielgcmr/sonnda/internal/domain/storage"
+	"github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/labextraction"
 	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
 )
 

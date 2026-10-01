@@ -14,9 +14,9 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humagin"
 	"github.com/gabrielgcmr/sonnda/internal/api/helpers"
-	"github.com/gabrielgcmr/sonnda/internal/domain/labextraction"
-	domaintext "github.com/gabrielgcmr/sonnda/internal/domain/textextraction"
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
+	"github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/labextraction"
+	domaintext "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/textextraction"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )

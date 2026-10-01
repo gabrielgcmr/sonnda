@@ -1,11 +1,11 @@
-// internal/features/documentprocessing/extraction/dates.go
+// internal/features/documentprocessing/extraction/date.go
 package extraction
 
 import (
 	"strings"
 	"time"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/labextraction"
+	"github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/labextraction"
 )
 
 func normalizeDates(report *labextraction.ExtractedLabReport) {

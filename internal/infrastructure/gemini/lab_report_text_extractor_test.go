@@ -1,4 +1,4 @@
-// internal/infrastructure/persistence/gemini/lab_report_text_extractor_test.go
+// internal/infrastructure/gemini/lab_report_text_extractor_test.go
 package gemini
 
 import (
@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/labextraction"
+	"github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/labextraction"
 	"google.golang.org/genai"
 )
 
@@ -38,7 +38,7 @@ func geminiTextResponse(text string) *genai.GenerateContentResponse {
 
 func readExpectedLabJSON(t *testing.T, filename string) string {
 	t.Helper()
-	data, err := os.ReadFile(filepath.Join("..", "..", "..", "domain", "labextraction", "testdata", filename))
+	data, err := os.ReadFile(filepath.Join("..", "..", "features", "documentprocessing", "labextraction", "testdata", filename))
 	if err != nil {
 		t.Fatal(err)
 	}

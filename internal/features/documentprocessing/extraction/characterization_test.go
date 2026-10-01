@@ -12,10 +12,10 @@ import (
 	"time"
 
 	"github.com/gabrielgcmr/sonnda/internal/config"
-	lab "github.com/gabrielgcmr/sonnda/internal/domain/labextraction"
-	text "github.com/gabrielgcmr/sonnda/internal/domain/textextraction"
 	"github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/extraction"
-	"github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/gemini"
+	lab "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/labextraction"
+	text "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/textextraction"
+	"github.com/gabrielgcmr/sonnda/internal/infrastructure/gemini"
 	"google.golang.org/genai"
 )
 

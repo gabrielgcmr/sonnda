@@ -1,4 +1,4 @@
-// internal/domain/labextraction/schema_test.go
+// internal/features/documentprocessing/labextraction/schema_test.go
 package labextraction
 
 import (

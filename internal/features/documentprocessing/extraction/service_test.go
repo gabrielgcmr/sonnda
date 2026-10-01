@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	lab "github.com/gabrielgcmr/sonnda/internal/domain/labextraction"
-	text "github.com/gabrielgcmr/sonnda/internal/domain/textextraction"
+	lab "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/labextraction"
+	text "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/textextraction"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 )
 

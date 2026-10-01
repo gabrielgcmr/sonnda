@@ -4,11 +4,11 @@ package bootstrap
 import (
 	"github.com/gabrielgcmr/sonnda/internal/application/usecase/labdocumentconfirmation"
 	"github.com/gabrielgcmr/sonnda/internal/config"
-	"github.com/gabrielgcmr/sonnda/internal/domain/labextraction"
 	domainstorage "github.com/gabrielgcmr/sonnda/internal/domain/storage"
 	documents "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing"
 	"github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/extraction"
 	documenthttp "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/http"
+	"github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/labextraction"
 	documentpostgres "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/postgres"
 	patientaccess "github.com/gabrielgcmr/sonnda/internal/features/patient/access"
 	accesspostgres "github.com/gabrielgcmr/sonnda/internal/features/patient/access/postgres"

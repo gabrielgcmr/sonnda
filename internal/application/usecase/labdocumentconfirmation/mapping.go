@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/labextraction"
+	"github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/labextraction"
 	labsvc "github.com/gabrielgcmr/sonnda/internal/features/patient/exam/laboratory"
 	labs "github.com/gabrielgcmr/sonnda/internal/features/patient/exam/laboratory/domain"
 	"github.com/google/uuid"

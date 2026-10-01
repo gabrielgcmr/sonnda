@@ -1,4 +1,4 @@
-// internal/domain/labextraction/extractor.go
+// internal/features/documentprocessing/labextraction/extractor.go
 package labextraction
 
 import (

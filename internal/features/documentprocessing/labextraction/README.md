@@ -1,4 +1,4 @@
-<!-- internal/domain/labextraction/README.md -->
+<!-- internal/features/documentprocessing/labextraction/README.md -->
 # Contrato de extracao laboratorial por texto
 
 Etapa 1 da ADR-005. Este pacote define a entrada textual, a saida existente em Go
@@ -71,7 +71,7 @@ anonimizado em `testdata/`, revisar a saida esperada e registrar em `cases.json`
 Nao basta copiar o JSON produzido pela propria LLM como resposta correta.
 
 ```powershell
-go test ./internal/domain/labextraction -v
+go test ./internal/features/documentprocessing/labextraction -v
 ```
 
 O validador JSON Schema usado pelos testes e `github.com/santhosh-tekuri/jsonschema/v6`.

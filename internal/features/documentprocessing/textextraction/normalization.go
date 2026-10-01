@@ -1,4 +1,4 @@
-// internal/domain/textextraction/normalization.go
+// internal/features/documentprocessing/textextraction/normalization.go
 package textextraction
 
 import "strings"

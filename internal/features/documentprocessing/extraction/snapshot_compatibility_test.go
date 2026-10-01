@@ -7,8 +7,8 @@ import (
 	"reflect"
 	"testing"
 
-	lab "github.com/gabrielgcmr/sonnda/internal/domain/labextraction"
 	"github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/extraction"
+	lab "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/labextraction"
 )
 
 func baselinePtr[T any](value T) *T { return &value }

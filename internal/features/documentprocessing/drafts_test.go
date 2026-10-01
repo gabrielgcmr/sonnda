@@ -4,9 +4,9 @@ package documentprocessing
 import (
 	"context"
 	"errors"
-	lab "github.com/gabrielgcmr/sonnda/internal/domain/labextraction"
 	domain "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/domain"
 	"github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/extraction"
+	lab "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/labextraction"
 	"github.com/google/uuid"
 	"io"
 	"os"

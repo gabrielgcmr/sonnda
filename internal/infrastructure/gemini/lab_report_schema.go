@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/labextraction"
+	"github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/labextraction"
 	"github.com/santhosh-tekuri/jsonschema/v6"
 )
 

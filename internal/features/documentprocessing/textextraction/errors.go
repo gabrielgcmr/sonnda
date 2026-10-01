@@ -1,4 +1,4 @@
-// internal/domain/textextraction/errors.go
+// internal/features/documentprocessing/textextraction/errors.go
 package textextraction
 
 import "errors"

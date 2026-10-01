@@ -1,4 +1,4 @@
-// internal/domain/labextraction/lab_dto.go
+// internal/features/documentprocessing/labextraction/lab_dto.go
 package labextraction
 
 import "strings"

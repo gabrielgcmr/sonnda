@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/labextraction"
+	"github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/labextraction"
 )
 
 func TestFormatLabSummary(t *testing.T) {

@@ -4,7 +4,7 @@ package documentai
 import (
 	"strings"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/labextraction"
+	"github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/labextraction"
 
 	"cloud.google.com/go/documentai/apiv1/documentaipb"
 )

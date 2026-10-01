@@ -15,8 +15,8 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/gabrielgcmr/sonnda/internal/api/helpers"
 	"github.com/gabrielgcmr/sonnda/internal/api/humaerror"
-	"github.com/gabrielgcmr/sonnda/internal/domain/labextraction"
-	domaintext "github.com/gabrielgcmr/sonnda/internal/domain/textextraction"
+	"github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/labextraction"
+	domaintext "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/textextraction"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 )
 

@@ -1,4 +1,4 @@
-// internal/domain/labextraction/schema.go
+// internal/features/documentprocessing/labextraction/schema.go
 package labextraction
 
 import _ "embed"

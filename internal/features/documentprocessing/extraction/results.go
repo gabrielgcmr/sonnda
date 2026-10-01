@@ -1,7 +1,7 @@
 // internal/features/documentprocessing/extraction/results.go
 package extraction
 
-import "github.com/gabrielgcmr/sonnda/internal/domain/labextraction"
+import "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/labextraction"
 
 // Remove unnamed entries before preview, so the persisted report matches what was reviewed.
 func normalizeResults(report *labextraction.ExtractedLabReport) {

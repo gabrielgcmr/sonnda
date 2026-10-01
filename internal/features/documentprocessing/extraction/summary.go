@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/labextraction"
+	"github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/labextraction"
 )
 
 func FormatSummary(report *labextraction.ExtractedLabReport) string {

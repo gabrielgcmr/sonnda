@@ -1,4 +1,4 @@
-// internal/domain/textextraction/extractor.go
+// internal/features/documentprocessing/textextraction/extractor.go
 package textextraction
 
 import "context"

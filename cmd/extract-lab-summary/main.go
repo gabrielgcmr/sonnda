@@ -12,7 +12,7 @@ import (
 
 	"github.com/gabrielgcmr/sonnda/internal/config"
 	"github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/extraction"
-	geminiinfra "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/gemini"
+	geminiinfra "github.com/gabrielgcmr/sonnda/internal/infrastructure/gemini"
 	"github.com/joho/godotenv"
 )
 

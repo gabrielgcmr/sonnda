@@ -15,15 +15,15 @@ import (
 
 	"github.com/gabrielgcmr/sonnda/internal/application/bootstrap"
 	"github.com/gabrielgcmr/sonnda/internal/config"
-	"github.com/gabrielgcmr/sonnda/internal/domain/labextraction"
 	authhttp "github.com/gabrielgcmr/sonnda/internal/features/auth/http"
+	"github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/labextraction"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/observability"
 
 	"github.com/gabrielgcmr/sonnda/internal/api"
 	authinfra "github.com/gabrielgcmr/sonnda/internal/infrastructure/auth"
+	geminiinfra "github.com/gabrielgcmr/sonnda/internal/infrastructure/gemini"
 	filestorage "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/filestorage"
-	geminiinfra "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/gemini"
 	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
 )
 

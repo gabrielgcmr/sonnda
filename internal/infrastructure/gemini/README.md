@@ -37,7 +37,7 @@ Nao ha ferramentas, busca externa nem upload de arquivos neste cliente.
 `NewLabReportTextExtractor(client)` implementa `labextraction.LabReportTextExtractor`.
 Ele recebe `ExtractLabReportInput{Text: texto}`, chama o cliente Gemini com prompt
 especifico para exames laboratoriais e valida a resposta contra o schema local de
-`internal/domain/labextraction`.
+`internal/features/documentprocessing/labextraction`.
 
 O custo deve ser protegido antes deste adaptador: use o classificador local de
 documentos e chame Gemini apenas quando o documento for `laboratory`. O prompt ainda

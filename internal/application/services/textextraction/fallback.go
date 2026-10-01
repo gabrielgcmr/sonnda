@@ -8,7 +8,7 @@ import (
 	"log/slog"
 	"time"
 
-	domaintext "github.com/gabrielgcmr/sonnda/internal/domain/textextraction"
+	domaintext "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/textextraction"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/observability"
 )

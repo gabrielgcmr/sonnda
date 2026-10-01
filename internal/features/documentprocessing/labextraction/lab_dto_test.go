@@ -1,3 +1,4 @@
+// internal/features/documentprocessing/labextraction/lab_dto_test.go
 package labextraction
 
 import "testing"
