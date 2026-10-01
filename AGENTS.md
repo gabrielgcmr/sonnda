@@ -21,7 +21,7 @@ Simple instructions for coding agents working on this repo.
   - Gin + sqlc + Supabase
   - **Auth**: Supabase
   - **Persistence**: Database: PostgreSQL (Supabase managed) and Redis (Upstash), File Storage: Supabase.
-  - **External integrations**: Google Cloud Document AI,
+  - **External integrations**: Google Cloud Document AI, Gemini
 
 - **Development tools**:
   - Air (live reload)
@@ -35,6 +35,10 @@ Simple instructions for coding agents working on this repo.
   - **Account (`internal/features/account`)**: Profile services, onboarding, DTOs and error mapping; HTTP handler and middleware live in `account/http`.
   - **Patient profile (`internal/features/patient/profile`)**: Patient registration services, DTOs, error mapping and repository contract; its domain model lives in `profile/domain`, HTTP handler in `profile/http`, and Postgres adapter in `profile/postgres`.
   - **Patient access (`internal/features/patient/access`)**: Account-to-patient grants, accessible-patient listing, relationship metadata, application and HTTP services, repository contracts and persistence. Access determines whether an account is linked to a patient; it does not define action-level authorization.
+  - **Document processing (`internal/features/documentprocessing`)**: Documentos clínicos e consultas (`queries.go`), coordenação de rascunhos (`drafts.go`), snapshot persistido (`snapshot.go`); HTTP handlers vivem em `documentprocessing/http` e adaptadores Postgres em `documentprocessing/postgres`.
+    - `documentprocessing/textextraction`: contrato de leitura (`Extractor`), qualidade (`IsUsableText`) e normalização textual.
+    - `documentprocessing/labextraction`: contrato (`LabReportTextExtractor`), tipos e schema JSON da extração estruturada.
+    - `documentprocessing/extraction`: coordenação da extração (`Service`), normalização semântica, avaliação e resumo.
   - Account owns its repository interface and user persistence errors in `account/repository.go`; its Postgres adapter lives in `account/postgres`.
   - User entities and account types belong to `internal/features/account/domain` (package `accountdomain`). Other contexts may import this pure domain package without depending on account application services.
 - The shared database client and generated sqlc code remain in `internal/infrastructure` during this migration.
@@ -46,10 +50,10 @@ Simple instructions for coding agents working on this repo.
 - **Domain (`internal/domain`)**: Core business models and rules (infrastructure and HTTP agnostic).
   - **Entity (`internal/domain/entity`)**: Core business entities.
   - **Storage (`internal/domain/storage`)**: Storage interfaces (file storage abstractions).
-  - **Lab Extraction (`internal/domain/labextraction`)**: contract for structured lab report extraction.
 - **Application (`internal/application`)**: Where orchestration and cross-cutting concerns live.
   - **Use cases (`internal/application/usecase`)**: Business flows composed from domain models/ports.
   - Patient creation is coordinated by `internal/application/usecase/patientcreation`: profile data and the creator's explicit relationship are validated by their owning features and persisted atomically.
+  - Confirmação de laudos laboratoriais é coordenada por `internal/application/usecase/labdocumentconfirmation`: converte o snapshot em histórico clínico.
   - **Services (`internal/application/services`)**: Application services that coordinate repositories/integrations.
   - Patient access checks live in `internal/features/patient/access`: `Checker` permits the patient owner or an account with an active grant. No action, account-type or professional-kind policies are currently implemented.
   - **Bootstrap (`internal/application/bootstrap`)**: Wiring of dependencies, env/config loading.
@@ -65,6 +69,7 @@ Simple instructions for coding agents working on this repo.
   - **Persistence (`internal/infrastructure/persistence`)**: Database repositories, cache, file storage.
   - **Auth (`internal/infrastructure/auth`)**: Authentication provider implementations.
   - **Document AI (`internal/infrastructure/documentai`)**: current Google Cloud Document AI integration.
+  - **Gemini (`internal/infrastructure/gemini`)**: Google Gemini API client and lab report structured text extractor implementation.
 - **Kernel (`internal/kernel`)**: Cross-cutting concerns.
   - **Error contract (`internal/kernel/apperr`)**: Centralized `AppError` codes/messages; handlers must convert via HTTP layer helpers.
   - **Observability (`internal/kernel/observability`)**: Logging setup (slog), request-scoped logger injection.
@@ -100,4 +105,3 @@ This project uses a **centralized error contract** based on `AppError`.
 ## Logging
 - The app uses `log/slog` via `internal/kernel/observability` (request-scoped logger is injected by HTTP middleware).
 - Configure with `LOG_LEVEL` (`debug|info|warn|error`) and `LOG_FORMAT` (`text|json|pretty`).
-

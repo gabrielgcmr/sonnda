@@ -11,7 +11,7 @@ SQLC_SPEC := internal/infrastructure/persistence/postgres/sqlc/sqlc.yaml
 # ==============================================================================
 # 🎯 TARGETS PRINCIPAIS
 # ==============================================================================
-.PHONY: all dev dev-air build clean generate test help lab-summary openapi-export tools-air
+.PHONY: all dev dev-air build clean generate test help openapi-export tools-air
 
 all: build
 
@@ -22,10 +22,6 @@ dev:
 # Roda backend com hot reload via Air
 dev-air:
 	go run github.com/air-verse/air@latest -c .air.toml
-
-# Seleciona um laudo e gera o resumo local (Windows)
-lab-summary:
-	powershell -NoProfile -ExecutionPolicy Bypass -File scripts/extract-lab-summary-picker.ps1
 
 build:
 	go build -o bin/$(APP_NAME) -ldflags "$(LDFLAGS)" $(MAIN)
@@ -88,7 +84,6 @@ help:
 	@echo "Comandos disponíveis:"
 	@echo "  dev         - Inicia apenas o Backend (sem Air)"
 	@echo "  dev-air     - Inicia apenas o Backend (com Air)"
-	@echo "  lab-summary - Seleciona um laudo e gera resumo (Windows)"
 	@echo "  build       - Gera o binário de produção"
 	@echo "  clean       - Limpa pastas geradas"
 	@echo "  generate    - Gera o SQLC"

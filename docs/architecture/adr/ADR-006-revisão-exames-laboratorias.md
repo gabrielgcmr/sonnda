@@ -7,15 +7,27 @@ Status: implementada. Substitui as decisões de orquestração/persistência ant
 
 - Área de trabalho: PDF com texto selecionável → leitura local → Gemini → resumo copiável. Não grava banco nem armazenamento permanente; o arquivo temporário é removido ao terminar, inclusive em falhas.
 - Paciente: verificar acesso → extrair → salvar PDF no GCS e rascunho no Postgres → conferir → confirmar no histórico. Não grava resultados clínicos antes da confirmação.
-- Terminal: mantém `extract-lab-summary -input texto.txt [-output resumo.txt]` e utiliza o mesmo serviço de extração de texto e formatação.
+- Terminal: comandos de terminal/CLI para extração foram descontinuados e removidos para evitar abusos; o processamento fica restrito aos fluxos autenticados da API (temporário e rascunho).
 
-Limite de 10 MiB por PDF. Processamento síncrono, sem fila e sem OCR remoto nos endpoints web. O Document AI continua disponível no comando independente de extração de texto. Falhas anteriores à criação do rascunho exigem novo envio.
+Limite de 10 MiB por PDF. Processamento síncrono, sem fila e sem OCR remoto nos endpoints web. Falhas anteriores à criação do rascunho exigem novo envio.
 
-## Responsabilidades
+## Organização e Responsabilidades
 
-`documentprocessing/extraction` não depende de paciente, storage nem banco. Retorna `status`, `warnings`, `report` e `summary_text`. Normaliza datas e dados antes da conferência, sem converter unidades ou valores; entradas sem identificação são omitidas com aviso. Resultado utilizável contém ao menos um exame e parâmetro identificados com valor, inclusive qualitativo.
+A feature `internal/features/documentprocessing` concentra os contratos de processamento:
 
-`documentprocessing` cuida do documento, da fotografia da extração e da exclusão. `patient/exam/laboratory` mantém os modelos e a leitura do histórico clínico. `application/usecase/labdocumentconfirmation` converte a fotografia conferida em exame e solicita a gravação transacional.
+- `documentprocessing/textextraction`: contrato de leitura (`Extractor`), qualidade (`IsUsableText`) e normalização textual.
+- `documentprocessing/labextraction`: contrato (`LabReportTextExtractor`), tipos e schema JSON da extração estruturada.
+- `documentprocessing/extraction`: coordenação da extração (`Service`), normalização semântica, avaliação e resumo. Não depende de HTTP, storage nem banco de dados.
+- Raiz de `documentprocessing`:
+  - `queries.go`: consultas públicas internas de documentos e textos extraídos (`Service`).
+  - `drafts.go`: coordenação do upload, criação com snapshot e exclusão de rascunhos.
+  - `snapshot.go`: codificação (`EncodeExtractionSnapshot`) e decodificação (`DecodeExtractionSnapshot`) do snapshot versionado.
+- Infraestrutura: implementações de leitura de texto (`infrastructure/textextraction`) e cliente Gemini (`infrastructure/gemini`).
+- `labdocumentconfirmation`: caso de uso que converte o snapshot conferido em histórico clínico (`patient/exam/laboratory`).
+
+Componentes sem uso foram eliminados: o classificador heurístico (`router.go`), o fallback textual secundário e o helper HTTP `isNilExtractor`.
+
+Normaliza datas e dados antes da conferência, sem converter unidades ou valores; entradas sem identificação são omitidas com aviso. Resultado utilizável contém ao menos um exame e parâmetro identificados com valor, inclusive qualitativo.
 
 Não há classificação automática nem processadores de imagem neste fluxo. A seleção explícita de uma funcionalidade laboratorial define o tipo. PDFs de outros tipos não geram rascunhos sem resultados laboratoriais utilizáveis.
 

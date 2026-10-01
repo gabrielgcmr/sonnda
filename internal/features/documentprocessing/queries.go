@@ -1,4 +1,4 @@
-// internal/features/documentprocessing/service_impl.go
+// internal/features/documentprocessing/queries.go
 package documentprocessing
 
 import (
@@ -132,3 +132,4 @@ func mapDomainDocumentTextToOutput(documentText *exams.ExamDocumentText) *ExamDo
 		UpdatedAt:          documentText.UpdatedAt,
 	}
 }
+
