@@ -52,7 +52,7 @@ func (s *Drafts) Create(ctx context.Context, input CreateDraftInput) (*ExamDocum
 	if result == nil || !extraction.Usable(&result.Report) {
 		return nil, apperr.DomainRuleViolation("O PDF não contém resultados laboratoriais utilizáveis.")
 	}
-	snapshot, err := extraction.Encode(result)
+	snapshot, err := EncodeExtractionSnapshot(result)
 	if err != nil {
 		return nil, apperr.Internal("Falha ao preparar a extração.", err)
 	}
@@ -90,7 +90,7 @@ func (s *Drafts) Extraction(ctx context.Context, id uuid.UUID) (*extraction.Resu
 	if len(data) == 0 {
 		return nil, apperr.NotFound("Este documento não possui uma extração para conferência.")
 	}
-	result, err := extraction.Decode(data)
+	result, err := DecodeExtractionSnapshot(data)
 	if err != nil {
 		return nil, apperr.Internal("Falha ao ler a extração armazenada.", err)
 	}

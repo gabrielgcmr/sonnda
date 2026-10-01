@@ -4,7 +4,6 @@ package extraction
 import (
 	"context"
 	"errors"
-	"reflect"
 	"strings"
 	"testing"
 
@@ -32,7 +31,7 @@ func sample() *lab.ExtractedLabReport {
 	value, unit, raw, date := "< 5", "mg/dL", "Glicose < 5", "2026-09-01"
 	return &lab.ExtractedLabReport{Metadata: lab.ExtractionMetadata{Provider: "test"}, Tests: []lab.ExtractedTestResult{{TestName: "Glicose", CollectedAt: &date, RawText: &raw, Items: []lab.ExtractedTestItem{{ParameterName: "Glicose", ResultValue: &value, ResultUnit: &unit, RawText: &raw, Status: lab.ExtractionStatusPartial, Warnings: []lab.ExtractionWarning{{Code: "test", Message: "Conferir"}}}}}}}
 }
-func TestExtractionAndSnapshotPreserveResultsAndPrivateMetadata(t *testing.T) {
+func TestExtractionPreservesResultsAndPrivateMetadata(t *testing.T) {
 	service := New(readerStub{}, labStub{report: sample()})
 	result, err := service.ExtractPDF(context.Background(), "test.pdf", "test.pdf")
 	if err != nil {
@@ -41,16 +40,15 @@ func TestExtractionAndSnapshotPreserveResultsAndPrivateMetadata(t *testing.T) {
 	if !strings.Contains(result.SummaryText, "Glicose: < 5 mg/dL") || !Usable(&result.Report) {
 		t.Fatalf("bad summary: %+v", result)
 	}
-	data, err := Encode(result)
-	if err != nil {
-		t.Fatal(err)
+	if result.Report.Metadata.Provider != "test" {
+		t.Fatalf("metadata lost: %+v", result.Report.Metadata)
 	}
-	decoded, err := Decode(data)
-	if err != nil {
-		t.Fatal(err)
+	test := result.Report.Tests[0]
+	if test.RawText == nil || *test.RawText != "Glicose < 5" {
+		t.Fatalf("test raw text lost: %+v", test)
 	}
-	if !reflect.DeepEqual(result, decoded) {
-		t.Fatalf("snapshot lost metadata: %+v", decoded)
+	if len(test.Items) != 1 || test.Items[0].Status != lab.ExtractionStatusPartial {
+		t.Fatalf("item status lost: %+v", test.Items)
 	}
 }
 func TestExtractionDistinguishesUnreadablePDFAndTechnicalFailure(t *testing.T) {

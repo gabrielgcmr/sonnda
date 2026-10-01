@@ -235,7 +235,7 @@ func TestConfirmationUsesStoredSnapshotWithoutReextracting(t *testing.T) {
 	result := &extraction.Result{Status: labextract.ExtractionStatusPartial, SummaryText: "Glicose: < 5 mg/dL", Report: labextract.ExtractedLabReport{
 		RawText: &raw, Tests: []labextract.ExtractedTestResult{{TestName: "Glicose", CollectedAt: &date, Items: []labextract.ExtractedTestItem{{ParameterName: "Glicose", ResultValue: &value, ResultUnit: &unit, ReferenceText: &reference}}}},
 	}}
-	data, err := extraction.Encode(result)
+	data, err := processing.EncodeExtractionSnapshot(result)
 	if err != nil {
 		t.Fatal(err)
 	}

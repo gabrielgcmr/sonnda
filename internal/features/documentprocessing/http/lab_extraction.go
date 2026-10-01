@@ -8,7 +8,6 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
-	"reflect"
 
 	"github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/extraction"
 
@@ -79,14 +78,6 @@ func (h *StandaloneLabExtractionHandler) extract(ctx context.Context, input *tem
 		return nil, humaerror.From(err)
 	}
 	return &temporaryLabExtractionOutput{Body: *result}, nil
-}
-
-func isNilExtractor(extractor any) bool {
-	if extractor == nil {
-		return true
-	}
-	value := reflect.ValueOf(extractor)
-	return value.Kind() == reflect.Ptr && value.IsNil()
 }
 
 func writeTemporaryPDF(header *multipart.FileHeader) (string, error) {
