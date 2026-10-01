@@ -59,7 +59,11 @@ O adaptador trata:
 - texto vazio;
 - JSON invalido;
 - JSON fora do schema;
-- resposta valida sem itens, marcada como `needs_review`.
+- resposta valida sem itens, devolvida sem avaliacao de qualidade pelo adaptador.
+
+O servico `documentprocessing/extraction` prepara o texto semantico, preserva o
+texto original e aplica normalizacao, avisos e estados (`needs_review`, `partial`
+ou `succeeded`). O adaptador valida a resposta e informa fornecedor/modelo.
 
 As rotas `/exames` e `/labs` continuam usando Document AI ate a etapa 4 da ADR-005.
 Configurar a chave ou instanciar o cliente nao ativa o Gemini nessas rotas.

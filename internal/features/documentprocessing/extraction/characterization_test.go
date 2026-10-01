@@ -78,14 +78,22 @@ func TestExtractionBehaviorBaseline(t *testing.T) {
 	if len(cases) == 0 {
 		t.Fatal("missing characterization cases")
 	}
+	// The same fixtures must hold without SDK or provider-specific behavior.
+	for _, tc := range cases {
+		if tc.UseGemini {
+			tc.Name += "_without_provider"
+			tc.UseGemini = false
+			cases = append(cases, tc)
+		}
+	}
 	for _, tc := range cases {
 		t.Run(tc.Name, func(t *testing.T) {
 			calls := 0
 			provider, model := "stub", "baseline-model"
 			var extractor lab.LabReportTextExtractor = baselineLabExtractor(func(_ context.Context, input lab.ExtractLabReportInput) (*lab.ExtractedLabReport, error) {
 				calls++
-				if input.Text != baselineText {
-					t.Fatalf("raw extractor input changed: %q", input.Text)
+				if input.Text != strings.ReplaceAll(baselineText, "\uFF05", "%") {
+					t.Fatalf("semantic extractor input changed: %q", input.Text)
 				}
 				var report lab.ExtractedLabReport
 				if err := json.Unmarshal(tc.Input, &report); err != nil {
@@ -149,11 +157,8 @@ func TestExtractionBehaviorBaseline(t *testing.T) {
 			if !reflect.DeepEqual(result.Report.Metadata, wantMetadata) {
 				t.Fatalf("private metadata = %+v, want %+v", result.Report.Metadata, wantMetadata)
 			}
-			// Gemini currently marks nodes succeeded before application-level partial warnings.
-			var nodeStatus lab.ExtractionStatus
-			if tc.UseGemini {
-				nodeStatus = lab.ExtractionStatusSucceeded
-			}
+			// The application records initial node success before partial-result warnings.
+			nodeStatus := lab.ExtractionStatusSucceeded
 			for _, test := range result.Report.Tests {
 				if test.Status != nodeStatus || test.RawText != nil || test.Confidence != nil || test.Warnings != nil {
 					t.Fatalf("test metadata changed: %+v", test)

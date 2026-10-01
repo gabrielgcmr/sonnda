@@ -77,11 +77,11 @@ func TestLabReportTextExtractorUsesPromptSchemaAndMapsResponse(t *testing.T) {
 	if _, exists := captured.JSONSchema["$schema"]; exists {
 		t.Fatal("provider schema kept unsupported $schema")
 	}
-	if report.Metadata.Provider != "gemini" || report.Metadata.Model != "test-model" || report.Metadata.Status != labextraction.ExtractionStatusSucceeded {
+	if report.Metadata.Provider != "gemini" || report.Metadata.Model != "test-model" || report.Metadata.Status != "" {
 		t.Fatalf("unexpected metadata: %+v", report.Metadata)
 	}
-	if report.RawText == nil || *report.RawText != input.Text {
-		t.Fatal("raw input text was not attached")
+	if report.RawText != nil {
+		t.Fatal("adapter must leave original text ownership to the application")
 	}
 	if len(report.Tests) != 1 || len(report.Tests[0].Items) != 1 {
 		t.Fatalf("unexpected tests: %+v", report.Tests)
@@ -90,17 +90,17 @@ func TestLabReportTextExtractorUsesPromptSchemaAndMapsResponse(t *testing.T) {
 	if item.ParameterName != "Glicemia de jejum" || item.ResultValue == nil || *item.ResultValue != "99" || item.ResultUnit == nil || *item.ResultUnit != "mg/dL" {
 		t.Fatalf("unexpected item: %+v", item)
 	}
-	if report.Tests[0].Status != labextraction.ExtractionStatusSucceeded || item.Status != labextraction.ExtractionStatusSucceeded {
-		t.Fatal("nested status was not marked")
+	if report.Tests[0].Status != "" || item.Status != "" {
+		t.Fatal("adapter must leave node assessment to the application")
 	}
 }
 
-func TestLabReportTextExtractorNormalizesPercentForGeminiAndKeepsRawText(t *testing.T) {
+func TestLabReportTextExtractorLeavesNormalizationToApplication(t *testing.T) {
 	input := labextraction.ExtractLabReportInput{Text: "Hematocrito 43,8 \uFF05"}
 	var capturedText string
 	client := labReportExtractorTestClient(t, generatorFunc(func(_ context.Context, _ string, contents []*genai.Content, _ *genai.GenerateContentConfig) (*genai.GenerateContentResponse, error) {
 		capturedText = contents[0].Parts[0].Text
-		return geminiTextResponse(readExpectedLabJSON(t, "glicose.expected.json")), nil
+		return geminiTextResponse(strings.ReplaceAll(readExpectedLabJSON(t, "glicose.expected.json"), `"99"`, `" 99 "`)), nil
 	}))
 	extractor, err := NewLabReportTextExtractor(client)
 	if err != nil {
@@ -111,15 +111,15 @@ func TestLabReportTextExtractorNormalizesPercentForGeminiAndKeepsRawText(t *test
 	if err != nil {
 		t.Fatal(err)
 	}
-	if capturedText != "Hematocrito 43,8 %" {
+	if capturedText != input.Text {
 		t.Fatalf("Gemini input = %q", capturedText)
 	}
-	if report.RawText == nil || *report.RawText != input.Text {
-		t.Fatalf("raw text = %v, want %q", report.RawText, input.Text)
+	if report.RawText != nil || *report.Tests[0].Items[0].ResultValue != " 99 " {
+		t.Fatalf("adapter applied normalization or attached original text: %+v", report)
 	}
 }
 
-func TestLabReportTextExtractorAcceptsNoStructuredResultsWithReviewStatus(t *testing.T) {
+func TestLabReportTextExtractorAcceptsEmptyReportWithoutAssessment(t *testing.T) {
 	client := labReportExtractorTestClient(t, generatorFunc(func(context.Context, string, []*genai.Content, *genai.GenerateContentConfig) (*genai.GenerateContentResponse, error) {
 		return geminiTextResponse(readExpectedLabJSON(t, "atestado.expected.json")), nil
 	}))
@@ -131,8 +131,8 @@ func TestLabReportTextExtractorAcceptsNoStructuredResultsWithReviewStatus(t *tes
 	if err != nil {
 		t.Fatal(err)
 	}
-	if report.Metadata.Status != labextraction.ExtractionStatusNeedsReview || len(report.Metadata.Warnings) != 1 {
-		t.Fatalf("expected review status with warning, got %+v", report.Metadata)
+	if report.Metadata.Status != "" || len(report.Metadata.Warnings) != 0 {
+		t.Fatalf("adapter assessed report quality: %+v", report.Metadata)
 	}
 	if len(report.Tests) != 0 {
 		t.Fatalf("unexpected tests: %+v", report.Tests)

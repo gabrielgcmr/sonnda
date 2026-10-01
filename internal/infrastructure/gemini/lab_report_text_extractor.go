@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/labextraction"
-	domaintext "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/textextraction"
 	"github.com/santhosh-tekuri/jsonschema/v6"
 	"google.golang.org/genai"
 )
@@ -71,9 +70,8 @@ func (e *LabReportTextExtractor) ExtractLabReport(ctx context.Context, input lab
 	if err := input.Validate(); err != nil {
 		return nil, err
 	}
-	semanticText := domaintext.NormalizeForSemanticExtraction(input.Text)
 	response, err := e.client.Generate(ctx, GenerateRequest{
-		Text:              semanticText,
+		Text:              input.Text,
 		SystemInstruction: labReportSystemInstruction,
 		JSONSchema:        e.providerSchema,
 	})
@@ -89,20 +87,8 @@ func (e *LabReportTextExtractor) ExtractLabReport(ctx context.Context, input lab
 		return nil, err
 	}
 
-	report.RawText = &input.Text
 	report.Metadata.Provider = "gemini"
 	report.Metadata.Model = e.client.cfg.Model
-	report.Metadata.Status = labextraction.ExtractionStatusSucceeded
-	if !report.HasStructuredResults() {
-		report.Metadata.Status = labextraction.ExtractionStatusNeedsReview
-		report.Metadata.Warnings = append(report.Metadata.Warnings, labextraction.ExtractionWarning{
-			Code:    "no_structured_results",
-			Message: "nenhum resultado laboratorial estruturado foi encontrado",
-			Field:   "tests",
-		})
-	}
-	markExtractionStatus(report, report.Metadata.Status)
-	report.Normalize()
 
 	return report, nil
 }
@@ -120,7 +106,6 @@ func (e *LabReportTextExtractor) decodeReport(payload string) (*labextraction.Ex
 	if err := json.Unmarshal([]byte(payload), &report); err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrInvalidResponseJSON, err)
 	}
-	report.Normalize()
 	return &report, nil
 }
 
@@ -181,16 +166,4 @@ func stripJSONFence(payload string) string {
 	}
 	payload = strings.TrimSuffix(payload, "```")
 	return strings.TrimSpace(payload)
-}
-
-func markExtractionStatus(report *labextraction.ExtractedLabReport, status labextraction.ExtractionStatus) {
-	if report == nil {
-		return
-	}
-	for testIndex := range report.Tests {
-		report.Tests[testIndex].Status = status
-		for itemIndex := range report.Tests[testIndex].Items {
-			report.Tests[testIndex].Items[itemIndex].Status = status
-		}
-	}
 }

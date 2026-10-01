@@ -56,7 +56,8 @@ func (s *Service) ExtractText(ctx context.Context, input string) (*Result, error
 	if strings.TrimSpace(input) == "" {
 		return nil, unreadablePDF()
 	}
-	report, err := s.lab.ExtractLabReport(ctx, labextraction.ExtractLabReportInput{Text: input})
+	semanticText := text.NormalizeForSemanticExtraction(input)
+	report, err := s.lab.ExtractLabReport(ctx, labextraction.ExtractLabReportInput{Text: semanticText})
 	if err != nil {
 		return nil, technicalError("Não foi possível extrair os dados laboratoriais.", err)
 	}
@@ -65,51 +66,15 @@ func (s *Service) ExtractText(ctx context.Context, input string) (*Result, error
 	}
 	report.Normalize()
 	report.RawText = &input
+	assessStructure(report)
 	normalizeDates(report)
 	normalizeResults(report)
-	status := report.Metadata.Status
-	if status == "" {
-		status = labextraction.ExtractionStatusSucceeded
-	}
-	if !Usable(report) {
-		status = labextraction.ExtractionStatusNeedsReview
-		report.Metadata.Warnings = append(report.Metadata.Warnings, labextraction.ExtractionWarning{Code: "no_usable_results", Message: "Nenhum resultado laboratorial utilizável foi encontrado."})
-	} else {
-		for _, test := range report.Tests {
-			for _, item := range test.Items {
-				if item.ResultValue == nil {
-					report.Metadata.Warnings = append(report.Metadata.Warnings, labextraction.ExtractionWarning{Code: "missing_value", Message: "Há parâmetros sem valor identificado.", Field: "tests.items.result_value"})
-					break
-				}
-			}
-		}
-		if len(report.Metadata.Warnings) > 0 && status == labextraction.ExtractionStatusSucceeded {
-			status = labextraction.ExtractionStatusPartial
-		}
-	}
-	report.Metadata.Status = status
+	assessResults(report)
 	warnings := report.Metadata.Warnings
 	if warnings == nil {
 		warnings = []labextraction.ExtractionWarning{}
 	}
-	return &Result{Status: status, Warnings: warnings, Report: *report, SummaryText: FormatSummary(report)}, nil
-}
-
-func Usable(report *labextraction.ExtractedLabReport) bool {
-	if report == nil || report.Metadata.Status == labextraction.ExtractionStatusFailed {
-		return false
-	}
-	for _, test := range report.Tests {
-		if strings.TrimSpace(test.TestName) == "" {
-			continue
-		}
-		for _, item := range test.Items {
-			if strings.TrimSpace(item.ParameterName) != "" && item.ResultValue != nil && strings.TrimSpace(*item.ResultValue) != "" {
-				return true
-			}
-		}
-	}
-	return false
+	return &Result{Status: report.Metadata.Status, Warnings: warnings, Report: *report, SummaryText: FormatSummary(report)}, nil
 }
 
 func unreadablePDF() error {

@@ -9,7 +9,8 @@ import (
 
 var ErrEmptyText = errors.New("lab extraction requires non-empty text")
 
-// ExtractLabReportInput recebe texto; paciente e arquivo ficam no caso de uso.
+// ExtractLabReportInput receives semantic text prepared by the application.
+// The application retains the original text, patient and file context.
 type ExtractLabReportInput struct {
 	Text string
 }
@@ -21,7 +22,8 @@ func (input ExtractLabReportInput) Validate() error {
 	return nil
 }
 
-// LabReportTextExtractor e o contrato alvo para a LLM da ADR-005.
+// LabReportTextExtractor decodes structured data and reports provider metadata.
+// Normalization and result assessment belong to the extraction application service.
 type LabReportTextExtractor interface {
 	ExtractLabReport(ctx context.Context, input ExtractLabReportInput) (*ExtractedLabReport, error)
 }
