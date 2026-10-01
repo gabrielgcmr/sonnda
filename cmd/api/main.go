@@ -22,7 +22,6 @@ import (
 
 	"github.com/gabrielgcmr/sonnda/internal/api"
 	authinfra "github.com/gabrielgcmr/sonnda/internal/infrastructure/auth"
-	documentaiinfra "github.com/gabrielgcmr/sonnda/internal/infrastructure/documentai"
 	filestorage "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/filestorage"
 	geminiinfra "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/gemini"
 	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
@@ -76,13 +75,6 @@ func main() {
 	}
 	defer storageService.Close()
 
-	//6.2 Document AI Service
-	docAIClient, err := documentaiinfra.NewClient(ctx, cfg.Storage.GCPProjectID, cfg.Storage.GCPLocation, gcpOpts...)
-	if err != nil {
-		logInfraFatal("falha ao criar DocAI client", err)
-	}
-	defer docAIClient.Close()
-
 	var labTextExtractor labextraction.LabReportTextExtractor
 	if strings.TrimSpace(cfg.Gemini.APIKey) != "" {
 		geminiClient, err := geminiinfra.NewClient(ctx, cfg.Gemini)
@@ -106,8 +98,7 @@ func main() {
 	}
 
 	//7. Módulos
-	fallbackOCR := documentaiinfra.NewTextExtractor(docAIClient, cfg.Storage.GCPExtractLabsProcessorID, cfg.OCR.FallbackTimeout)
-	modules := bootstrap.NewModules(dbClient, labTextExtractor, storageService, cfg.OCR, fallbackOCR)
+	modules := bootstrap.NewModules(dbClient, labTextExtractor, storageService, cfg.OCR)
 
 	//8 Middlewares
 	//8.1 API

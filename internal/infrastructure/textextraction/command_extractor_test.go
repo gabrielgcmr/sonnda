@@ -5,10 +5,36 @@ import (
 	"context"
 	"errors"
 	"image"
+	"os"
+	"os/exec"
 	"path/filepath"
 	"testing"
 	"time"
+
+	domaintext "github.com/gabrielgcmr/sonnda/internal/domain/textextraction"
 )
+
+func TestInvalidPDFIsUnreadable(t *testing.T) {
+	if _, err := exec.LookPath("pdftotext"); err != nil {
+		t.Skip("pdftotext is required")
+	}
+	path := filepath.Join(t.TempDir(), "invalid.pdf")
+	if err := os.WriteFile(path, []byte("%PDF-1.4\ninvalid content"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	_, err := NewCommandExtractor().extractPDF(context.Background(), path)
+	if !errors.Is(err, domaintext.ErrUnreadablePDF) {
+		t.Fatalf("invalid PDF must be classified as unreadable: %v", err)
+	}
+}
+
+func TestMissingPDFReaderRemainsTechnicalFailure(t *testing.T) {
+	t.Setenv("PATH", t.TempDir())
+	_, err := NewCommandExtractor().extractPDF(context.Background(), "file.pdf")
+	if err == nil || errors.Is(err, domaintext.ErrUnreadablePDF) {
+		t.Fatalf("missing executable must remain a technical error: %v", err)
+	}
+}
 
 func TestExpiredOCRDeadlineIsPreserved(t *testing.T) {
 	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(-time.Second))

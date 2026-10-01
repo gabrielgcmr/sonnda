@@ -1,19 +1,11 @@
-Sim, mas bem menor enquanto houver endpoints/middlewares Gin legados.
-
-Para as rotas Huma, mantenha apenas a tradução do `AppError`:
-
-- `StatusFromCode`: converte o código interno para status HTTP.
-- Uma conversão `AppError → huma.StatusError` que preserve `code` e `violations`, caso esses campos façam parte do contrato público.
-- A política de logging/observabilidade, idealmente aplicada também aos erros retornados pelo Huma.
-
-Hoje há uma inconsistência: [`writeHumaError`](/C:/Users/gabri/Dev/sonnda/sonnda-api/internal/api/huma.go:133) monta um `Problem`, mas passa apenas `problem.Detail` para `huma.WriteErr`; portanto `code`, `violations`, `traceId` e `instance` são descartados. Já handlers Huma usam `huma.NewError(...)`, cujo modelo padrão é RFC 9457, mas também não inclui o `code` Sonnda.
-
-O que ainda precisa ficar para Gin é `ErrorResponder`, `writeProblem` e os helpers de log, pois existem três rotas legadas em [`routes.go`](/C:/Users/gabri/Dev/sonnda/sonnda-api/internal/api/routes.go:59), além de middlewares Gin.
-
-Quando essas rotas forem migradas para Huma, eu removeria `ErrorResponder` e a escrita manual de JSON. O diretório poderia virar algo como `internal/api/problem`, contendo só:
-
-- `StatusFromCode`
-- adaptador `AppError → huma.StatusError`/modelo de problema Huma
-- mapeamento de violações para `huma.ErrorDetail`, se necessário
-
-Ou seja: Huma substitui o “writer” do presenter; não substitui automaticamente a tradução do contrato de erro da aplicação.
+Não completamente. A branch atual refac-lab preserva boa parte do fluxo, mas perdeu mudanças importantes do plano. Minha afirmação anterior de que tudo estava concluído não vale para esse estado atual.
+Encontrei estes problemas:
+1. A migration não está na branch. O código exige as novas colunas e exam_document_extractions, mas a migration aplicada anteriormente no Supabase não existe em supabase/migrations. Outro ambiente não conseguiria reproduzir o banco necessário.
+2. A exclusão não é totalmente retomável. Se o PDF for removido e a exclusão no banco falhar, a tentativa seguinte recebe erro de arquivo inexistente e não remove o rascunho. O adapter precisa considerar esse caso como sucesso. [gcsfilestorage.go (line 84)](C:/Users/gabri/Dev/sonnda/sonnda-api/internal/infrastructure/persistence/filestorage/gcsfilestorage.go:84)
+3. Os testes de integração não compilam. Ainda referenciam Repository e NewRepository, removidos. Portanto, atomicidade, concorrência e recuperação de falhas não estão comprovadas pela suíte atual. [repository_integration_test.go (line 22)](C:/Users/gabri/Dev/sonnda/sonnda-api/internal/features/documentprocessing/postgres/repository_integration_test.go:22)
+4. Terminal e web não compartilham a extração/formatação. O comando voltou a chamar Gemini diretamente e usar formatLabSummary, incluindo a formatação antiga. [main.go (line 56)](C:/Users/gabri/Dev/sonnda/sonnda-api/cmd/extract-lab-summary/main.go:56)
+5. PDF ilegível é tratado como falha técnica. O leitor retorna um erro genérico, enquanto o serviço espera ErrUnreadablePDF. Isso impede a resposta específica orientando o usuário a enviar texto selecionável. [command_extractor.go (line 68)](C:/Users/gabri/Dev/sonnda/sonnda-api/internal/infrastructure/textextraction/command_extractor.go:68)
+6. A cobertura de testes regrediu. Os novos handlers de documentos estão sem testes, e os testes de resumo ficaram em summary_text.go, sem o sufixo _test.go; o Go não os executa. [summary_text.go (line 11)](C:/Users/gabri/Dev/sonnda/sonnda-api/internal/features/documentprocessing/extraction/summary_text.go:11)
+7. A limpeza ficou incompleta. A inicialização da API ainda cria o cliente Document AI e exige sua configuração. A ADR-006 também não está nesta branch.
+A estrutura de rascunhos, snapshots, confirmação transacional, autorização via Huma e interface de conferência está presente. Passaram: go test ./..., sqlc, os 18 testes do web, lint e build. Falhou: compilação dos testes de integração.
+Não alterei arquivos nesta revisão. Eu corrigiria essas lacunas antes de considerar o PR pronto para publicação.
