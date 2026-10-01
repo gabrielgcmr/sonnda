@@ -5,24 +5,31 @@ import (
 	"context"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/gabrielgcmr/sonnda/internal/api/helpers"
 	"github.com/gabrielgcmr/sonnda/internal/api/humaerror"
 	domainstorage "github.com/gabrielgcmr/sonnda/internal/domain/storage"
-	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
 	documents "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing"
-	processing "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/processing"
+	"github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/extraction"
 	patientaccess "github.com/gabrielgcmr/sonnda/internal/features/patient/access"
-	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
+	laboratory "github.com/gabrielgcmr/sonnda/internal/features/patient/exam/laboratory"
 	"github.com/google/uuid"
 )
 
+type draftService interface {
+	Create(context.Context, documents.CreateDraftInput) (*documents.ExamDocumentOutput, error)
+	Extraction(context.Context, uuid.UUID) (*extraction.Result, error)
+	Delete(context.Context, uuid.UUID) error
+}
+type confirmationService interface {
+	Confirm(context.Context, uuid.UUID, uuid.UUID) (*laboratory.LabReportOutput, error)
+}
 type ExamsHandler struct {
 	svc           documents.Service
-	processor     processing.ProcessStoredDocumentUseCase
+	drafts        draftService
+	confirmer     confirmationService
 	storage       domainstorage.FileStorageService
 	accessChecker patientaccess.Checker
 }
@@ -61,8 +68,7 @@ type examDocumentFileOutput struct {
 }
 
 type uploadExamDocumentForm struct {
-	File           huma.FormFile `form:"file" required:"true"`
-	CollectionDate string        `form:"collection_date"`
+	File huma.FormFile `form:"file" required:"true"`
 }
 
 type uploadExamDocumentInput struct {
@@ -72,15 +78,17 @@ type uploadExamDocumentInput struct {
 
 func NewExams(
 	svc documents.Service,
-	processor processing.ProcessStoredDocumentUseCase,
+	drafts draftService,
+	confirmer confirmationService,
 	storageClient domainstorage.FileStorageService,
 	accessChecker patientaccess.Checker,
 ) *ExamsHandler {
-	return &ExamsHandler{svc: svc, processor: processor, storage: storageClient, accessChecker: accessChecker}
+	return &ExamsHandler{svc: svc, drafts: drafts, confirmer: confirmer, storage: storageClient, accessChecker: accessChecker}
 }
 
 // RegisterHumaRoutes registers the supported exam-document operations.
 func (h *ExamsHandler) RegisterHumaRoutes(registered huma.API, security []map[string][]string) {
+	h.registerReviewRoutes(registered, security)
 	huma.Register(registered, huma.Operation{
 		OperationID: "listExamDocuments",
 		Method:      http.MethodGet,
@@ -105,7 +113,8 @@ func (h *ExamsHandler) RegisterHumaRoutes(registered huma.API, security []map[st
 		OperationID:   "uploadExamDocument",
 		Method:        http.MethodPost,
 		Path:          "/patients/{patientId}/exam-documents",
-		Summary:       "Enviar documento de exame",
+		Summary:       "Extrair PDF laboratorial e criar rascunho para conferência",
+		MaxBodyBytes:  11 * 1024 * 1024,
 		Tags:          []string{"Exam documents"},
 		DefaultStatus: http.StatusCreated,
 		Errors:        []int{http.StatusUnauthorized, http.StatusForbidden, http.StatusRequestEntityTooLarge, http.StatusUnsupportedMediaType},
@@ -134,9 +143,9 @@ func (h *ExamsHandler) RegisterHumaRoutes(registered huma.API, security []map[st
 }
 
 func (h *ExamsHandler) listExamDocuments(ctx context.Context, input *listExamDocumentsInput) (*listExamDocumentsOutput, error) {
-	currentUser, err := humaCurrentUser(ctx)
-	if err != nil {
-		return nil, err
+	currentUser, ok := helpers.GetCurrentUserFromContext(ctx)
+	if !ok {
+		return nil, huma.Error403Forbidden("conta registrada necess?ria")
 	}
 	if err := h.accessChecker.RequireAccess(ctx, currentUser.ID, input.PatientID); err != nil {
 		return nil, humaerror.From(err)
@@ -149,9 +158,9 @@ func (h *ExamsHandler) listExamDocuments(ctx context.Context, input *listExamDoc
 }
 
 func (h *ExamsHandler) listExamDocumentTexts(ctx context.Context, input *listExamDocumentsInput) (*listExamDocumentTextsOutput, error) {
-	currentUser, err := humaCurrentUser(ctx)
-	if err != nil {
-		return nil, err
+	currentUser, ok := helpers.GetCurrentUserFromContext(ctx)
+	if !ok {
+		return nil, huma.Error403Forbidden("conta registrada necess?ria")
 	}
 	if err := h.accessChecker.RequireAccess(ctx, currentUser.ID, input.PatientID); err != nil {
 		return nil, humaerror.From(err)
@@ -190,36 +199,25 @@ func (h *ExamsHandler) getExamDocumentFile(ctx context.Context, input *examDocum
 }
 
 func (h *ExamsHandler) uploadExamDocument(ctx context.Context, input *uploadExamDocumentInput) (*examDocumentOutput, error) {
-	currentUser, err := humaCurrentUser(ctx)
-	if err != nil {
-		return nil, err
+	currentUser, ok := helpers.GetCurrentUserFromContext(ctx)
+	if !ok {
+		return nil, huma.Error403Forbidden("conta registrada necess?ria")
 	}
 	if err := h.accessChecker.RequireAccess(ctx, currentUser.ID, input.PatientID); err != nil {
 		return nil, humaerror.From(err)
 	}
-	collectionDate, err := parseExamCollectionDate(input.RawBody.Data().CollectionDate)
-	if err != nil {
-		return nil, humaerror.From(err)
-	}
+
 	fileHeaders := input.RawBody.Form.File["file"]
 	if len(fileHeaders) != 1 {
 		return nil, huma.Error422UnprocessableEntity("arquivo é obrigatório")
 	}
-	upload, err := UploadDocument(ctx, fileHeaders[0], input.PatientID, h.storage)
+	path, err := writeTemporaryPDF(fileHeaders[0])
 	if err != nil {
 		return nil, humaerror.From(err)
 	}
-	defer os.Remove(upload.LocalPath)
+	defer os.Remove(path)
+	document, err := h.drafts.Create(ctx, documents.CreateDraftInput{PatientID: input.PatientID, UserID: currentUser.ID, LocalPath: path, Filename: fileHeaders[0].Filename})
 
-	document, err := h.processor.Execute(ctx, processing.ProcessStoredDocumentInput{
-		PatientID:        input.PatientID,
-		UploadedByUserID: currentUser.ID,
-		StorageURI:       upload.StorageURI,
-		OriginalFilename: upload.OriginalFilename,
-		MimeType:         upload.MimeType,
-		LocalPath:        upload.LocalPath,
-		CollectionDate:   collectionDate,
-	})
 	if err != nil {
 		return nil, humaerror.From(err)
 	}
@@ -227,9 +225,9 @@ func (h *ExamsHandler) uploadExamDocument(ctx context.Context, input *uploadExam
 }
 
 func (h *ExamsHandler) findAccessibleDocument(ctx context.Context, documentID uuid.UUID) (*documents.ExamDocumentOutput, error) {
-	currentUser, err := humaCurrentUser(ctx)
-	if err != nil {
-		return nil, err
+	currentUser, ok := helpers.GetCurrentUserFromContext(ctx)
+	if !ok {
+		return nil, huma.Error403Forbidden("conta registrada necess?ria")
 	}
 	document, err := h.svc.FindByID(ctx, documentID)
 	if err != nil {
@@ -242,24 +240,4 @@ func (h *ExamsHandler) findAccessibleDocument(ctx context.Context, documentID uu
 		return nil, humaerror.From(err)
 	}
 	return document, nil
-}
-
-func humaCurrentUser(ctx context.Context) (*accountdomain.User, error) {
-	currentUser, ok := helpers.GetCurrentUserFromContext(ctx)
-	if !ok {
-		return nil, huma.Error403Forbidden("conta registrada necessária")
-	}
-	return currentUser, nil
-}
-
-func parseExamCollectionDate(raw string) (*time.Time, error) {
-	raw = strings.TrimSpace(raw)
-	if raw == "" {
-		return nil, nil
-	}
-	date, err := time.Parse("2006-01-02", raw)
-	if err != nil {
-		return nil, apperr.Validation("data da coleta invalida", apperr.Violation{Field: "collection_date", Reason: "must_be_yyyy_mm_dd"})
-	}
-	return &date, nil
 }

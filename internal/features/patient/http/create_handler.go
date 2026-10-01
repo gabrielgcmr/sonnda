@@ -3,16 +3,18 @@ package patienthttp
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/danielgtaylor/huma/v2"
 	helpers "github.com/gabrielgcmr/sonnda/internal/api/helpers"
-	"github.com/gabrielgcmr/sonnda/internal/api/humaerror"
+	"github.com/gabrielgcmr/sonnda/internal/api/presenter"
 	patientcreation "github.com/gabrielgcmr/sonnda/internal/application/usecase/patientcreation"
 	"github.com/gabrielgcmr/sonnda/internal/domain/demographics"
 	patientprofile "github.com/gabrielgcmr/sonnda/internal/features/patient/profile"
+	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 	applog "github.com/gabrielgcmr/sonnda/internal/kernel/observability"
 	"github.com/google/uuid"
 )
@@ -107,7 +109,7 @@ func (h *CreationHandler) create(ctx context.Context, input *createPatientInput)
 		},
 	})
 	if err != nil {
-		return nil, humaerror.From(err)
+		return nil, toHumaError(err)
 	}
 
 	return &createPatientOutput{
@@ -130,4 +132,12 @@ func parseRace(value string) (demographics.Race, error) {
 		return "", fmt.Errorf("invalid race value %q: %w", value, err)
 	}
 	return race, nil
+}
+
+func toHumaError(err error) error {
+	var appErr *apperr.AppError
+	if errors.As(err, &appErr) && appErr != nil {
+		return huma.NewError(presenter.StatusFromCode(appErr.Kind), appErr.Message)
+	}
+	return huma.Error500InternalServerError("erro inesperado")
 }

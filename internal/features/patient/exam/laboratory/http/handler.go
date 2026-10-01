@@ -7,11 +7,10 @@ import (
 	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
-	"github.com/google/uuid"
-
 	"github.com/gabrielgcmr/sonnda/internal/api/helpers"
 	"github.com/gabrielgcmr/sonnda/internal/api/humaerror"
-	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
+	"github.com/google/uuid"
+
 	patientaccess "github.com/gabrielgcmr/sonnda/internal/features/patient/access"
 	laboratory "github.com/gabrielgcmr/sonnda/internal/features/patient/exam/laboratory"
 )
@@ -75,9 +74,9 @@ func (h *Handler) RegisterHumaRoutes(registered huma.API, security []map[string]
 }
 
 func (h *Handler) listLabReports(ctx context.Context, input *listLabReportsInput) (*listLabReportsOutput, error) {
-	currentUser, err := humaCurrentUser(ctx)
-	if err != nil {
-		return nil, err
+	currentUser, ok := helpers.GetCurrentUserFromContext(ctx)
+	if !ok {
+		return nil, huma.Error403Forbidden("conta registrada necess?ria")
 	}
 	if err := h.accessChecker.RequireAccess(ctx, currentUser.ID, input.PatientID); err != nil {
 		return nil, humaerror.From(err)
@@ -97,9 +96,9 @@ func (h *Handler) listLabReports(ctx context.Context, input *listLabReportsInput
 }
 
 func (h *Handler) getLabReport(ctx context.Context, input *labReportInput) (*labReportOutput, error) {
-	currentUser, err := humaCurrentUser(ctx)
-	if err != nil {
-		return nil, err
+	currentUser, ok := helpers.GetCurrentUserFromContext(ctx)
+	if !ok {
+		return nil, huma.Error403Forbidden("conta registrada necess?ria")
 	}
 	report, err := h.svc.FindByID(ctx, input.LabReportID)
 	if err != nil {
@@ -112,14 +111,6 @@ func (h *Handler) getLabReport(ctx context.Context, input *labReportInput) (*lab
 		return nil, humaerror.From(err)
 	}
 	return &labReportOutput{Body: *report}, nil
-}
-
-func humaCurrentUser(ctx context.Context) (*accountdomain.User, error) {
-	currentUser, ok := helpers.GetCurrentUserFromContext(ctx)
-	if !ok {
-		return nil, huma.Error403Forbidden("conta registrada necessária")
-	}
-	return currentUser, nil
 }
 
 func shouldReturnFullLabsFor(expand, include string) bool {
