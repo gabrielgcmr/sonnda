@@ -4,17 +4,20 @@ package http
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"reflect"
 	"testing"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humagin"
 	"github.com/gabrielgcmr/sonnda/internal/api/helpers"
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
+	"github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/extraction"
 	"github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/labextraction"
 	domaintext "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/textextraction"
 	"github.com/gin-gonic/gin"
@@ -55,7 +58,7 @@ func (s *temporaryLabExtractorStub) ExtractLabReport(_ context.Context, input la
 	}}}, nil
 }
 
-func TestTemporaryLabExtractionDiscardsPDFAndReturnsStructuredResult(t *testing.T) {
+func TestStandaloneLabExtractionDiscardsPDFAndReturnsStructuredResult(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	textExtractor := &temporaryTextExtractorStub{}
 	labExtractor := &temporaryLabExtractorStub{}
@@ -65,7 +68,7 @@ func TestTemporaryLabExtractionDiscardsPDFAndReturnsStructuredResult(t *testing.
 		c.Next()
 	})
 	api := humagin.New(router, huma.DefaultConfig("test", "test"))
-	NewTemporaryLabExtraction(textExtractor, labExtractor).RegisterHumaRoutes(api, nil)
+	NewStandaloneLabExtraction(extraction.New(textExtractor, labExtractor)).RegisterHumaRoutes(api, nil)
 
 	body, contentType := temporaryLabMultipart(t, "exam.pdf", "application/pdf", []byte("%PDF-1.4"))
 	request := httptest.NewRequest(http.MethodPost, "/lab-extractions", body)
@@ -87,7 +90,7 @@ func TestTemporaryLabExtractionDiscardsPDFAndReturnsStructuredResult(t *testing.
 	}
 }
 
-func TestTemporaryLabExtractionRejectsNonPDF(t *testing.T) {
+func TestStandaloneLabExtractionRejectsNonPDF(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
 	router.Use(func(c *gin.Context) {
@@ -95,7 +98,7 @@ func TestTemporaryLabExtractionRejectsNonPDF(t *testing.T) {
 		c.Next()
 	})
 	api := humagin.New(router, huma.DefaultConfig("test", "test"))
-	NewTemporaryLabExtraction(&temporaryTextExtractorStub{}, &temporaryLabExtractorStub{}).RegisterHumaRoutes(api, nil)
+	NewStandaloneLabExtraction(extraction.New(&temporaryTextExtractorStub{}, &temporaryLabExtractorStub{})).RegisterHumaRoutes(api, nil)
 	body, contentType := temporaryLabMultipart(t, "exam.txt", "text/plain", []byte("not a PDF"))
 	request := httptest.NewRequest(http.MethodPost, "/lab-extractions", body)
 	request.Header.Set("Content-Type", contentType)
@@ -113,7 +116,7 @@ func TestTemporaryExtractionFailureStillRemovesPDF(t *testing.T) {
 	router.Use(func(c *gin.Context) {
 		c.Request = c.Request.WithContext(helpers.ContextWithCurrentUser(c.Request.Context(), &accountdomain.User{ID: uuid.New()}))
 	})
-	NewTemporaryLabExtraction(reader, provider).RegisterHumaRoutes(humagin.New(router, huma.DefaultConfig("test", "test")), nil)
+	NewStandaloneLabExtraction(extraction.New(reader, provider)).RegisterHumaRoutes(humagin.New(router, huma.DefaultConfig("test", "test")), nil)
 	body, contentType := temporaryLabMultipart(t, "exam.pdf", "application/pdf", []byte("%PDF-1.4"))
 	request := httptest.NewRequest(http.MethodPost, "/lab-extractions", body)
 	request.Header.Set("Content-Type", contentType)
@@ -142,7 +145,7 @@ func TestTemporaryPDFValidation(t *testing.T) {
 			router.Use(func(c *gin.Context) {
 				c.Request = c.Request.WithContext(helpers.ContextWithCurrentUser(c.Request.Context(), &accountdomain.User{ID: uuid.New()}))
 			})
-			NewTemporaryLabExtraction(&temporaryTextExtractorStub{}, &temporaryLabExtractorStub{}).RegisterHumaRoutes(humagin.New(router, huma.DefaultConfig("test", "test")), nil)
+			NewStandaloneLabExtraction(extraction.New(&temporaryTextExtractorStub{}, &temporaryLabExtractorStub{})).RegisterHumaRoutes(humagin.New(router, huma.DefaultConfig("test", "test")), nil)
 			body, contentType := temporaryLabMultipart(t, "exam.pdf", "application/pdf", tc.content)
 			request := httptest.NewRequest(http.MethodPost, "/lab-extractions", body)
 			request.Header.Set("Content-Type", contentType)
@@ -152,6 +155,57 @@ func TestTemporaryPDFValidation(t *testing.T) {
 				t.Fatalf("status %d: %s", response.Code, response.Body.String())
 			}
 		})
+	}
+}
+
+type pdfExtractorFunc func(context.Context, string, string) (*extraction.Result, error)
+
+func (f pdfExtractorFunc) ExtractPDF(ctx context.Context, path, filename string) (*extraction.Result, error) {
+	return f(ctx, path, filename)
+}
+
+func TestStandaloneLabExtractionUsesInjectedService(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	want := extraction.Result{
+		Status:      labextraction.ExtractionStatusPartial,
+		Warnings:    []labextraction.ExtractionWarning{{Code: "review", Message: "Conferir resultado."}},
+		SummaryText: "Resumo retornado pelo serviço injetado.",
+	}
+	user := &accountdomain.User{ID: uuid.New()}
+	requestContext := helpers.ContextWithCurrentUser(context.Background(), user)
+	var temporaryPath string
+	calls := 0
+	extractor := pdfExtractorFunc(func(ctx context.Context, path, filename string) (*extraction.Result, error) {
+		calls++
+		temporaryPath = path
+		if ctx != requestContext || filename != "injected.pdf" {
+			t.Fatalf("request context or filename changed: %s", filename)
+		}
+		data, err := os.ReadFile(path)
+		if err != nil || string(data) != "%PDF-1.4" {
+			t.Fatalf("temporary file unavailable to injected service: %q, %v", data, err)
+		}
+		return &want, nil
+	})
+	router := gin.New()
+	NewStandaloneLabExtraction(extractor).RegisterHumaRoutes(humagin.New(router, huma.DefaultConfig("test", "test")), nil)
+	body, contentType := temporaryLabMultipart(t, "injected.pdf", "application/pdf", []byte("%PDF-1.4"))
+	request := httptest.NewRequest(http.MethodPost, "/lab-extractions", body).WithContext(requestContext)
+	request.Header.Set("Content-Type", contentType)
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, request)
+	if response.Code != http.StatusOK || calls != 1 {
+		t.Fatalf("status=%d calls=%d body=%s", response.Code, calls, response.Body.String())
+	}
+	var got extraction.Result
+	if err := json.Unmarshal(response.Body.Bytes(), &got); err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("injected result changed: got %+v, want %+v", got, want)
+	}
+	if _, err := os.Stat(temporaryPath); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("temporary PDF was not removed: %v", err)
 	}
 }
 

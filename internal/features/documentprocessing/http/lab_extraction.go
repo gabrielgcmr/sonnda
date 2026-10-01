@@ -15,19 +15,17 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/gabrielgcmr/sonnda/internal/api/helpers"
 	"github.com/gabrielgcmr/sonnda/internal/api/humaerror"
-	"github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/labextraction"
-	domaintext "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/textextraction"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 )
 
 const temporaryLabExtractionMaxFileSize = 10 * 1024 * 1024
 
-type temporaryLabTextExtractor interface {
-	Extract(ctx context.Context, input domaintext.ExtractInput) (*domaintext.ExtractOutput, error)
+type pdfExtractor interface {
+	ExtractPDF(ctx context.Context, path, filename string) (*extraction.Result, error)
 }
 
-type TemporaryLabExtractionHandler struct {
-	extractor *extraction.Service
+type StandaloneLabExtractionHandler struct {
+	extractor pdfExtractor
 }
 
 type temporaryLabExtractionForm struct {
@@ -44,14 +42,11 @@ type temporaryLabExtractionOutput struct {
 	Body temporaryLabExtractionResponse
 }
 
-func NewTemporaryLabExtraction(
-	textExtractor temporaryLabTextExtractor,
-	labExtractor labextraction.LabReportTextExtractor,
-) *TemporaryLabExtractionHandler {
-	return &TemporaryLabExtractionHandler{extractor: extraction.New(textExtractor, labExtractor)}
+func NewStandaloneLabExtraction(extractor pdfExtractor) *StandaloneLabExtractionHandler {
+	return &StandaloneLabExtractionHandler{extractor: extractor}
 }
 
-func (h *TemporaryLabExtractionHandler) RegisterHumaRoutes(registered huma.API, security []map[string][]string) {
+func (h *StandaloneLabExtractionHandler) RegisterHumaRoutes(registered huma.API, security []map[string][]string) {
 	huma.Register(registered, huma.Operation{
 		OperationID:  "extractTemporaryLabReport",
 		Method:       http.MethodPost,
@@ -64,7 +59,7 @@ func (h *TemporaryLabExtractionHandler) RegisterHumaRoutes(registered huma.API, 
 	}, h.extract)
 }
 
-func (h *TemporaryLabExtractionHandler) extract(ctx context.Context, input *temporaryLabExtractionInput) (*temporaryLabExtractionOutput, error) {
+func (h *StandaloneLabExtractionHandler) extract(ctx context.Context, input *temporaryLabExtractionInput) (*temporaryLabExtractionOutput, error) {
 	if _, ok := helpers.GetCurrentUserFromContext(ctx); !ok {
 		return nil, huma.Error403Forbidden("conta registrada necess?ria")
 	}

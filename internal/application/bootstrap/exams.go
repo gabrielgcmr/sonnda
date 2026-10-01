@@ -19,8 +19,8 @@ import (
 )
 
 type ExamsModule struct {
-	Handler                       *documenthttp.ExamsHandler
-	TemporaryLabExtractionHandler *documenthttp.TemporaryLabExtractionHandler
+	Handler                        *documenthttp.ExamsHandler
+	StandaloneLabExtractionHandler *documenthttp.StandaloneLabExtractionHandler
 }
 
 func NewExamsModule(db *pginfra.Client, lab labextraction.LabReportTextExtractor, storage domainstorage.FileStorageService, config config.OCRConfig) *ExamsModule {
@@ -33,5 +33,5 @@ func NewExamsModule(db *pginfra.Client, lab labextraction.LabReportTextExtractor
 	drafts := documents.NewDrafts(repo, extractor, storage)
 	confirmer := labdocumentconfirmation.New(service, drafts, repo, labs)
 	access := patientaccess.NewChecker(patients, accesspostgres.NewRepository(db))
-	return &ExamsModule{Handler: documenthttp.NewExams(service, drafts, confirmer, storage, access), TemporaryLabExtractionHandler: documenthttp.NewTemporaryLabExtraction(reader, lab)}
+	return &ExamsModule{Handler: documenthttp.NewExams(service, drafts, confirmer, storage, access), StandaloneLabExtractionHandler: documenthttp.NewStandaloneLabExtraction(extractor)}
 }
