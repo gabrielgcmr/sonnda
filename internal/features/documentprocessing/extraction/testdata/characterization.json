@@ -1,0 +1,460 @@
+[
+  {
+    "name": "success_preserves_values_units_and_references",
+    "use_gemini": true,
+    "input": {
+      "patient_name": null,
+      "patient_dob": null,
+      "lab_name": null,
+      "lab_phone": null,
+      "insurance_provider": null,
+      "requesting_doctor": null,
+      "technical_manager": null,
+      "report_date": null,
+      "tests": [
+        {
+          "test_name": "Painel sintético",
+          "material": null,
+          "method": null,
+          "collected_at": "2026-09-01",
+          "release_at": null,
+          "items": [
+            {
+              "parameter_name": "Hematócrito",
+              "result_value": "43,8",
+              "result_unit": "%",
+              "reference_text": "40 a 50"
+            },
+            {
+              "parameter_name": "Marcador",
+              "result_value": "< 5",
+              "result_unit": "mg/L",
+              "reference_text": null
+            },
+            {
+              "parameter_name": "Triagem",
+              "result_value": "Negativo",
+              "result_unit": null,
+              "reference_text": null
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "status": "succeeded",
+      "warnings": [],
+      "report": {
+        "patient_name": null,
+        "patient_dob": null,
+        "lab_name": null,
+        "lab_phone": null,
+        "insurance_provider": null,
+        "requesting_doctor": null,
+        "technical_manager": null,
+        "report_date": null,
+        "tests": [
+          {
+            "test_name": "Painel sintético",
+            "material": null,
+            "method": null,
+            "collected_at": "2026-09-01",
+            "release_at": null,
+            "items": [
+              {
+                "parameter_name": "Hematócrito",
+                "result_value": "43,8",
+                "result_unit": "%",
+                "reference_text": "40 a 50"
+              },
+              {
+                "parameter_name": "Marcador",
+                "result_value": "< 5",
+                "result_unit": "mg/L",
+                "reference_text": null
+              },
+              {
+                "parameter_name": "Triagem",
+                "result_value": "Negativo",
+                "result_unit": null,
+                "reference_text": null
+              }
+            ]
+          }
+        ]
+      },
+      "summary_text": "Data de coleta: 01/09/2026\n\nPainel sintético\nHematócrito: 43,8 %\nMarcador: < 5 mg/L\nTriagem: Negativo\n"
+    }
+  },
+  {
+    "name": "partial_missing_values_warns_once_per_panel",
+    "use_gemini": true,
+    "input": {
+      "patient_name": null,
+      "patient_dob": null,
+      "lab_name": null,
+      "lab_phone": null,
+      "insurance_provider": null,
+      "requesting_doctor": null,
+      "technical_manager": null,
+      "report_date": null,
+      "tests": [
+        {
+          "test_name": "Painel",
+          "material": null,
+          "method": null,
+          "collected_at": null,
+          "release_at": null,
+          "items": [
+            {
+              "parameter_name": "Glicose",
+              "result_value": "90",
+              "result_unit": "mg/dL",
+              "reference_text": null
+            },
+            {
+              "parameter_name": "Outro",
+              "result_value": null,
+              "result_unit": null,
+              "reference_text": null
+            },
+            {
+              "parameter_name": "Terceiro",
+              "result_value": null,
+              "result_unit": null,
+              "reference_text": null
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "status": "partial",
+      "warnings": [
+        {
+          "code": "missing_value",
+          "message": "Há parâmetros sem valor identificado.",
+          "field": "tests.items.result_value"
+        }
+      ],
+      "report": {
+        "patient_name": null,
+        "patient_dob": null,
+        "lab_name": null,
+        "lab_phone": null,
+        "insurance_provider": null,
+        "requesting_doctor": null,
+        "technical_manager": null,
+        "report_date": null,
+        "tests": [
+          {
+            "test_name": "Painel",
+            "material": null,
+            "method": null,
+            "collected_at": null,
+            "release_at": null,
+            "items": [
+              {
+                "parameter_name": "Glicose",
+                "result_value": "90",
+                "result_unit": "mg/dL",
+                "reference_text": null
+              },
+              {
+                "parameter_name": "Outro",
+                "result_value": null,
+                "result_unit": null,
+                "reference_text": null
+              },
+              {
+                "parameter_name": "Terceiro",
+                "result_value": null,
+                "result_unit": null,
+                "reference_text": null
+              }
+            ]
+          }
+        ]
+      },
+      "summary_text": "Painel\nGlicose: 90 mg/dL\nOutro: não identificado\nTerceiro: não identificado\n"
+    }
+  },
+  {
+    "name": "empty_report_combines_provider_and_application_warnings",
+    "use_gemini": true,
+    "input": {
+      "patient_name": null,
+      "patient_dob": null,
+      "lab_name": null,
+      "lab_phone": null,
+      "insurance_provider": null,
+      "requesting_doctor": null,
+      "technical_manager": null,
+      "report_date": null,
+      "tests": []
+    },
+    "expected": {
+      "status": "needs_review",
+      "warnings": [
+        {
+          "code": "no_structured_results",
+          "message": "nenhum resultado laboratorial estruturado foi encontrado",
+          "field": "tests"
+        },
+        {
+          "code": "no_usable_results",
+          "message": "Nenhum resultado laboratorial utilizável foi encontrado."
+        }
+      ],
+      "report": {
+        "patient_name": null,
+        "patient_dob": null,
+        "lab_name": null,
+        "lab_phone": null,
+        "insurance_provider": null,
+        "requesting_doctor": null,
+        "technical_manager": null,
+        "report_date": null,
+        "tests": []
+      },
+      "summary_text": "Nenhum resultado estruturado encontrado.\n"
+    }
+  },
+  {
+    "name": "identified_parameter_without_value_is_not_usable",
+    "use_gemini": true,
+    "input": {
+      "patient_name": null,
+      "patient_dob": null,
+      "lab_name": null,
+      "lab_phone": null,
+      "insurance_provider": null,
+      "requesting_doctor": null,
+      "technical_manager": null,
+      "report_date": null,
+      "tests": [
+        {
+          "test_name": "Painel",
+          "material": null,
+          "method": null,
+          "collected_at": null,
+          "release_at": null,
+          "items": [
+            {
+              "parameter_name": "Glicose",
+              "result_value": null,
+              "result_unit": null,
+              "reference_text": null
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "status": "needs_review",
+      "warnings": [
+        {
+          "code": "no_usable_results",
+          "message": "Nenhum resultado laboratorial utilizável foi encontrado."
+        }
+      ],
+      "report": {
+        "patient_name": null,
+        "patient_dob": null,
+        "lab_name": null,
+        "lab_phone": null,
+        "insurance_provider": null,
+        "requesting_doctor": null,
+        "technical_manager": null,
+        "report_date": null,
+        "tests": [
+          {
+            "test_name": "Painel",
+            "material": null,
+            "method": null,
+            "collected_at": null,
+            "release_at": null,
+            "items": [
+              {
+                "parameter_name": "Glicose",
+                "result_value": null,
+                "result_unit": null,
+                "reference_text": null
+              }
+            ]
+          }
+        ]
+      },
+      "summary_text": "Painel\nGlicose: não identificado\n"
+    }
+  },
+  {
+    "name": "service_omits_unnamed_entries_and_trims_fields",
+    "use_gemini": false,
+    "input": {
+      "patient_name": null,
+      "patient_dob": null,
+      "lab_name": null,
+      "lab_phone": null,
+      "insurance_provider": null,
+      "requesting_doctor": null,
+      "technical_manager": null,
+      "report_date": null,
+      "tests": [
+        {
+          "test_name": "  ",
+          "material": null,
+          "method": null,
+          "collected_at": null,
+          "release_at": null,
+          "items": [
+            {
+              "parameter_name": "Ignorado",
+              "result_value": "1",
+              "result_unit": null,
+              "reference_text": null
+            }
+          ]
+        },
+        {
+          "test_name": " Painel ",
+          "material": null,
+          "method": null,
+          "collected_at": null,
+          "release_at": null,
+          "items": [
+            {
+              "parameter_name": "  ",
+              "result_value": "2",
+              "result_unit": null,
+              "reference_text": null
+            },
+            {
+              "parameter_name": " Glicose ",
+              "result_value": " 90 ",
+              "result_unit": " mg/dL ",
+              "reference_text": null
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "status": "partial",
+      "warnings": [
+        {
+          "code": "unnamed_test",
+          "message": "Um exame sem nome identificado foi omitido.",
+          "field": "tests"
+        },
+        {
+          "code": "unnamed_parameter",
+          "message": "Um parâmetro sem nome identificado foi omitido.",
+          "field": "tests.items"
+        }
+      ],
+      "report": {
+        "patient_name": null,
+        "patient_dob": null,
+        "lab_name": null,
+        "lab_phone": null,
+        "insurance_provider": null,
+        "requesting_doctor": null,
+        "technical_manager": null,
+        "report_date": null,
+        "tests": [
+          {
+            "test_name": "Painel",
+            "material": null,
+            "method": null,
+            "collected_at": null,
+            "release_at": null,
+            "items": [
+              {
+                "parameter_name": "Glicose",
+                "result_value": "90",
+                "result_unit": "mg/dL",
+                "reference_text": null
+              }
+            ]
+          }
+        ]
+      },
+      "summary_text": "Painel\nGlicose: 90 mg/dL\n"
+    }
+  },
+  {
+    "name": "dates_normalize_and_warnings_keep_field_order",
+    "use_gemini": true,
+    "input": {
+      "patient_name": null,
+      "patient_dob": "31/02/2000",
+      "lab_name": null,
+      "lab_phone": null,
+      "insurance_provider": null,
+      "requesting_doctor": null,
+      "technical_manager": null,
+      "report_date": "01/09/2026",
+      "tests": [
+        {
+          "test_name": "Painel",
+          "material": null,
+          "method": null,
+          "collected_at": "01/09/2026 08:15",
+          "release_at": "inválida",
+          "items": [
+            {
+              "parameter_name": "Glicose",
+              "result_value": "90",
+              "result_unit": "mg/dL",
+              "reference_text": null
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "status": "partial",
+      "warnings": [
+        {
+          "code": "invalid_date",
+          "message": "Uma data não pôde ser identificada e foi deixada em branco.",
+          "field": "patient_dob"
+        },
+        {
+          "code": "invalid_date",
+          "message": "Uma data não pôde ser identificada e foi deixada em branco.",
+          "field": "tests.release_at"
+        }
+      ],
+      "report": {
+        "patient_name": null,
+        "patient_dob": null,
+        "lab_name": null,
+        "lab_phone": null,
+        "insurance_provider": null,
+        "requesting_doctor": null,
+        "technical_manager": null,
+        "report_date": "2026-09-01",
+        "tests": [
+          {
+            "test_name": "Painel",
+            "material": null,
+            "method": null,
+            "collected_at": "2026-09-01T08:15:00Z",
+            "release_at": null,
+            "items": [
+              {
+                "parameter_name": "Glicose",
+                "result_value": "90",
+                "result_unit": "mg/dL",
+                "reference_text": null
+              }
+            ]
+          }
+        ]
+      },
+      "summary_text": "Data de coleta: 01/09/2026 08:15\n\nPainel\nGlicose: 90 mg/dL\n"
+    }
+  }
+]

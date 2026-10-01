@@ -1,0 +1,125 @@
+{
+  "version": 1,
+  "result": {
+    "status": "partial",
+    "warnings": [
+      {
+        "code": "review_source",
+        "message": "Conferir documento original.",
+        "field": "tests.items"
+      }
+    ],
+    "report": {
+      "patient_name": null,
+      "patient_dob": null,
+      "lab_name": null,
+      "lab_phone": null,
+      "insurance_provider": null,
+      "requesting_doctor": null,
+      "technical_manager": null,
+      "report_date": null,
+      "tests": [
+        {
+          "test_name": "Painel A",
+          "material": null,
+          "method": null,
+          "collected_at": null,
+          "release_at": null,
+          "items": [
+            {
+              "parameter_name": "Marcador",
+              "result_value": "< 5",
+              "result_unit": "mg/L",
+              "reference_text": null
+            },
+            {
+              "parameter_name": "Triagem",
+              "result_value": "Negativo",
+              "result_unit": null,
+              "reference_text": null
+            }
+          ]
+        },
+        {
+          "test_name": "Painel B",
+          "material": null,
+          "method": null,
+          "collected_at": null,
+          "release_at": null,
+          "items": [
+            {
+              "parameter_name": "Glicose",
+              "result_value": "90",
+              "result_unit": "mg/dL",
+              "reference_text": null
+            }
+          ]
+        }
+      ]
+    },
+    "summary_text": "Painel A\nMarcador: < 5 mg/L\nTriagem: Negativo\n\nPainel B\nGlicose: 90 mg/dL\n"
+  },
+  "metadata": {
+    "provider": "gemini",
+    "processor": "synthetic-processor",
+    "model": "baseline-model",
+    "status": "partial",
+    "confidence": 0.9,
+    "warnings": [
+      {
+        "code": "review_source",
+        "message": "Conferir documento original.",
+        "field": "tests.items"
+      }
+    ]
+  },
+  "raw_text": "  Texto bruto sintético\n",
+  "tests_metadata": [
+    {
+      "raw_text": "Painel A original",
+      "status": "partial",
+      "confidence": 0.8,
+      "warnings": [
+        {
+          "code": "review_source",
+          "message": "Conferir documento original.",
+          "field": "tests.items"
+        }
+      ],
+      "items": [
+        {
+          "raw_text": "Marcador < 5",
+          "status": "partial",
+          "confidence": 0.7,
+          "warnings": [
+            {
+              "code": "review_source",
+              "message": "Conferir documento original.",
+              "field": "tests.items"
+            }
+          ]
+        },
+        {
+          "raw_text": "Triagem Negativo",
+          "status": "succeeded",
+          "confidence": null,
+          "warnings": null
+        }
+      ]
+    },
+    {
+      "raw_text": "Painel B original",
+      "status": "succeeded",
+      "confidence": null,
+      "warnings": null,
+      "items": [
+        {
+          "raw_text": "Glicose 90",
+          "status": "succeeded",
+          "confidence": 0.95,
+          "warnings": []
+        }
+      ]
+    }
+  ]
+}
