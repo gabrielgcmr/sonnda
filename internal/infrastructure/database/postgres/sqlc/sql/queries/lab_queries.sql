@@ -160,21 +160,50 @@ WHERE patient_id = $1
 -- ============================================================
 
 -- name: ListLabReportsByPatientID :many
+WITH paged_reports AS (
+  SELECT
+      id,
+      patient_id,
+      exam_document_id,
+      patient_name,
+      lab_name,
+      report_date,
+      uploaded_by_user_id,
+      created_at,
+      updated_at
+  FROM lab_reports
+  WHERE patient_id = $1
+  ORDER BY report_date DESC NULLS LAST, created_at DESC
+  LIMIT $2 OFFSET $3
+)
 SELECT
-    id,
-    patient_id,
-    exam_document_id,
-    patient_name,
-    lab_name,
-    report_date,
-    uploaded_by_user_id,
-    fingerprint,
-    created_at,
-    updated_at
-FROM lab_reports
-WHERE patient_id = $1
-ORDER BY report_date DESC NULLS LAST, created_at DESC
-LIMIT $2 OFFSET $3;
+    r.id AS report_id,
+    r.patient_id,
+    r.exam_document_id,
+    r.patient_name,
+    r.lab_name,
+    r.report_date,
+    r.uploaded_by_user_id,
+    r.created_at,
+    r.updated_at,
+    p.id AS panel_id,
+    p.lab_report_id AS panel_report_id,
+    p.test_name,
+    p.material,
+    p.method,
+    p.collected_at,
+    p.release_at,
+    o.id AS observation_id,
+    o.lab_panel_id AS observation_panel_id,
+    o.parameter_name,
+    o.result_value,
+    o.result_unit,
+    o.reference_text
+FROM paged_reports r
+LEFT JOIN lab_panels p ON p.lab_report_id = r.id
+LEFT JOIN observations o ON o.lab_panel_id = p.id
+ORDER BY r.report_date DESC NULLS LAST, r.created_at DESC,
+         p.collected_at NULLS LAST, p.id, o.id;
 
 -- name: ListLabPanelsByReportID :many
 SELECT

@@ -9,7 +9,6 @@ import (
 )
 
 type Repository interface {
-	Create(ctx context.Context, report *labdomain.LabReport) error
 	FindByID(ctx context.Context, reportID uuid.UUID) (*labdomain.LabReport, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 	ListLabs(ctx context.Context, patientID uuid.UUID, limit, offset int) ([]labdomain.LabReport, error)

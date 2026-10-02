@@ -8,7 +8,6 @@ import (
 
 	documents "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/domain"
 	labs "github.com/gabrielgcmr/sonnda/internal/features/patient/exam/laboratory/domain"
-	labpostgres "github.com/gabrielgcmr/sonnda/internal/features/patient/exam/laboratory/postgres"
 	pginfra "github.com/gabrielgcmr/sonnda/internal/infrastructure/database/postgres"
 	examsqlc "github.com/gabrielgcmr/sonnda/internal/infrastructure/database/postgres/sqlc/generated/exam"
 	"github.com/google/uuid"
@@ -20,10 +19,14 @@ import (
 type DraftRepository struct {
 	client    *pginfra.Client
 	documents *ExamsRepository
-	labs      *labpostgres.Repository
+	labs      labReportWriter
 }
 
-func NewDraftRepository(client *pginfra.Client, labs *labpostgres.Repository) *DraftRepository {
+type labReportWriter interface {
+	CreateInTx(context.Context, pgx.Tx, *labs.LabReport) error
+}
+
+func NewDraftRepository(client *pginfra.Client, labs labReportWriter) *DraftRepository {
 	return &DraftRepository{client: client, documents: &ExamsRepository{client: client, queries: examsqlc.New(client.Pool())}, labs: labs}
 }
 

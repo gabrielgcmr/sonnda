@@ -1,93 +1,85 @@
-# Refatoração de `documentprocessing` em etapas
+# Refatoração incremental do repositório de exames laboratoriais
 
-## Objetivo e estrutura
+## Resumo
 
-Concentrar os contratos de processamento na feature, explicitar a responsabilidade de cada etapa e preservar o comportamento atual. Executar em seis commits sequenciais, mantendo o projeto compilando e os testes relevantes passando em cada um.
+Refatorar somente `internal/features/patient/exam/laboratory/postgres`, preservando a interface da feature, as rotas, o banco e o comportamento atual. Alterações mecânicas em `bootstrap` e testes serão feitas apenas para acompanhar a renomeação do construtor; nenhum outro adaptador de repositório será refatorado.
 
-A organização final terá:
+## Etapas
 
-- `documentprocessing/textextraction`: contrato de leitura, qualidade e normalização de texto.
-- `documentprocessing/labextraction`: contrato, tipos e schema da extração estruturada.
-- `documentprocessing/extraction`: coordenação, normalização dos dados, avaliação e resumo.
-- Raiz de `documentprocessing`: documentos, consultas, rascunhos e snapshot persistido.
-- Infraestrutura: implementações de leitura e integração Gemini.
-- `labdocumentconfirmation`: conversão do snapshot em histórico clínico.
+1. **Caracterização**
 
-## Etapas de implementação
+   Criar testes do adaptador para:
 
-### 1. Fixar a referência de comportamento
+   - reconstrução de `lab_report → lab_panels → observations`;
+   - persistência transacional do agregado;
+   - rollback quando a criação de painel ou observação falhar;
+   - `FindByID` retornando `nil` para `pgx.ErrNoRows`;
+   - listagem de laudos e timeline;
+   - exclusão do laudo com cascata.
 
-Complementar os testes existentes com casos de caracterização da extração completa: sucesso, resultado parcial, ausência de resultados, campos sem identificação, datas inválidas e valores qualitativos.
+   Nenhuma alteração de comportamento será feita nesta etapa.
 
-Registrar respostas esperadas, incluindo códigos e ordem dos avisos, estados, resumo e metadados internos. Criar uma fixture de snapshot versão 1 para verificar sua leitura depois da refatoração. Exportar o OpenAPI atual para um arquivo temporário de comparação.
+2. **Padronização de nomes**
 
-**Concluída quando:** os testes representam o comportamento vigente e passam antes das mudanças estruturais.
+   Dentro do adaptador de laboratório:
 
-### 2. Reorganizar contratos e adaptadores
+   - renomear `LabsRepository` para `Repository`;
+   - renomear `NewLabsRepository` para `NewRepository`;
+   - manter a interface `laboratory.Repository` sem mudanças;
+   - atualizar somente os pontos de composição e testes que instanciam o adaptador.
 
-Mover os pacotes globais de extração textual e laboratorial para dentro de `documentprocessing`, levando testes, fixtures, documentação e schema embarcado. Manter nomes dos tipos, interfaces, campos e versões.
+3. **Separação dos arquivos**
 
-Mover Gemini de `infrastructure/persistence/gemini` para `infrastructure/gemini`. Atualizar imports da API, bootstrap, comandos, Document AI e testes no mesmo commit, sem deixar aliases de compatibilidade.
+   Organizar o pacote assim:
 
-Os pacotes de contratos não dependerão da raiz da feature, de HTTP, banco ou SDKs.
+   ```text
+   internal/features/patient/exam/laboratory/postgres/
+   ├── repository.go
+   ├── read.go
+   ├── write.go
+   ├── mapper.go
+   └── errors.go
+   ```
 
-**Concluída quando:** todos os consumidores compilam e os testes dos pacotes movidos passam.
+   - `repository.go`: tipo, construtor e verificação da interface;
+   - `read.go`: `FindByID`, `ListLabs` e timeline;
+   - `write.go`: `Create`, `CreateInTx` e `Delete`;
+   - `mapper.go`: conversões SQLC/domínio;
+   - `errors.go`: classificadores específicos do adaptador.
 
-### 3. Centralizar a composição do fluxo
+4. **Padronização da transação**
 
-Alterar o construtor do handler de extração temporária para receber uma interface com `ExtractPDF`, em vez dos extratores de texto e laboratório.
+   Preservar as duas operações:
 
-O bootstrap construirá o serviço e fornecerá a mesma instância à extração temporária e aos rascunhos. O terminal continuará compondo suas dependências e utilizando `ExtractText`, sem exigir um leitor de PDF.
+   ```go
+   Create(ctx, report)
+   CreateInTx(ctx, tx, report)
+   ```
 
-Manter `Drafts` como coordenador de extração, armazenamento e criação do documento. A confirmação continuará sendo um caso de uso separado.
+   `Create` continuará abrindo e confirmando sua própria transação. `CreateInTx` continuará disponível para o fluxo de confirmação, sem alterar `DraftRepository` ou qualquer outro repositório.
 
-**Concluída quando:** handlers não constroem serviços de extração e os testes comprovam que os dois fluxos HTTP usam a dependência injetada.
+   O rollback deverá usar o mesmo contexto de limpeza já adotado no código atual.
 
-### 4. Consolidar as regras de extração
+5. **Limpeza interna**
 
-Separar, dentro do pacote `extraction`, funções para normalização, avaliação de resultados e formatação. Manter a sequência explícita no serviço, sem criar um mecanismo genérico de etapas.
-
-Gemini ficará responsável por preparar a requisição, chamar o fornecedor, validar término/JSON/schema e informar fornecedor/modelo. Transferir suas decisões sobre ausência de resultados e estados dos itens para a aplicação.
-
-Executar a normalização de entrada semântica na aplicação, preservando o texto original. Consolidar as chamadas redundantes de normalização dos dados estruturados.
-
-Preservar as regras atuais: presença de estrutura e presença de resultado utilizável continuam sendo verificações distintas. A mudança de localização não alterará avisos, estados ou critérios de aceitação.
-
-**Concluída quando:** os testes de caracterização continuam passando e as regras de qualidade podem ser testadas sem Gemini.
-
-### 5. Separar snapshot e remover componentes sem uso
-
-Mover a codificação do snapshot para a raiz de `documentprocessing`, com funções `EncodeExtractionSnapshot` e `DecodeExtractionSnapshot`. Atualizar rascunhos e testes de persistência.
-
-Preservar integralmente a versão 1, seus campos privados e validações. Separar os testes de processamento dos testes de serialização para evitar dependências circulares.
-
-Remover o classificador heurístico, o fallback textual sem consumidores de produção e o helper HTTP `isNilExtractor`, junto dos testes exclusivos desses componentes. Preservar o comando de leitura com Document AI e as funcionalidades efetivamente usadas.
-
-**Concluída quando:** snapshots anteriores são recuperados sem perda e a busca de referências confirma a remoção dos componentes selecionados.
-
-### 6. Documentar e validar a entrega
-
-Atualizar as instruções do repositório, documentação arquitetural, READMEs dos pacotes e ADR-006. Registrar a reorganização como complemento histórico da ADR-005.
-
-Renomear `service_impl.go` para `queries.go`, mantendo a interface pública interna de consultas. Documentar a direção das dependências e os três consumidores da extração: temporário, rascunho e terminal.
-
-**Concluída quando:** as verificações abaixo passam e o diff contém somente a refatoração planejada.
+   - remover helpers sem uso;
+   - usar os conversores compartilhados de `database/postgres/pgtypes.go`;
+   - concentrar conversões de `LabReport`, `LabPanel` e `Observation` em `mapper.go`;
+   - tornar privado qualquer helper usado apenas pelo adaptador;
+   - preservar os nomes e formatos públicos da API.
 
 ## Validação
 
-- Executar testes dos pacotes afetados em cada etapa e `go test ./...` ao concluir.
-- Verificar PDF ilegível, falha do fornecedor, cancelamento, ausência de resultado e limpeza do arquivo temporário.
-- Verificar preservação de texto original, valores, unidades, datas, avisos, resumo e metadados no snapshot.
-- Executar os testes de integração existentes em Postgres local isolado: criação sem histórico clínico, confirmação atômica e idempotente, rollback e retomada da exclusão.
-- Confirmar que a confirmação utiliza o snapshot e não repete a extração.
-- Comparar o OpenAPI antes/depois com a mesma versão de exportação; não aceitar mudanças no contrato HTTP.
+Executar os testes unitários e de compilação após as etapas relevantes:
 
-Os testes unitários direcionados executados durante o planejamento passaram. Os testes de integração ainda não foram executados.
+```powershell
+go test ./internal/features/patient/exam/laboratory/... ./internal/application/bootstrap ./internal/application/usecase/labdocumentconfirmation
+```
 
-## Premissas e limites
+Os testes de integração requerem `LABS_TEST_DATABASE_URL` apontando para um
+PostgreSQL local isolado. Eles criam e removem um schema próprio:
 
-- Reorganização completa neste PR, em commits separados.
-- Permanecem o processamento síncrono, os endpoints, as respostas e a confirmação explícita.
-- Não haverá migrations, mudanças no schema de extração, fila, novo fornecedor ou alterações no web/mobile.
-- Preservar o tratamento centralizado de erros e logging.
-- Preservar a exclusão preexistente de `docs/dev/setup.md`, fora desta refatoração.
+```powershell
+$env:LABS_TEST_DATABASE_URL = "postgres://postgres:postgres@localhost:5432/sonnda_test?sslmode=disable"
+go test -tags=integration ./internal/features/patient/exam/laboratory/postgres ./internal/features/documentprocessing/postgres -count=1
+```

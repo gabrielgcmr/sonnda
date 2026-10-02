@@ -48,15 +48,7 @@ func (s *service) List(ctx context.Context, patientID uuid.UUID, limit, offset i
 
 	out := make([]LabReportSummaryOutput, 0, len(reports))
 
-	for _, header := range reports {
-		fullReport, err := s.labsRepo.FindByID(ctx, header.ID)
-		if err != nil {
-			return nil, mapRepoError("labs.find_by_id", err)
-		}
-		if fullReport == nil {
-			continue
-		}
-
+	for _, fullReport := range reports {
 		summary := LabReportSummaryOutput{
 			ID:             fullReport.ID,
 			PatientID:      fullReport.PatientID,
@@ -107,16 +99,8 @@ func (s *service) ListFull(ctx context.Context, patientID uuid.UUID, limit, offs
 
 	out := make([]*LabReportOutput, 0, len(headers))
 
-	for _, header := range headers {
-		fullReport, err := s.labsRepo.FindByID(ctx, header.ID)
-		if err != nil {
-			return nil, mapRepoError("labs.find_by_id", err)
-		}
-		if fullReport == nil {
-			continue
-		}
-
-		dto := mapDomainReportToOutput(fullReport)
+	for i := range headers {
+		dto := mapDomainReportToOutput(&headers[i])
 		out = append(out, dto)
 	}
 
