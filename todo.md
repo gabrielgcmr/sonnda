@@ -1,19 +1,85 @@
-Sim, mas bem menor enquanto houver endpoints/middlewares Gin legados.
+# Refatoração incremental do repositório de exames laboratoriais
 
-Para as rotas Huma, mantenha apenas a tradução do `AppError`:
+## Resumo
 
-- `StatusFromCode`: converte o código interno para status HTTP.
-- Uma conversão `AppError → huma.StatusError` que preserve `code` e `violations`, caso esses campos façam parte do contrato público.
-- A política de logging/observabilidade, idealmente aplicada também aos erros retornados pelo Huma.
+Refatorar somente `internal/features/patient/exam/laboratory/postgres`, preservando a interface da feature, as rotas, o banco e o comportamento atual. Alterações mecânicas em `bootstrap` e testes serão feitas apenas para acompanhar a renomeação do construtor; nenhum outro adaptador de repositório será refatorado.
 
-Hoje há uma inconsistência: [`writeHumaError`](/C:/Users/gabri/Dev/sonnda/sonnda-api/internal/api/huma.go:133) monta um `Problem`, mas passa apenas `problem.Detail` para `huma.WriteErr`; portanto `code`, `violations`, `traceId` e `instance` são descartados. Já handlers Huma usam `huma.NewError(...)`, cujo modelo padrão é RFC 9457, mas também não inclui o `code` Sonnda.
+## Etapas
 
-O que ainda precisa ficar para Gin é `ErrorResponder`, `writeProblem` e os helpers de log, pois existem três rotas legadas em [`routes.go`](/C:/Users/gabri/Dev/sonnda/sonnda-api/internal/api/routes.go:59), além de middlewares Gin.
+1. **Caracterização**
 
-Quando essas rotas forem migradas para Huma, eu removeria `ErrorResponder` e a escrita manual de JSON. O diretório poderia virar algo como `internal/api/problem`, contendo só:
+   Criar testes do adaptador para:
 
-- `StatusFromCode`
-- adaptador `AppError → huma.StatusError`/modelo de problema Huma
-- mapeamento de violações para `huma.ErrorDetail`, se necessário
+   - reconstrução de `lab_report → lab_panels → observations`;
+   - persistência transacional do agregado;
+   - rollback quando a criação de painel ou observação falhar;
+   - `FindByID` retornando `nil` para `pgx.ErrNoRows`;
+   - listagem de laudos e timeline;
+   - exclusão do laudo com cascata.
 
-Ou seja: Huma substitui o “writer” do presenter; não substitui automaticamente a tradução do contrato de erro da aplicação.
+   Nenhuma alteração de comportamento será feita nesta etapa.
+
+2. **Padronização de nomes**
+
+   Dentro do adaptador de laboratório:
+
+   - renomear `LabsRepository` para `Repository`;
+   - renomear `NewLabsRepository` para `NewRepository`;
+   - manter a interface `laboratory.Repository` sem mudanças;
+   - atualizar somente os pontos de composição e testes que instanciam o adaptador.
+
+3. **Separação dos arquivos**
+
+   Organizar o pacote assim:
+
+   ```text
+   internal/features/patient/exam/laboratory/postgres/
+   ├── repository.go
+   ├── read.go
+   ├── write.go
+   ├── mapper.go
+   └── errors.go
+   ```
+
+   - `repository.go`: tipo, construtor e verificação da interface;
+   - `read.go`: `FindByID`, `ListLabs` e timeline;
+   - `write.go`: `Create`, `CreateInTx` e `Delete`;
+   - `mapper.go`: conversões SQLC/domínio;
+   - `errors.go`: classificadores específicos do adaptador.
+
+4. **Padronização da transação**
+
+   Preservar as duas operações:
+
+   ```go
+   Create(ctx, report)
+   CreateInTx(ctx, tx, report)
+   ```
+
+   `Create` continuará abrindo e confirmando sua própria transação. `CreateInTx` continuará disponível para o fluxo de confirmação, sem alterar `DraftRepository` ou qualquer outro repositório.
+
+   O rollback deverá usar o mesmo contexto de limpeza já adotado no código atual.
+
+5. **Limpeza interna**
+
+   - remover helpers sem uso;
+   - usar os conversores compartilhados de `database/postgres/pgtypes.go`;
+   - concentrar conversões de `LabReport`, `LabPanel` e `Observation` em `mapper.go`;
+   - tornar privado qualquer helper usado apenas pelo adaptador;
+   - preservar os nomes e formatos públicos da API.
+
+## Validação
+
+Executar os testes unitários e de compilação após as etapas relevantes:
+
+```powershell
+go test ./internal/features/patient/exam/laboratory/... ./internal/application/bootstrap ./internal/application/usecase/labdocumentconfirmation
+```
+
+Os testes de integração requerem `LABS_TEST_DATABASE_URL` apontando para um
+PostgreSQL local isolado. Eles criam e removem um schema próprio:
+
+```powershell
+$env:LABS_TEST_DATABASE_URL = "postgres://postgres:postgres@localhost:5432/sonnda_test?sslmode=disable"
+go test -tags=integration ./internal/features/patient/exam/laboratory/postgres ./internal/features/documentprocessing/postgres -count=1
+```

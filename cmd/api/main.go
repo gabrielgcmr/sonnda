@@ -15,17 +15,16 @@ import (
 
 	"github.com/gabrielgcmr/sonnda/internal/application/bootstrap"
 	"github.com/gabrielgcmr/sonnda/internal/config"
-	"github.com/gabrielgcmr/sonnda/internal/domain/labextraction"
 	authhttp "github.com/gabrielgcmr/sonnda/internal/features/auth/http"
+	"github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/labextraction"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/observability"
 
 	"github.com/gabrielgcmr/sonnda/internal/api"
 	authinfra "github.com/gabrielgcmr/sonnda/internal/infrastructure/auth"
-	documentaiinfra "github.com/gabrielgcmr/sonnda/internal/infrastructure/documentai"
-	filestorage "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/filestorage"
-	geminiinfra "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/gemini"
-	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
+	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/database/postgres"
+	filestorage "github.com/gabrielgcmr/sonnda/internal/infrastructure/filestorage"
+	geminiinfra "github.com/gabrielgcmr/sonnda/internal/infrastructure/gemini"
 )
 
 // version is overridden via -ldflags in build/release pipelines.
@@ -76,13 +75,6 @@ func main() {
 	}
 	defer storageService.Close()
 
-	//6.2 Document AI Service
-	docAIClient, err := documentaiinfra.NewClient(ctx, cfg.Storage.GCPProjectID, cfg.Storage.GCPLocation, gcpOpts...)
-	if err != nil {
-		logInfraFatal("falha ao criar DocAI client", err)
-	}
-	defer docAIClient.Close()
-
 	var labTextExtractor labextraction.LabReportTextExtractor
 	if strings.TrimSpace(cfg.Gemini.APIKey) != "" {
 		geminiClient, err := geminiinfra.NewClient(ctx, cfg.Gemini)
@@ -106,8 +98,7 @@ func main() {
 	}
 
 	//7. Módulos
-	fallbackOCR := documentaiinfra.NewTextExtractor(docAIClient, cfg.Storage.GCPExtractLabsProcessorID, cfg.OCR.FallbackTimeout)
-	modules := bootstrap.NewModules(dbClient, labTextExtractor, storageService, cfg.OCR, fallbackOCR)
+	modules := bootstrap.NewModules(dbClient, labTextExtractor, storageService, cfg.OCR)
 
 	//8 Middlewares
 	//8.1 API
@@ -126,15 +117,15 @@ func main() {
 		Logger:     appLogger,
 		CORSConfig: cfg.CORS,
 		Deps: &api.APIDependencies{
-			Auth:                          authMiddleware,
-			Account:                       modules.Account.Middleware,
-			AccountHandler:                modules.Account.Handler,
-			PatientAccessHandler:          modules.PatientAccess.Handler,
-			PatientCreationHandler:        modules.Patient.CreationHandler,
-			PatientHandler:                modules.Patient.ProfileHandler,
-			LaboratoryHandler:             modules.Labs.LaboratoryHandler,
-			ExamsHandler:                  modules.Exams.Handler,
-			TemporaryLabExtractionHandler: modules.Exams.TemporaryLabExtractionHandler,
+			Auth:                           authMiddleware,
+			Account:                        modules.Account.Middleware,
+			AccountHandler:                 modules.Account.Handler,
+			PatientAccessHandler:           modules.PatientAccess.Handler,
+			PatientCreationHandler:         modules.Patient.CreationHandler,
+			PatientHandler:                 modules.Patient.ProfileHandler,
+			LaboratoryHandler:              modules.Labs.LaboratoryHandler,
+			ExamsHandler:                   modules.Exams.Handler,
+			StandaloneLabExtractionHandler: modules.Exams.StandaloneLabExtractionHandler,
 		},
 	})
 

@@ -12,16 +12,16 @@ type LabReport struct {
 	ID        uuid.UUID `json:"id"`
 	PatientID uuid.UUID `json:"patient_id"`
 
-	ExamDocumentID    *uuid.UUID  `json:"exam_document_id,omitempty"`
-	PatientName       *string     `json:"patient_name,omitempty"`
-	PatientDOB        *time.Time  `json:"patient_dob,omitempty"`
-	LabName           *string     `json:"lab_name,omitempty"`
-	LabPhone          *string     `json:"lab_phone,omitempty"`
-	InsuranceProvider *string     `json:"insurance_provider,omitempty"`
-	RequestingDoctor  *string     `json:"requesting_doctor,omitempty"`
-	TechnicalManager  *string     `json:"technical_manager,omitempty"`
-	ReportDate        *time.Time  `json:"report_date,omitempty"`
-	TestResults       []LabResult `json:"test_results"`
+	ExamDocumentID    *uuid.UUID `json:"exam_document_id,omitempty"`
+	PatientName       *string    `json:"patient_name,omitempty"`
+	PatientDOB        *time.Time `json:"patient_dob,omitempty"`
+	LabName           *string    `json:"lab_name,omitempty"`
+	LabPhone          *string    `json:"lab_phone,omitempty"`
+	InsuranceProvider *string    `json:"insurance_provider,omitempty"`
+	RequestingDoctor  *string    `json:"requesting_doctor,omitempty"`
+	TechnicalManager  *string    `json:"technical_manager,omitempty"`
+	ReportDate        *time.Time `json:"report_date,omitempty"`
+	TestResults       []LabPanel `json:"panels"`
 
 	CreatedAt  time.Time `json:"created_at"`
 	UpdatedAt  time.Time `json:"updated_at"`

@@ -17,7 +17,7 @@ import (
 	"strings"
 	"time"
 
-	domaintext "github.com/gabrielgcmr/sonnda/internal/domain/textextraction"
+	domaintext "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/textextraction"
 )
 
 type CommandExtractor struct {
@@ -62,10 +62,14 @@ func (e *CommandExtractor) Extract(ctx context.Context, input domaintext.Extract
 func (e *CommandExtractor) extractPDF(ctx context.Context, localPath string) (*domaintext.ExtractOutput, error) {
 	text, err := e.run(ctx, "pdftotext", "-raw", localPath, "-")
 	if err != nil {
+		var exit *exec.ExitError
+		if errors.As(err, &exit) && (exit.ExitCode() == 1 || exit.ExitCode() == 3) {
+			return nil, fmt.Errorf("%w: %w", domaintext.ErrUnreadablePDF, err)
+		}
 		return nil, err
 	}
 	if e.requireUsableText && !domaintext.IsUsableText(text) {
-		return nil, errors.New("pdf text is not usable")
+		return nil, domaintext.ErrUnreadablePDF
 	}
 
 	return &domaintext.ExtractOutput{
@@ -518,7 +522,7 @@ func rotateImage(src image.Image, degrees int) image.Image {
 	}
 }
 
-var labResultLinePattern = regexp.MustCompile(`(?im)(?:hemacias|hemoglobina|hematocrito|v\.?g\.?m|h\.?g\.?m|c\.?h\.?g\.?m|leucocitos|plaquetas)(?:[.:]{2,}\s*:?[\s]*|:\s*)\d`)
+var labPanelLinePattern = regexp.MustCompile(`(?im)(?:hemacias|hemoglobina|hematocrito|v\.?g\.?m|h\.?g\.?m|c\.?h\.?g\.?m|leucocitos|plaquetas)(?:[.:]{2,}\s*:?[\s]*|:\s*)\d`)
 
 func scoreOCRText(text string) int {
 	normalized := strings.ToLower(text)
@@ -533,7 +537,7 @@ func scoreOCRText(text string) int {
 		}
 	}
 	// Linhas completas de analito e valor sao mais uteis que texto longo com ruido.
-	score += len(labResultLinePattern.FindAllStringIndex(normalized, -1)) * 120
+	score += len(labPanelLinePattern.FindAllStringIndex(normalized, -1)) * 120
 	for _, r := range normalized {
 		switch {
 		case r >= '0' && r <= '9':

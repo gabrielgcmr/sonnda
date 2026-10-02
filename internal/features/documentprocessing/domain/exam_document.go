@@ -27,20 +27,24 @@ const (
 )
 
 type ExamDocument struct {
-	ID               uuid.UUID      `json:"id"`
-	PatientID        uuid.UUID      `json:"patient_id"`
-	UploadedByUserID uuid.UUID      `json:"uploaded_by_user_id"`
-	StorageURI       string         `json:"storage_uri"`
-	OriginalFilename string         `json:"original_filename"`
-	MimeType         string         `json:"mime_type"`
-	Status           DocumentStatus `json:"status"`
-	ExamType         *ExamType      `json:"exam_type,omitempty"`
-	ExtractionMethod *string        `json:"extraction_method,omitempty"`
-	Confidence       *float64       `json:"confidence,omitempty"`
-	ExtractedText    *string        `json:"extracted_text,omitempty"`
-	ErrorMessage     *string        `json:"error_message,omitempty"`
-	CreatedAt        time.Time      `json:"created_at"`
-	UpdatedAt        time.Time      `json:"updated_at"`
+	ReviewStatus      *string        `json:"review_status,omitempty" enum:"pending,confirmed,deleting"`
+	LabReportID       *uuid.UUID     `json:"lab_report_id,omitempty"`
+	ConfirmedByUserID *uuid.UUID     `json:"confirmed_by_user_id,omitempty"`
+	ConfirmedAt       *time.Time     `json:"confirmed_at,omitempty"`
+	ID                uuid.UUID      `json:"id"`
+	PatientID         uuid.UUID      `json:"patient_id"`
+	UploadedByUserID  uuid.UUID      `json:"uploaded_by_user_id"`
+	StorageURI        string         `json:"storage_uri"`
+	OriginalFilename  string         `json:"original_filename"`
+	MimeType          string         `json:"mime_type"`
+	Status            DocumentStatus `json:"status"`
+	ExamType          *ExamType      `json:"exam_type,omitempty"`
+	ExtractionMethod  *string        `json:"extraction_method,omitempty"`
+	Confidence        *float64       `json:"confidence,omitempty"`
+	ExtractedText     *string        `json:"extracted_text,omitempty"`
+	ErrorMessage      *string        `json:"error_message,omitempty"`
+	CreatedAt         time.Time      `json:"created_at"`
+	UpdatedAt         time.Time      `json:"updated_at"`
 }
 
 func NewExamDocument(patientID, uploadedByUserID uuid.UUID, storageURI, originalFilename, mimeType string) (*ExamDocument, error) {

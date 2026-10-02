@@ -44,7 +44,7 @@ func TestListForAccountOmitsRelationshipMetadata(t *testing.T) {
 		total: 1,
 	}
 
-	output, err := NewService(repo).ListForAccount(context.Background(), accountID, 150, 2)
+	output, err := New(repo).ListForAccount(context.Background(), accountID, 150, 2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -63,7 +63,7 @@ func TestListForAccountOmitsRelationshipMetadata(t *testing.T) {
 func TestListForAccountMapsRepositoryFailure(t *testing.T) {
 	dbErr := errors.New("database unavailable")
 	err := errors.Join(persistence.ErrPersistenceFailure, dbErr)
-	_, got := NewService(&listRepository{err: err}).ListForAccount(context.Background(), uuid.New(), 20, 0)
+	_, got := New(&listRepository{err: err}).ListForAccount(context.Background(), uuid.New(), 20, 0)
 	var appErr *apperr.AppError
 	if !errors.As(got, &appErr) || appErr.Kind != apperr.INFRA_DATABASE_ERROR || !errors.Is(got, dbErr) {
 		t.Fatalf("unexpected error: %v", got)

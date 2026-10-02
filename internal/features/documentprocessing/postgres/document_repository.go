@@ -3,12 +3,11 @@ package postgres
 
 import (
 	"context"
-	"time"
 
 	processing "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing"
 	exams "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/domain"
-	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
-	examsqlc "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/sqlc/generated/exam"
+	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/database/postgres"
+	examsqlc "github.com/gabrielgcmr/sonnda/internal/infrastructure/database/postgres/sqlc/generated/exam"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -25,38 +24,6 @@ func NewDocumentRepository(client *postgress.Client) processing.DocumentReposito
 		client:  client,
 		queries: examsqlc.New(client.Pool()),
 	}
-}
-
-func (r *ExamsRepository) Create(ctx context.Context, document *exams.ExamDocument) error {
-	if document == nil {
-		return errDocumentRepositoryFailure
-	}
-	if err := document.NormalizeAndValidate(); err != nil {
-		return err
-	}
-
-	row, err := r.queries.CreateExamDocument(ctx, examsqlc.CreateExamDocumentParams{
-		ID:               document.ID,
-		PatientID:        document.PatientID,
-		UploadedByUserID: document.UploadedByUserID,
-		StorageUri:       document.StorageURI,
-		OriginalFilename: document.OriginalFilename,
-		MimeType:         document.MimeType,
-		Status:           string(document.Status),
-		ExamType:         examTypeToPgText(document.ExamType),
-		ExtractionMethod: nullableStringToPgText(document.ExtractionMethod),
-		Confidence:       nullableFloat64ToPgFloat8(document.Confidence),
-		ExtractedText:    nullableStringToPgText(document.ExtractedText),
-		ErrorMessage:     nullableStringToPgText(document.ErrorMessage),
-		CreatedAt:        requiredTimeToPgTimestamptz(document.CreatedAt),
-		UpdatedAt:        requiredTimeToPgTimestamptz(document.UpdatedAt),
-	})
-	if err != nil {
-		return err
-	}
-
-	*document = mapExamDocumentRow(row)
-	return nil
 }
 
 func (r *ExamsRepository) FindByID(ctx context.Context, id uuid.UUID) (*exams.ExamDocument, error) {
@@ -90,119 +57,6 @@ func (r *ExamsRepository) ListByPatient(ctx context.Context, patientID uuid.UUID
 	return documents, nil
 }
 
-func (r *ExamsRepository) MarkProcessing(ctx context.Context, id uuid.UUID, extractionMethod *string) (*exams.ExamDocument, error) {
-	row, err := r.queries.UpdateExamDocumentProcessing(ctx, examsqlc.UpdateExamDocumentProcessingParams{
-		ID:               id,
-		ExtractionMethod: nullableStringToPgText(extractionMethod),
-		UpdatedAt:        requiredTimeToPgTimestamptz(time.Now().UTC()),
-	})
-	if err != nil {
-		if isDocumentNotFound(err) {
-			return nil, nil
-		}
-		return nil, err
-	}
-
-	document := mapExamDocumentRow(row)
-	return &document, nil
-}
-
-func (r *ExamsRepository) MarkClassified(
-	ctx context.Context,
-	id uuid.UUID,
-	status exams.DocumentStatus,
-	examType exams.ExamType,
-	extractionMethod *string,
-	confidence *float64,
-	extractedText *string,
-	errorMessage *string,
-) (*exams.ExamDocument, error) {
-	row, err := r.queries.UpdateExamDocumentClassified(ctx, examsqlc.UpdateExamDocumentClassifiedParams{
-		ID:               id,
-		Status:           string(status),
-		ExamType:         examTypeToPgText(&examType),
-		ExtractionMethod: nullableStringToPgText(extractionMethod),
-		Confidence:       nullableFloat64ToPgFloat8(confidence),
-		ExtractedText:    nullableStringToPgText(extractedText),
-		ErrorMessage:     nullableStringToPgText(errorMessage),
-		UpdatedAt:        requiredTimeToPgTimestamptz(time.Now().UTC()),
-	})
-	if err != nil {
-		if isDocumentNotFound(err) {
-			return nil, nil
-		}
-		return nil, err
-	}
-
-	document := mapExamDocumentRow(row)
-	return &document, nil
-}
-
-func (r *ExamsRepository) MarkFailed(ctx context.Context, id uuid.UUID, errorMessage string) (*exams.ExamDocument, error) {
-	row, err := r.queries.UpdateExamDocumentFailed(ctx, examsqlc.UpdateExamDocumentFailedParams{
-		ID:           id,
-		ErrorMessage: requiredStringToPgText(errorMessage),
-		UpdatedAt:    requiredTimeToPgTimestamptz(time.Now().UTC()),
-	})
-	if err != nil {
-		if isDocumentNotFound(err) {
-			return nil, nil
-		}
-		return nil, err
-	}
-
-	document := mapExamDocumentRow(row)
-	return &document, nil
-}
-
-func (r *ExamsRepository) CreateDocumentText(ctx context.Context, documentText *exams.ExamDocumentText) error {
-	if documentText == nil {
-		return errDocumentRepositoryFailure
-	}
-	if err := documentText.NormalizeAndValidate(); err != nil {
-		return err
-	}
-
-	row, err := r.queries.CreateExamDocumentText(ctx, examsqlc.CreateExamDocumentTextParams{
-		ID:                 documentText.ID,
-		ExamDocumentID:     nullableUUIDToPgUUID(documentText.ExamDocumentID),
-		PatientID:          documentText.PatientID,
-		UploadedByUserID:   documentText.UploadedByUserID,
-		Category:           string(documentText.Category),
-		Title:              nullableStringToPgText(documentText.Title),
-		Modality:           nullableStringToPgText(documentText.Modality),
-		BodySite:           nullableStringToPgText(documentText.BodySite),
-		PerformedAt:        nullableTimeToPgTimestamptz(documentText.PerformedAt),
-		FacilityName:       nullableStringToPgText(documentText.FacilityName),
-		InterpretingDoctor: nullableStringToPgText(documentText.InterpretingDoctor),
-		Text:               documentText.Text,
-		Conclusion:         nullableStringToPgText(documentText.Conclusion),
-		ExtractionMethod:   nullableStringToPgText(documentText.ExtractionMethod),
-		Confidence:         nullableFloat64ToPgFloat8(documentText.Confidence),
-		CreatedAt:          requiredTimeToPgTimestamptz(documentText.CreatedAt),
-		UpdatedAt:          requiredTimeToPgTimestamptz(documentText.UpdatedAt),
-	})
-	if err != nil {
-		return err
-	}
-
-	*documentText = mapExamDocumentTextRow(row)
-	return nil
-}
-
-func (r *ExamsRepository) FindDocumentTextByDocumentID(ctx context.Context, documentID uuid.UUID) (*exams.ExamDocumentText, error) {
-	row, err := r.queries.GetExamDocumentTextByDocumentID(ctx, nullableUUIDToPgUUID(&documentID))
-	if err != nil {
-		if isDocumentNotFound(err) {
-			return nil, nil
-		}
-		return nil, err
-	}
-
-	documentText := mapExamDocumentTextRow(row)
-	return &documentText, nil
-}
-
 func (r *ExamsRepository) ListDocumentTextsByPatient(ctx context.Context, patientID uuid.UUID, limit, offset int) ([]exams.ExamDocumentText, error) {
 	rows, err := r.queries.ListExamDocumentTextsByPatientID(ctx, examsqlc.ListExamDocumentTextsByPatientIDParams{
 		PatientID: patientID,
@@ -223,6 +77,7 @@ func (r *ExamsRepository) ListDocumentTextsByPatient(ctx context.Context, patien
 
 func mapExamDocumentRow(row examsqlc.ExamDocument) exams.ExamDocument {
 	return exams.ExamDocument{
+		ReviewStatus: pgTextToNullableString(row.ReviewStatus), LabReportID: pgUUIDToNullableUUID(row.LabReportID), ConfirmedByUserID: pgUUIDToNullableUUID(row.ConfirmedByUserID), ConfirmedAt: pgTimestamptzToNullableTime(row.ConfirmedAt),
 		ID:               row.ID,
 		PatientID:        row.PatientID,
 		UploadedByUserID: row.UploadedByUserID,

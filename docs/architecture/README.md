@@ -10,11 +10,7 @@ As decisões não óbvias (o *porquê*) são registradas separadamente em ADRs.
 
 ## Visão geral
 
-O backend está migrando de camadas globais para contextos em `internal/features`, mantendo a separação entre domínio, aplicação, HTTP e persistência. Os contextos ainda não migrados permanecem nas camadas existentes.
-
-- **Domain (`internal/domain`)**  
-  Modelos do domínio, regras de negócio e invariantes.  
-  - Entities em `internal/domain/entity`; storage abstractions em `internal/domain/storage`; contrato de extracao laboratorial em `internal/domain/labextraction`.
+O backend está em camadas globais para contextos em `internal/features`, mantendo a separação entre domínio, aplicação, HTTP e persistência.
 
 - **Application (`internal/application`)**  
   Orquestração e cross-cutting concerns.  
@@ -33,26 +29,24 @@ O backend está migrando de camadas globais para contextos em `internal/features
   - `account/http` contém o handler de perfil e o middleware que resolve o usuário local e expõe `RequireRegisteredUser`.
   - `account/repository.go` define a interface de persistência; `account/postgres` implementa esse contrato usando o SQLC existente.
   - `patient/access` contém o checker, a listagem de pacientes acessíveis e os contratos de vínculo; seu handler HTTP atende `/v1/me/patients`.
+  - `documentprocessing` reúne o processamento e gestão documental: consultas de documentos (`queries.go`), coordenação de rascunhos (`drafts.go`) e snapshot persistido (`snapshot.go`). Subpacotes `textextraction` e `labextraction` definem contratos de leitura e extração estruturada, e `extraction` coordena normalização e resumo.
 
 - **Infrastructure (`internal/infrastructure`)**  
   Implementações concretas de persistência e integrações externas.  
   - **Persistence (`internal/infrastructure/persistence`)**: repositórios (sqlc/pgx), cache.
   - **Auth (`internal/infrastructure/auth`)**: Supabase auth provider.
-  - **Document AI (`internal/infrastructure/documentai`)**: implementacao atual de extracao laboratorial via Google Cloud Document AI.
+  - **Document AI (`internal/infrastructure/documentai`)**: integração independente com Google Cloud Document AI, sem consumidor no fluxo laboratorial atual.
+  - **Gemini (`internal/infrastructure/gemini`)**: cliente e extrator semântico estruturado baseado na API Google Gemini.
 
 - **Kernel (`internal/kernel`)**  
   Preocupações transversais (cross-cutting concerns).  
-  - Error contract (`internal/kernel/apperr`): `AppError` e catalog de códigos.
-  - Persistence (`internal/kernel/persistence`): sentinelas compartilhados de falha de persistência.
-  - Observability (`internal/kernel/observability`): logging (slog) com escopo de requisição.
-  - **Auth (`internal/infrastructure/auth`)**: integração com o provedor de autenticação.
-
-- **Kernel (`internal/kernel`)**  
-  Núcleo transversal do sistema.
-  - **Error contract (`internal/kernel/apperr`)**: contrato centralizado de erros.
-  - **Observability (`internal/kernel/observability`)**: logging baseado em slog, logger por request.
+  - **Error contract (`internal/kernel/apperr`)**: `AppError` e catálogo centralizado de códigos.
+  - **Persistence (`internal/kernel/persistence`)**: sentinelas compartilhados de falha de persistência.
+  - **Observability (`internal/kernel/observability`)**: logging (slog) com escopo de requisição.
 
 Essas camadas representam **limites conceituais**, não apenas organização de pastas.
+
+---
 
 ## Migração de account — aplicação, persistência e entidades
 
@@ -78,29 +72,9 @@ internal/features/account/
     └── middleware_test.go
 ```
 
-O código antes distribuído entre `api/handlers/user.go`, `application/services/user`
-e `application/usecase/registration` agora pertence a `account`. O pacote de
-aplicação não depende de Gin; o transporte HTTP depende dos serviços de account e
-dos helpers e presenter compartilhados.
-
-`bootstrap/account.go` monta um único `AccountModule`, com handler e middleware
-usando a mesma instância do repositório de usuários. `UserModule` foi incorporado
-a esse módulo. As rotas continuam compostas em `internal/api/routes.go`.
-
-A segunda etapa trouxe a interface `account.Repository` e o adaptador
-`account/postgres.Repository` para a feature. O bootstrap fornece o pool ao
-adaptador, que usa o SQLC já gerado, sem importar o pacote de repositórios legado.
 Os erros de conflito e usuário ausente pertencem ao contrato de account. A falha
 genérica de persistência pertence a `internal/kernel/persistence/errors.go`.
 O mapeamento de erros da aplicação deixa de importar a implementação Postgres.
-
-As entidades `User` e `AccountType`, seus parâmetros, erros de validação e testes
-agora pertencem a `account/domain`, sem uma subpasta `entity`. Esse pacote mantém
-as regras de domínio independentes de serviços de aplicação, HTTP, `apperr` e
-infraestrutura. Os contextos de paciente importam `accountdomain` diretamente;
-essa dependência entre contextos continua explícita, sem depender dos serviços
-de account. A normalização de CPF continua usando o domínio compartilhado
-`demographics`.
 
 As interfaces e a listagem de acesso a pacientes pertencem a `patient/access`.
 `account` não depende mais do repositório de acesso. A conexão compartilhada e o
@@ -115,6 +89,39 @@ em `internal/api/account_routes_test.go` verificam os fluxos pelas rotas reais,
 com serviços de account e repositórios em memória.
 Os testes do adaptador verificam parâmetros, conversões e erros com uma
 implementação em memória da interface de queries do SQLC, sem acessar banco real.
+
+---
+
+## Processamento e extração de documentos (`documentprocessing`)
+
+```text
+internal/features/documentprocessing/
+├── queries.go              # Consultas de documentos e textos extraídos (Service)
+├── drafts.go               # Coordenação de criação, conferência e exclusão de rascunhos
+├── snapshot.go             # Codificação e decodificação do snapshot persistido
+├── dto.go                  # DTOs públicos de documentos
+├── repository.go           # Contratos de persistência de documentos
+├── textextraction/         # Contrato de leitura, qualidade e normalização de texto
+├── labextraction/          # Contrato, tipos e schema da extração estruturada
+├── extraction/             # Coordenação, normalização dos dados, avaliação e resumo
+├── http/                   # Handlers Huma (extração temporária e rascunhos)
+└── postgres/               # Adaptadores PostgreSQL para documentos e rascunhos
+```
+
+### Direção das dependências
+
+1. **`textextraction` e `labextraction`**: Contratos e tipos folha, sem dependências de infraestrutura, HTTP ou da raiz de `documentprocessing`.
+2. **`extraction`**: Coordena `textextraction` e `labextraction`. Não depende de HTTP, storage, banco de dados nem da raiz da feature.
+3. **Raiz de `documentprocessing`**: `queries.go` para consultas públicas internas (`Service`), `drafts.go` para rascunhos e `snapshot.go` (`EncodeExtractionSnapshot` / `DecodeExtractionSnapshot`) para serialização de snapshots. Fica na raiz para evitar dependências circulares com `extraction`.
+4. **Casos de uso**: `internal/application/usecase/labdocumentconfirmation` converte a fotografia conferida em histórico clínico (`patient/exam/laboratory`).
+
+### Consumidores da extração
+
+A extração de laudos atende a dois fluxos:
+1. **Temporário (`StandaloneLabExtractionHandler` / `POST /lab-extractions`)**: Processamento em memória e arquivos temporários para conferência rápida, descartando o PDF em seguida. Não grava banco nem storage permanente.
+2. **Rascunho (`Drafts` / `POST /patients/{patientId}/exam-documents`)**: Armazena o PDF no storage, grava a fotografia da extração e gera rascunho com status pendente para conferência do usuário.
+
+*Nota:* A extração via terminal/CLI foi descontinuada e removida para evitar execuções sem autenticação e controle de acesso.
 
 ---
 

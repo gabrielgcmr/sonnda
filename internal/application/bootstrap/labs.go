@@ -8,7 +8,7 @@ import (
 	laboratoryhttp "github.com/gabrielgcmr/sonnda/internal/features/patient/exam/laboratory/http"
 	labpostgres "github.com/gabrielgcmr/sonnda/internal/features/patient/exam/laboratory/postgres"
 	patientpostgres "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/postgres"
-	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
+	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/database/postgres"
 )
 
 type LabsModule struct {
@@ -18,7 +18,7 @@ type LabsModule struct {
 func NewLabsModule(dbClient *postgress.Client) *LabsModule {
 	patientRepo := patientpostgres.NewRepository(dbClient)
 	accessRepo := accesspostgres.NewRepository(dbClient)
-	labsRepo := labpostgres.NewLabsRepository(dbClient)
+	labsRepo := labpostgres.NewRepository(dbClient)
 
 	svc := labsvc.New(patientRepo, labsRepo)
 	accessChecker := patientaccess.NewChecker(patientRepo, accessRepo)

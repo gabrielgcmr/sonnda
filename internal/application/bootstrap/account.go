@@ -5,7 +5,7 @@ import (
 	"github.com/gabrielgcmr/sonnda/internal/features/account"
 	accounthttp "github.com/gabrielgcmr/sonnda/internal/features/account/http"
 	accountpostgres "github.com/gabrielgcmr/sonnda/internal/features/account/postgres"
-	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
+	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/database/postgres"
 )
 
 type AccountModule struct {
@@ -16,7 +16,7 @@ type AccountModule struct {
 func NewAccountModule(db *postgress.Client) *AccountModule {
 	userRepo := accountpostgres.New(db.Pool())
 
-	service := account.NewService(userRepo)
+	service := account.New(userRepo)
 	onboarding := account.NewOnboarding(userRepo, service)
 
 	return &AccountModule{

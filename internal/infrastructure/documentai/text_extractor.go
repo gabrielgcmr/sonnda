@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/documentai/apiv1/documentaipb"
-	domaintext "github.com/gabrielgcmr/sonnda/internal/domain/textextraction"
+	domaintext "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/textextraction"
 )
 
 type DocumentProcessor interface {

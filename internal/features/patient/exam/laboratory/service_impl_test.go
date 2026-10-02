@@ -3,6 +3,7 @@ package laboratory
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"testing"
 
@@ -65,12 +66,12 @@ func (r *fakeLabsRepo) FindBySignature(ctx context.Context, patientID uuid.UUID,
 func (r *fakeLabsRepo) ListLabs(ctx context.Context, patientID uuid.UUID, limit, offset int) ([]labs.LabReport, error) {
 	return r.listRes, r.listErr
 }
-func (r *fakeLabsRepo) ListItemsByPatientAndParameter(
+func (r *fakeLabsRepo) ListObservationTimelineByPatientAndParameter(
 	ctx context.Context,
 	patientID uuid.UUID,
 	parameterName string,
 	limit, offset int,
-) ([]labs.LabResultItemTimeline, error) {
+) ([]labs.ObservationTimeline, error) {
 	panic("unused")
 }
 
@@ -131,5 +132,39 @@ func TestList_LabsRepoError_ReturnsInfraDatabaseError(t *testing.T) {
 	}
 	if appErr.Kind != apperr.INFRA_DATABASE_ERROR {
 		t.Fatalf("expected INFRA_DATABASE_ERROR, got %s", appErr.Kind)
+	}
+}
+
+func TestLabReportOutputUsesPanelAndObservationJSONNames(t *testing.T) {
+	report := LabReportOutput{
+		Panels: []LabPanelOutput{{
+			Observations: []ObservationOutput{{ParameterName: "Glicose"}},
+		}},
+	}
+	data, err := json.Marshal(report)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var body map[string]json.RawMessage
+	if err := json.Unmarshal(data, &body); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := body["panels"]; !ok {
+		t.Fatal("report output is missing panels")
+	}
+	if _, ok := body["test_results"]; ok {
+		t.Fatal("report output still exposes test_results")
+	}
+
+	var panels []map[string]json.RawMessage
+	if err := json.Unmarshal(body["panels"], &panels); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := panels[0]["observations"]; !ok {
+		t.Fatal("panel output is missing observations")
+	}
+	if _, ok := panels[0]["items"]; ok {
+		t.Fatal("panel output still exposes items")
 	}
 }

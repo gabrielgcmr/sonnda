@@ -17,57 +17,23 @@ Simple instructions for coding agents working on this repo.
    - Skip only when the format does not support comments or the file is auto-generated.
 
 ## Stack
-- Backend: API Restful in Go
-  - Gin + sqlc + Supabase
-  - **Auth**: Supabase
-  - **Persistence**: Database: PostgreSQL (Supabase managed) and Redis (Upstash), File Storage: Supabase.
-  - **External integrations**: Google Cloud Document AI,
+- Backend: API REST in Go, using Gin with Huma for route definitions and OpenAPI.
+- **Database**: PostgreSQL hosted on Supabase, accessed through pgx and sqlc; Redis is available through the infrastructure adapter.
+- **Auth**: Supabase JWT authentication.
+- **File storage**: Google Cloud Storage (GCS).
+- **Document processing**: command-based text extraction and Gemini structured extraction. A Document AI adapter also exists; check application wiring before treating it as active.
 
-- **Development tools**:
-  - Air (live reload)
-  - SQLC (SQL code generation)
-  - Make (task automation)
-  - Docker + docker-compose (containerization)
+## Architecture
 
-## Arquitetura
-- The architecture is migrating incrementally from global layers to business contexts under `internal/features`, preserving separation of concerns.
-- **Features (`internal/features`)**: Context-specific application flows.
-  - **Account (`internal/features/account`)**: Profile services, onboarding, DTOs and error mapping; HTTP handler and middleware live in `account/http`.
-  - **Patient profile (`internal/features/patient/profile`)**: Patient registration services, DTOs, error mapping and repository contract; its domain model lives in `profile/domain`, HTTP handler in `profile/http`, and Postgres adapter in `profile/postgres`.
-  - **Patient access (`internal/features/patient/access`)**: Account-to-patient grants, accessible-patient listing, relationship metadata, application and HTTP services, repository contracts and persistence. Access determines whether an account is linked to a patient; it does not define action-level authorization.
-  - Account owns its repository interface and user persistence errors in `account/repository.go`; its Postgres adapter lives in `account/postgres`.
-  - User entities and account types belong to `internal/features/account/domain` (package `accountdomain`). Other contexts may import this pure domain package without depending on account application services.
-- The shared database client and generated sqlc code remain in `internal/infrastructure` during this migration.
-- Huma route registrations are the OpenAPI source of truth. The API CI exports an immutable `openapi.json` artifact identified by the API commit SHA; clients generate from that artifact.
-  - The shared persistence failure sentinel belongs to `internal/kernel/persistence/errors.go`; account application code must not import concrete Postgres repositories.
-  - `internal/application/bootstrap/account.go` composes the account handler and middleware in a single `AccountModule`; patient access is composed independently in `PatientAccessModule`.
-  - Add account behavior to this feature, not to the former global user service, registration use case or user handler paths.
-  - Other contexts keep their existing organization until explicitly migrated.
-- **Domain (`internal/domain`)**: Core business models and rules (infrastructure and HTTP agnostic).
-  - **Entity (`internal/domain/entity`)**: Core business entities.
-  - **Storage (`internal/domain/storage`)**: Storage interfaces (file storage abstractions).
-  - **Lab Extraction (`internal/domain/labextraction`)**: contract for structured lab report extraction.
-- **Application (`internal/application`)**: Where orchestration and cross-cutting concerns live.
-  - **Use cases (`internal/application/usecase`)**: Business flows composed from domain models/ports.
-  - Patient creation is coordinated by `internal/application/usecase/patientcreation`: profile data and the creator's explicit relationship are validated by their owning features and persisted atomically.
-  - **Services (`internal/application/services`)**: Application services that coordinate repositories/integrations.
-  - Patient access checks live in `internal/features/patient/access`: `Checker` permits the patient owner or an account with an active grant. No action, account-type or professional-kind policies are currently implemented.
-  - **Bootstrap (`internal/application/bootstrap`)**: Wiring of dependencies, env/config loading.
-- **Config (`internal/config`)**: Environment configuration.
-- **API (`internal/api`)**: HTTP layer (RESTful API).
-- Feature-specific HTTP handlers live with their owning feature under `internal/features/<feature>/http`.
-- `internal/api` owns route composition, middleware and shared HTTP adapters; keep cross-feature wiring here, not feature behavior.
-  - **Middleware (`internal/api/middleware`)**: HTTP middlewares (auth, logging, CORS, etc).
-  - **Helpers (`internal/api/helpers`)**: HTTP helper functions (binding, validation, identity).
-  - **Huma errors (`internal/api/humaerror`)**: Application-to-HTTP error translation and request-scoped error observability.
-  - **Presenter (`internal/api/presenter`)**: Legacy Gin error responses only; retain it for legacy code that will be reused, not for new Huma handlers.
-- **Infrastructure (`internal/infrastructure`)**: Concrete implementations and outbound integrations.
-  - **Persistence (`internal/infrastructure/persistence`)**: Database repositories, cache, file storage.
-  - **Auth (`internal/infrastructure/auth`)**: Authentication provider implementations.
-  - **Document AI (`internal/infrastructure/documentai`)**: current Google Cloud Document AI integration.
-- **Kernel (`internal/kernel`)**: Cross-cutting concerns.
-  - **Error contract (`internal/kernel/apperr`)**: Centralized `AppError` codes/messages; handlers must convert via HTTP layer helpers.
-  - **Observability (`internal/kernel/observability`)**: Logging setup (slog), request-scoped logger injection.
+- The codebase is organized primarily by business feature under `internal/features`. The migration is incremental; do not assume every feature has the same internal package layout.
+- Feature-specific models, contracts, services, HTTP handlers, and persistence adapters belong with their owning feature where applicable. Current feature areas include `account`, `auth`, `documentprocessing`, and `patient` (`access`, `profile`, and `exam`).
+- `documentprocessing` owns document workflows, extraction coordination, snapshots, and the file-storage contract. Its specialized packages include `domain`, `extraction`, `labextraction`, `textextraction`, `http`, and `postgres`.
+- `internal/domain` contains shared domain concepts used by multiple features, currently including demographics. Feature-specific domain models live under their feature.
+- `internal/application/bootstrap` composes modules and dependencies. `internal/application/usecase` contains cross-feature workflows, including patient creation and laboratory-document confirmation.
+- `internal/api` owns Gin/Huma setup, shared middleware and helpers, route composition, and HTTP error translation. Feature handlers remain in their feature packages. Huma route registrations are the OpenAPI source of truth; CI publishes an immutable OpenAPI artifact identified by the API commit SHA.
+- `internal/infrastructure` contains concrete adapters: PostgreSQL and generated sqlc code under `database/postgres`, plus `auth`, `filestorage`, `redis`, `documentai`, `gemini`, and `textextraction`.
+- `internal/kernel` contains cross-cutting application errors, persistence errors, and observability. `internal/config` owns environment and integration configuration.
+- Patient access checks live in `internal/features/patient/access`; the checker permits the patient owner or an account with an active grant. It does not currently implement action-level, account-type, or professional-kind authorization.
 
 ## Error Handling (MANDATORY)
 
@@ -100,4 +66,3 @@ This project uses a **centralized error contract** based on `AppError`.
 ## Logging
 - The app uses `log/slog` via `internal/kernel/observability` (request-scoped logger is injected by HTTP middleware).
 - Configure with `LOG_LEVEL` (`debug|info|warn|error`) and `LOG_FORMAT` (`text|json|pretty`).
-

@@ -141,7 +141,7 @@ Cada item parseado deve ter status:
 Um item laboratorial parseado deve carregar, no minimo:
 
 ```go
-type ParsedLabResult struct {
+type ParsedPanel struct {
     Code          string
     OriginalName  string
     Value         *float64

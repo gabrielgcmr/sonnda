@@ -18,16 +18,16 @@ import (
 )
 
 type APIDependencies struct {
-	APIInfo                       APIInfo
-	Auth                          *authhttp.Middleware
-	Account                       *accounthttp.Middleware
-	AccountHandler                *accounthttp.Handler
-	PatientAccessHandler          *accesshttp.Handler
-	PatientCreationHandler        *patienthttp.CreationHandler
-	PatientHandler                *profilehttp.Handler
-	LaboratoryHandler             *laboratoryhttp.Handler
-	ExamsHandler                  *documentprocessinghttp.ExamsHandler
-	TemporaryLabExtractionHandler *documentprocessinghttp.TemporaryLabExtractionHandler
+	APIInfo                        APIInfo
+	Auth                           *authhttp.Middleware
+	Account                        *accounthttp.Middleware
+	AccountHandler                 *accounthttp.Handler
+	PatientAccessHandler           *accesshttp.Handler
+	PatientCreationHandler         *patienthttp.CreationHandler
+	PatientHandler                 *profilehttp.Handler
+	LaboratoryHandler              *laboratoryhttp.Handler
+	ExamsHandler                   *documentprocessinghttp.ExamsHandler
+	StandaloneLabExtractionHandler *documentprocessinghttp.StandaloneLabExtractionHandler
 }
 
 // SetupRoutes registers the endpoints and returns the configured Huma API.
@@ -56,7 +56,7 @@ func registerHumaRoutes(api huma.API, deps *APIDependencies) {
 	deps.PatientCreationHandler.RegisterHumaRoutes(registered, bearerSecurity())
 	deps.PatientHandler.RegisterHumaRoutes(registered, bearerSecurity())
 	deps.ExamsHandler.RegisterHumaRoutes(registered, bearerSecurity())
-	deps.TemporaryLabExtractionHandler.RegisterHumaRoutes(registered, bearerSecurity())
+	deps.StandaloneLabExtractionHandler.RegisterHumaRoutes(registered, bearerSecurity())
 	deps.LaboratoryHandler.RegisterHumaRoutes(registered, bearerSecurity())
 }
 

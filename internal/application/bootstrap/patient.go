@@ -9,8 +9,8 @@ import (
 	patientprofile "github.com/gabrielgcmr/sonnda/internal/features/patient/profile"
 	profilehttp "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/http"
 	patientpostgres "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/postgres"
-	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
-	patientcreationpostgres "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/patientcreation"
+	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/database/postgres"
+	patientcreationpostgres "github.com/gabrielgcmr/sonnda/internal/infrastructure/database/postgres/patientcreation"
 )
 
 type PatientModule struct {

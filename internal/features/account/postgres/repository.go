@@ -12,7 +12,7 @@ import (
 
 	"github.com/gabrielgcmr/sonnda/internal/features/account"
 	accountdomain "github.com/gabrielgcmr/sonnda/internal/features/account/domain"
-	usersqlc "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/sqlc/generated/user"
+	usersqlc "github.com/gabrielgcmr/sonnda/internal/infrastructure/database/postgres/sqlc/generated/user"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/persistence"
 )
 
