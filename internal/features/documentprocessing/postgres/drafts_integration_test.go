@@ -21,7 +21,7 @@ import (
 	labextract "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/labextraction"
 	labs "github.com/gabrielgcmr/sonnda/internal/features/patient/exam/laboratory/domain"
 	labpostgres "github.com/gabrielgcmr/sonnda/internal/features/patient/exam/laboratory/postgres"
-	pginfra "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
+	pginfra "github.com/gabrielgcmr/sonnda/internal/infrastructure/database/postgres"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
@@ -63,7 +63,7 @@ func reviewTestDatabase(t *testing.T) (*pginfra.Client, *DraftRepository, uuid.U
 	if _, err := client.Pool().Exec(ctx, "CREATE TABLE users (id uuid PRIMARY KEY); CREATE TABLE patients (id uuid PRIMARY KEY)"); err != nil {
 		t.Fatal(err)
 	}
-	schemaDir := filepath.Join("..", "..", "..", "infrastructure", "persistence", "postgres", "sqlc", "sql", "schema")
+	schemaDir := filepath.Join("..", "..", "..", "infrastructure", "database", "postgres", "sqlc", "sql", "schema")
 	for _, name := range []string{"exam.sql", "lab.sql"} {
 		sql, err := os.ReadFile(filepath.Join(schemaDir, name))
 		if err != nil {
@@ -77,7 +77,7 @@ func reviewTestDatabase(t *testing.T) (*pginfra.Client, *DraftRepository, uuid.U
 	if _, err := client.Pool().Exec(ctx, "INSERT INTO users VALUES ($1); INSERT INTO patients VALUES ($2)", userID, patientID); err != nil {
 		t.Fatal(err)
 	}
-	clinicalRepository := labpostgres.NewLabsRepository(client)
+	clinicalRepository := labpostgres.NewRepository(client)
 	return client, NewDraftRepository(client, clinicalRepository), patientID, userID
 }
 
@@ -247,14 +247,14 @@ func TestConfirmationUsesStoredSnapshotWithoutReextracting(t *testing.T) {
 	if err = repo.CreateDraft(context.Background(), doc, data); err != nil {
 		t.Fatal(err)
 	}
-	service := confirmation.New(processing.New(nil, repo.documents), processing.NewDrafts(repo, nil, nil), repo, labpostgres.NewLabsRepository(client))
+	service := confirmation.New(processing.New(nil, repo.documents), processing.NewDrafts(repo, nil, nil), repo, labpostgres.NewRepository(client))
 	saved, err := service.Confirm(context.Background(), doc.ID, user)
 	if err != nil {
 		t.Fatal(err)
 	}
-	item := saved.TestResults[0].Items[0]
+	item := saved.Panels[0].Observations[0]
 	// pgx may return the same instant in the host's local timezone.
-	if *item.ResultValue != value || *item.ResultUnit != unit || *item.ReferenceText != reference || saved.TestResults[0].CollectedAt.UTC().Format("2006-01-02") != date || saved.ExamDocumentID == nil {
+	if *item.ResultValue != value || *item.ResultUnit != unit || *item.ReferenceText != reference || saved.Panels[0].CollectedAt.UTC().Format("2006-01-02") != date || saved.ExamDocumentID == nil {
 		t.Fatalf("confirmation changed reviewed values: %+v", saved)
 	}
 	again, err := service.Confirm(context.Background(), doc.ID, user)

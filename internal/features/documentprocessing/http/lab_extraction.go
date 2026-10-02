@@ -17,7 +17,7 @@ import (
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 )
 
-const temporaryLabExtractionMaxFileSize = 10 * 1024 * 1024
+const standaloneLabExtractionMaxFileSize = 10 * 1024 * 1024
 
 type pdfExtractor interface {
 	ExtractPDF(ctx context.Context, path, filename string) (*extraction.Result, error)
@@ -27,18 +27,18 @@ type StandaloneLabExtractionHandler struct {
 	extractor pdfExtractor
 }
 
-type temporaryLabExtractionForm struct {
+type standaloneLabExtractionForm struct {
 	File huma.FormFile `form:"file" required:"true"`
 }
 
-type temporaryLabExtractionInput struct {
-	RawBody huma.MultipartFormFiles[temporaryLabExtractionForm]
+type standaloneLabExtractionInput struct {
+	RawBody huma.MultipartFormFiles[standaloneLabExtractionForm]
 }
 
-type temporaryLabExtractionResponse = extraction.Result
+type standaloneLabExtractionResponse = extraction.Result
 
-type temporaryLabExtractionOutput struct {
-	Body temporaryLabExtractionResponse
+type standaloneLabExtractionOutput struct {
+	Body standaloneLabExtractionResponse
 }
 
 func NewStandaloneLabExtraction(extractor pdfExtractor) *StandaloneLabExtractionHandler {
@@ -47,10 +47,10 @@ func NewStandaloneLabExtraction(extractor pdfExtractor) *StandaloneLabExtraction
 
 func (h *StandaloneLabExtractionHandler) RegisterHumaRoutes(registered huma.API, security []map[string][]string) {
 	huma.Register(registered, huma.Operation{
-		OperationID:  "extractTemporaryLabReport",
+		OperationID:  "extractStandaloneLabReport",
 		Method:       http.MethodPost,
 		Path:         "/lab-extractions",
-		Summary:      "Extrair dados laboratoriais sem persistir o documento",
+		Summary:      "Extrair dados laboratoriais de forma independente sem persistir o documento",
 		MaxBodyBytes: 11 * 1024 * 1024,
 		Tags:         []string{"Lab extraction"},
 		Errors:       []int{http.StatusUnauthorized, http.StatusRequestEntityTooLarge, http.StatusUnsupportedMediaType, http.StatusUnprocessableEntity},
@@ -58,7 +58,7 @@ func (h *StandaloneLabExtractionHandler) RegisterHumaRoutes(registered huma.API,
 	}, h.extract)
 }
 
-func (h *StandaloneLabExtractionHandler) extract(ctx context.Context, input *temporaryLabExtractionInput) (*temporaryLabExtractionOutput, error) {
+func (h *StandaloneLabExtractionHandler) extract(ctx context.Context, input *standaloneLabExtractionInput) (*standaloneLabExtractionOutput, error) {
 	if _, ok := helpers.GetCurrentUserFromContext(ctx); !ok {
 		return nil, huma.Error403Forbidden("conta registrada necess?ria")
 	}
@@ -77,7 +77,7 @@ func (h *StandaloneLabExtractionHandler) extract(ctx context.Context, input *tem
 	if err != nil {
 		return nil, humaerror.From(err)
 	}
-	return &temporaryLabExtractionOutput{Body: *result}, nil
+	return &standaloneLabExtractionOutput{Body: *result}, nil
 }
 
 func writeTemporaryPDF(header *multipart.FileHeader) (string, error) {
@@ -87,7 +87,7 @@ func writeTemporaryPDF(header *multipart.FileHeader) (string, error) {
 	if header.Size <= 0 {
 		return "", apperr.Validation("arquivo vazio", apperr.Violation{Field: "file", Reason: "empty"})
 	}
-	if header.Size > temporaryLabExtractionMaxFileSize {
+	if header.Size > standaloneLabExtractionMaxFileSize {
 		return "", &apperr.AppError{Kind: apperr.UPLOAD_SIZE_EXCEEDED, Message: "o PDF deve ter no maximo 10 MB"}
 	}
 
@@ -108,13 +108,13 @@ func writeTemporaryPDF(header *multipart.FileHeader) (string, error) {
 		return "", apperr.Internal("falha ao preparar arquivo temporario", err)
 	}
 	path := target.Name()
-	count, err := io.Copy(target, io.LimitReader(source, temporaryLabExtractionMaxFileSize+1))
+	count, err := io.Copy(target, io.LimitReader(source, standaloneLabExtractionMaxFileSize+1))
 	if err != nil {
 		target.Close()
 		os.Remove(path)
 		return "", apperr.Internal("falha ao preparar arquivo temporario", err)
 	}
-	if count > temporaryLabExtractionMaxFileSize {
+	if count > standaloneLabExtractionMaxFileSize {
 		_ = target.Close()
 		_ = os.Remove(path)
 		return "", &apperr.AppError{Kind: apperr.UPLOAD_SIZE_EXCEEDED, Message: "O PDF deve ter no máximo 10 MB."}

@@ -4,6 +4,11 @@ package http
 import (
 	"bytes"
 	"context"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"testing"
+
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humagin"
 	"github.com/gabrielgcmr/sonnda/internal/api/helpers"
@@ -14,10 +19,6 @@ import (
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"net/http"
-	"net/http/httptest"
-	"os"
-	"testing"
 )
 
 type documentStub struct {
@@ -91,11 +92,11 @@ func TestReviewRoutesRequirePatientAccess(t *testing.T) {
 		}
 	}
 }
-func TestUploadCreatesDraftAndCleansTemporaryFile(t *testing.T) {
+func TestUploadCreatesDraftAndCleansStandaloneFile(t *testing.T) {
 	for _, denied := range []bool{false, true} {
 		stub := &reviewStub{}
 		router, _, patient := reviewRouter(denied, stub)
-		body, contentType := temporaryLabMultipart(t, "lab.pdf", "application/pdf", []byte("%PDF-1.4"))
+		body, contentType := standaloneLabMultipart(t, "lab.pdf", "application/pdf", []byte("%PDF-1.4"))
 		req := httptest.NewRequest(http.MethodPost, "/patients/"+patient.String()+"/exam-documents", body)
 		req.Header.Set("Content-Type", contentType)
 		res := httptest.NewRecorder()
@@ -110,7 +111,7 @@ func TestUploadCreatesDraftAndCleansTemporaryFile(t *testing.T) {
 			t.Fatalf("%d: %s", res.Code, res.Body)
 		}
 		if _, err := os.Stat(stub.path); !os.IsNotExist(err) {
-			t.Fatal("temporary file leaked")
+			t.Fatal("standalone file leaked")
 		}
 	}
 }
