@@ -20,22 +20,22 @@ import (
 	"github.com/google/uuid"
 )
 
-type LabsRepository struct {
+type Repository struct {
 	client  *postgress.Client
 	queries *labsqlc.Queries
 }
 
-var _ labrepository.Repository = (*LabsRepository)(nil)
+var _ labrepository.Repository = (*Repository)(nil)
 
-func NewLabsRepository(client *postgress.Client) *LabsRepository {
-	return &LabsRepository{
+func NewRepository(client *postgress.Client) *Repository {
+	return &Repository{
 		client:  client,
 		queries: labsqlc.New(client.Pool()),
 	}
 }
 
 // Create implements [repository.LabsRepository].
-func (l *LabsRepository) Create(ctx context.Context, report *labs.LabReport) error {
+func (l *Repository) Create(ctx context.Context, report *labs.LabReport) error {
 	if report == nil {
 		return persistence.ErrPersistenceFailure
 	}
@@ -57,7 +57,7 @@ func (l *LabsRepository) Create(ctx context.Context, report *labs.LabReport) err
 }
 
 // CreateInTx lets a cross-feature use case commit the clinical report with its document.
-func (l *LabsRepository) CreateInTx(ctx context.Context, tx pgx.Tx, report *labs.LabReport) error {
+func (l *Repository) CreateInTx(ctx context.Context, tx pgx.Tx, report *labs.LabReport) error {
 	if report == nil {
 		return persistence.ErrPersistenceFailure
 	}
@@ -116,14 +116,14 @@ func (l *LabsRepository) CreateInTx(ctx context.Context, tx pgx.Tx, report *labs
 }
 
 // Delete implements [repository.LabsRepository].
-func (l *LabsRepository) Delete(ctx context.Context, id uuid.UUID) error {
+func (l *Repository) Delete(ctx context.Context, id uuid.UUID) error {
 	// Foreign-key cascades remove panels and observations with the report.
 	_, err := l.queries.DeleteLabReport(ctx, id)
 	return err
 }
 
 // FindByID implements [repository.LabsRepository].
-func (l *LabsRepository) FindByID(ctx context.Context, reportID uuid.UUID) (*labs.LabReport, error) {
+func (l *Repository) FindByID(ctx context.Context, reportID uuid.UUID) (*labs.LabReport, error) {
 	reportRow, err := l.queries.GetLabReportByID(ctx, reportID)
 	if err != nil {
 		if IsNoRows(err) {
@@ -189,7 +189,7 @@ func (l *LabsRepository) FindByID(ctx context.Context, reportID uuid.UUID) (*lab
 }
 
 // ListObservationTimelineByPatientAndParameter implements [repository.Repository].
-func (l *LabsRepository) ListObservationTimelineByPatientAndParameter(ctx context.Context, patientID uuid.UUID, parameterName string, limit int, offset int) ([]labs.ObservationTimeline, error) {
+func (l *Repository) ListObservationTimelineByPatientAndParameter(ctx context.Context, patientID uuid.UUID, parameterName string, limit int, offset int) ([]labs.ObservationTimeline, error) {
 	rows, err := l.queries.ListObservationTimelineByPatientAndParameter(ctx, labsqlc.ListObservationTimelineByPatientAndParameterParams{
 		PatientID:     patientID,
 		ParameterName: parameterName,
@@ -219,7 +219,7 @@ func (l *LabsRepository) ListObservationTimelineByPatientAndParameter(ctx contex
 }
 
 // ListLabs implements [repository.LabsRepository].
-func (l *LabsRepository) ListLabs(ctx context.Context, patientID uuid.UUID, limit int, offset int) ([]labs.LabReport, error) {
+func (l *Repository) ListLabs(ctx context.Context, patientID uuid.UUID, limit int, offset int) ([]labs.LabReport, error) {
 	rows, err := l.queries.ListLabReportsByPatientID(ctx, labsqlc.ListLabReportsByPatientIDParams{
 		PatientID: patientID,
 		Limit:     int32(limit),

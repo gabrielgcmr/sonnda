@@ -14,6 +14,6 @@ type PatientAccessModule struct {
 
 func NewPatientAccessModule(db *postgress.Client) *PatientAccessModule {
 	repo := accesspostgres.NewRepository(db)
-	service := patientaccess.NewService(repo)
+	service := patientaccess.New(repo)
 	return &PatientAccessModule{Handler: accesshttp.NewHandler(service)}
 }

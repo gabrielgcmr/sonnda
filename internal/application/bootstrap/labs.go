@@ -18,7 +18,7 @@ type LabsModule struct {
 func NewLabsModule(dbClient *postgress.Client) *LabsModule {
 	patientRepo := patientpostgres.NewRepository(dbClient)
 	accessRepo := accesspostgres.NewRepository(dbClient)
-	labsRepo := labpostgres.NewLabsRepository(dbClient)
+	labsRepo := labpostgres.NewRepository(dbClient)
 
 	svc := labsvc.New(patientRepo, labsRepo)
 	accessChecker := patientaccess.NewChecker(patientRepo, accessRepo)

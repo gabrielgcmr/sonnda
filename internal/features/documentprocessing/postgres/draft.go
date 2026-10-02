@@ -20,10 +20,10 @@ import (
 type DraftRepository struct {
 	client    *pginfra.Client
 	documents *ExamsRepository
-	labs      *labpostgres.LabsRepository
+	labs      *labpostgres.Repository
 }
 
-func NewDraftRepository(client *pginfra.Client, labs *labpostgres.LabsRepository) *DraftRepository {
+func NewDraftRepository(client *pginfra.Client, labs *labpostgres.Repository) *DraftRepository {
 	return &DraftRepository{client: client, documents: &ExamsRepository{client: client, queries: examsqlc.New(client.Pool())}, labs: labs}
 }
 

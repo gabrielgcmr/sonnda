@@ -16,7 +16,7 @@ type AccountModule struct {
 func NewAccountModule(db *postgress.Client) *AccountModule {
 	userRepo := accountpostgres.New(db.Pool())
 
-	service := account.NewService(userRepo)
+	service := account.New(userRepo)
 	onboarding := account.NewOnboarding(userRepo, service)
 
 	return &AccountModule{

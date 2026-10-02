@@ -42,37 +42,27 @@ mobile geram seus clientes a partir desse mesmo artefato.
 
 ## Arquitetura
 
-A arquitetura segue uma abordagem em camadas com baixo acoplamento e clara separação de responsabilidades:
+A aplicação é organizada principalmente por contexto de negócio em `internal/features`. A migração é incremental; nem todas as features têm a mesma estrutura interna.
 
-- **Domain (`internal/domain`)**: Modelos e regras de negócio centrais (agnóstico de infraestrutura e HTTP).
-  - **Entity (`internal/domain/entity`)**: Entidades de negócio centrais.
-  - **Storage (`internal/domain/storage`)**: Interfaces de armazenamento de arquivos (abstrações).
-  - **Lab Extraction (`internal/domain/labextraction`)**: Contrato para extração estruturada de laudos laboratoriais.
-
-- **Application (`internal/application`)**: Orquestração e preocupações transversais.
-  - **Use cases (`internal/application/usecase`)**: Fluxos de negócio compostos a partir de modelos do domínio.
-  - **Services (`internal/application/services`)**: Serviços de aplicação que coordenam repositórios/integrações.
-  - **Bootstrap (`internal/application/bootstrap`)**: Injeção de dependências e carregamento de configuração.
-
-- **Infrastructure (`internal/infrastructure`)**: Implementações concretas e integrações outbound.
-  - **Persistence (`internal/infrastructure/persistence`)**: Repositórios de banco de dados, cache, armazenamento de arquivos.
-  - **Auth (`internal/infrastructure/auth`)**: Implementações de autenticação/autorização.
-
-- **Kernel (`internal/kernel`)**: Preocupações transversais.
-  - **Error contract (`internal/kernel/apperr`)**: Códigos/mensagens centralizadas de `AppError`; handlers devem converter via helpers da camada HTTP.
-  - **Observability (`internal/kernel/observability`)**: Configuração de logging (slog), injeção de logger com escopo de requisição.
+- **Features (`internal/features`)**: `account`, `auth`, `documentprocessing` e `patient` (`access`, `profile` e `exam`). Cada contexto mantém modelos, contratos, serviços, handlers HTTP e adapters de persistência conforme necessário.
+- **Document processing**: coordena documentos e extrações; seus pacotes incluem `domain`, `extraction`, `labextraction`, `textextraction`, `http` e `postgres`. O contrato de armazenamento de arquivos pertence a essa feature.
+- **Domain compartilhado (`internal/domain`)**: conceitos puros usados por mais de uma feature, atualmente incluindo demografia. Modelos específicos ficam dentro da feature proprietária.
+- **Application (`internal/application`)**: `bootstrap` compõe módulos e dependências; `usecase` contém fluxos entre features, como criação de pacientes e confirmação de laudos.
+- **API (`internal/api`)**: configura Gin e Huma, compõe rotas e mantém middleware, helpers e tradução de erros HTTP. Handlers de negócio ficam junto das features. As rotas Huma são a fonte do OpenAPI.
+- **Infrastructure (`internal/infrastructure`)**: adapters concretos para PostgreSQL/sqlc, autenticação, GCS, Redis e integrações de extração com Gemini, Document AI e comandos locais.
+- **Kernel (`internal/kernel`)**: contratos transversais de erro, persistência e observabilidade. `internal/config` concentra a configuração da aplicação e integrações.
 
 ---
 
 ## Stack Tecnologico
 
 **Backend:** API RESTful em Go
-- **Framework web:** Gin
+- **Framework web:** Gin com Huma para rotas e OpenAPI
 - **Banco de dados:** PostgreSQL (gerenciado via Supabase) + Redis (Upstash)
 - **Geração de código SQL:** SQLC
 - **Autenticação:** Supabase Auth (JWT)
-- **Armazenamento de arquivos:** Supabase Storage
-- **Processamento de documentos:** Google Cloud Document AI
+- **Armazenamento de arquivos:** Google Cloud Storage (GCS)
+- **Processamento de documentos:** extração textual por adapter de comandos e extração estruturada com Gemini; há também um adapter para Google Cloud Document AI
 - **Containerização:** Docker / docker-compose
 
 **Ferramentas de desenvolvimento:**
@@ -100,14 +90,15 @@ Este projeto usa um **contrato de erro centralizado** baseado em `AppError`.
 - Erros de nível de aplicação devem ser representados como `*apperr.AppError`.
 - Localização: `internal/kernel/apperr`
 - `AppError` contém:
-  - `Code` (`ErrorCode`) - contrato estável e legível por máquina
+  - `Kind` (`ErrorKind`) - contrato estável e legível por máquina
   - `Message` - mensagem segura e legível por humanos
   - `Cause` - erro interno opcional (wrapped com `%w`)
 - **Prefira usar construtores helper** de `internal/kernel/apperr/factory.go` ao invés de construí-los manualmente.
-- Services/use cases **devem retornar `AppError` para falhas conhecidas** (validação, conflitos, não encontrado, erros de infra).
+- Serviços e casos de uso **devem retornar `AppError` para falhas conhecidas** (validação, conflitos, não encontrado, erros de infraestrutura).
 - Domínio **nunca** importa HTTP, Gin ou `apperr`.
-- Handlers e middlewares **devem chamar**: `presenter.ErrorResponder(c, err)`
-- Apresentação de erro HTTP é centralizada em: `internal/api/presenter`.
+- Handlers Huma convertem erros de aplicação com `humaerror.From(err)`; middlewares usam `humaerror.Write(api, ctx, err)`.
+- Use respostas Problem Details padrão do Huma. Não exponha causas internas nem construa JSON de erro manualmente.
+- `internal/api/presenter.ErrorResponder` permanece apenas para consumidores Gin legados; não use em handlers Huma novos.
 
 ## Configuracao de ambiente (dev/prod)
 
@@ -129,81 +120,21 @@ Estrutura atual do projeto:
 ```text
 .
 ├── cmd/
-│   └── server/
-│       └── main.go                 # Ponto de entrada da aplicação
+│   ├── api/                        # Inicialização da API
+│   └── openapi-export/             # Exportação do contrato OpenAPI
 ├── docs/
-│   ├── README.md
-│   ├── api/                        # Documentação de endpoints
-│   │   ├── auth.md
-│   │   ├── labs.md
-│   │   ├── patient.md
-│   │   ├── user.md
-│   │   └── README.md
-│   ├── architecture/               # Arquitetura e decisões
-│   │   ├── access-control.md
-│   │   ├── app-source-of-truth.md
-│   │   ├── error-handling.md
-│   │   └── adr/                    # Architecture Decision Records
-│   └── dev/                        # Guias de desenvolvimento
-│       └── setup.md
-├── static/                         # Assets embutidos (docs, favicon)
-│   ├── embed.go
-│   ├── docs.html
-│   └── favicon.ico
+│   └── architecture/               # Arquitetura e ADRs
 ├── internal/
-│   ├── api/                        # [LEGADO - sendo migrado]
-│   │   ├── routes.go
-│   │   ├── handlers/
-│   │   ├── helpers/
-│   │   ├── middleware/
-│   │   └── presenter/
-│   ├── generated/
-│   │   └── openapi/
-│   │       └── oapi.gen.go         # Tipos Go gerados do bundle
-│   ├── openapispec/
-│   │   └── spec.gen.go             # Bundle embutido no binário
-│   ├── application/                # Camada de aplicação
-│   │   ├── bootstrap/              # Injeção de dependências
-│   │   ├── services/               # Serviços de aplicação
-│   │   └── usecase/                # Casos de uso
-│   ├── config/                     # Configuração da aplicação
-│   │   ├── config.go
-│   │   └── config_test.go
-│   ├── domain/                     # Camada de domínio (core)
-│   │   ├── ai/                     # Abstrações de IA
-│   │   ├── entity/                 # Entidades de domínio
-│   │   ├── repository/             # Interfaces de repositório
-│   │   └── storage/                # Interfaces de armazenamento
-│   ├── infrastructure/             # Implementações concretas
-│   │   ├── ai/                     # Integração com Google Cloud Document AI
-│   │   ├── auth/                   # Autenticação/autorização
-│   │   └── persistence/            # Persistência
-│   │       ├── filestorage/        # Armazenamento de arquivos
-│   │       ├── postgres/           # Repositórios PostgreSQL
-│   │       └── redis/              # Cache Redis
-│   └── kernel/                     # Núcleo transversal
-│       ├── apperr/                 # Contrato de erros centralizado
-│       │   ├── catalog.go
-│       │   ├── error.go
-│       │   ├── factory.go
-│       │   ├── logging.go
-│       │   └── violation.go
-│       └── observability/          # Logging e observabilidade
-│           ├── context.go
-│           ├── logger.go
-│           ├── pretty_handler.go
-│           └── utils.go
-├── secrets/                        # Configurações sensíveis (não versionado)
-│   └── sonnda-gcs.json
-├── tools/                          # Ferramentas de build
-│   └── bin/
-│       ├── air
-│       └── sqlc
-├── .env.example                    # Template de variáveis de ambiente
-├── AGENTS.md                       # Instruções para agentes de IA
-├── docker-compose.yml              # Orquestração de containers
-├── Dockerfile                      # Build da imagem Docker
-├── go.mod                          # Dependências Go
-├── Makefile                        # Comandos úteis
-└── README.md                       # Este arquivo
+│   ├── api/                        # Gin/Huma, rotas e middleware compartilhados
+│   ├── application/                # Bootstrap e casos de uso
+│   ├── config/                     # Configuração
+│   ├── domain/                     # Conceitos compartilhados
+│   ├── features/                   # Contextos de negócio e seus adapters
+│   ├── infrastructure/             # PostgreSQL, GCS e integrações externas
+│   └── kernel/                     # Erros, persistência e observabilidade
+├── static/                         # Assets embutidos
+├── supabase/                       # Configuração e migrations do banco
+├── AGENTS.md                       # Instruções para agentes
+├── Makefile                        # Comandos de desenvolvimento e geração
+└── README.md                       # Documentação do projeto
 ```

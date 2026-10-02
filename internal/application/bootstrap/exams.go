@@ -25,7 +25,7 @@ type ExamsModule struct {
 
 func NewExamsModule(db *pginfra.Client, lab labextraction.LabReportTextExtractor, storage documentprocessing.FileStorageService, config config.OCRConfig) *ExamsModule {
 	patients := patientpostgres.NewRepository(db)
-	labs := labpostgres.NewLabsRepository(db)
+	labs := labpostgres.NewRepository(db)
 	service := documents.New(patients, documentpostgres.NewDocumentRepository(db))
 	repo := documentpostgres.NewDraftRepository(db, labs)
 	reader := textinfra.NewCommandExtractorWithOptions(textinfra.CommandExtractorOptions{Timeout: config.Timeout, RequireUsableText: true})
