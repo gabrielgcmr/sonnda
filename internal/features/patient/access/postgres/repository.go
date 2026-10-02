@@ -8,8 +8,8 @@ import (
 
 	patientaccess "github.com/gabrielgcmr/sonnda/internal/features/patient/access"
 	accessdomain "github.com/gabrielgcmr/sonnda/internal/features/patient/access/domain"
-	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
-	patientaccesssqlc "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/sqlc/generated/patientaccess"
+	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/database/postgres"
+	patientaccesssqlc "github.com/gabrielgcmr/sonnda/internal/infrastructure/database/postgres/sqlc/generated/patientaccess"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/persistence"
 
 	"github.com/google/uuid"

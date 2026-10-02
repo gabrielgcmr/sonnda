@@ -12,40 +12,38 @@ import (
 
 type Querier interface {
 	AttachLabReportDocument(ctx context.Context, arg AttachLabReportDocumentParams) (int64, error)
+	CreateLabPanel(ctx context.Context, arg CreateLabPanelParams) (uuid.UUID, error)
 	// ============================================================
 	// Creators
 	// ============================================================
 	CreateLabReport(ctx context.Context, arg CreateLabReportParams) (CreateLabReportRow, error)
-	CreateLabResult(ctx context.Context, arg CreateLabResultParams) (uuid.UUID, error)
-	CreateLabResultItem(ctx context.Context, arg CreateLabResultItemParams) (uuid.UUID, error)
-	DeleteLabReport(ctx context.Context, id uuid.UUID) (int64, error)
+	CreateObservation(ctx context.Context, arg CreateObservationParams) (uuid.UUID, error)
 	// ============================================================
 	// Deletes
 	// ============================================================
-	DeleteLabResultItemsByReportID(ctx context.Context, labReportID uuid.UUID) (int64, error)
-	DeleteLabResultsByReportID(ctx context.Context, labReportID uuid.UUID) (int64, error)
+	DeleteLabReport(ctx context.Context, id uuid.UUID) (int64, error)
 	// ============================================================
 	// Dedupe (Existence checks)
 	// ============================================================
 	ExistsLabReportByPatientAndFingerprint(ctx context.Context, arg ExistsLabReportByPatientAndFingerprintParams) (bool, error)
+	GetLabPanelsByReportID(ctx context.Context, labReportID uuid.UUID) (GetLabPanelsByReportIDRow, error)
 	// ============================================================
 	// Getters
 	// ============================================================
 	GetLabReportByID(ctx context.Context, id uuid.UUID) (GetLabReportByIDRow, error)
 	GetLabReportByPatientAndFingerprint(ctx context.Context, arg GetLabReportByPatientAndFingerprintParams) (GetLabReportByPatientAndFingerprintRow, error)
-	GetLabResultsByReportID(ctx context.Context, labReportID uuid.UUID) (GetLabResultsByReportIDRow, error)
 	// internal/infrastructure/persistence/postgres/sqlc/sql/queries/lab_queries.sql
 	LabDocumentBelongsToPatient(ctx context.Context, arg LabDocumentBelongsToPatientParams) (bool, error)
-	// ============================================================
-	// Timeline
-	// ============================================================
-	ListLabItemTimelineByPatientAndParameter(ctx context.Context, arg ListLabItemTimelineByPatientAndParameterParams) ([]ListLabItemTimelineByPatientAndParameterRow, error)
+	ListLabPanelsByReportID(ctx context.Context, labReportID uuid.UUID) ([]LabPanel, error)
 	// ============================================================
 	// List
 	// ============================================================
 	ListLabReportsByPatientID(ctx context.Context, arg ListLabReportsByPatientIDParams) ([]ListLabReportsByPatientIDRow, error)
-	ListLabResultItemsByResultID(ctx context.Context, labResultID uuid.UUID) ([]LabResultItem, error)
-	ListLabResultsByReportID(ctx context.Context, labReportID uuid.UUID) ([]LabResult, error)
+	// ============================================================
+	// Timeline
+	// ============================================================
+	ListObservationTimelineByPatientAndParameter(ctx context.Context, arg ListObservationTimelineByPatientAndParameterParams) ([]ListObservationTimelineByPatientAndParameterRow, error)
+	ListObservationsByPanelID(ctx context.Context, labPanelID uuid.UUID) ([]Observation, error)
 }
 
 var _ Querier = (*Queries)(nil)

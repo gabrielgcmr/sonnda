@@ -10,7 +10,7 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/gabrielgcmr/sonnda/internal/api/helpers"
 	"github.com/gabrielgcmr/sonnda/internal/api/humaerror"
-	domainstorage "github.com/gabrielgcmr/sonnda/internal/domain/storage"
+	"github.com/gabrielgcmr/sonnda/internal/features/documentprocessing"
 	documents "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing"
 	"github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/extraction"
 	patientaccess "github.com/gabrielgcmr/sonnda/internal/features/patient/access"
@@ -30,7 +30,7 @@ type ExamsHandler struct {
 	svc           documents.Service
 	drafts        draftService
 	confirmer     confirmationService
-	storage       domainstorage.FileStorageService
+	storage       documentprocessing.FileStorageService
 	accessChecker patientaccess.Checker
 }
 
@@ -80,7 +80,7 @@ func NewExams(
 	svc documents.Service,
 	drafts draftService,
 	confirmer confirmationService,
-	storageClient domainstorage.FileStorageService,
+	storageClient documentprocessing.FileStorageService,
 	accessChecker patientaccess.Checker,
 ) *ExamsHandler {
 	return &ExamsHandler{svc: svc, drafts: drafts, confirmer: confirmer, storage: storageClient, accessChecker: accessChecker}

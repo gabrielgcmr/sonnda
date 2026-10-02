@@ -54,7 +54,7 @@ func TestScoreOCRTextPrefersClinicalLabText(t *testing.T) {
 	}
 }
 
-func TestScoreOCRTextPrefersPreservedLabResultLines(t *testing.T) {
+func TestScoreOCRTextPrefersPreservedLabPanelLines(t *testing.T) {
 	noisy := "HEMOGRAMA HEMOGLOBINA 14,6 HEMATOCRITO 43,8 PLAQUETAS 199000"
 	structured := "HEMOGRAMA\nHEMOGLOBINA........: 14,6 g/dl\nHEMATOCRITO........: 43,8 %\nPLAQUETAS..........: 199000 /mm3"
 

@@ -1,4 +1,4 @@
-// internal/features/patient/exam/laboratory/domain/result.go
+// internal/features/patient/exam/laboratory/domain/panel.go
 package domain
 
 import (
@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type LabResult struct {
+type LabPanel struct {
 	ID          uuid.UUID `json:"id"`
 	LabReportID uuid.UUID `json:"lab_report_id"`
 
@@ -19,10 +19,10 @@ type LabResult struct {
 	CollectedAt *time.Time `json:"collected_at,omitempty"`
 	ReleaseAt   *time.Time `json:"release_at,omitempty"`
 
-	Items []LabResultItem `json:"items"`
+	Items []Observation `json:"observations"`
 }
 
-func NewLabResult(labReportID, testName string) (*LabResult, error) {
+func NewLabPanel(labReportID, testName string) (*LabPanel, error) {
 	labReportID = strings.TrimSpace(labReportID)
 	testName = strings.TrimSpace(testName)
 	if labReportID == "" {
@@ -37,15 +37,15 @@ func NewLabResult(labReportID, testName string) (*LabResult, error) {
 		return nil, ErrMissingId
 	}
 
-	return &LabResult{
+	return &LabPanel{
 		ID:          uuid.Must(uuid.NewV7()),
 		LabReportID: parsedLabReportID,
 		TestName:    testName,
-		Items:       make([]LabResultItem, 0),
+		Items:       make([]Observation, 0),
 	}, nil
 }
 
-func (r *LabResult) Normalize() {
+func (r *LabPanel) Normalize() {
 	if r == nil {
 		return
 	}

@@ -65,20 +65,20 @@ func (s *service) List(ctx context.Context, patientID uuid.UUID, limit, offset i
 		}
 
 		for _, tr := range fullReport.TestResults {
-			testSummary := LabResultSummaryOutput{
+			panelSummary := LabPanelSummaryOutput{
 				TestName:    tr.TestName,
 				CollectedAt: tr.CollectedAt,
 			}
 
 			for _, item := range tr.Items {
-				testSummary.Items = append(testSummary.Items, ResultItemSummaryOutput{
+				panelSummary.Observations = append(panelSummary.Observations, ObservationSummaryOutput{
 					ParameterName: item.ParameterName,
 					ResultValue:   item.ResultValue,
 					ResultUnit:    item.ResultUnit,
 				})
 			}
 
-			summary.SummaryTests = append(summary.SummaryTests, testSummary)
+			summary.SummaryPanels = append(summary.SummaryPanels, panelSummary)
 		}
 
 		out = append(out, summary)
@@ -158,7 +158,7 @@ func mapDomainReportToOutput(report *labdomain.LabReport) *LabReportOutput {
 	}
 
 	for _, tr := range report.TestResults {
-		testOutput := TestResultOutput{
+		panelOutput := LabPanelOutput{
 			ID:          tr.ID,
 			TestName:    tr.TestName,
 			Material:    tr.Material,
@@ -168,7 +168,7 @@ func mapDomainReportToOutput(report *labdomain.LabReport) *LabReportOutput {
 		}
 
 		for _, item := range tr.Items {
-			testOutput.Items = append(testOutput.Items, TestItemOutput{
+			panelOutput.Observations = append(panelOutput.Observations, ObservationOutput{
 				ID:            item.ID,
 				ParameterName: item.ParameterName,
 				ResultValue:   item.ResultValue,
@@ -177,7 +177,7 @@ func mapDomainReportToOutput(report *labdomain.LabReport) *LabReportOutput {
 			})
 		}
 
-		output.TestResults = append(output.TestResults, testOutput)
+		output.Panels = append(output.Panels, panelOutput)
 	}
 
 	return output

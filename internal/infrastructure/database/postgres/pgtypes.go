@@ -1,5 +1,5 @@
-// internal/adapters/outbound/persistence/postgres/repository/parser.go
-package repo
+// internal/infrastructure/persistence/postgres/parser.go
+package postgres
 
 import (
 	"fmt"

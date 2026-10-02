@@ -55,6 +55,16 @@ type ExamDocumentText struct {
 	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
 }
 
+type LabPanel struct {
+	ID          uuid.UUID          `json:"id"`
+	LabReportID uuid.UUID          `json:"lab_report_id"`
+	TestName    string             `json:"test_name"`
+	Material    pgtype.Text        `json:"material"`
+	Method      pgtype.Text        `json:"method"`
+	CollectedAt pgtype.Timestamptz `json:"collected_at"`
+	ReleaseAt   pgtype.Timestamptz `json:"release_at"`
+}
+
 type LabReport struct {
 	ID                uuid.UUID          `json:"id"`
 	PatientID         uuid.UUID          `json:"patient_id"`
@@ -74,19 +84,9 @@ type LabReport struct {
 	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
 }
 
-type LabResult struct {
-	ID          uuid.UUID          `json:"id"`
-	LabReportID uuid.UUID          `json:"lab_report_id"`
-	TestName    string             `json:"test_name"`
-	Material    pgtype.Text        `json:"material"`
-	Method      pgtype.Text        `json:"method"`
-	CollectedAt pgtype.Timestamptz `json:"collected_at"`
-	ReleaseAt   pgtype.Timestamptz `json:"release_at"`
-}
-
-type LabResultItem struct {
+type Observation struct {
 	ID            uuid.UUID   `json:"id"`
-	LabResultID   uuid.UUID   `json:"lab_result_id"`
+	LabPanelID    uuid.UUID   `json:"lab_panel_id"`
 	ParameterName string      `json:"parameter_name"`
 	ResultValue   pgtype.Text `json:"result_value"`
 	ResultUnit    pgtype.Text `json:"result_unit"`

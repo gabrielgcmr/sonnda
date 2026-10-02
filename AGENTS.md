@@ -39,6 +39,7 @@ Simple instructions for coding agents working on this repo.
     - `documentprocessing/textextraction`: contrato de leitura (`Extractor`), qualidade (`IsUsableText`) e normalização textual.
     - `documentprocessing/labextraction`: contrato (`LabReportTextExtractor`), tipos e schema JSON da extração estruturada.
     - `documentprocessing/extraction`: coordenação da extração (`Service`), normalização semântica, avaliação e resumo.
+  - **Laboratory exams (`internal/features/patient/exam/laboratory`)**: histórico confirmado organizado como `lab_reports`, `lab_panels` e `observations`; a confirmação recebe o snapshot já conferido e não executa nova extração.
   - Account owns its repository interface and user persistence errors in `account/repository.go`; its Postgres adapter lives in `account/postgres`.
   - User entities and account types belong to `internal/features/account/domain` (package `accountdomain`). Other contexts may import this pure domain package without depending on account application services.
 - The shared database client and generated sqlc code remain in `internal/infrastructure` during this migration.

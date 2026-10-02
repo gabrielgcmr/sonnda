@@ -8,8 +8,8 @@ import (
 	"github.com/gabrielgcmr/sonnda/internal/domain/demographics"
 	patientprofile "github.com/gabrielgcmr/sonnda/internal/features/patient/profile"
 	profiledomain "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/domain"
-	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
-	patientsqlc "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/sqlc/generated/patient"
+	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/database/postgres"
+	patientsqlc "github.com/gabrielgcmr/sonnda/internal/infrastructure/database/postgres/sqlc/generated/patient"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/persistence"
 
 	"github.com/google/uuid"

@@ -22,9 +22,9 @@ import (
 
 	"github.com/gabrielgcmr/sonnda/internal/api"
 	authinfra "github.com/gabrielgcmr/sonnda/internal/infrastructure/auth"
+	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/database/postgres"
+	filestorage "github.com/gabrielgcmr/sonnda/internal/infrastructure/filestorage"
 	geminiinfra "github.com/gabrielgcmr/sonnda/internal/infrastructure/gemini"
-	filestorage "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/filestorage"
-	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
 )
 
 // version is overridden via -ldflags in build/release pipelines.

@@ -37,6 +37,7 @@ Não há classificação automática nem processadores de imagem neste fluxo. A 
 - `exam_document_extractions` tem relação 1:1 com o documento. Guarda JSON versionado com resultado público e metadados internos que o JSON público omite, incluindo texto e avisos por item. Um trigger impede atualização da fotografia.
 - A criação do documento e da fotografia usa uma transação. Se falhar, há tentativa de compensação do upload; falha de compensação permanece na cadeia interna de erro para investigação.
 - A confirmação bloqueia o documento e grava laudo, resultados, vínculo, fingerprint e autor/data da confirmação na mesma transação. Repetições retornam o mesmo exame. O Gemini não é chamado na confirmação.
+- O histórico laboratorial usa `lab_reports` → `lab_panels` → `observations`; a extração continua usando `tests[]` e `tests[].items[]` no snapshot, com o mapeamento feito somente na confirmação.
 - A exclusão marca `deleting`, remove o objeto e depois o registro. Falhas de storage preservam o rascunho para nova tentativa. Objetos já ausentes são tratados como removidos. Documentos confirmados e anteriores não podem ser excluídos por essa operação.
 - Documentos anteriores permanecem com `review_status` nulo. Não se atribui confirmação humana retroativa.
 - Não há novas gravações em `exam_document_texts`; a consulta dos textos antigos permanece disponível.

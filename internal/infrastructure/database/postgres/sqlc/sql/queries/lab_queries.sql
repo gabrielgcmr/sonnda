@@ -59,10 +59,10 @@ RETURNING
     created_at,
     updated_at;
 
--- name: CreateLabResult :one
-INSERT INTO lab_results(
+-- name: CreateLabPanel :one
+INSERT INTO lab_panels(
     id,
-    lab_report_id,
+  lab_report_id,
     test_name,
     material,
     method,
@@ -72,10 +72,10 @@ INSERT INTO lab_results(
 VALUES ($1,$2,$3,$4,$5,$6,$7)
 RETURNING id;
 
--- name: CreateLabResultItem :one
-INSERT INTO lab_result_items (
+-- name: CreateObservation :one
+INSERT INTO observations (
     id,
-    lab_result_id,
+  lab_panel_id,
     parameter_name,
     result_value,
     result_unit,
@@ -109,7 +109,7 @@ SELECT
 FROM lab_reports
 WHERE id = $1;
 
--- name: GetLabResultsByReportID :one
+-- name: GetLabPanelsByReportID :one
 SELECT
     id,
     test_name,
@@ -117,7 +117,7 @@ SELECT
     method,
     collected_at,
     release_at
-FROM lab_results
+FROM lab_panels
 WHERE lab_report_id = $1
 ORDER BY test_name;
 
@@ -176,55 +176,46 @@ WHERE patient_id = $1
 ORDER BY report_date DESC NULLS LAST, created_at DESC
 LIMIT $2 OFFSET $3;
 
--- name: ListLabResultsByReportID :many
+-- name: ListLabPanelsByReportID :many
 SELECT
   id, lab_report_id, test_name, material, method, collected_at, release_at
-FROM lab_results
+FROM lab_panels
 WHERE lab_report_id = $1
 ORDER BY collected_at NULLS LAST, id;
 
--- name: ListLabResultItemsByResultID :many
+-- name: ListObservationsByPanelID :many
 SELECT
-  id, lab_result_id, parameter_name, result_value, result_unit, reference_text
-FROM lab_result_items
-WHERE lab_result_id = $1
+  id, lab_panel_id, parameter_name, result_value, result_unit, reference_text
+FROM observations
+WHERE lab_panel_id = $1
 ORDER BY id;
 
 -- ============================================================
 -- Timeline
 -- ============================================================
 
--- name: ListLabItemTimelineByPatientAndParameter :many
+-- name: ListObservationTimelineByPatientAndParameter :many
 SELECT
-  lr.id           AS report_id,
-  r.id          AS lab_result_id,
-  i.id          AS item_id,
-  lr.report_date  AS report_date,
-  r.test_name   AS test_name,
-  i.parameter_name,
-  i.result_value,
-  i.result_unit
-FROM lab_result_items i
-JOIN lab_results r ON i.lab_result_id = r.id
-JOIN lab_reports      lr  ON r.lab_report_id      = lr.id
-WHERE lr.patient_id      = $1
-  AND i.parameter_name = $2
+  lr.id AS report_id,
+  p.id AS lab_panel_id,
+  o.id AS observation_id,
+  lr.report_date AS report_date,
+  p.test_name AS test_name,
+  o.parameter_name,
+  o.result_value,
+  o.result_unit,
+  o.reference_text
+FROM observations o
+JOIN lab_panels p ON o.lab_panel_id = p.id
+JOIN lab_reports lr ON p.lab_report_id = lr.id
+WHERE lr.patient_id = $1
+  AND o.parameter_name = $2
 ORDER BY lr.report_date DESC NULLS LAST, lr.created_at DESC
 LIMIT $3 OFFSET $4;
 
 -- ============================================================
 -- Deletes
 -- ============================================================
-
--- name: DeleteLabResultItemsByReportID :execrows
-DELETE FROM lab_result_items
-WHERE lab_result_id IN (
-  SELECT id FROM lab_results WHERE lab_report_id = $1
-);
-
--- name: DeleteLabResultsByReportID :execrows
-DELETE FROM lab_results
-WHERE lab_report_id = $1;
 
 -- name: DeleteLabReport :execrows
 DELETE FROM lab_reports

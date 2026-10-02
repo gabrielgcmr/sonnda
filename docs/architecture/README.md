@@ -10,8 +10,7 @@ As decisões não óbvias (o *porquê*) são registradas separadamente em ADRs.
 
 ## Visão geral
 
-O backend está migrando de camadas globais para contextos em `internal/features`, mantendo a separação entre domínio, aplicação, HTTP e persistência. Os contextos ainda não migrados permanecem nas camadas existentes.
-
+O backend está em camadas globais para contextos em `internal/features`, mantendo a separação entre domínio, aplicação, HTTP e persistência.
 
 - **Application (`internal/application`)**  
   Orquestração e cross-cutting concerns.  
@@ -36,7 +35,7 @@ O backend está migrando de camadas globais para contextos em `internal/features
   Implementações concretas de persistência e integrações externas.  
   - **Persistence (`internal/infrastructure/persistence`)**: repositórios (sqlc/pgx), cache.
   - **Auth (`internal/infrastructure/auth`)**: Supabase auth provider.
-  - **Document AI (`internal/infrastructure/documentai`)**: integração com Google Cloud Document AI.
+  - **Document AI (`internal/infrastructure/documentai`)**: integração independente com Google Cloud Document AI, sem consumidor no fluxo laboratorial atual.
   - **Gemini (`internal/infrastructure/gemini`)**: cliente e extrator semântico estruturado baseado na API Google Gemini.
 
 - **Kernel (`internal/kernel`)**  

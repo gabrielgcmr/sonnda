@@ -8,7 +8,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/gabrielgcmr/sonnda/internal/domain/storage"
 	documents "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/domain"
 	"github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/extraction"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
@@ -29,7 +28,7 @@ type PDFExtractor interface {
 type Drafts struct {
 	repo      DraftRepository
 	extractor PDFExtractor
-	storage   storage.FileStorageService
+	storage   FileStorageService
 }
 
 type CreateDraftInput struct {
@@ -37,7 +36,7 @@ type CreateDraftInput struct {
 	LocalPath, Filename string
 }
 
-func NewDrafts(repo DraftRepository, extractor PDFExtractor, storage storage.FileStorageService) *Drafts {
+func NewDrafts(repo DraftRepository, extractor PDFExtractor, storage FileStorageService) *Drafts {
 	return &Drafts{repo: repo, extractor: extractor, storage: storage}
 }
 

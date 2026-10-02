@@ -1,4 +1,4 @@
-// internal/features/patient/exam/laboratory/domain/result_item.go
+// internal/features/patient/exam/laboratory/domain/observation.go
 package domain
 
 import (
@@ -8,9 +8,9 @@ import (
 	"github.com/google/uuid"
 )
 
-type LabResultItem struct {
-	ID          uuid.UUID `json:"id"`
-	LabResultID uuid.UUID `json:"lab_result_id"`
+type Observation struct {
+	ID         uuid.UUID `json:"id"`
+	LabPanelID uuid.UUID `json:"lab_panel_id"`
 
 	ParameterName string  `json:"parameter_name"`
 	ResultValue   *string `json:"result_value,omitempty"`
@@ -18,29 +18,29 @@ type LabResultItem struct {
 	ReferenceText *string `json:"reference_text,omitempty"`
 }
 
-func NewLabResultItem(labResultID, parameterName string) (*LabResultItem, error) {
-	labResultID = strings.TrimSpace(labResultID)
+func NewObservation(labPanelID, parameterName string) (*Observation, error) {
+	labPanelID = strings.TrimSpace(labPanelID)
 	parameterName = strings.TrimSpace(parameterName)
-	if labResultID == "" {
+	if labPanelID == "" {
 		return nil, ErrMissingId
 	}
 	if parameterName == "" {
 		return nil, ErrInvalidParameterName
 	}
 
-	parsedLabResultID, err := uuid.Parse(labResultID)
+	parsedLabPanelID, err := uuid.Parse(labPanelID)
 	if err != nil {
 		return nil, ErrMissingId
 	}
 
-	return &LabResultItem{
+	return &Observation{
 		ID:            uuid.Must(uuid.NewV7()),
-		LabResultID:   parsedLabResultID,
+		LabPanelID:    parsedLabPanelID,
 		ParameterName: parameterName,
 	}, nil
 }
 
-func (i *LabResultItem) Normalize() {
+func (i *Observation) Normalize() {
 	if i == nil {
 		return
 	}
@@ -50,13 +50,14 @@ func (i *LabResultItem) Normalize() {
 	i.ReferenceText = trimToNil(i.ReferenceText)
 }
 
-type LabResultItemTimeline struct {
+type ObservationTimeline struct {
 	ReportID      uuid.UUID  `json:"report_id"`
-	LabResultID   uuid.UUID  `json:"lab_result_id"`
-	ItemID        uuid.UUID  `json:"item_id"`
+	LabPanelID    uuid.UUID  `json:"lab_panel_id"`
+	ObservationID uuid.UUID  `json:"observation_id"`
 	ReportDate    *time.Time `json:"report_date,omitempty"`
 	TestName      string     `json:"test_name"`
 	ParameterName string     `json:"parameter_name"`
 	ResultValue   *string    `json:"result_value,omitempty"`
 	ResultUnit    *string    `json:"result_unit,omitempty"`
+	ReferenceText *string    `json:"reference_text,omitempty"`
 }

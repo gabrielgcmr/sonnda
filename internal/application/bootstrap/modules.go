@@ -3,9 +3,9 @@ package bootstrap
 
 import (
 	"github.com/gabrielgcmr/sonnda/internal/config"
-	domainstorage "github.com/gabrielgcmr/sonnda/internal/domain/storage"
+	"github.com/gabrielgcmr/sonnda/internal/features/documentprocessing"
 	"github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/labextraction"
-	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
+	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/database/postgres"
 )
 
 type Modules struct {
@@ -19,7 +19,7 @@ type Modules struct {
 func NewModules(
 	dbClient *postgress.Client,
 	labTextExtractor labextraction.LabReportTextExtractor,
-	storage domainstorage.FileStorageService,
+	storage documentprocessing.FileStorageService,
 	ocrConfig config.OCRConfig,
 ) *Modules {
 	return &Modules{

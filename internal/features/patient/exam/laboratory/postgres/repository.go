@@ -3,17 +3,18 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 
-	repohelpers "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/repo"
+	repohelpers "github.com/gabrielgcmr/sonnda/internal/infrastructure/database/postgres"
 
 	labrepository "github.com/gabrielgcmr/sonnda/internal/features/patient/exam/laboratory"
 	labs "github.com/gabrielgcmr/sonnda/internal/features/patient/exam/laboratory/domain"
-	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
-	labsqlc "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/sqlc/generated/lab"
+	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/database/postgres"
+	labsqlc "github.com/gabrielgcmr/sonnda/internal/infrastructure/database/postgres/sqlc/generated/lab"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/persistence"
 
 	"github.com/google/uuid"
@@ -62,31 +63,28 @@ func (l *LabsRepository) CreateInTx(ctx context.Context, tx pgx.Tx, report *labs
 	}
 	queries := l.queries.WithTx(tx)
 
-	// Laudo, resultados e itens sao gravados juntos; metadata documental pertence a documentprocessing.
-	_, err := tx.Exec(ctx, `
-		INSERT INTO lab_reports (
-			id, patient_id, patient_name, patient_dob, lab_name, lab_phone,
-			insurance_provider, requesting_doctor, technical_manager, report_date, uploaded_by_user_id
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
-		report.ID,
-		report.PatientID,
-		repohelpers.FromNullableStringToPgText(report.PatientName),
-		repohelpers.FromNullableTimestamptzToPgTimestamptz(report.PatientDOB),
-		repohelpers.FromNullableStringToPgText(report.LabName),
-		repohelpers.FromNullableStringToPgText(report.LabPhone),
-		repohelpers.FromNullableStringToPgText(report.InsuranceProvider),
-		repohelpers.FromNullableStringToPgText(report.RequestingDoctor),
-		repohelpers.FromNullableStringToPgText(report.TechnicalManager),
-		repohelpers.FromNullableTimestamptzToPgTimestamptz(report.ReportDate),
-		report.UploadedBy,
-	)
+	// Report, panels, and observations are created atomically; document metadata belongs to documentprocessing.
+	_, err := queries.CreateLabReport(ctx, labsqlc.CreateLabReportParams{
+		ID:                report.ID,
+		PatientID:         report.PatientID,
+		ExamDocumentID:    nullableUUIDToPg(report.ExamDocumentID),
+		PatientName:       repohelpers.FromNullableStringToPgText(report.PatientName),
+		PatientDob:        repohelpers.FromNullableTimestamptzToPgTimestamptz(report.PatientDOB),
+		LabName:           repohelpers.FromNullableStringToPgText(report.LabName),
+		LabPhone:          repohelpers.FromNullableStringToPgText(report.LabPhone),
+		InsuranceProvider: repohelpers.FromNullableStringToPgText(report.InsuranceProvider),
+		RequestingDoctor:  repohelpers.FromNullableStringToPgText(report.RequestingDoctor),
+		TechnicalManager:  repohelpers.FromNullableStringToPgText(report.TechnicalManager),
+		ReportDate:        repohelpers.FromNullableTimestamptzToPgTimestamptz(report.ReportDate),
+		UploadedByUserID:  report.UploadedBy,
+	})
 	if err != nil {
 		return err
 	}
 
-	// Create test results and their items
+	// Create panels and their observations.
 	for _, tr := range report.TestResults {
-		_, err := queries.CreateLabResult(ctx, labsqlc.CreateLabResultParams{
+		_, err := queries.CreateLabPanel(ctx, labsqlc.CreateLabPanelParams{
 			ID:          tr.ID,
 			LabReportID: report.ID,
 			TestName:    tr.TestName,
@@ -100,9 +98,9 @@ func (l *LabsRepository) CreateInTx(ctx context.Context, tx pgx.Tx, report *labs
 		}
 
 		for _, item := range tr.Items {
-			_, err := queries.CreateLabResultItem(ctx, labsqlc.CreateLabResultItemParams{
+			_, err := queries.CreateObservation(ctx, labsqlc.CreateObservationParams{
 				ID:            item.ID,
-				LabResultID:   tr.ID,
+				LabPanelID:    tr.ID,
 				ParameterName: item.ParameterName,
 				ResultValue:   repohelpers.FromNullableStringToPgText(item.ResultValue),
 				ResultUnit:    repohelpers.FromNullableStringToPgText(item.ResultUnit),
@@ -119,20 +117,8 @@ func (l *LabsRepository) CreateInTx(ctx context.Context, tx pgx.Tx, report *labs
 
 // Delete implements [repository.LabsRepository].
 func (l *LabsRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	// Delete items first
-	_, err := l.queries.DeleteLabResultItemsByReportID(ctx, id)
-	if err != nil {
-		return err
-	}
-
-	// Then delete results
-	_, err = l.queries.DeleteLabResultsByReportID(ctx, id)
-	if err != nil {
-		return err
-	}
-
-	// Finally delete the report
-	_, err = l.queries.DeleteLabReport(ctx, id)
+	// Foreign-key cascades remove panels and observations with the report.
+	_, err := l.queries.DeleteLabReport(ctx, id)
 	return err
 }
 
@@ -140,38 +126,38 @@ func (l *LabsRepository) Delete(ctx context.Context, id uuid.UUID) error {
 func (l *LabsRepository) FindByID(ctx context.Context, reportID uuid.UUID) (*labs.LabReport, error) {
 	reportRow, err := l.queries.GetLabReportByID(ctx, reportID)
 	if err != nil {
-		if repohelpers.IsPgNotFound(err) {
+		if IsNoRows(err) {
 			return nil, nil
 		}
 		return nil, err
 	}
 
-	// Fetch test results
-	resultsRows, err := l.queries.ListLabResultsByReportID(ctx, reportID)
+	// Fetch panels.
+	resultsRows, err := l.queries.ListLabPanelsByReportID(ctx, reportID)
 	if err != nil {
 		return nil, err
 	}
 
-	var testResults []labs.LabResult
+	var testResults []labs.LabPanel
 	for _, resultRow := range resultsRows {
-		itemsRows, err := l.queries.ListLabResultItemsByResultID(ctx, resultRow.ID)
+		observationsRows, err := l.queries.ListObservationsByPanelID(ctx, resultRow.ID)
 		if err != nil {
 			return nil, err
 		}
 
-		var items []labs.LabResultItem
-		for _, itemRow := range itemsRows {
-			items = append(items, labs.LabResultItem{
-				ID:            itemRow.ID,
-				LabResultID:   itemRow.LabResultID,
-				ParameterName: itemRow.ParameterName,
-				ResultValue:   repohelpers.FromPgTextToNullableString(itemRow.ResultValue),
-				ResultUnit:    repohelpers.FromPgTextToNullableString(itemRow.ResultUnit),
-				ReferenceText: repohelpers.FromPgTextToNullableString(itemRow.ReferenceText),
+		var observations []labs.Observation
+		for _, observationRow := range observationsRows {
+			observations = append(observations, labs.Observation{
+				ID:            observationRow.ID,
+				LabPanelID:    observationRow.LabPanelID,
+				ParameterName: observationRow.ParameterName,
+				ResultValue:   repohelpers.FromPgTextToNullableString(observationRow.ResultValue),
+				ResultUnit:    repohelpers.FromPgTextToNullableString(observationRow.ResultUnit),
+				ReferenceText: repohelpers.FromPgTextToNullableString(observationRow.ReferenceText),
 			})
 		}
 
-		testResults = append(testResults, labs.LabResult{
+		testResults = append(testResults, labs.LabPanel{
 			ID:          resultRow.ID,
 			LabReportID: resultRow.LabReportID,
 			TestName:    resultRow.TestName,
@@ -179,7 +165,7 @@ func (l *LabsRepository) FindByID(ctx context.Context, reportID uuid.UUID) (*lab
 			Method:      repohelpers.FromPgTextToNullableString(resultRow.Method),
 			CollectedAt: repohelpers.FromPgTimestamptzToNullableTimestamptz(resultRow.CollectedAt),
 			ReleaseAt:   repohelpers.FromPgTimestamptzToNullableTimestamptz(resultRow.ReleaseAt),
-			Items:       items,
+			Items:       observations,
 		})
 	}
 
@@ -202,9 +188,9 @@ func (l *LabsRepository) FindByID(ctx context.Context, reportID uuid.UUID) (*lab
 	}, nil
 }
 
-// ListItemsByPatientAndParameter implements [repository.LabsRepository].
-func (l *LabsRepository) ListItemsByPatientAndParameter(ctx context.Context, patientID uuid.UUID, parameterName string, limit int, offset int) ([]labs.LabResultItemTimeline, error) {
-	rows, err := l.queries.ListLabItemTimelineByPatientAndParameter(ctx, labsqlc.ListLabItemTimelineByPatientAndParameterParams{
+// ListObservationTimelineByPatientAndParameter implements [repository.Repository].
+func (l *LabsRepository) ListObservationTimelineByPatientAndParameter(ctx context.Context, patientID uuid.UUID, parameterName string, limit int, offset int) ([]labs.ObservationTimeline, error) {
+	rows, err := l.queries.ListObservationTimelineByPatientAndParameter(ctx, labsqlc.ListObservationTimelineByPatientAndParameterParams{
 		PatientID:     patientID,
 		ParameterName: parameterName,
 		Limit:         int32(limit),
@@ -214,21 +200,22 @@ func (l *LabsRepository) ListItemsByPatientAndParameter(ctx context.Context, pat
 		return nil, err
 	}
 
-	var items []labs.LabResultItemTimeline
+	var observations []labs.ObservationTimeline
 	for _, row := range rows {
-		items = append(items, labs.LabResultItemTimeline{
+		observations = append(observations, labs.ObservationTimeline{
 			ReportID:      row.ReportID,
-			LabResultID:   row.LabResultID,
-			ItemID:        row.ItemID,
+			LabPanelID:    row.LabPanelID,
+			ObservationID: row.ObservationID,
 			ReportDate:    repohelpers.FromPgTimestamptzToNullableTimestamptz(row.ReportDate),
 			TestName:      row.TestName,
 			ParameterName: row.ParameterName,
 			ResultValue:   repohelpers.FromPgTextToNullableString(row.ResultValue),
 			ResultUnit:    repohelpers.FromPgTextToNullableString(row.ResultUnit),
+			ReferenceText: repohelpers.FromPgTextToNullableString(row.ReferenceText),
 		})
 	}
 
-	return items, nil
+	return observations, nil
 }
 
 // ListLabs implements [repository.LabsRepository].
@@ -265,4 +252,15 @@ func nullableReportDocumentID(value pgtype.UUID) *uuid.UUID {
 	}
 	id := uuid.UUID(value.Bytes)
 	return &id
+}
+
+func nullableUUIDToPg(value *uuid.UUID) pgtype.UUID {
+	if value == nil {
+		return pgtype.UUID{}
+	}
+	return pgtype.UUID{Bytes: *value, Valid: true}
+}
+
+func IsNoRows(err error) bool {
+	return errors.Is(err, pgx.ErrNoRows)
 }

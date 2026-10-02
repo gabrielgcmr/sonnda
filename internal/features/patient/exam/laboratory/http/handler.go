@@ -119,7 +119,7 @@ func shouldReturnFullLabsFor(expand, include string) bool {
 	}
 	for _, raw := range strings.Split(include, ",") {
 		switch strings.ToLower(strings.TrimSpace(raw)) {
-		case "full", "results", "test_results":
+		case "full", "results", "panels", "test_results":
 			return true
 		}
 	}

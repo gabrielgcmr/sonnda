@@ -7,6 +7,13 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"net/url"
+	"os"
+	"path/filepath"
+	"strings"
+	"sync"
+	"testing"
+
 	confirmation "github.com/gabrielgcmr/sonnda/internal/application/usecase/labdocumentconfirmation"
 	processing "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing"
 	documents "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/domain"
@@ -17,12 +24,6 @@ import (
 	pginfra "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"net/url"
-	"os"
-	"path/filepath"
-	"strings"
-	"sync"
-	"testing"
 )
 
 func reviewTestDatabase(t *testing.T) (*pginfra.Client, *DraftRepository, uuid.UUID, uuid.UUID) {
@@ -97,10 +98,10 @@ func processingTestReport(patientID, userID uuid.UUID) *labs.LabReport {
 	value, unit := "99", "mg/dL"
 	return &labs.LabReport{
 		ID: reportID, PatientID: patientID, UploadedBy: userID,
-		TestResults: []labs.LabResult{{
+		TestResults: []labs.LabPanel{{
 			ID: resultID, LabReportID: reportID, TestName: "Glicose",
-			Items: []labs.LabResultItem{{
-				ID: uuid.New(), LabResultID: resultID, ParameterName: "Glicose", ResultValue: &value, ResultUnit: &unit,
+			Items: []labs.Observation{{
+				ID: uuid.New(), LabPanelID: resultID, ParameterName: "Glicose", ResultValue: &value, ResultUnit: &unit,
 			}},
 		}},
 	}
@@ -165,9 +166,9 @@ func TestConcurrentConfirmationIsAtomicAndIdempotent(t *testing.T) {
 			t.Fatal("confirmation duplicated")
 		}
 	}
-	var reports, results, items int
-	if err := client.Pool().QueryRow(context.Background(), "SELECT (SELECT count(*) FROM lab_reports),(SELECT count(*) FROM lab_results),(SELECT count(*) FROM lab_result_items)").Scan(&reports, &results, &items); err != nil || reports != 1 || results != 1 || items != 1 {
-		t.Fatalf("unexpected counts %d/%d/%d %v", reports, results, items, err)
+	var reports, panels, observations int
+	if err := client.Pool().QueryRow(context.Background(), "SELECT (SELECT count(*) FROM lab_reports),(SELECT count(*) FROM lab_panels),(SELECT count(*) FROM observations)").Scan(&reports, &panels, &observations); err != nil || reports != 1 || panels != 1 || observations != 1 {
+		t.Fatalf("unexpected counts %d/%d/%d %v", reports, panels, observations, err)
 	}
 	loaded, err := repo.documents.FindByID(context.Background(), doc.ID)
 	if err != nil || loaded.ConfirmedAt == nil || loaded.ConfirmedByUserID == nil || *loaded.ConfirmedByUserID != user || loaded.LabReportID == nil || *loaded.LabReportID != first {

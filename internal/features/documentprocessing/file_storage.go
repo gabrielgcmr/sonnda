@@ -1,5 +1,5 @@
-// internal/domain/storage/file_storage.go
-package storage
+// internal/features/documentprocessing/file_storage.go
+package documentprocessing
 
 import (
 	"context"

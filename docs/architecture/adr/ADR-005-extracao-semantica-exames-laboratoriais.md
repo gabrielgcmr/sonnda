@@ -217,7 +217,7 @@ Flutter: POST /v1/patients/:patientId/exames, multipart com campo file
   -> classificar documento
        laboratorio:
          texto -> LLM -> JSON conforme schema -> validacao em Go
-         -> lab_reports + lab_results + lab_result_items em transacao
+         -> lab_reports + lab_panels + observations em transacao
          -> texto de apoio em exam_document_texts
        imagem ou desconhecido:
          -> texto disponivel em exam_document_texts

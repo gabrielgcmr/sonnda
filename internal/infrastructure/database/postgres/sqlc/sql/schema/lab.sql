@@ -18,8 +18,8 @@ CREATE TABLE lab_reports (
     updated_at         TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
 );
 
--- Lab results: one-to-many from lab_reports.
-CREATE TABLE lab_results (
+-- Lab panel: one-to-many from lab_reports.
+CREATE TABLE lab_panels (
     id            UUID PRIMARY KEY,
     lab_report_id UUID   NOT NULL REFERENCES lab_reports(id) ON DELETE CASCADE,
     test_name     TEXT NOT NULL,
@@ -29,10 +29,10 @@ CREATE TABLE lab_results (
     release_at    TIMESTAMP WITH TIME ZONE
 );
 
--- Lab result items: one-to-many from lab_results.
-CREATE TABLE lab_result_items (
+-- Lab observations: one-to-many from lab_panels.
+CREATE TABLE observations (
     id             UUID PRIMARY KEY,
-    lab_result_id  UUID NOT NULL REFERENCES lab_results(id) ON DELETE CASCADE,
+    lab_panel_id   UUID NOT NULL REFERENCES lab_panels(id) ON DELETE CASCADE,
     parameter_name TEXT NOT NULL,
     result_value   TEXT,
     result_unit    TEXT,
@@ -44,5 +44,5 @@ CREATE UNIQUE INDEX idx_lab_reports_fingerprint ON lab_reports(fingerprint) WHER
 CREATE UNIQUE INDEX idx_lab_reports_exam_document ON lab_reports(exam_document_id) WHERE exam_document_id IS NOT NULL;
 CREATE INDEX idx_lab_reports_patient ON lab_reports(patient_id);
 CREATE INDEX idx_lab_reports_report_date ON lab_reports(report_date);
-CREATE INDEX idx_lab_results_report ON lab_results(lab_report_id);
-CREATE INDEX idx_lab_result_items_result ON lab_result_items(lab_result_id);
+CREATE INDEX idx_lab_panels_report ON lab_panels(lab_report_id);
+CREATE INDEX idx_observations_panel ON observations(lab_panel_id);

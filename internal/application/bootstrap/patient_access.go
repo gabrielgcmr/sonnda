@@ -5,7 +5,7 @@ import (
 	patientaccess "github.com/gabrielgcmr/sonnda/internal/features/patient/access"
 	accesshttp "github.com/gabrielgcmr/sonnda/internal/features/patient/access/http"
 	accesspostgres "github.com/gabrielgcmr/sonnda/internal/features/patient/access/postgres"
-	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
+	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/database/postgres"
 )
 
 type PatientAccessModule struct {

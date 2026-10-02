@@ -13,7 +13,7 @@ import (
 	"io"
 	"time"
 
-	domainstorage "github.com/gabrielgcmr/sonnda/internal/domain/storage"
+	"github.com/gabrielgcmr/sonnda/internal/features/documentprocessing"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/apperr"
 
 	"cloud.google.com/go/storage"
@@ -26,7 +26,7 @@ type GCSObjectStorage struct {
 	projectID  string
 }
 
-var _ domainstorage.FileStorageService = (*GCSObjectStorage)(nil)
+var _ documentprocessing.FileStorageService = (*GCSObjectStorage)(nil)
 
 func NewGCSObjectStorage(
 	ctx context.Context,

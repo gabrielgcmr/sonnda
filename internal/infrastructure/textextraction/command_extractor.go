@@ -522,7 +522,7 @@ func rotateImage(src image.Image, degrees int) image.Image {
 	}
 }
 
-var labResultLinePattern = regexp.MustCompile(`(?im)(?:hemacias|hemoglobina|hematocrito|v\.?g\.?m|h\.?g\.?m|c\.?h\.?g\.?m|leucocitos|plaquetas)(?:[.:]{2,}\s*:?[\s]*|:\s*)\d`)
+var labPanelLinePattern = regexp.MustCompile(`(?im)(?:hemacias|hemoglobina|hematocrito|v\.?g\.?m|h\.?g\.?m|c\.?h\.?g\.?m|leucocitos|plaquetas)(?:[.:]{2,}\s*:?[\s]*|:\s*)\d`)
 
 func scoreOCRText(text string) int {
 	normalized := strings.ToLower(text)
@@ -537,7 +537,7 @@ func scoreOCRText(text string) int {
 		}
 	}
 	// Linhas completas de analito e valor sao mais uteis que texto longo com ruido.
-	score += len(labResultLinePattern.FindAllStringIndex(normalized, -1)) * 120
+	score += len(labPanelLinePattern.FindAllStringIndex(normalized, -1)) * 120
 	for _, r := range normalized {
 		switch {
 		case r >= '0' && r <= '9':

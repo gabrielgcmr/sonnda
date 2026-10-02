@@ -6,8 +6,8 @@ import (
 
 	processing "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing"
 	exams "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/domain"
-	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
-	examsqlc "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/sqlc/generated/exam"
+	postgress "github.com/gabrielgcmr/sonnda/internal/infrastructure/database/postgres"
+	examsqlc "github.com/gabrielgcmr/sonnda/internal/infrastructure/database/postgres/sqlc/generated/exam"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )

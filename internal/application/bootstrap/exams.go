@@ -4,7 +4,7 @@ package bootstrap
 import (
 	"github.com/gabrielgcmr/sonnda/internal/application/usecase/labdocumentconfirmation"
 	"github.com/gabrielgcmr/sonnda/internal/config"
-	domainstorage "github.com/gabrielgcmr/sonnda/internal/domain/storage"
+	"github.com/gabrielgcmr/sonnda/internal/features/documentprocessing"
 	documents "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing"
 	"github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/extraction"
 	documenthttp "github.com/gabrielgcmr/sonnda/internal/features/documentprocessing/http"
@@ -14,7 +14,7 @@ import (
 	accesspostgres "github.com/gabrielgcmr/sonnda/internal/features/patient/access/postgres"
 	labpostgres "github.com/gabrielgcmr/sonnda/internal/features/patient/exam/laboratory/postgres"
 	patientpostgres "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/postgres"
-	pginfra "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
+	pginfra "github.com/gabrielgcmr/sonnda/internal/infrastructure/database/postgres"
 	textinfra "github.com/gabrielgcmr/sonnda/internal/infrastructure/textextraction"
 )
 
@@ -23,7 +23,7 @@ type ExamsModule struct {
 	StandaloneLabExtractionHandler *documenthttp.StandaloneLabExtractionHandler
 }
 
-func NewExamsModule(db *pginfra.Client, lab labextraction.LabReportTextExtractor, storage domainstorage.FileStorageService, config config.OCRConfig) *ExamsModule {
+func NewExamsModule(db *pginfra.Client, lab labextraction.LabReportTextExtractor, storage documentprocessing.FileStorageService, config config.OCRConfig) *ExamsModule {
 	patients := patientpostgres.NewRepository(db)
 	labs := labpostgres.NewLabsRepository(db)
 	service := documents.New(patients, documentpostgres.NewDocumentRepository(db))

@@ -1,4 +1,4 @@
-// internal/infrastructure/persistence/postgres/patientcreation/repository.go
+// internal/infrastructure/database/postgres/patientcreation/repository.go
 package patientcreationpostgres
 
 import (
@@ -10,9 +10,9 @@ import (
 	accessdomain "github.com/gabrielgcmr/sonnda/internal/features/patient/access/domain"
 	patientprofile "github.com/gabrielgcmr/sonnda/internal/features/patient/profile"
 	profiledomain "github.com/gabrielgcmr/sonnda/internal/features/patient/profile/domain"
-	postgres "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres"
-	patientsqlc "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/sqlc/generated/patient"
-	patientaccesssqlc "github.com/gabrielgcmr/sonnda/internal/infrastructure/persistence/postgres/sqlc/generated/patientaccess"
+	postgres "github.com/gabrielgcmr/sonnda/internal/infrastructure/database/postgres"
+	patientsqlc "github.com/gabrielgcmr/sonnda/internal/infrastructure/database/postgres/sqlc/generated/patient"
+	patientaccesssqlc "github.com/gabrielgcmr/sonnda/internal/infrastructure/database/postgres/sqlc/generated/patientaccess"
 	"github.com/gabrielgcmr/sonnda/internal/kernel/persistence"
 
 	"github.com/google/uuid"

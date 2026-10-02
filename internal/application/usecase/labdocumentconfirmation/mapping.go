@@ -49,7 +49,7 @@ func mapExtractedToDomain(
 	}
 
 	for _, et := range extracted.Tests {
-		testResult, err := labs.NewLabResult(report.ID.String(), et.TestName)
+		testResult, err := labs.NewLabPanel(report.ID.String(), et.TestName)
 		if err != nil {
 			return nil, err
 		}
@@ -69,7 +69,7 @@ func mapExtractedToDomain(
 		}
 
 		for _, ei := range et.Items {
-			item, err := labs.NewLabResultItem(testResult.ID.String(), ei.ParameterName)
+			item, err := labs.NewObservation(testResult.ID.String(), ei.ParameterName)
 			if err != nil {
 				return nil, err
 			}
@@ -206,7 +206,7 @@ func toOutput(report *labs.LabReport) *labsvc.LabReportOutput {
 	}
 
 	for _, tr := range report.TestResults {
-		testOutput := labsvc.TestResultOutput{
+		panelOutput := labsvc.LabPanelOutput{
 			ID:          tr.ID,
 			TestName:    tr.TestName,
 			Material:    tr.Material,
@@ -216,7 +216,7 @@ func toOutput(report *labs.LabReport) *labsvc.LabReportOutput {
 		}
 
 		for _, item := range tr.Items {
-			testOutput.Items = append(testOutput.Items, labsvc.TestItemOutput{
+			panelOutput.Observations = append(panelOutput.Observations, labsvc.ObservationOutput{
 				ID:            item.ID,
 				ParameterName: item.ParameterName,
 				ResultValue:   item.ResultValue,
@@ -225,7 +225,7 @@ func toOutput(report *labs.LabReport) *labsvc.LabReportOutput {
 			})
 		}
 
-		output.TestResults = append(output.TestResults, testOutput)
+		output.Panels = append(output.Panels, panelOutput)
 	}
 
 	return output

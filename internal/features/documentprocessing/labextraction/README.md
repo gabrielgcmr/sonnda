@@ -11,14 +11,14 @@ Paciente, usuário, persistência, rascunhos e storage ficam a cargo da feature 
 
 ## Correspondência com o banco
 
-| JSON | Destino existente |
-| --- | --- |
-| `patient_name`, `patient_dob`, `lab_name`, `lab_phone` | Campos correspondentes em `lab_reports` |
-| `insurance_provider`, `requesting_doctor`, `technical_manager`, `report_date` | Campos correspondentes em `lab_reports` |
-| `tests[]` | Registros em `lab_results` |
-| `test_name`, `material`, `method`, `collected_at`, `release_at` | Campos correspondentes em `lab_results` |
-| `tests[].items[]` | Registros em `lab_result_items` |
-| `parameter_name`, `result_value`, `result_unit`, `reference_text` | Campos correspondentes em `lab_result_items` |
+| JSON                                                                          | Destino existente                        |
+| ----------------------------------------------------------------------------- | ---------------------------------------- |
+| `patient_name`, `patient_dob`, `lab_name`, `lab_phone`                        | Campos correspondentes em `lab_reports`  |
+| `insurance_provider`, `requesting_doctor`, `technical_manager`, `report_date` | Campos correspondentes em `lab_reports`  |
+| `tests[]`                                                                     | Registros em `lab_panels`                |
+| `test_name`, `material`, `method`, `collected_at`, `release_at`               | Campos correspondentes em `lab_panels`   |
+| `tests[].items[]`                                                             | Registros em `observations`              |
+| `parameter_name`, `result_value`, `result_unit`, `reference_text`             | Campos correspondentes em `observations` |
 
 O schema acompanha os campos de extração usados pelo mapper de confirmação. Não é um dump
 das tabelas: IDs, chaves estrangeiras, fingerprint, timestamps de gravação, texto
