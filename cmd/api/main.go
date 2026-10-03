@@ -8,7 +8,9 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 
 	"github.com/gin-gonic/gin"
 	"google.golang.org/api/option"
@@ -32,7 +34,8 @@ var version = "dev"
 
 func main() {
 	// 1. Carrega o contexto
-	ctx := context.Background()
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
 
 	// 2. Carrega configuracao
 	cfg, err := config.Load()
@@ -136,7 +139,7 @@ func main() {
 		slog.String("local_api_url", "http://localhost:"+cfg.HTTP.Port),
 		slog.String("public_api_url", "https://api.sonnda.com.br"),
 	)
-	if err := app.Run(":" + cfg.HTTP.Port); err != nil && !errors.Is(err, http.ErrServerClosed) {
+	if err := app.Run(ctx, ":"+cfg.HTTP.Port); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		// 1. Loga o erro com nivel Error (estruturado)
 		slog.Error("failed to start server", "error", err)
 

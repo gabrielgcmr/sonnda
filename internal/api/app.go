@@ -2,8 +2,12 @@
 package api
 
 import (
+	"context"
+	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humagin"
@@ -11,6 +15,11 @@ import (
 	"github.com/gabrielgcmr/sonnda/internal/api/middleware"
 	"github.com/gabrielgcmr/sonnda/internal/config"
 	"github.com/gin-gonic/gin"
+)
+
+const (
+	readHeaderTimeout = 5 * time.Second
+	shutdownTimeout   = 30 * time.Second
 )
 
 type Options struct {
@@ -63,13 +72,37 @@ func New(opts Options) *App {
 	}
 }
 
-func (a *App) Run(addr string) error {
+func (a *App) Run(ctx context.Context, addr string) error {
 	if addr == "" {
 		addr = ":8080"
 	}
 	server := &http.Server{
-		Addr:    addr,
-		Handler: a.router,
+		Addr:              addr,
+		Handler:           a.router,
+		ReadHeaderTimeout: readHeaderTimeout,
 	}
-	return server.ListenAndServe()
+
+	serverErrors := make(chan error, 1)
+	go func() {
+		serverErrors <- server.ListenAndServe()
+	}()
+
+	select {
+	case err := <-serverErrors:
+		return err
+	case <-ctx.Done():
+	}
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+	defer cancel()
+
+	if err := server.Shutdown(shutdownCtx); err != nil {
+		shutdownErr := fmt.Errorf("shutdown HTTP server: %w", err)
+		if closeErr := server.Close(); closeErr != nil {
+			return errors.Join(shutdownErr, fmt.Errorf("close HTTP server: %w", closeErr))
+		}
+		return shutdownErr
+	}
+
+	return <-serverErrors
 }
